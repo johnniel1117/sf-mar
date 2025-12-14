@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import * as XLSX from "xlsx"
 import { Upload, X, FileSpreadsheet, Download } from "lucide-react"
 
@@ -14,21 +14,47 @@ interface MaterialData {
   shipName: string
 }
 
+interface SerialData {
+  dnNo: string
+  orderItem: string
+  factoryCode: string
+  location: string
+  binCode: string
+  materialCode: string
+  materialDesc: string
+  barcode: string
+  materialType: string
+  productStatus: string
+  shipTo: string
+  shipToName: string
+  shipToAddress: string
+  shipToRegion: string
+  soldTo: string
+  soldToName: string
+  scanBy: string
+  scanTime: string
+}
+
 interface UploadedFile {
   id: string
   name: string
   dnNo: string
   data: MaterialData[]
+  serialData: SerialData[]
 }
+
+type TabType = "consolidated" | "serialList"
 
 export default function ExcelUploader() {
   const [groupedData, setGroupedData] = useState<MaterialData[]>([])
+  const [serialListData, setSerialListData] = useState<SerialData[]>([])
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const tableRef = useRef<HTMLDivElement>(null)
   const [animatingRows, setAnimatingRows] = useState<Set<number>>(new Set())
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const [showFilesList, setShowFilesList] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabType>("consolidated")
 
   const getCategoryFromBinCode = (binCode: string): string => {
     const code = String(binCode || "").toUpperCase()
@@ -62,6 +88,14 @@ export default function ExcelUploader() {
     return Array.from(groupedMap.values())
   }
 
+  const combineAllSerialData = (files: UploadedFile[]): SerialData[] => {
+    const allSerialData: SerialData[] = []
+    files.forEach((file) => {
+      allSerialData.push(...file.serialData)
+    })
+    return allSerialData
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -86,6 +120,7 @@ export default function ExcelUploader() {
             .trim(),
         )
 
+        // Parse for consolidated materials
         const dnNoIdx = headers.findIndex((h) => h.includes("dn no") || h.includes("dn_no") || h.includes("dnno"))
         const materialCodeIdx = headers.findIndex((h) => h.includes("material code") || h.includes("materialcode"))
         const materialDescIdx = headers.findIndex(
@@ -97,12 +132,28 @@ export default function ExcelUploader() {
             h.includes("ship to name") || h.includes("shiptoname") || h.includes("ship name") || h.includes("shipname"),
         )
 
+        // Parse for serial list - all columns
+        const orderItemIdx = headers.findIndex((h) => h.includes("order item") || h.includes("orderitem"))
+        const factoryCodeIdx = headers.findIndex((h) => h.includes("factory code") || h.includes("factorycode"))
+        const locationIdx = headers.findIndex((h) => h.includes("location"))
+        const barcodeIdx = headers.findIndex((h) => h.includes("barcode"))
+        const materialTypeIdx = headers.findIndex((h) => h.includes("material type") || h.includes("materialtype"))
+        const productStatusIdx = headers.findIndex((h) => h.includes("product status") || h.includes("productstatus"))
+        const shipToIdx = headers.findIndex((h) => h === "ship to" || h === "shipto")
+        const shipToAddressIdx = headers.findIndex((h) => h.includes("ship to address") || h.includes("shiptoaddress"))
+        const shipToRegionIdx = headers.findIndex((h) => h.includes("ship to region") || h.includes("shiptoregion"))
+        const soldToIdx = headers.findIndex((h) => h === "sold to" || h === "soldto")
+        const soldToNameIdx = headers.findIndex((h) => h.includes("sold to name") || h.includes("soldtoname"))
+        const scanByIdx = headers.findIndex((h) => h.includes("scan by") || h.includes("scanby"))
+        const scanTimeIdx = headers.findIndex((h) => h.includes("scan time") || h.includes("scantime"))
+
         let dnNo = "N/A"
         if (dnNoIdx >= 0 && jsonData[1]) {
           dnNo = String(jsonData[1][dnNoIdx] || "N/A")
         }
 
         const fileData: MaterialData[] = []
+        const serialData: SerialData[] = []
 
         for (let i = 1; i < jsonData.length; i++) {
           const row = jsonData[i]
@@ -117,10 +168,8 @@ export default function ExcelUploader() {
           if (!materialCode) continue
 
           // Check if there's a quantity column in the Excel
-          const qtyIdx = headers.findIndex(
-            (h) => h.includes("qty") || h.includes("quantity") || h.includes("qnt"),
-          )
-          const qty = qtyIdx >= 0 ? parseInt(String(row[qtyIdx] || "1"), 10) || 1 : 1
+          const qtyIdx = headers.findIndex((h) => h.includes("qty") || h.includes("quantity") || h.includes("qnt"))
+          const qty = qtyIdx >= 0 ? Number.parseInt(String(row[qtyIdx] || "1"), 10) || 1 : 1
 
           const category = getCategoryFromBinCode(binCode)
 
@@ -132,6 +181,28 @@ export default function ExcelUploader() {
             remarks: dnNo,
             shipName,
           })
+
+          // Parse serial list data
+          serialData.push({
+            dnNo: dnNoIdx >= 0 ? String(row[dnNoIdx] || dnNo) : dnNo,
+            orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "",
+            factoryCode: factoryCodeIdx >= 0 ? String(row[factoryCodeIdx] || "") : "",
+            location: locationIdx >= 0 ? String(row[locationIdx] || "") : "",
+            binCode: binCode,
+            materialCode: materialCode,
+            materialDesc: materialDescription,
+            barcode: barcodeIdx >= 0 ? String(row[barcodeIdx] || "") : "",
+            materialType: materialTypeIdx >= 0 ? String(row[materialTypeIdx] || "") : "",
+            productStatus: productStatusIdx >= 0 ? String(row[productStatusIdx] || "") : "",
+            shipTo: shipToIdx >= 0 ? String(row[shipToIdx] || "") : "",
+            shipToName: shipName,
+            shipToAddress: shipToAddressIdx >= 0 ? String(row[shipToAddressIdx] || "") : "",
+            shipToRegion: shipToRegionIdx >= 0 ? String(row[shipToRegionIdx] || "") : "",
+            soldTo: soldToIdx >= 0 ? String(row[soldToIdx] || "") : "",
+            soldToName: soldToNameIdx >= 0 ? String(row[soldToNameIdx] || "") : "",
+            scanBy: scanByIdx >= 0 ? String(row[scanByIdx] || "") : "",
+            scanTime: scanTimeIdx >= 0 ? String(row[scanTimeIdx] || "") : "",
+          })
         }
 
         newFiles.push({
@@ -139,6 +210,7 @@ export default function ExcelUploader() {
           name: file.name,
           dnNo,
           data: fileData,
+          serialData: serialData,
         })
       }
 
@@ -146,10 +218,13 @@ export default function ExcelUploader() {
       setUploadedFiles(allFiles)
       const newGroupedData = groupAllData(allFiles)
       setGroupedData(newGroupedData)
+      const newSerialListData = combineAllSerialData(allFiles)
+      setSerialListData(newSerialListData)
 
       // Trigger staggered animation
       setAnimatingRows(new Set())
-      newGroupedData.forEach((_, idx) => {
+      const dataLength = activeTab === "consolidated" ? newGroupedData.length : newSerialListData.length
+      Array.from({ length: dataLength }).forEach((_, idx) => {
         setTimeout(() => {
           setAnimatingRows((prev) => {
             const newSet = new Set(prev)
@@ -160,9 +235,12 @@ export default function ExcelUploader() {
       })
 
       // Scroll to table after animation completes
-      setTimeout(() => {
-        tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-      }, newGroupedData.length * 50 + 300)
+      setTimeout(
+        () => {
+          tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+        },
+        dataLength * 50 + 300,
+      )
     } catch (error) {
       console.error("Error parsing Excel file:", error)
       alert("Error parsing Excel file. Please make sure it contains the required columns.")
@@ -176,10 +254,12 @@ export default function ExcelUploader() {
     const updatedFiles = uploadedFiles.filter((f) => f.id !== fileId)
     setUploadedFiles(updatedFiles)
     setGroupedData(groupAllData(updatedFiles))
+    setSerialListData(combineAllSerialData(updatedFiles))
   }
 
   const handleClear = () => {
     setGroupedData([])
+    setSerialListData([])
     setUploadedFiles([])
     setAnimatingRows(new Set())
     setSelectedFileId(null)
@@ -210,23 +290,39 @@ export default function ExcelUploader() {
     // Toggle: if already selected, unselect
     if (selectedFileId === fileId) {
       setSelectedFileId(null)
-      const allGrouped = groupAllData(uploadedFiles)
-      setGroupedData(allGrouped)
-      setAnimatingRows(new Set())
+      if (activeTab === "consolidated") {
+        const allGrouped = groupAllData(uploadedFiles)
+        setGroupedData(allGrouped)
+        setAnimatingRows(new Set())
 
-      allGrouped.forEach((_, idx) => {
-        setTimeout(() => {
-          setAnimatingRows((prev) => {
-            const newSet = new Set(prev)
-            newSet.add(idx)
-            return newSet
-          })
-        }, idx * 30)
-      })
+        allGrouped.forEach((_, idx) => {
+          setTimeout(() => {
+            setAnimatingRows((prev) => {
+              const newSet = new Set(prev)
+              newSet.add(idx)
+              return newSet
+            })
+          }, idx * 30)
+        })
+      } else {
+        const allSerial = combineAllSerialData(uploadedFiles)
+        setSerialListData(allSerial)
+        setAnimatingRows(new Set())
+
+        allSerial.forEach((_, idx) => {
+          setTimeout(() => {
+            setAnimatingRows((prev) => {
+              const newSet = new Set(prev)
+              newSet.add(idx)
+              return newSet
+            })
+          }, idx * 30)
+        })
+      }
 
       setTimeout(() => {
         tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-      }, allGrouped.length * 30 + 300)
+      }, 300)
     } else {
       // Select new file
       setSelectedFileId(fileId)
@@ -234,125 +330,195 @@ export default function ExcelUploader() {
 
       const selectedFile = uploadedFiles.find((f) => f.id === fileId)
       if (selectedFile) {
-        // Group data by material code, description, AND remarks
-        const groupedData = groupSingleFileData(selectedFile.data)
-        setGroupedData(groupedData)
+        if (activeTab === "consolidated") {
+          const groupedData = groupSingleFileData(selectedFile.data)
+          setGroupedData(groupedData)
 
-        // Trigger staggered animation for selected file data
-        groupedData.forEach((_, idx) => {
-          setTimeout(() => {
-            setAnimatingRows((prev) => {
-              const newSet = new Set(prev)
-              newSet.add(idx)
-              return newSet
-            })
-          }, idx * 50)
-        })
+          groupedData.forEach((_, idx) => {
+            setTimeout(() => {
+              setAnimatingRows((prev) => {
+                const newSet = new Set(prev)
+                newSet.add(idx)
+                return newSet
+              })
+            }, idx * 50)
+          })
 
-        // Scroll to table after animation completes
-        setTimeout(() => {
-          tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-        }, groupedData.length * 50 + 300)
+          setTimeout(
+            () => {
+              tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            },
+            groupedData.length * 50 + 300,
+          )
+        } else {
+          setSerialListData(selectedFile.serialData)
+
+          selectedFile.serialData.forEach((_, idx) => {
+            setTimeout(() => {
+              setAnimatingRows((prev) => {
+                const newSet = new Set(prev)
+                newSet.add(idx)
+                return newSet
+              })
+            }, idx * 50)
+          })
+
+          setTimeout(
+            () => {
+              tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            },
+            selectedFile.serialData.length * 50 + 300,
+          )
+        }
       }
     }
-  }
-
-  const handleShowAll = () => {
-    setSelectedFileId(null)
-    const allGrouped = groupAllData(uploadedFiles)
-    setGroupedData(allGrouped)
-    setAnimatingRows(new Set())
-
-    allGrouped.forEach((_, idx) => {
-      setTimeout(() => {
-        setAnimatingRows((prev) => {
-          const newSet = new Set(prev)
-          newSet.add(idx)
-          return newSet
-        })
-      }, idx * 30)
-    })
-
-    setTimeout(() => {
-      tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-    }, allGrouped.length * 30 + 300)
   }
 
   const handleDownload = () => {
     const wb = XLSX.utils.book_new()
-    const wsData: any[][] = []
 
-    // Table headers only
-    wsData.push(["MATERIAL CODE", "MATERIAL DESCRIPTION", "CATEGORY", "QTY.", "UM", "SHIPNAME", "REMARKS"])
+    if (activeTab === "consolidated") {
+      const wsData: any[][] = []
+      wsData.push(["MATERIAL CODE", "MATERIAL DESCRIPTION", "CATEGORY", "QTY.", "UM", "SHIPNAME", "REMARKS"])
 
-    // Data rows
-    groupedData.forEach((row) => {
-      wsData.push([
-        row.materialCode,
-        row.materialDescription,
-        row.category,
-        row.qty,
-        "",
-        row.shipName,
-        row.remarks,
-      ])
-    })
+      groupedData.forEach((row) => {
+        wsData.push([row.materialCode, row.materialDescription, row.category, row.qty, "", row.shipName, row.remarks])
+      })
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData)
-    
-    // Column widths
-    ws["!cols"] = [
-      { wch: 18 },  // Material Code
-      { wch: 35 },  // Material Description
-      { wch: 22 },  // Category
-      { wch: 8 },   // QTY
-      { wch: 6 },   // UM
-      { wch: 28 },  // SHIPNAME
-      { wch: 18 }   // REMARKS
-    ]
+      const ws = XLSX.utils.aoa_to_sheet(wsData)
+      ws["!cols"] = [{ wch: 18 }, { wch: 35 }, { wch: 22 }, { wch: 8 }, { wch: 6 }, { wch: 28 }, { wch: 18 }]
 
-    // Apply styles to cells
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1')
-    
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
-        if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: '' }
-        
-        // Initialize cell style
-        if (!ws[cellAddress].s) ws[cellAddress].s = {}
-        
-        // Add borders to all cells
-        ws[cellAddress].s.border = {
-          top: { style: 'thin', color: { rgb: '000000' } },
-          bottom: { style: 'thin', color: { rgb: '000000' } },
-          left: { style: 'thin', color: { rgb: '000000' } },
-          right: { style: 'thin', color: { rgb: '000000' } }
-        }
-        
-        // Bold and style header row (row 0)
-        if (R === 0) {
-          ws[cellAddress].s.font = { bold: true, sz: 11 }
-          ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
-          ws[cellAddress].s.fill = { fgColor: { rgb: 'D3D3D3' } }
-        }
-        
-        // Center align QTY column
-        if (C === 3 && R > 0) {
-          ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
-          ws[cellAddress].s.font = { bold: true }
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
+
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+          if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
+
+          if (!ws[cellAddress].s) ws[cellAddress].s = {}
+
+          ws[cellAddress].s.border = {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          }
+
+          if (R === 0) {
+            ws[cellAddress].s.font = { bold: true, sz: 11 }
+            ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
+          }
+
+          if (C === 3 && R > 0) {
+            ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
+            ws[cellAddress].s.font = { bold: true }
+          }
         }
       }
-    }
 
-    XLSX.utils.book_append_sheet(wb, ws, "Materials")
+      XLSX.utils.book_append_sheet(wb, ws, "Consolidated Materials")
+    } else {
+      const wsData: any[][] = []
+      wsData.push([
+        "DN No",
+        "Order Item",
+        "Factory Code",
+        "Location",
+        "binCode",
+        "Material Code",
+        "Material Desc",
+        "Barcode",
+        "Material Type",
+        "Product Status",
+        "Ship To",
+        "Ship To Name",
+        "Ship To Address",
+        "Ship To Region",
+        "Sold To",
+        "Sold To Name",
+        "Scan By",
+        "Scan Time",
+      ])
+
+      serialListData.forEach((row) => {
+        wsData.push([
+          row.dnNo,
+          row.orderItem,
+          row.factoryCode,
+          row.location,
+          row.binCode,
+          row.materialCode,
+          row.materialDesc,
+          row.barcode,
+          row.materialType,
+          row.productStatus,
+          row.shipTo,
+          row.shipToName,
+          row.shipToAddress,
+          row.shipToRegion,
+          row.soldTo,
+          row.soldToName,
+          row.scanBy,
+          row.scanTime,
+        ])
+      })
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData)
+      ws["!cols"] = [
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 30 },
+        { wch: 18 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 25 },
+        { wch: 30 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 25 },
+        { wch: 15 },
+        { wch: 18 },
+      ]
+
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
+
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+          if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
+
+          if (!ws[cellAddress].s) ws[cellAddress].s = {}
+
+          ws[cellAddress].s.border = {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          }
+
+          if (R === 0) {
+            ws[cellAddress].s.font = { bold: true, sz: 11 }
+            ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "4472C4" } }
+          }
+        }
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, "Bulking Serial List")
+    }
 
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
     const blob = new Blob([wbout], { type: "application/octet-stream" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
-    link.download = `Materials_Export_${Date.now()}.xlsx`
+    link.download = `${activeTab === "consolidated" ? "Consolidated_Materials" : "Bulking_Serial_List"}_${Date.now()}.xlsx`
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -382,37 +548,6 @@ export default function ExcelUploader() {
           }
         }
 
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        @keyframes pulse-glow {
-          0%, 100% {
-            box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.7);
-          }
-          50% {
-            box-shadow: 0 0 0 8px rgba(var(--primary-rgb), 0);
-          }
-        }
-
         .animate-row {
           animation: fadeInUp 0.5s ease-out forwards;
         }
@@ -424,17 +559,9 @@ export default function ExcelUploader() {
         .animate-section {
           animation: fadeInUp 0.6s ease-out forwards;
         }
-
-        .animate-scale {
-          animation: scaleIn 0.4s ease-out forwards;
-        }
-
-        .animate-pulse-glow {
-          animation: pulse-glow 2s infinite;
-        }
       `}</style>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 space-y-6">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-12 space-y-6">
         <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-8 shadow-lg animate-section">
           <label
             htmlFor="file-upload"
@@ -513,8 +640,12 @@ export default function ExcelUploader() {
                     style={{ animationDelay: `${idx * 0.1}s` }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${selectedFileId === file.id ? "bg-primary/20" : "bg-background/50"}`}>
-                        <FileSpreadsheet className={`w-5 h-5 ${selectedFileId === file.id ? "text-primary" : "text-primary"}`} />
+                      <div
+                        className={`p-2 rounded-lg ${selectedFileId === file.id ? "bg-primary/20" : "bg-background/50"}`}
+                      >
+                        <FileSpreadsheet
+                          className={`w-5 h-5 ${selectedFileId === file.id ? "text-primary" : "text-primary"}`}
+                        />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">{file.name}</p>
@@ -537,12 +668,42 @@ export default function ExcelUploader() {
           </div>
         )}
 
-        {groupedData.length > 0 && (
-          <div ref={tableRef} className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-6 shadow-lg animate-section">
+        {(groupedData.length > 0 || serialListData.length > 0) && (
+          <div
+            ref={tableRef}
+            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-6 shadow-lg animate-section"
+          >
+            <div className="flex items-center gap-4 mb-6 border-b border-border/50 pb-2">
+              <button
+                onClick={() => setActiveTab("consolidated")}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  activeTab === "consolidated"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                }`}
+              >
+                Consolidated Materials
+              </button>
+              <button
+                onClick={() => setActiveTab("serialList")}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  activeTab === "serialList"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                }`}
+              >
+                Bulking Serial List
+              </button>
+            </div>
+
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Consolidated Materials</h2>
-                <p className="text-sm text-muted-foreground mt-1">{groupedData.length} items ready for export</p>
+                <h2 className="text-lg font-semibold text-foreground">
+                  {activeTab === "consolidated" ? "Consolidated Materials" : "Bulking Serial List"}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {activeTab === "consolidated" ? groupedData.length : serialListData.length} items ready for export
+                </p>
               </div>
               <button
                 onClick={handleDownload}
@@ -555,60 +716,185 @@ export default function ExcelUploader() {
 
             <div className="border border-border/50 rounded-xl overflow-hidden bg-background/50">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-accent/40 border-b border-border/50">
-                      <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30">#</th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30">
-                        MATERIAL CODE
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30">
-                        MATERIAL DESCRIPTION
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30">
-                        CATEGORY
-                      </th>
-                      <th className="px-4 py-3 text-center font-semibold text-foreground border-r border-border/30">
-                        QTY.
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30">UM</th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30">
-                        SHIPNAME
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground">REMARKS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {groupedData.map((row, idx) => (
-                      <tr
-                        key={idx}
-                        className="border-b border-border/30 hover:bg-accent/20 transition-colors duration-200 animate-row"
-                        style={{
-                          opacity: animatingRows.has(idx) ? 1 : 0,
-                          transform: animatingRows.has(idx) ? "translateY(0)" : "translateY(20px)",
-                          transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
-                        }}
-                      >
-                        <td className="px-4 py-3 border-r border-border/30 font-medium text-muted-foreground">
-                          {idx + 1}
-                        </td>
-                        <td className="px-4 py-3 border-r border-border/30 text-foreground font-medium">
-                          {row.materialCode}
-                        </td>
-                        <td className="px-4 py-3 border-r border-border/30 text-foreground">
-                          {row.materialDescription}
-                        </td>
-                        <td className="px-4 py-3 border-r border-border/30 text-foreground">{row.category}</td>
-                        <td className="px-4 py-3 border-r border-border/30 text-center text-foreground font-semibold">
-                          {row.qty}
-                        </td>
-                        <td className="px-4 py-3 border-r border-border/30 text-muted-foreground"></td>
-                        <td className="px-4 py-3 border-r border-border/30 text-foreground">{row.shipName}</td>
-                        <td className="px-4 py-3 text-foreground text-xs bg-accent/30 rounded px-2 py-1 inline-block">{row.remarks}</td>
+                {activeTab === "consolidated" ? (
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-accent/40 border-b border-border/50">
+                        <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30 text-sm">
+                          MATERIAL CODE
+                        </th>
+                        <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30 text-sm">
+                          MATERIAL DESCRIPTION
+                        </th>
+                        <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30 text-sm">
+                          CATEGORY
+                        </th>
+                        <th className="px-4 py-3 text-center font-semibold text-foreground border-r border-border/30 text-sm">
+                          QTY.
+                        </th>
+                        <th className="px-4 py-3 text-center font-semibold text-foreground border-r border-border/30 text-sm">
+                          UM
+                        </th>
+                        <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30 text-sm">
+                          SHIPNAME
+                        </th>
+                        <th className="px-4 py-3 text-left font-semibold text-foreground text-sm">REMARKS</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {groupedData.map((row, index) => (
+                        <tr
+                          key={index}
+                          className={`border-b border-border/30 hover:bg-accent/20 transition-colors duration-150 ${
+                            animatingRows.has(index) ? "animate-row" : "opacity-0"
+                          }`}
+                        >
+                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20 font-medium">
+                            {row.materialCode}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20">
+                            {row.materialDescription}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20">
+                            {row.category}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20 text-center font-bold">
+                            {row.qty}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground border-r border-border/20 text-center">
+                            -
+                          </td>
+                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20">
+                            {row.shipName || "-"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">{row.remarks}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-blue-600 border-b border-border/50">
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          DN No
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Order Item
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Factory Code
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Location
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          binCode
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Material Code
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Material Desc
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Barcode
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Material Type
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Product Status
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Ship To
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Ship To Name
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Ship To Address
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Ship To Region
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Sold To
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Sold To Name
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
+                          Scan By
+                        </th>
+                        <th className="px-3 py-3 text-left font-semibold text-white text-xs whitespace-nowrap">
+                          Scan Time
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {serialListData.map((row, index) => (
+                        <tr
+                          key={index}
+                          className={`border-b border-border/30 hover:bg-accent/20 transition-colors duration-150 ${
+                            animatingRows.has(index) ? "animate-row" : "opacity-0"
+                          }`}
+                        >
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">{row.dnNo}</td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.orderItem}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.factoryCode}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.location}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.binCode}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20 font-medium">
+                            {row.materialCode}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.materialDesc}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.barcode}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.materialType}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.productStatus}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.shipTo}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.shipToName}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.shipToAddress}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.shipToRegion}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.soldTo}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.soldToName}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
+                            {row.scanBy}
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-foreground">{row.scanTime}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           </div>
