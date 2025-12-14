@@ -380,7 +380,7 @@ export default function ExcelUploader() {
         // Initialize cell style
         if (!ws[cellAddress].s) ws[cellAddress].s = {}
         
-        // Add borders to all cells
+        // Add borders to all cells from row 0 onwards
         ws[cellAddress].s.border = {
           top: { style: 'thin', color: { rgb: '000000' } },
           bottom: { style: 'thin', color: { rgb: '000000' } },
@@ -388,19 +388,73 @@ export default function ExcelUploader() {
           right: { style: 'thin', color: { rgb: '000000' } }
         }
         
-        // Bold formatting for specific rows/cells
-        if (R === 0 || R === 1 || R === 8 || R >= 29) {
+        // Bold formatting for specific sections
+        // Row 0: SF EXPRESS and DELIVERY NOTE header
+        if (R === 0) {
+          ws[cellAddress].s.font = { bold: true, sz: 14 }
+          ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
+        }
+        
+        // Row 1: Address
+        if (R === 1) {
+          ws[cellAddress].s.font = { bold: true, sz: 10 }
+        }
+        
+        // Rows 3-6: Form labels (Company Name, Destination, etc.)
+        if (R >= 3 && R <= 6 && (C === 0 || C === 4)) {
           ws[cellAddress].s.font = { bold: true }
         }
         
-        // Center align header row (row 8)
+        // Row 8: Table headers
         if (R === 8) {
+          ws[cellAddress].s.font = { bold: true, sz: 11 }
+          ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
+          ws[cellAddress].s.fill = { fgColor: { rgb: 'D3D3D3' } }
+        }
+        
+        // Data rows: Bold first column (row numbers)
+        if (R >= 9 && R < 29 && C === 0) {
+          ws[cellAddress].s.font = { bold: true }
           ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
         }
         
         // Center align QTY column
         if (C === 4 && R >= 9 && R < 29) {
           ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
+          ws[cellAddress].s.font = { bold: true }
+        }
+        
+        // Signature section (rows 29+): Bold all text
+        if (R >= 29) {
+          ws[cellAddress].s.font = { bold: true, sz: 10 }
+        }
+        
+        // Specific bold for signature titles
+        if (R === 29 && (C === 0 || C === 3 || C === 6)) {
+          ws[cellAddress].s.font = { bold: true }
+        }
+        
+        if (R === 31 && C === 3) {
+          ws[cellAddress].s.font = { bold: true }
+          ws[cellAddress].s.alignment = { horizontal: 'center' }
+        }
+        
+        if (R === 32 && C === 3) {
+          ws[cellAddress].s.font = { bold: true, italic: true }
+          ws[cellAddress].s.alignment = { horizontal: 'center' }
+        }
+        
+        if (R === 33 && (C === 0 || C === 3 || C === 6)) {
+          ws[cellAddress].s.font = { bold: true }
+        }
+        
+        if (R === 35 && (C === 0 || C === 3)) {
+          ws[cellAddress].s.font = { bold: true, italic: true }
+          ws[cellAddress].s.alignment = { horizontal: 'center' }
+        }
+        
+        if (R === 37) {
+          ws[cellAddress].s.font = { bold: true, sz: 9 }
         }
       }
     }
