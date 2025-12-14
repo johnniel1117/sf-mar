@@ -28,6 +28,7 @@ export default function ExcelUploader() {
   const tableRef = useRef<HTMLDivElement>(null)
   const [animatingRows, setAnimatingRows] = useState<Set<number>>(new Set())
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
+  const [showFilesList, setShowFilesList] = useState(false)
 
   const getCategoryFromBinCode = (binCode: string): string => {
     const code = String(binCode || "").toUpperCase()
@@ -48,12 +49,12 @@ export default function ExcelUploader() {
 
         if (groupedMap.has(key)) {
           const existing = groupedMap.get(key)!
-          existing.qty += 1
+          existing.qty += item.qty
           if (item.shipName && !existing.shipName.includes(item.shipName)) {
             existing.shipName = existing.shipName ? `${existing.shipName}, ${item.shipName}` : item.shipName
           }
         } else {
-          groupedMap.set(key, { ...item, qty: 1 })
+          groupedMap.set(key, { ...item, qty: item.qty })
         }
       })
     })
@@ -182,6 +183,7 @@ export default function ExcelUploader() {
     setUploadedFiles([])
     setAnimatingRows(new Set())
     setSelectedFileId(null)
+    setShowFilesList(false)
   }
 
   const groupSingleFileData = (fileData: MaterialData[]): MaterialData[] => {
@@ -197,7 +199,7 @@ export default function ExcelUploader() {
           existing.shipName = existing.shipName ? `${existing.shipName}, ${item.shipName}` : item.shipName
         }
       } else {
-        groupedMap.set(key, { ...item })
+        groupedMap.set(key, { ...item, qty: item.qty })
       }
     })
 
@@ -506,47 +508,57 @@ export default function ExcelUploader() {
                   Uploaded Files <span className="text-muted-foreground font-normal">({uploadedFiles.length})</span>
                 </h2>
               </div>
-              <button
-                onClick={handleClear}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors duration-200"
-              >
-                <X className="w-4 h-4" />
-                Clear All
-              </button>
-            </div>
-            <div className="space-y-2">
-              {uploadedFiles.map((file, idx) => (
-                <div
-                  key={file.id}
-                  onClick={() => handleSelectFile(file.id)}
-                  className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 animate-file cursor-pointer ${
-                    selectedFileId === file.id
-                      ? "bg-primary/20 border-primary/50 ring-2 ring-primary/30"
-                      : "bg-accent/20 hover:bg-accent/30 border-border/30"
-                  }`}
-                  style={{ animationDelay: `${idx * 0.1}s` }}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowFilesList(!showFilesList)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-all duration-200 shadow-sm font-medium text-sm"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${selectedFileId === file.id ? "bg-primary/20" : "bg-background/50"}`}>
-                      <FileSpreadsheet className={`w-5 h-5 ${selectedFileId === file.id ? "text-primary" : "text-primary"}`} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{file.name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">DN No: {file.dnNo}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteFile(file.id)
-                    }}
-                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors duration-200"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                  {showFilesList ? "Hide Files" : "Show Files"}
+                </button>
+                <button
+                  onClick={handleClear}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors duration-200"
+                >
+                  <X className="w-4 h-4" />
+                  Clear All
+                </button>
+              </div>
             </div>
+            {showFilesList && (
+              <div className="space-y-2 animate-section">
+                {uploadedFiles.map((file, idx) => (
+                  <div
+                    key={file.id}
+                    onClick={() => handleSelectFile(file.id)}
+                    className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 animate-file cursor-pointer ${
+                      selectedFileId === file.id
+                        ? "bg-primary/20 border-primary/50 ring-2 ring-primary/30"
+                        : "bg-accent/20 hover:bg-accent/30 border-border/30"
+                    }`}
+                    style={{ animationDelay: `${idx * 0.1}s` }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${selectedFileId === file.id ? "bg-primary/20" : "bg-background/50"}`}>
+                        <FileSpreadsheet className={`w-5 h-5 ${selectedFileId === file.id ? "text-primary" : "text-primary"}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{file.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">DN No: {file.dnNo}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteFile(file.id)
+                      }}
+                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors duration-200"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
