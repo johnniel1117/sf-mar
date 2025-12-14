@@ -278,30 +278,16 @@ export default function ExcelUploader() {
     }, allGrouped.length * 30 + 300)
   }
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     const wb = XLSX.utils.book_new()
     const wsData: any[][] = []
 
-    // Header row
-    wsData.push(["SF EXPRESS", "", "", "", "DELIVERY NOTE", "", "", `D${Date.now().toString().slice(-8)}`])
-    wsData.push(["Cebu East Corporation Upper Tingub, Mandaue City, Cebu"])
-    wsData.push([])
-    
-    // Company info section
-    wsData.push(["Company Name:", "", "", "", "Dispatch Date:", "", new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })])
-    wsData.push(["Destination/Location:", "", "", "", "Carrier/Trucker:"])
-    wsData.push(["Contact No.:", "", "", "", "CV No./Plate No."])
-    wsData.push(["Delivery Address:", "", "", "", "Seal No.:"])
-    wsData.push([])
+    // Table headers only
+    wsData.push(["MATERIAL CODE", "MATERIAL DESCRIPTION", "CATEGORY", "QTY.", "UM", "SHIPNAME", "REMARKS"])
 
-    // Table headers
-    wsData.push(["", "MATERIAL CODE", "MATERIAL DESCRIPTION", "CATEGORY", "QTY.", "UM", "SHIPNAME", "REMARKS"])
-
-    // Data rows - start from row 8 (index 8)
-    const dataStartRow = wsData.length
-    groupedData.forEach((row, idx) => {
+    // Data rows
+    groupedData.forEach((row) => {
       wsData.push([
-        idx + 1,
         row.materialCode,
         row.materialDescription,
         row.category,
@@ -312,61 +298,17 @@ export default function ExcelUploader() {
       ])
     })
 
-    // Fill empty rows up to row 29 (total 29 rows with data)
-    const currentRows = wsData.length
-    const targetDataRows = 29
-    for (let i = currentRows; i < targetDataRows; i++) {
-      wsData.push(["", "", "", "", "", "", "", ""])
-    }
-
-    // Signature section
-    wsData.push(["Prepared and Checked by(Signature Over Printed Name):", "", "", "Approved by(Signature Over Printed Name):", "", "", "Start", ":"])
-    wsData.push(["", "", "", "", "", "", "", ""])
-    wsData.push(["", "", "", "Kenneth Irvin Bellcario", "", "", "End", ":"])
-    wsData.push(["", "", "", "Warehouse Supervisor", "", "", "", ""])
-    wsData.push(["Received by(Signature Over Printed Name):", "", "", "Witnessed by(Signature Over Printed Name):", "", "", "Departure", ":"])
-    wsData.push(["", "", "", "", "", "", "", ""])
-    wsData.push(["Customer/Trucker Representative", "", "", "Security Guard"])
-    wsData.push([])
-    wsData.push(["Distribution of Copy: Original - Warehouse | Duplicate - Trucker | Triplicate - Security Office", "", "", "", "", "", "SF_CEBUDITDC", "", "Issue Date: 2025.12.03"])
-    wsData.push(["Revision: D"])
-
     const ws = XLSX.utils.aoa_to_sheet(wsData)
     
     // Column widths
     ws["!cols"] = [
-      { wch: 4 },   // #
-      { wch: 15 },  // Material Code
-      { wch: 30 },  // Material Description
-      { wch: 20 },  // Category
-      { wch: 6 },   // QTY
-      { wch: 4 },   // UM
-      { wch: 25 },  // SHIPNAME
-      { wch: 15 }   // REMARKS
-    ]
-
-    // Merged cells
-    ws["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // SF EXPRESS
-      { s: { r: 0, c: 4 }, e: { r: 0, c: 6 } }, // DELIVERY NOTE
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }, // Address
-      { s: { r: 3, c: 1 }, e: { r: 3, c: 3 } }, // Company Name input
-      { s: { r: 3, c: 5 }, e: { r: 3, c: 6 } }, // Dispatch Date
-      { s: { r: 4, c: 1 }, e: { r: 4, c: 3 } }, // Destination input
-      { s: { r: 4, c: 5 }, e: { r: 4, c: 7 } }, // Carrier input
-      { s: { r: 5, c: 1 }, e: { r: 5, c: 3 } }, // Contact input
-      { s: { r: 5, c: 5 }, e: { r: 5, c: 7 } }, // CV No input
-      { s: { r: 6, c: 1 }, e: { r: 6, c: 3 } }, // Delivery Address input
-      { s: { r: 6, c: 5 }, e: { r: 6, c: 7 } }, // Seal No input
-      { s: { r: 29, c: 0 }, e: { r: 29, c: 2 } }, // Prepared and Checked
-      { s: { r: 29, c: 3 }, e: { r: 29, c: 5 } }, // Approved by
-      { s: { r: 31, c: 3 }, e: { r: 31, c: 5 } }, // Kenneth name
-      { s: { r: 32, c: 3 }, e: { r: 32, c: 5 } }, // Warehouse Supervisor
-      { s: { r: 33, c: 0 }, e: { r: 33, c: 2 } }, // Received by
-      { s: { r: 33, c: 3 }, e: { r: 33, c: 5 } }, // Witnessed by
-      { s: { r: 35, c: 0 }, e: { r: 35, c: 2 } }, // Customer Representative
-      { s: { r: 35, c: 3 }, e: { r: 35, c: 7 } }, // Security Guard
-      { s: { r: 37, c: 0 }, e: { r: 37, c: 5 } }, // Distribution
+      { wch: 18 },  // Material Code
+      { wch: 35 },  // Material Description
+      { wch: 22 },  // Category
+      { wch: 8 },   // QTY
+      { wch: 6 },   // UM
+      { wch: 28 },  // SHIPNAME
+      { wch: 18 }   // REMARKS
     ]
 
     // Apply styles to cells
@@ -380,7 +322,7 @@ export default function ExcelUploader() {
         // Initialize cell style
         if (!ws[cellAddress].s) ws[cellAddress].s = {}
         
-        // Add borders to all cells from row 0 onwards
+        // Add borders to all cells
         ws[cellAddress].s.border = {
           top: { style: 'thin', color: { rgb: '000000' } },
           bottom: { style: 'thin', color: { rgb: '000000' } },
@@ -388,121 +330,31 @@ export default function ExcelUploader() {
           right: { style: 'thin', color: { rgb: '000000' } }
         }
         
-        // Bold formatting for specific sections
-        // Row 0: SF EXPRESS and DELIVERY NOTE header
+        // Bold and style header row (row 0)
         if (R === 0) {
-          ws[cellAddress].s.font = { bold: true, sz: 14 }
-          ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
-        }
-        
-        // Row 1: Address
-        if (R === 1) {
-          ws[cellAddress].s.font = { bold: true, sz: 10 }
-        }
-        
-        // Rows 3-6: Form labels (Company Name, Destination, etc.)
-        if (R >= 3 && R <= 6 && (C === 0 || C === 4)) {
-          ws[cellAddress].s.font = { bold: true }
-        }
-        
-        // Row 8: Table headers
-        if (R === 8) {
           ws[cellAddress].s.font = { bold: true, sz: 11 }
           ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
           ws[cellAddress].s.fill = { fgColor: { rgb: 'D3D3D3' } }
         }
         
-        // Data rows: Bold first column (row numbers)
-        if (R >= 9 && R < 29 && C === 0) {
-          ws[cellAddress].s.font = { bold: true }
-          ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
-        }
-        
         // Center align QTY column
-        if (C === 4 && R >= 9 && R < 29) {
+        if (C === 3 && R > 0) {
           ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
           ws[cellAddress].s.font = { bold: true }
         }
-        
-        // Signature section (rows 29+): Bold all text
-        if (R >= 29) {
-          ws[cellAddress].s.font = { bold: true, sz: 10 }
-        }
-        
-        // Specific bold for signature titles
-        if (R === 29 && (C === 0 || C === 3 || C === 6)) {
-          ws[cellAddress].s.font = { bold: true }
-        }
-        
-        if (R === 31 && C === 3) {
-          ws[cellAddress].s.font = { bold: true }
-          ws[cellAddress].s.alignment = { horizontal: 'center' }
-        }
-        
-        if (R === 32 && C === 3) {
-          ws[cellAddress].s.font = { bold: true, italic: true }
-          ws[cellAddress].s.alignment = { horizontal: 'center' }
-        }
-        
-        if (R === 33 && (C === 0 || C === 3 || C === 6)) {
-          ws[cellAddress].s.font = { bold: true }
-        }
-        
-        if (R === 35 && (C === 0 || C === 3)) {
-          ws[cellAddress].s.font = { bold: true, italic: true }
-          ws[cellAddress].s.alignment = { horizontal: 'center' }
-        }
-        
-        if (R === 37) {
-          ws[cellAddress].s.font = { bold: true, sz: 9 }
-        }
       }
     }
 
-    XLSX.utils.book_append_sheet(wb, ws, "Delivery Note")
+    XLSX.utils.book_append_sheet(wb, ws, "Materials")
 
-    // Add logo image to the workbook
-    try {
-      // Fetch the logo image
-      const logoUrl = 'https://imgs.search.brave.com/5U1-YxAoWwEyipwO5Fp2kTlqBd5iNc4PnD0lwkfZDQo/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4u/d29ybGR2ZWN0b3Js/b2dvLmNvbS9sb2dv/cy9zZi1leHByZXNz/LnN2Zw'
-      const response = await fetch(logoUrl)
-      const blob = await response.blob()
-      const reader = new FileReader()
-      
-      reader.onloadend = () => {
-        const base64data = reader.result as string
-        
-        if (!wb.Workbook) wb.Workbook = {}
-        if (!wb.Workbook.Sheets) wb.Workbook.Sheets = []
-        
-        // Add image to workbook (this is a simplified approach - actual implementation may vary)
-        // Note: SheetJS community edition has limited image support
-        // The image would need to be added using the pro version or alternative methods
-        
-        // Continue with download
-        const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
-        const downloadBlob = new Blob([wbout], { type: "application/octet-stream" })
-        const url = URL.createObjectURL(downloadBlob)
-        const link = document.createElement("a")
-        link.href = url
-        link.download = `Delivery_Note_${Date.now()}.xlsx`
-        link.click()
-        URL.revokeObjectURL(url)
-      }
-      
-      reader.readAsDataURL(blob)
-    } catch (error) {
-      console.error('Error loading logo:', error)
-      // Fallback: download without image
-      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
-      const blob = new Blob([wbout], { type: "application/octet-stream" })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = `Delivery_Note_${Date.now()}.xlsx`
-      link.click()
-      URL.revokeObjectURL(url)
-    }
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
+    const blob = new Blob([wbout], { type: "application/octet-stream" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `Materials_Export_${Date.now()}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
