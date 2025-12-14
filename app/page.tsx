@@ -46,14 +46,11 @@ export default function ExcelUploader() {
 
     files.forEach((file) => {
       file.data.forEach((item) => {
-        const key = `${item.materialCode}|${item.materialDescription}`
+        const key = `${item.materialCode}|${item.materialDescription}|${item.remarks}`
 
         if (groupedMap.has(key)) {
           const existing = groupedMap.get(key)!
           existing.qty += 1
-          if (item.remarks && !existing.remarks.includes(item.remarks)) {
-            existing.remarks = existing.remarks ? `${existing.remarks}, ${item.remarks}` : item.remarks
-          }
           if (item.shipName && !existing.shipName.includes(item.shipName)) {
             existing.shipName = existing.shipName ? `${existing.shipName}, ${item.shipName}` : item.shipName
           }
