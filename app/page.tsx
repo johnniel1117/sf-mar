@@ -282,24 +282,23 @@ export default function ExcelUploader() {
     const wb = XLSX.utils.book_new()
     const wsData: any[][] = []
 
-    wsData.push(["(GF) BUSINESS", "", "", "", "", "DELIVERY NOTE", "", `D${Date.now().toString().slice(-8)}`])
+    // Header row
+    wsData.push(["SF EXPRESS", "", "", "", "DELIVERY NOTE", "", "", `D${Date.now().toString().slice(-8)}`])
+    wsData.push(["Cebu East Corporation Upper Tingub, Mandaue City, Cebu"])
     wsData.push([])
-    wsData.push([
-      "Company Name:",
-      "",
-      "",
-      "",
-      "",
-      "Dispatch Date:",
-      new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-    ])
-    wsData.push(["Company Branch:", "", "", "", "", "Deliver/Receive:"])
-    wsData.push(["Contact No.:", "", "", "", "", "DV No./Plate No.:"])
-    wsData.push(["Deliver Address:", "", "", "", "", "DR No.:"])
+    
+    // Company info section
+    wsData.push(["Company Name:", "", "", "", "Dispatch Date:", "", new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })])
+    wsData.push(["Destination/Location:", "", "", "", "Carrier/Trucker:"])
+    wsData.push(["Contact No.:", "", "", "", "CV No./Plate No."])
+    wsData.push(["Delivery Address:", "", "", "", "Seal No.:"])
     wsData.push([])
 
+    // Table headers
     wsData.push(["", "MATERIAL CODE", "MATERIAL DESCRIPTION", "CATEGORY", "QTY.", "UM", "SHIPNAME", "REMARKS"])
 
+    // Data rows - start from row 8 (index 8)
+    const dataStartRow = wsData.length
     groupedData.forEach((row, idx) => {
       wsData.push([
         idx + 1,
@@ -313,66 +312,102 @@ export default function ExcelUploader() {
       ])
     })
 
+    // Fill empty rows up to row 29 (total 29 rows with data)
     const currentRows = wsData.length
-    const totalRows = 25
-    for (let i = currentRows; i < totalRows; i++) {
+    const targetDataRows = 29
+    for (let i = currentRows; i < targetDataRows; i++) {
       wsData.push(["", "", "", "", "", "", "", ""])
     }
 
+    // Signature section
+    wsData.push(["Prepared and Checked by(Signature Over Printed Name):", "", "", "Approved by(Signature Over Printed Name):", "", "", "Start", ":"])
+    wsData.push(["", "", "", "", "", "", "", ""])
+    wsData.push(["", "", "", "Kenneth Irvin Bellcario", "", "", "End", ":"])
+    wsData.push(["", "", "", "Warehouse Supervisor", "", "", "", ""])
+    wsData.push(["Received by(Signature Over Printed Name):", "", "", "Witnessed by(Signature Over Printed Name):", "", "", "Departure", ":"])
+    wsData.push(["", "", "", "", "", "", "", ""])
+    wsData.push(["Customer/Trucker Representative", "", "", "Security Guard"])
     wsData.push([])
-    wsData.push([
-      "Prepared and Checked by (CapSurety/Your Printed Name):",
-      "",
-      "",
-      "Approved by (Signature/Your Printed Name):",
-      "",
-      "",
-      "Start",
-      "",
-    ])
-    wsData.push([])
-    wsData.push(["Original: Tagbilaran City", "", "", "Witnessed by (Signature/Your Printed Name):", "", "", "End", ""])
-    wsData.push(["Duplicate: Warehouse"])
-    wsData.push(["Triplicate: Vehicle File"])
-    wsData.push([])
-    wsData.push([
-      "Received by (Signature/Your Printed Name):",
-      "",
-      "",
-      "Witnessed by (Signature/Your Printed Name):",
-      "",
-      "",
-      "Dispatched:",
-      "",
-    ])
-    wsData.push([])
-    wsData.push(["Company/Project/Branch Representative", "", "", "Security Guard", "", ""])
-    wsData.push([])
-    wsData.push([
-      "Checked Status of Items/Material/Warehouse/Loading/Stocks/Transfer/Employee/Technician-Project Officer/Engineering Department/Admin",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "Scan: Date: Date: Year",
-    ])
+    wsData.push(["Distribution of Copy: Original - Warehouse | Duplicate - Trucker | Triplicate - Security Office", "", "", "", "", "", "SF_CEBUDITDC", "", "Issue Date: 2025.12.03"])
+    wsData.push(["Revision: D"])
 
     const ws = XLSX.utils.aoa_to_sheet(wsData)
-    ws["!cols"] = [{ wch: 4 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 6 }, { wch: 6 }, { wch: 25 }, { wch: 15 }]
-    ws["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
-      { s: { r: 0, c: 5 }, e: { r: 0, c: 6 } },
-      { s: { r: 2, c: 1 }, e: { r: 2, c: 4 } },
-      { s: { r: 2, c: 6 }, e: { r: 2, c: 7 } },
-      { s: { r: 3, c: 1 }, e: { r: 3, c: 4 } },
-      { s: { r: 4, c: 1 }, e: { r: 4, c: 4 } },
-      { s: { r: 5, c: 1 }, e: { r: 5, c: 4 } },
+    
+    // Column widths
+    ws["!cols"] = [
+      { wch: 4 },   // #
+      { wch: 15 },  // Material Code
+      { wch: 30 },  // Material Description
+      { wch: 20 },  // Category
+      { wch: 6 },   // QTY
+      { wch: 4 },   // UM
+      { wch: 25 },  // SHIPNAME
+      { wch: 15 }   // REMARKS
     ]
+
+    // Merged cells
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // SF EXPRESS
+      { s: { r: 0, c: 4 }, e: { r: 0, c: 6 } }, // DELIVERY NOTE
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }, // Address
+      { s: { r: 3, c: 1 }, e: { r: 3, c: 3 } }, // Company Name input
+      { s: { r: 3, c: 5 }, e: { r: 3, c: 6 } }, // Dispatch Date
+      { s: { r: 4, c: 1 }, e: { r: 4, c: 3 } }, // Destination input
+      { s: { r: 4, c: 5 }, e: { r: 4, c: 7 } }, // Carrier input
+      { s: { r: 5, c: 1 }, e: { r: 5, c: 3 } }, // Contact input
+      { s: { r: 5, c: 5 }, e: { r: 5, c: 7 } }, // CV No input
+      { s: { r: 6, c: 1 }, e: { r: 6, c: 3 } }, // Delivery Address input
+      { s: { r: 6, c: 5 }, e: { r: 6, c: 7 } }, // Seal No input
+      { s: { r: 29, c: 0 }, e: { r: 29, c: 2 } }, // Prepared and Checked
+      { s: { r: 29, c: 3 }, e: { r: 29, c: 5 } }, // Approved by
+      { s: { r: 31, c: 3 }, e: { r: 31, c: 5 } }, // Kenneth name
+      { s: { r: 32, c: 3 }, e: { r: 32, c: 5 } }, // Warehouse Supervisor
+      { s: { r: 33, c: 0 }, e: { r: 33, c: 2 } }, // Received by
+      { s: { r: 33, c: 3 }, e: { r: 33, c: 5 } }, // Witnessed by
+      { s: { r: 35, c: 0 }, e: { r: 35, c: 2 } }, // Customer Representative
+      { s: { r: 35, c: 3 }, e: { r: 35, c: 7 } }, // Security Guard
+      { s: { r: 37, c: 0 }, e: { r: 37, c: 5 } }, // Distribution
+    ]
+
+    // Apply styles to cells
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1')
+    
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+        if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: '' }
+        
+        // Initialize cell style
+        if (!ws[cellAddress].s) ws[cellAddress].s = {}
+        
+        // Add borders to all cells
+        ws[cellAddress].s.border = {
+          top: { style: 'thin', color: { rgb: '000000' } },
+          bottom: { style: 'thin', color: { rgb: '000000' } },
+          left: { style: 'thin', color: { rgb: '000000' } },
+          right: { style: 'thin', color: { rgb: '000000' } }
+        }
+        
+        // Bold formatting for specific rows/cells
+        if (R === 0 || R === 1 || R === 8 || R >= 29) {
+          ws[cellAddress].s.font = { bold: true }
+        }
+        
+        // Center align header row (row 8)
+        if (R === 8) {
+          ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
+        }
+        
+        // Center align QTY column
+        if (C === 4 && R >= 9 && R < 29) {
+          ws[cellAddress].s.alignment = { horizontal: 'center', vertical: 'center' }
+        }
+      }
+    }
 
     XLSX.utils.book_append_sheet(wb, ws, "Delivery Note")
 
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" })
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
     const blob = new Blob([wbout], { type: "application/octet-stream" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
