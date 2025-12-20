@@ -28,7 +28,6 @@ interface SerialData {
   shipTo: string
   shipToName: string
   shipToAddress: string
-  shipToRegion: string
   soldTo: string
   soldToName: string
   scanBy: string
@@ -43,7 +42,7 @@ interface UploadedFile {
   serialData: SerialData[]
 }
 
-type TabType = "consolidated" | "serialList"
+type TabType = "consolidated" | "serialList" | "individualDN"
 
 export default function ExcelUploader() {
   const [groupedData, setGroupedData] = useState<MaterialData[]>([])
@@ -93,7 +92,7 @@ export default function ExcelUploader() {
     files.forEach((file) => {
       allSerialData.push(...file.serialData)
     })
-    return allSerialData
+    return allSerialData.filter((row) => row.materialCode && row.barcode)
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,7 +140,6 @@ export default function ExcelUploader() {
         const productStatusIdx = headers.findIndex((h) => h.includes("product status") || h.includes("productstatus"))
         const shipToIdx = headers.findIndex((h) => h === "ship to" || h === "shipto")
         const shipToAddressIdx = headers.findIndex((h) => h.includes("ship to address") || h.includes("shiptoaddress"))
-        const shipToRegionIdx = headers.findIndex((h) => h.includes("ship to region") || h.includes("shiptoregion"))
         const soldToIdx = headers.findIndex((h) => h === "sold to" || h === "soldto")
         const soldToNameIdx = headers.findIndex((h) => h.includes("sold to name") || h.includes("soldtoname"))
         const scanByIdx = headers.findIndex((h) => h.includes("scan by") || h.includes("scanby"))
@@ -182,7 +180,6 @@ export default function ExcelUploader() {
             shipName,
           })
 
-          // Parse serial list data
           serialData.push({
             dnNo: dnNoIdx >= 0 ? String(row[dnNoIdx] || dnNo) : dnNo,
             orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "",
@@ -197,7 +194,6 @@ export default function ExcelUploader() {
             shipTo: shipToIdx >= 0 ? String(row[shipToIdx] || "") : "",
             shipToName: shipName,
             shipToAddress: shipToAddressIdx >= 0 ? String(row[shipToAddressIdx] || "") : "",
-            shipToRegion: shipToRegionIdx >= 0 ? String(row[shipToRegionIdx] || "") : "",
             soldTo: soldToIdx >= 0 ? String(row[soldToIdx] || "") : "",
             soldToName: soldToNameIdx >= 0 ? String(row[soldToNameIdx] || "") : "",
             scanBy: scanByIdx >= 0 ? String(row[scanByIdx] || "") : "",
@@ -404,86 +400,65 @@ export default function ExcelUploader() {
             right: { style: "thin", color: { rgb: "000000" } },
           }
 
+          ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
+
           if (R === 0) {
-            ws[cellAddress].s.font = { bold: true, sz: 11 }
-            ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
+            ws[cellAddress].s.font = { bold: true, sz: 12 }
             ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
           }
 
           if (C === 3 && R > 0) {
-            ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
             ws[cellAddress].s.font = { bold: true }
           }
         }
       }
 
       XLSX.utils.book_append_sheet(wb, ws, "Consolidated Materials")
-    } else {
+
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
+      const blob = new Blob([wbout], { type: "application/octet-stream" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `Consolidated_Materials_${Date.now()}.xlsx`
+      link.click()
+      URL.revokeObjectURL(url)
+    } else if (activeTab === "serialList") {
       const wsData: any[][] = []
       wsData.push([
         "DN No",
-        "Order Item",
-        "Factory Code",
         "Location",
         "binCode",
         "Material Code",
         "Material Desc",
         "Barcode",
-        "Material Type",
-        "Product Status",
-        "Ship To",
         "Ship To Name",
         "Ship To Address",
-        "Ship To Region",
-        "Sold To",
-        "Sold To Name",
-        "Scan By",
-        "Scan Time",
       ])
 
       serialListData.forEach((row) => {
         wsData.push([
           row.dnNo,
-          row.orderItem,
-          row.factoryCode,
           row.location,
           row.binCode,
           row.materialCode,
           row.materialDesc,
           row.barcode,
-          row.materialType,
-          row.productStatus,
-          row.shipTo,
           row.shipToName,
           row.shipToAddress,
-          row.shipToRegion,
-          row.soldTo,
-          row.soldToName,
-          row.scanBy,
-          row.scanTime,
         ])
       })
 
       const ws = XLSX.utils.aoa_to_sheet(wsData)
       ws["!cols"] = [
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 15 },
-        { wch: 12 },
-        { wch: 15 },
-        { wch: 30 },
         { wch: 18 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 12 },
-        { wch: 25 },
-        { wch: 30 },
-        { wch: 15 },
-        { wch: 12 },
-        { wch: 25 },
-        { wch: 15 },
+        { wch: 20 },
         { wch: 18 },
+        { wch: 20 },
+        { wch: 40 },
+        { wch: 30 },
+        { wch: 35 },
+        { wch: 45 },
       ]
 
       const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
@@ -502,23 +477,189 @@ export default function ExcelUploader() {
             right: { style: "thin", color: { rgb: "000000" } },
           }
 
+          ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
+
           if (R === 0) {
-            ws[cellAddress].s.font = { bold: true, sz: 11 }
-            ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
-            ws[cellAddress].s.fill = { fgColor: { rgb: "4472C4" } }
+            ws[cellAddress].s.font = { bold: true, sz: 12 }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
           }
         }
       }
 
       XLSX.utils.book_append_sheet(wb, ws, "Bulking Serial List")
+
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
+      const blob = new Blob([wbout], { type: "application/octet-stream" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `Bulking_Serial_List_${Date.now()}.xlsx`
+      link.click()
+      URL.revokeObjectURL(url)
     }
+  }
+
+  const handleDownloadIndividualDN = (file: UploadedFile) => {
+    const wb = XLSX.utils.book_new()
+    const wsData: any[][] = []
+    wsData.push([
+      "DN No",
+      "Location",
+      "binCode",
+      "Material Code",
+      "Material Desc",
+      "Barcode",
+      "Ship To Name",
+      "Ship To Address",
+    ])
+
+    file.serialData.forEach((row) => {
+      wsData.push([
+        row.dnNo,
+        row.location,
+        row.binCode,
+        row.materialCode,
+        row.materialDesc,
+        row.barcode,
+        row.shipToName,
+        row.shipToAddress,
+      ])
+    })
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData)
+    ws["!cols"] = [
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 40 },
+      { wch: 30 },
+      { wch: 35 },
+      { wch: 45 },
+    ]
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
+
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+        if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
+
+        if (!ws[cellAddress].s) ws[cellAddress].s = {}
+
+        ws[cellAddress].s.border = {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
+        }
+
+        ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
+
+        if (R === 0) {
+          ws[cellAddress].s.font = { bold: true, sz: 12 }
+          ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
+        }
+      }
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, file.dnNo)
 
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
     const blob = new Blob([wbout], { type: "application/octet-stream" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
-    link.download = `${activeTab === "consolidated" ? "Consolidated_Materials" : "Bulking_Serial_List"}_${Date.now()}.xlsx`
+    link.download = `${file.dnNo}_${Date.now()}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleDownloadAllDN = () => {
+    const wb = XLSX.utils.book_new()
+    const sheetNames = new Map<string, number>()
+
+    uploadedFiles.forEach((file) => {
+      const wsData: any[][] = []
+      wsData.push([
+        "DN No",
+        "Location",
+        "binCode",
+        "Material Code",
+        "Material Desc",
+        "Barcode",
+        "Ship To Name",
+        "Ship To Address",
+      ])
+
+      file.serialData.forEach((row) => {
+        wsData.push([
+          row.dnNo,
+          row.location,
+          row.binCode,
+          row.materialCode,
+          row.materialDesc,
+          row.barcode,
+          row.shipToName,
+          row.shipToAddress,
+        ])
+      })
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData)
+      ws["!cols"] = [
+        { wch: 18 },
+        { wch: 20 },
+        { wch: 18 },
+        { wch: 20 },
+        { wch: 40 },
+        { wch: 30 },
+        { wch: 35 },
+        { wch: 45 },
+      ]
+
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
+
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+          if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
+
+          if (!ws[cellAddress].s) ws[cellAddress].s = {}
+
+          ws[cellAddress].s.border = {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          }
+
+          ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
+
+          if (R === 0) {
+            ws[cellAddress].s.font = { bold: true, sz: 12 }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
+          }
+        }
+      }
+
+      let sheetName = file.dnNo
+      if (sheetNames.has(file.dnNo)) {
+        const count = sheetNames.get(file.dnNo)! + 1
+        sheetNames.set(file.dnNo, count)
+        sheetName = `${file.dnNo} (${count})`
+      } else {
+        sheetNames.set(file.dnNo, 1)
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, sheetName)
+    })
+
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
+    const blob = new Blob([wbout], { type: "application/octet-stream" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `All_DN_${Date.now()}.xlsx`
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -572,94 +713,83 @@ export default function ExcelUploader() {
                 <Upload className="w-8 h-8 text-primary" />
               </div>
               <div className="text-center">
-                <p className="text-base font-semibold text-foreground mb-1">Drop Excel files here</p>
-                <p className="text-sm text-muted-foreground">or click to browse</p>
-              </div>
-              <div className="px-4 py-1.5 rounded-full bg-accent/50 border border-border/50">
-                <p className="text-xs text-muted-foreground font-medium">.xlsx, .xls supported</p>
+                <p className="text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+                  Click to upload Excel file(s)
+                </p>
+                <p className="text-sm text-muted-foreground">or drag and drop</p>
               </div>
             </div>
+            <input
+              id="file-upload"
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+            />
           </label>
-          <input
-            id="file-upload"
-            type="file"
-            className="hidden"
-            accept=".xlsx,.xls"
-            onChange={handleFileUpload}
-            multiple
-          />
 
           {isLoading && (
-            <div className="mt-6 flex items-center justify-center">
-              <div className="flex items-center gap-3 px-4 py-2 bg-primary/10 rounded-full animate-section">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                <p className="text-sm font-medium text-primary">Processing files...</p>
-              </div>
+            <div className="mt-6 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent" />
+              <p className="mt-4 text-muted-foreground font-medium">Processing your files...</p>
             </div>
           )}
         </div>
 
         {uploadedFiles.length > 0 && (
-          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-6 shadow-lg animate-section">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <FileSpreadsheet className="w-5 h-5 text-primary" />
-                </div>
-                <h2 className="text-lg font-semibold text-foreground">
-                  Uploaded Files <span className="text-muted-foreground font-normal">({uploadedFiles.length})</span>
-                </h2>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowFilesList(!showFilesList)}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-all duration-200 shadow-sm font-medium text-sm"
+          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-8 shadow-lg animate-section">
+            <div className="flex items-center justify-between mb-6">
+              <button
+                onClick={() => setShowFilesList(!showFilesList)}
+                className="flex items-center gap-3 text-xl font-bold text-foreground hover:text-primary transition-colors duration-300"
+              >
+                <FileSpreadsheet className="w-6 h-6" />
+                Uploaded Files ({uploadedFiles.length})
+                <span
+                  className={`transform transition-transform duration-300 ${showFilesList ? "rotate-90" : ""}`}
+                  style={{ display: "inline-block" }}
                 >
-                  {showFilesList ? "Hide Files" : "Show Files"}
-                </button>
-                <button
-                  onClick={handleClear}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors duration-200"
-                >
-                  <X className="w-4 h-4" />
-                  Clear All
-                </button>
-              </div>
+                  ▶
+                </span>
+              </button>
+              <button
+                onClick={handleClear}
+                className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-all duration-300 font-medium"
+              >
+                <X className="w-4 h-4" />
+                Clear All
+              </button>
             </div>
+
             {showFilesList && (
-              <div className="space-y-2 animate-section">
+              <div className="space-y-3 max-h-80 overflow-y-auto">
                 {uploadedFiles.map((file, idx) => (
                   <div
                     key={file.id}
-                    onClick={() => handleSelectFile(file.id)}
-                    className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 animate-file cursor-pointer ${
-                      selectedFileId === file.id
-                        ? "bg-primary/20 border-primary/50 ring-2 ring-primary/30"
-                        : "bg-accent/20 hover:bg-accent/30 border-border/30"
+                    className={`flex items-center justify-between p-4 bg-accent/30 rounded-lg border transition-all duration-300 animate-file ${
+                      selectedFileId === file.id ? "border-primary shadow-md bg-primary/10" : "border-border/50"
                     }`}
                     style={{ animationDelay: `${idx * 0.1}s` }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`p-2 rounded-lg ${selectedFileId === file.id ? "bg-primary/20" : "bg-background/50"}`}
-                      >
-                        <FileSpreadsheet
-                          className={`w-5 h-5 ${selectedFileId === file.id ? "text-primary" : "text-primary"}`}
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{file.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">DN No: {file.dnNo}</p>
-                      </div>
-                    </div>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteFile(file.id)
-                      }}
-                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors duration-200"
+                      onClick={() => handleSelectFile(file.id)}
+                      className="flex items-center gap-3 flex-1 hover:text-primary transition-colors duration-300"
                     >
-                      <X className="w-4 h-4" />
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <FileSpreadsheet className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-foreground text-base">{file.name}</p>
+                        <p className="text-sm text-muted-foreground">DN: {file.dnNo}</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteFile(file.id)}
+                      className="p-2 hover:bg-destructive/20 text-destructive rounded-lg transition-all duration-300"
+                      title="Delete file"
+                    >
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
                 ))}
@@ -671,231 +801,264 @@ export default function ExcelUploader() {
         {(groupedData.length > 0 || serialListData.length > 0) && (
           <div
             ref={tableRef}
-            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-6 shadow-lg animate-section"
+            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl shadow-lg animate-section"
           >
-            <div className="flex items-center gap-4 mb-6 border-b border-border/50 pb-2">
-              <button
-                onClick={() => setActiveTab("consolidated")}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                  activeTab === "consolidated"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
-                }`}
-              >
-                Consolidated Materials
-              </button>
-              <button
-                onClick={() => setActiveTab("serialList")}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                  activeTab === "serialList"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
-                }`}
-              >
-                Bulking Serial List
-              </button>
+            <div className="border-b border-border/50">
+              <div className="flex">
+                <button
+                  onClick={() => setActiveTab("consolidated")}
+                  className={`flex-1 px-6 py-4 text-base font-semibold transition-all duration-300 ${
+                    activeTab === "consolidated"
+                      ? "bg-primary/10 text-primary border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                  }`}
+                >
+                  Consolidated Materials
+                </button>
+                <button
+                  onClick={() => setActiveTab("serialList")}
+                  className={`flex-1 px-6 py-4 text-base font-semibold transition-all duration-300 ${
+                    activeTab === "serialList"
+                      ? "bg-primary/10 text-primary border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                  }`}
+                >
+                  Bulking Serial List
+                </button>
+                <button
+                  onClick={() => setActiveTab("individualDN")}
+                  className={`flex-1 px-6 py-4 text-base font-semibold transition-all duration-300 ${
+                    activeTab === "individualDN"
+                      ? "bg-primary/10 text-primary border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                  }`}
+                >
+                  Individual DN Downloads
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">
-                  {activeTab === "consolidated" ? "Consolidated Materials" : "Bulking Serial List"}
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {activeTab === "consolidated" ? groupedData.length : serialListData.length} items ready for export
-                </p>
-              </div>
-              <button
-                onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors duration-200 shadow-sm font-medium"
-              >
-                <Download className="w-4 h-4" />
-                Download
-              </button>
-            </div>
+            <div className="p-8">
+              {activeTab === "consolidated" && (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">Consolidated Materials</h2>
+                      <p className="text-base text-muted-foreground mt-1">
+                        {selectedFileId
+                          ? `Showing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
+                          : `Combined data from ${uploadedFiles.length} file(s)`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleDownload}
+                      className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                    >
+                      <Download className="w-5 h-5" />
+                      Download Excel
+                    </button>
+                  </div>
 
-            <div className="border border-border/50 rounded-xl overflow-hidden bg-background/50">
-              <div className="overflow-x-auto">
-                {activeTab === "consolidated" ? (
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-accent/40 border-b border-border/50">
-                        <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30 text-sm">
-                          MATERIAL CODE
-                        </th>
-                        <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30 text-sm">
-                          MATERIAL DESCRIPTION
-                        </th>
-                        <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30 text-sm">
-                          CATEGORY
-                        </th>
-                        <th className="px-4 py-3 text-center font-semibold text-foreground border-r border-border/30 text-sm">
-                          QTY.
-                        </th>
-                        <th className="px-4 py-3 text-center font-semibold text-foreground border-r border-border/30 text-sm">
-                          UM
-                        </th>
-                        <th className="px-4 py-3 text-left font-semibold text-foreground border-r border-border/30 text-sm">
-                          SHIPNAME
-                        </th>
-                        <th className="px-4 py-3 text-left font-semibold text-foreground text-sm">REMARKS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {groupedData.map((row, index) => (
-                        <tr
-                          key={index}
-                          className={`border-b border-border/30 hover:bg-accent/20 transition-colors duration-150 ${
-                            animatingRows.has(index) ? "animate-row" : "opacity-0"
-                          }`}
-                        >
-                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20 font-medium">
-                            {row.materialCode}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20">
-                            {row.materialDescription}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20">
-                            {row.category}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20 text-center font-bold">
-                            {row.qty}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground border-r border-border/20 text-center">
-                            -
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground border-r border-border/20">
-                            {row.shipName || "-"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">{row.remarks}</td>
+                  <div className="overflow-x-auto rounded-xl border border-border/50">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-accent/50 border-b border-border/50">
+                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">MATERIAL CODE</th>
+                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">
+                            MATERIAL DESCRIPTION
+                          </th>
+                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">CATEGORY</th>
+                          <th className="px-6 py-4 text-center text-base font-bold text-foreground">QTY.</th>
+                          <th className="px-6 py-4 text-center text-base font-bold text-foreground">UM</th>
+                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">SHIPNAME</th>
+                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">REMARKS</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-blue-600 border-b border-border/50">
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          DN No
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Order Item
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Factory Code
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Location
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          binCode
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Material Code
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Material Desc
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Barcode
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Material Type
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Product Status
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Ship To
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Ship To Name
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Ship To Address
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Ship To Region
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Sold To
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Sold To Name
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white border-r border-blue-500 text-xs whitespace-nowrap">
-                          Scan By
-                        </th>
-                        <th className="px-3 py-3 text-left font-semibold text-white text-xs whitespace-nowrap">
-                          Scan Time
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {serialListData.map((row, index) => (
-                        <tr
-                          key={index}
-                          className={`border-b border-border/30 hover:bg-accent/20 transition-colors duration-150 ${
-                            animatingRows.has(index) ? "animate-row" : "opacity-0"
-                          }`}
-                        >
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">{row.dnNo}</td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.orderItem}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.factoryCode}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.location}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.binCode}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20 font-medium">
-                            {row.materialCode}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.materialDesc}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.barcode}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.materialType}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.productStatus}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.shipTo}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.shipToName}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.shipToAddress}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.shipToRegion}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.soldTo}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.soldToName}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground border-r border-border/20">
-                            {row.scanBy}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-foreground">{row.scanTime}</td>
+                      </thead>
+                      <tbody>
+                        {groupedData
+                          .filter((row) => row.materialCode && row.materialDescription)
+                          .map((row, idx) => (
+                            <tr
+                              key={idx}
+                              className={`border-b border-border/30 hover:bg-accent/30 transition-colors duration-300 ${
+                                animatingRows.has(idx) ? "animate-row" : ""
+                              }`}
+                              style={{
+                                opacity: animatingRows.has(idx) ? 1 : 0,
+                              }}
+                            >
+                              <td className="px-6 py-4 text-base font-medium text-foreground border border-border/50">
+                                {row.materialCode}
+                              </td>
+                              <td className="px-6 py-4 text-base text-foreground border border-border/50">
+                                {row.materialDescription}
+                              </td>
+                              <td className="px-6 py-4 text-base text-foreground border border-border/50">
+                                {row.category}
+                              </td>
+                              <td className="px-6 py-4 text-base text-center font-bold text-primary border border-border/50">
+                                {row.qty}
+                              </td>
+                              <td className="px-6 py-4 text-base text-center text-muted-foreground border border-border/50">
+                                -
+                              </td>
+                              <td className="px-6 py-4 text-base text-foreground border border-border/50">
+                                {row.shipName}
+                              </td>
+                              <td className="px-6 py-4 text-base text-muted-foreground border border-border/50">
+                                {row.remarks}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {activeTab === "serialList" && (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">Bulking Serial List</h2>
+                      <p className="text-base text-muted-foreground mt-1">
+                        {selectedFileId
+                          ? `Showing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
+                          : `Combined serial data from ${uploadedFiles.length} file(s)`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleDownload}
+                      className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                    >
+                      <Download className="w-5 h-5" />
+                      Download Excel
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-xl border-2 border-border">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-accent/60">
+                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                            DN No
+                          </th>
+                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                            Location
+                          </th>
+                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                            Bin Code
+                          </th>
+                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                            Material Code
+                          </th>
+                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                            Material Desc
+                          </th>
+                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                            Barcode
+                          </th>
+                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                            Ship To Name
+                          </th>
+                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                            Ship To Address
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+                      </thead>
+                      <tbody>
+                        {serialListData
+                          .filter((row) => row.materialCode && row.barcode)
+                          .map((row, idx) => (
+                            <tr
+                              key={idx}
+                              className={`border-b-2 border-border hover:bg-accent/30 transition-colors duration-300 ${
+                                animatingRows.has(idx) ? "animate-row" : ""
+                              }`}
+                              style={{
+                                opacity: animatingRows.has(idx) ? 1 : 0,
+                              }}
+                            >
+                              <td className="px-6 py-4 text-base font-semibold text-center text-foreground border-2 border-border">
+                                {row.dnNo}
+                              </td>
+                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
+                                {row.location}
+                              </td>
+                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
+                                {row.binCode}
+                              </td>
+                              <td className="px-6 py-4 text-base font-semibold text-center text-foreground border-2 border-border">
+                                {row.materialCode}
+                              </td>
+                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
+                                {row.materialDesc}
+                              </td>
+                              <td className="px-6 py-4 text-lg font-mono font-bold text-center text-primary border-2 border-border">
+                                {row.barcode}
+                              </td>
+                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
+                                {row.shipToName}
+                              </td>
+                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
+                                {row.shipToAddress}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {activeTab === "individualDN" && (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">Individual DN Downloads</h2>
+                      <p className="text-base text-muted-foreground mt-1">
+                        Download each DN file separately without unnecessary columns
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleDownloadAllDN}
+                      className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                    >
+                      <Download className="w-5 h-5" />
+                      Download All DN
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {uploadedFiles.map((file, idx) => (
+                      <div
+                        key={file.id}
+                        className="flex items-center justify-between p-6 bg-accent/30 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-accent/50 transition-all duration-300 animate-file"
+                        style={{ animationDelay: `${idx * 0.1}s` }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 rounded-lg bg-primary/10">
+                            <FileSpreadsheet className="w-6 h-6 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground text-lg">{file.name}</p>
+                            <p className="text-base text-muted-foreground">
+                              DN: {file.dnNo} • {file.serialData.length} items
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDownloadIndividualDN(file)}
+                          className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                        >
+                          <Download className="w-5 h-5" />
+                          Download
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
