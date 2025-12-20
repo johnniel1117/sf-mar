@@ -415,8 +415,8 @@ export default function ExcelUploader() {
 
       XLSX.utils.book_append_sheet(wb, ws, "Consolidated Materials")
 
-      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
-      const blob = new Blob([wbout], { type: "application/octet-stream" })
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" })
+      const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
       const url = URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.href = url
