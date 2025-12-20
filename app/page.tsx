@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef } from "react"
-import * as XLSX from "xlsx"
+import * as XLSX from 'xlsx-js-style';
 import { Upload, X, FileSpreadsheet, Download } from "lucide-react"
 
 interface MaterialData {
