@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef } from "react"
-import * as XLSX from 'xlsx-js-style';
+import * as XLSX from "xlsx-js-style"
 import { Upload, X, FileSpreadsheet, Download, FileText } from "lucide-react"
 
 interface MaterialData {
@@ -82,10 +82,10 @@ export default function ExcelUploader() {
   }
 
   const HaierLogo = () => (
-    <img 
-      src="`https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1`" 
-      alt="Haier Logo" 
-      style={{ height: "40px", width: "auto" }}
+    <img
+      src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1"
+      alt="Haier Logo"
+      style={{ height: "80px", width: "auto" }}
     />
   )
 
@@ -422,7 +422,6 @@ export default function ExcelUploader() {
   }
 
   const handleDownloadPDF = () => {
-    // Create a printable HTML document
     const printWindow = window.open("", "", "width=1200,height=800")
     if (!printWindow) return
 
@@ -446,7 +445,7 @@ export default function ExcelUploader() {
           body {
             font-family: Arial, sans-serif;
             margin: 15px;
-            color: #000;
+            color: #000000;
             background: #fff;
           }
           
@@ -456,92 +455,88 @@ export default function ExcelUploader() {
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 12px;
-            border-bottom: 3px solid #0057A8;
+            border-bottom: 3px solid #000000;
           }
           
           .logo img {
-            height: 45px;
+            height: 80px;
             width: auto;
           }
           
           .date {
             text-align: right;
-            font-size: 11px;
-            color: #000;
+            font-size: 12px;
+            color: #000000;
+            font-family: Arial, sans-serif;
           }
           
           .date strong {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 13px;
           }
           
           h1 {
-            color: #000;
+            color: #000000;
             margin: 15px 0 20px 0;
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
             text-align: center;
-            letter-spacing: 0.5px;
+            font-family: Arial, sans-serif;
           }
           
           table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 11px;
+            font-family: Arial, sans-serif;
           }
           
           th, td {
-            border: 1.5px solid #000;
+            border: 1px solid #000000;
             padding: 10px 8px;
             text-align: center;
             word-wrap: break-word;
-            color: #000;
+            color: #000000;
           }
           
           th {
-            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
-            color: #000;
+            background-color: #E0E0E0;
+            color: #000000;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
             padding: 12px 8px;
+            font-family: Arial, sans-serif;
           }
           
           tr:nth-child(even) {
-            background-color: #F9F9F9;
-          }
-          
-          tr:hover {
-            background-color: #F0F0F0;
+            background-color: #F5F5F5;
           }
           
           .qty-cell {
             font-weight: bold;
-            color: #000;
+            color: #000000;
           }
           
           .barcode-cell {
             font-family: Arial, sans-serif;
             font-weight: bold;
-            color: #000;
-            font-size: 10px;
-            letter-spacing: 0.5px;
+            color: #000000;
+            font-size: 11px;
           }
           
           .material-code-cell {
             font-weight: bold;
-            font-size: 10px;
-            color: #000;
+            font-size: 11px;
+            color: #000000;
           }
           
           .desc-cell {
             text-align: left;
-            max-width: 200px;
-            font-size: 9px;
-            color: #000;
+            max-width: 250px;
+            font-size: 10px;
+            color: #000000;
             line-height: 1.4;
           }
           
@@ -609,14 +604,14 @@ export default function ExcelUploader() {
         <table>
           <thead>
             <tr>
-              <th>DN No</th>
-              <th>Location</th>
-              <th>Bin Code</th>
-              <th>Material Code</th>
-              <th>Material Desc</th>
-              <th>Barcode</th>
-              <th>Ship To Name</th>
-              <th>Ship To Address</th>
+              <th>DN NO</th>
+              <th>LOCATION</th>
+              <th>BIN CODE</th>
+              <th>MATERIAL CODE</th>
+              <th>MATERIAL DESC</th>
+              <th>BARCODE</th>
+              <th>SHIP TO NAME</th>
+              <th>SHIP TO ADDRESS</th>
             </tr>
           </thead>
           <tbody>
@@ -626,7 +621,7 @@ export default function ExcelUploader() {
                 (row) => `
               <tr>
                 <td>${row.dnNo}</td>
-                <td class="desc-cell">${row.location}</td>
+                <td>${row.location}</td>
                 <td>${row.binCode}</td>
                 <td class="material-code-cell">${row.materialCode}</td>
                 <td class="desc-cell">${row.materialDesc}</td>
@@ -647,17 +642,212 @@ export default function ExcelUploader() {
 
     printWindow.document.write(htmlContent)
     printWindow.document.close()
-    printWindow.onload = () => {
+    setTimeout(() => {
       printWindow.print()
-    }
+    }, 500)
   }
 
   const handleDownloadAllDNPDF = () => {
-    uploadedFiles.forEach((file, index) => {
-      setTimeout(() => {
-        handleDownloadIndividualDNPDF(file)
-      }, index * 1000) // Stagger the downloads by 1 second each
-    })
+    const printWindow = window.open("", "", "width=1200,height=800")
+    if (!printWindow) return
+
+    // Generate HTML for all DN files in one document with page breaks
+    const allDNContent = uploadedFiles
+      .map(
+        (file, index) => `
+      <div class="page-break">
+        <div class="header">
+          <div class="logo">
+            <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
+          </div>
+          <div class="date">
+            <strong>Date Printed:</strong><br/>
+            ${formatDate()}
+          </div>
+        </div>
+        <h1>DN: ${file.dnNo} - Serial List Report (Page ${index + 1} of ${uploadedFiles.length})</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>DN NO</th>
+              <th>LOCATION</th>
+              <th>BIN CODE</th>
+              <th>MATERIAL CODE</th>
+              <th>MATERIAL DESC</th>
+              <th>BARCODE</th>
+              <th>SHIP TO NAME</th>
+              <th>SHIP TO ADDRESS</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${file.serialData
+              .filter((row) => row.materialCode && row.barcode)
+              .map(
+                (row) => `
+              <tr>
+                <td>${row.dnNo}</td>
+                <td>${row.location}</td>
+                <td>${row.binCode}</td>
+                <td class="material-code-cell">${row.materialCode}</td>
+                <td class="desc-cell">${row.materialDesc}</td>
+                <td class="barcode-cell">${row.barcode}</td>
+                <td class="desc-cell">${row.shipToName}</td>
+                <td class="desc-cell">${row.shipToAddress}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    `,
+      )
+      .join("")
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>All DN Serial Lists</title>
+        <style>
+          @page {
+            size: landscape;
+            margin: 15mm;
+          }
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: Arial, sans-serif;
+            margin: 15px;
+            color: #000000;
+            background: #fff;
+          }
+          
+          .page-break {
+            page-break-after: always;
+            margin-bottom: 30px;
+          }
+          
+          .page-break:last-child {
+            page-break-after: auto;
+          }
+          
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #000000;
+          }
+          
+          .logo img {
+            height: 80px;
+            width: auto;
+          }
+          
+          .date {
+            text-align: right;
+            font-size: 12px;
+            color: #000000;
+            font-family: Arial, sans-serif;
+          }
+          
+          .date strong {
+            font-weight: bold;
+            font-size: 13px;
+          }
+          
+          h1 {
+            color: #000000;
+            margin: 15px 0 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            font-family: Arial, sans-serif;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 11px;
+            font-family: Arial, sans-serif;
+          }
+          
+          th, td {
+            border: 1px solid #000000;
+            padding: 10px 8px;
+            text-align: center;
+            word-wrap: break-word;
+            color: #000000;
+          }
+          
+          th {
+            background-color: #E0E0E0;
+            color: #000000;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+            padding: 12px 8px;
+            font-family: Arial, sans-serif;
+          }
+          
+          tr:nth-child(even) {
+            background-color: #F5F5F5;
+          }
+          
+          .barcode-cell {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: #000000;
+            font-size: 11px;
+          }
+          
+          .material-code-cell {
+            font-weight: bold;
+            font-size: 11px;
+            color: #000000;
+          }
+          
+          .desc-cell {
+            text-align: left;
+            max-width: 250px;
+            font-size: 10px;
+            color: #000000;
+            line-height: 1.4;
+          }
+          
+          @media print {
+            body { 
+              margin: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .no-print { display: none; }
+            @page {
+              size: landscape;
+              margin: 15mm;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        ${allDNContent}
+      </body>
+      </html>
+    `
+
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+    setTimeout(() => {
+      printWindow.print()
+    }, 500)
   }
 
   const handleDownloadIndividualDNPDF = (file: UploadedFile) => {
@@ -684,7 +874,7 @@ export default function ExcelUploader() {
           body {
             font-family: Arial, sans-serif;
             margin: 15px;
-            color: #000;
+            color: #000000;
             background: #fff;
           }
           
@@ -694,93 +884,84 @@ export default function ExcelUploader() {
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 12px;
-            border-bottom: 3px solid #0057A8;
+            border-bottom: 3px solid #000000;
           }
           
           .logo img {
-            height: 45px;
+            height: 80px;
             width: auto;
           }
           
           .date {
             text-align: right;
-            font-size: 11px;
-            color: #000;
+            font-size: 12px;
+            color: #000000;
+            font-family: Arial, sans-serif;
           }
           
           .date strong {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 13px;
           }
           
           h1 {
-            color: #000;
+            color: #000000;
             margin: 15px 0 20px 0;
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
             text-align: center;
-            letter-spacing: 0.5px;
+            font-family: Arial, sans-serif;
           }
           
           table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 11px;
+            font-family: Arial, sans-serif;
           }
           
           th, td {
-            border: 1.5px solid #000;
+            border: 1px solid #000000;
             padding: 10px 8px;
             text-align: center;
             word-wrap: break-word;
-            color: #000;
+            color: #000000;
           }
           
           th {
-            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
-            color: #000;
+            background-color: #E0E0E0;
+            color: #000000;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
             padding: 12px 8px;
+            font-family: Arial, sans-serif;
           }
           
           tr:nth-child(even) {
-            background-color: #F9F9F9;
-          }
-          
-          tr:hover {
-            background-color: #F0F0F0;
+            background-color: #F5F5F5;
           }
           
           .barcode-cell {
             font-family: Arial, sans-serif;
             font-weight: bold;
-            color: #000;
-            font-size: 10px;
-            letter-spacing: 0.5px;
+            color: #000000;
+            font-size: 11px;
           }
           
           .material-code-cell {
             font-weight: bold;
-            font-size: 10px;
-            color: #000;
+            font-size: 11px;
+            color: #000000;
           }
           
           .desc-cell {
             text-align: left;
-            max-width: 200px;
-            font-size: 9px;
-            color: #000;
+            max-width: 250px;
+            font-size: 10px;
+            color: #000000;
             line-height: 1.4;
-          }
-          
-          .dn-cell {
-            font-weight: bold;
-            color: #000;
           }
           
           @media print {
@@ -807,18 +988,18 @@ export default function ExcelUploader() {
             ${formatDate()}
           </div>
         </div>
-        <h1>DN ${file.dnNo} - Serial List Report</h1>
+        <h1>DN: ${file.dnNo} - Serial List Report</h1>
         <table>
           <thead>
             <tr>
-              <th>DN No</th>
-              <th>Location</th>
-              <th>Bin Code</th>
-              <th>Material Code</th>
-              <th>Material Desc</th>
-              <th>Barcode</th>
-              <th>Ship To Name</th>
-              <th>Ship To Address</th>
+              <th>DN NO</th>
+              <th>LOCATION</th>
+              <th>BIN CODE</th>
+              <th>MATERIAL CODE</th>
+              <th>MATERIAL DESC</th>
+              <th>BARCODE</th>
+              <th>SHIP TO NAME</th>
+              <th>SHIP TO ADDRESS</th>
             </tr>
           </thead>
           <tbody>
@@ -827,8 +1008,8 @@ export default function ExcelUploader() {
               .map(
                 (row) => `
               <tr>
-                <td class="dn-cell">${row.dnNo}</td>
-                <td class="desc-cell">${row.location}</td>
+                <td>${row.dnNo}</td>
+                <td>${row.location}</td>
                 <td>${row.binCode}</td>
                 <td class="material-code-cell">${row.materialCode}</td>
                 <td class="desc-cell">${row.materialDesc}</td>
@@ -847,9 +1028,9 @@ export default function ExcelUploader() {
 
     printWindow.document.write(htmlContent)
     printWindow.document.close()
-    printWindow.onload = () => {
+    setTimeout(() => {
       printWindow.print()
-    }
+    }, 500)
   }
 
   const handleDownloadExcel = () => {
@@ -857,10 +1038,9 @@ export default function ExcelUploader() {
 
     if (activeTab === "consolidated") {
       const wsData: any[][] = []
-      
-      // Add logo and date header rows
+
       wsData.push(["HAIER", "", "", "", "", "", `Date Printed: ${formatDate()}`])
-      wsData.push([]) // Empty row for spacing
+      wsData.push([])
       wsData.push(["MATERIAL CODE", "MATERIAL DESCRIPTION", "CATEGORY", "QTY.", "UM", "SHIPNAME", "REMARKS"])
 
       groupedData.forEach((row) => {
@@ -889,7 +1069,6 @@ export default function ExcelUploader() {
           ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
           ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
 
-          // Header row (row 0 - HAIER and Date)
           if (R === 0) {
             ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 14, color: { rgb: "000000" } }
             ws[cellAddress].s.fill = { fgColor: { rgb: "FFFFFF" } }
@@ -900,13 +1079,11 @@ export default function ExcelUploader() {
             }
           }
 
-          // Column headers (row 2)
           if (R === 2) {
             ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
             ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
           }
 
-          // QTY column bold
           if (C === 3 && R > 2) {
             ws[cellAddress].s.font = { name: "Arial", bold: true, color: { rgb: "000000" } }
           }
@@ -925,10 +1102,9 @@ export default function ExcelUploader() {
       URL.revokeObjectURL(url)
     } else if (activeTab === "serialList") {
       const wsData: any[][] = []
-      
-      // Add logo and date header rows
+
       wsData.push(["HAIER", "", "", "", "", "", "", `Date Printed: ${formatDate()}`])
-      wsData.push([]) // Empty row for spacing
+      wsData.push([])
       wsData.push([
         "DN No",
         "Location",
@@ -984,7 +1160,6 @@ export default function ExcelUploader() {
           ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
           ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
 
-          // Header row (row 0 - HAIER and Date)
           if (R === 0) {
             ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 14, color: { rgb: "000000" } }
             ws[cellAddress].s.fill = { fgColor: { rgb: "FFFFFF" } }
@@ -995,7 +1170,6 @@ export default function ExcelUploader() {
             }
           }
 
-          // Column headers (row 2)
           if (R === 2) {
             ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
             ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
@@ -1019,10 +1193,9 @@ export default function ExcelUploader() {
   const handleDownloadIndividualDN = (file: UploadedFile) => {
     const wb = XLSX.utils.book_new()
     const wsData: any[][] = []
-    
-    // Add logo and date header rows
+
     wsData.push(["HAIER", "", "", "", "", "", "", `Date Printed: ${formatDate()}`])
-    wsData.push([]) // Empty row for spacing
+    wsData.push([])
     wsData.push([
       "DN No",
       "Location",
@@ -1078,7 +1251,6 @@ export default function ExcelUploader() {
         ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
         ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
 
-        // Header row (row 0 - HAIER and Date)
         if (R === 0) {
           ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 14, color: { rgb: "000000" } }
           ws[cellAddress].s.fill = { fgColor: { rgb: "FFFFFF" } }
@@ -1089,7 +1261,6 @@ export default function ExcelUploader() {
           }
         }
 
-        // Column headers (row 2)
         if (R === 2) {
           ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
           ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
@@ -1115,10 +1286,9 @@ export default function ExcelUploader() {
 
     uploadedFiles.forEach((file) => {
       const wsData: any[][] = []
-      
-      // Add logo and date header rows
+
       wsData.push(["HAIER", "", "", "", "", "", "", `Date Printed: ${formatDate()}`])
-      wsData.push([]) // Empty row for spacing
+      wsData.push([])
       wsData.push([
         "DN No",
         "Location",
@@ -1174,7 +1344,6 @@ export default function ExcelUploader() {
           ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
           ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
 
-          // Header row (row 0 - HAIER and Date)
           if (R === 0) {
             ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 14, color: { rgb: "000000" } }
             ws[cellAddress].s.fill = { fgColor: { rgb: "FFFFFF" } }
@@ -1185,7 +1354,6 @@ export default function ExcelUploader() {
             }
           }
 
-          // Column headers (row 2)
           if (R === 2) {
             ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
             ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
@@ -1644,14 +1812,12 @@ export default function ExcelUploader() {
           <div className="bg-card rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl border border-border">
             <h3 className="text-2xl font-bold text-foreground mb-4">Select Download Format</h3>
             <p className="text-muted-foreground mb-6">Choose how you want to download your report:</p>
-            
+
             <div className="space-y-3 mb-6">
               <button
                 onClick={() => setDownloadType("excel")}
                 className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-300 ${
-                  downloadType === "excel"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/50"
+                  downloadType === "excel" ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
                 }`}
               >
                 <FileSpreadsheet className="w-6 h-6 text-primary" />
@@ -1660,13 +1826,11 @@ export default function ExcelUploader() {
                   <p className="text-sm text-muted-foreground">Editable spreadsheet with formatting</p>
                 </div>
               </button>
-              
+
               <button
                 onClick={() => setDownloadType("pdf")}
                 className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-300 ${
-                  downloadType === "pdf"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/50"
+                  downloadType === "pdf" ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
                 }`}
               >
                 <FileText className="w-6 h-6 text-primary" />
