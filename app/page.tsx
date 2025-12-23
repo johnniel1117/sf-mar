@@ -455,7 +455,7 @@ export default function ExcelUploader() {
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 3px solid #0057A8;
+      
           }
           
           .logo img {
