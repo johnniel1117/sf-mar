@@ -444,7 +444,7 @@ export default function ExcelUploader() {
           
           body {
             font-family: Arial, sans-serif;
-            color: #1a1a1a;
+            color: #000;
             background: #fff;
             padding: 20px;
           }
@@ -455,32 +455,32 @@ export default function ExcelUploader() {
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 2px solid #2563eb;
+            border-bottom: 3px solid #0057A8;
           }
           
           .logo img {
-            height: 70px;
+            height: 45px;
             width: auto;
           }
           
           .date {
             text-align: right;
             font-size: 11px;
-            color: #4b5563;
+            color: #000;
             line-height: 1.6;
           }
           
           .date strong {
-            font-weight: 600;
+            font-weight: bold;
             font-size: 12px;
-            color: #1f2937;
+            color: #000;
           }
           
           h1 {
-            color: #1f2937;
+            color: #000;
             margin: 15px 0 20px 0;
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: bold;
             text-align: center;
             letter-spacing: 0.5px;
           }
@@ -489,72 +489,93 @@ export default function ExcelUploader() {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 9px;
+            font-size: 10px;
             background: #fff;
             font-family: Arial, sans-serif;
-            border: 2px solid #000; /* Add bold border to outside of table only */
+            border: 2px solid #000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
           
           th, td {
-            border: 1px solid #000; /* Changed to thin borders for internal cells */
-            padding: 8px 6px;
+            border: 1.5px solid #000;
+            padding: 10px 8px;
             text-align: center;
             word-wrap: break-word;
-            color: #374151;
+            color: #000;
             background: #fff;
             font-family: Arial, sans-serif;
           }
           
           th {
-            background: #fff;
-            color: #1f2937;
-            font-weight: 700;
-            font-size: 10px;
+            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
+            color: #000;
+            font-weight: bold;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 10px 6px;
-            border: 1px solid #000; /* Changed back to 1px for internal header borders */
+            letter-spacing: 0.3px;
+            padding: 12px 8px;
             text-align: center;
             font-family: Arial, sans-serif;
           }
           
-          tbody tr {
-            background: #fff;
+          tbody tr:nth-child(even) {
+            background: #F9F9F9;
+          }
+          
+          tbody tr:hover {
+            background: #F0F0F0;
           }
           
           .qty-cell {
-            font-weight: 700;
-            color: #2563eb;
+            font-weight: bold;
+            color: #000;
             font-size: 10px;
           }
           
           .barcode-cell {
-            font-family: Arial, sans-serif; /* Changed to Arial font family */
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 9px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: #000;
+            font-size: 10px;
+            letter-spacing: 0.5px;
           }
           
           .material-code-cell {
-            font-family: Arial, sans-serif; /* Changed to Arial font family */
-            color: #374151;
-            font-size: 9px;
-            font-weight: 500;
+            font-family: Arial, sans-serif;
+            color: #000;
+            font-size: 10px;
+            font-weight: bold;
           }
           
           .desc-cell {
+            text-align: center;
             max-width: 200px;
-            text-align: center; /* Added center text alignment */
+            font-size: 9px;
+            color: #000;
+            line-height: 1.4;
+          }
+          
+          @media print {
+            body { 
+              margin: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .no-print { display: none; }
+            @page {
+              size: landscape;
+              margin: 15mm;
+            }
           }
         </style>
       </head>
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
+            <img src="https://i.imgur.com/YXK7RZE.png" alt="Haier Logo" />
           </div>
           <div class="date">
-            <strong>Generated:</strong><br/>
+            <strong>Date Printed:</strong><br/>
             ${formatDate()}
           </div>
         </div>
@@ -648,10 +669,7 @@ export default function ExcelUploader() {
 
     const allDNContent = uploadedFiles
       .map((file, index) => {
-        // Get the first Ship To Name from the file's data
         const shipToName = file.serialData[0]?.shipToName || "Unknown"
-
-        // Only add page-break class if this is NOT the last file
         const pageBreakClass = index < uploadedFiles.length - 1 ? "page-break" : ""
 
         return `
@@ -666,7 +684,7 @@ export default function ExcelUploader() {
           </div>
         </div>
 
-        <h2 style="color: #1f2937; font-size: 18px; font-weight: 600; margin: 15px 0; text-align: center;">${file.dnNo} | ${shipToName}</h2>
+        <h2 style="color: #000; font-size: 18px; font-weight: bold; margin: 15px 0; text-align: center;">${file.dnNo} | ${shipToName}</h2>
         
         <table>
           <thead>
@@ -725,7 +743,7 @@ export default function ExcelUploader() {
           
           body {
             font-family: Arial, sans-serif;
-            color: #1a1a1a;
+            color: #000;
             background: #fff;
             padding: 20px;
           }
@@ -741,32 +759,32 @@ export default function ExcelUploader() {
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 2px solid #2563eb;
+            border-bottom: 3px solid #0057A8;
           }
           
           .logo img {
-            height: 70px;
+            height: 45px;
             width: auto;
           }
           
           .date {
             text-align: right;
             font-size: 11px;
-            color: #4b5563;
+            color: #000;
             line-height: 1.6;
           }
           
           .date strong {
-            font-weight: 600;
+            font-weight: bold;
             font-size: 12px;
-            color: #1f2937;
+            color: #000;
           }
           
           h1, h2 {
-            color: #1f2937;
+            color: #000;
             margin: 15px 0 20px 0;
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: bold;
             text-align: center;
             letter-spacing: 0.5px;
           }
@@ -775,56 +793,77 @@ export default function ExcelUploader() {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 9px;
+            font-size: 10px;
             background: #fff;
             font-family: Arial, sans-serif;
-            border: 2px solid #000; /* Add bold border to outside of table only */
+            border: 2px solid #000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
           
           th, td {
-            border: 1px solid #000; /* Changed to thin borders for internal cells */
-            padding: 8px 6px;
+            border: 1.5px solid #000;
+            padding: 10px 8px;
             text-align: center;
             word-wrap: break-word;
-            color: #374151;
+            color: #000;
             background: #fff;
             font-family: Arial, sans-serif;
           }
           
           th {
-            background: #fff;
-            color: #1f2937;
-            font-weight: 700;
-            font-size: 10px;
+            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
+            color: #000;
+            font-weight: bold;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 10px 6px;
-            border: 1px solid #000; /* Changed back to 1px for internal header borders */
+            letter-spacing: 0.3px;
+            padding: 12px 8px;
             text-align: center;
             font-family: Arial, sans-serif;
           }
           
-          tbody tr {
-            background: #fff;
+          tbody tr:nth-child(even) {
+            background: #F9F9F9;
+          }
+          
+          tbody tr:hover {
+            background: #F0F0F0;
           }
           
           .barcode-cell {
-            font-family: Arial, sans-serif; /* Changed to Arial font family */
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 9px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: #000;
+            font-size: 10px;
+            letter-spacing: 0.5px;
           }
           
           .material-code-cell {
-            font-family: Arial, sans-serif; /* Changed to Arial font family */
-            color: #374151;
-            font-size: 9px;
-            font-weight: 500;
+            font-family: Arial, sans-serif;
+            color: #000;
+            font-size: 10px;
+            font-weight: bold;
           }
           
           .desc-cell {
+            text-align: center;
             max-width: 200px;
-            text-align: center; /* Added center text alignment */
+            font-size: 9px;
+            color: #000;
+            line-height: 1.4;
+          }
+          
+          @media print {
+            body { 
+              margin: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .no-print { display: none; }
+            @page {
+              size: landscape;
+              margin: 15mm;
+            }
           }
         </style>
       </head>
@@ -867,7 +906,7 @@ export default function ExcelUploader() {
           
           body {
             font-family: Arial, sans-serif;
-            color: #1a1a1a;
+            color: #000;
             background: #fff;
             padding: 20px;
           }
@@ -878,32 +917,32 @@ export default function ExcelUploader() {
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 2px solid #2563eb;
+            border-bottom: 3px solid #0057A8;
           }
           
           .logo img {
-            height: 70px;
+            height: 45px;
             width: auto;
           }
           
           .date {
             text-align: right;
             font-size: 11px;
-            color: #4b5563;
+            color: #000;
             line-height: 1.6;
           }
           
           .date strong {
-            font-weight: 600;
+            font-weight: bold;
             font-size: 12px;
-            color: #1f2937;
+            color: #000;
           }
           
           h1 {
-            color: #1f2937;
+            color: #000;
             margin: 15px 0 20px 0;
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: bold;
             text-align: center;
             letter-spacing: 0.5px;
           }
@@ -912,66 +951,87 @@ export default function ExcelUploader() {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
-            font-size: 9px;
+            font-size: 10px;
             background: #fff;
             font-family: Arial, sans-serif;
-            border: 2px solid #000; /* Add bold border to outside of table only */
+            border: 2px solid #000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
           
           th, td {
-            border: 1px solid #000; /* Changed to thin borders for internal cells */
-            padding: 8px 6px;
+            border: 1.5px solid #000;
+            padding: 10px 8px;
             text-align: center;
             word-wrap: break-word;
-            color: #374151;
+            color: #000;
             background: #fff;
             font-family: Arial, sans-serif;
           }
           
           th {
-            background: #fff;
-            color: #1f2937;
-            font-weight: 700;
-            font-size: 10px;
+            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
+            color: #000;
+            font-weight: bold;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 10px 6px;
-            border: 1px solid #000; /* Changed back to 1px for internal header borders */
+            letter-spacing: 0.3px;
+            padding: 12px 8px;
             text-align: center;
             font-family: Arial, sans-serif;
           }
           
-          tbody tr {
-            background: #fff;
+          tbody tr:nth-child(even) {
+            background: #F9F9F9;
+          }
+          
+          tbody tr:hover {
+            background: #F0F0F0;
           }
           
           .barcode-cell {
-            font-family: Arial, sans-serif; /* Changed to Arial font family */
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 9px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: #000;
+            font-size: 10px;
+            letter-spacing: 0.5px;
           }
           
           .material-code-cell {
-            font-family: Arial, sans-serif; /* Changed to Arial font family */
-            color: #374151;
-            font-size: 9px;
-            font-weight: 500;
+            font-family: Arial, sans-serif;
+            color: #000;
+            font-size: 10px;
+            font-weight: bold;
           }
           
           .desc-cell {
+            text-align: center;
             max-width: 200px;
-            text-align: center; /* Added center text alignment */
+            font-size: 9px;
+            color: #000;
+            line-height: 1.4;
+          }
+          
+          @media print {
+            body { 
+              margin: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .no-print { display: none; }
+            @page {
+              size: landscape;
+              margin: 15mm;
+            }
           }
         </style>
       </head>
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
+            <img src="https://i.imgur.com/YXK7RZE.png" alt="Haier Logo" />
           </div>
           <div class="date">
-            <strong>Generated:</strong><br/>
+            <strong>Date Printed:</strong><br/>
             ${formatDate()}
           </div>
         </div>
