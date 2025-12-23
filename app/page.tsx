@@ -443,7 +443,7 @@ export default function ExcelUploader() {
           }
           
           body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             color: #1a1a1a;
             background: #fff;
             padding: 20px;
@@ -490,33 +490,31 @@ export default function ExcelUploader() {
             border-collapse: collapse;
             margin-top: 15px;
             font-size: 9px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: #fff;
           }
           
           th, td {
-            border: 1px solid #d1d5db;
+            border: 2px solid #000;
             padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
             color: #374151;
+            background: #fff;
           }
           
           th {
-            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            background: #fff;
             color: #1f2937;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 10px 6px;
+            border: 2px solid #000;
           }
           
-          tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-          }
-          
-          tbody tr:hover {
-            background-color: #eff6ff;
+          tbody tr {
+            background: #fff;
           }
           
           .qty-cell {
@@ -723,7 +721,7 @@ export default function ExcelUploader() {
           }
           
           body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             color: #1a1a1a;
             background: #fff;
             padding: 20px;
@@ -775,33 +773,31 @@ export default function ExcelUploader() {
             border-collapse: collapse;
             margin-top: 15px;
             font-size: 9px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: #fff;
           }
           
           th, td {
-            border: 1px solid #d1d5db;
+            border: 2px solid #000;
             padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
             color: #374151;
+            background: #fff;
           }
           
           th {
-            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            background: #fff;
             color: #1f2937;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 10px 6px;
+            border: 2px solid #000;
           }
           
-          tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-          }
-          
-          tbody tr:hover {
-            background-color: #eff6ff;
+          tbody tr {
+            background: #fff;
           }
           
           .barcode-cell {
@@ -864,7 +860,7 @@ export default function ExcelUploader() {
           }
           
           body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             color: #1a1a1a;
             background: #fff;
             padding: 20px;
@@ -911,33 +907,31 @@ export default function ExcelUploader() {
             border-collapse: collapse;
             margin-top: 15px;
             font-size: 9px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: #fff;
           }
           
           th, td {
-            border: 1px solid #d1d5db;
+            border: 2px solid #000;
             padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
             color: #374151;
+            background: #fff;
           }
           
           th {
-            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            background: #fff;
             color: #1f2937;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 10px 6px;
+            border: 2px solid #000;
           }
           
-          tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-          }
-          
-          tbody tr:hover {
-            background-color: #eff6ff;
+          tbody tr {
+            background: #fff;
           }
           
           .barcode-cell {
