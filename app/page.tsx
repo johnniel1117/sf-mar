@@ -57,6 +57,7 @@ export default function ExcelUploader() {
   const [showDownloadModal, setShowDownloadModal] = useState(false)
   const [downloadType, setDownloadType] = useState<"pdf" | "excel">("excel")
   const [selectedDownloadFile, setSelectedDownloadFile] = useState<UploadedFile | null>(null)
+  const [isDownloadingAllDN, setIsDownloadingAllDN] = useState(false)
 
   const getCategoryFromBinCode = (binCode: string): string => {
     const code = String(binCode || "").toUpperCase()
@@ -82,7 +83,7 @@ export default function ExcelUploader() {
 
   const HaierLogo = () => (
     <img 
-      src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" 
+      src="`https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1`" 
       alt="Haier Logo" 
       style={{ height: "40px", width: "auto" }}
     />
@@ -400,19 +401,24 @@ export default function ExcelUploader() {
   const handleDownloadConfirm = () => {
     setShowDownloadModal(false)
     if (downloadType === "pdf") {
-      if (selectedDownloadFile) {
+      if (isDownloadingAllDN) {
+        handleDownloadAllDNPDF()
+      } else if (selectedDownloadFile) {
         handleDownloadIndividualDNPDF(selectedDownloadFile)
       } else {
         handleDownloadPDF()
       }
     } else {
-      if (selectedDownloadFile) {
+      if (isDownloadingAllDN) {
+        handleDownloadAllDN()
+      } else if (selectedDownloadFile) {
         handleDownloadIndividualDN(selectedDownloadFile)
       } else {
         handleDownloadExcel()
       }
     }
     setSelectedDownloadFile(null)
+    setIsDownloadingAllDN(false)
   }
 
   const handleDownloadPDF = () => {
@@ -431,80 +437,120 @@ export default function ExcelUploader() {
             margin: 15mm;
           }
           
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
           body {
             font-family: Arial, sans-serif;
             margin: 15px;
             color: #000;
+            background: #fff;
           }
+          
           .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #0057A8;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #0057A8;
           }
+          
           .logo img {
-            height: 40px;
+            height: 45px;
             width: auto;
           }
+          
           .date {
             text-align: right;
-            font-size: 12px;
+            font-size: 11px;
             color: #000;
-            font-weight: bold;
           }
+          
+          .date strong {
+            font-weight: bold;
+            font-size: 12px;
+          }
+          
           h1 {
             color: #000;
-            margin: 15px 0;
-            font-size: 20px;
+            margin: 15px 0 20px 0;
+            font-size: 22px;
             font-weight: bold;
+            text-align: center;
+            letter-spacing: 0.5px;
           }
+          
           table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
             font-size: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
+          
           th, td {
-            border: 1px solid #000;
-            padding: 8px 6px;
+            border: 1.5px solid #000;
+            padding: 10px 8px;
             text-align: center;
             word-wrap: break-word;
             color: #000;
           }
+          
           th {
-            background-color: #D3D3D3;
+            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
             color: #000;
             font-weight: bold;
             font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 12px 8px;
           }
+          
           tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: #F9F9F9;
           }
+          
+          tr:hover {
+            background-color: #F0F0F0;
+          }
+          
           .qty-cell {
             font-weight: bold;
             color: #000;
           }
+          
           .barcode-cell {
             font-family: Arial, sans-serif;
             font-weight: bold;
             color: #000;
-            font-size: 9px;
+            font-size: 10px;
+            letter-spacing: 0.5px;
           }
+          
           .material-code-cell {
-            font-weight: 600;
+            font-weight: bold;
             font-size: 10px;
             color: #000;
           }
+          
           .desc-cell {
             text-align: left;
             max-width: 200px;
             font-size: 9px;
             color: #000;
+            line-height: 1.4;
           }
+          
           @media print {
-            body { margin: 10px; }
+            body { 
+              margin: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
             .no-print { display: none; }
             @page {
               size: landscape;
@@ -606,6 +652,14 @@ export default function ExcelUploader() {
     }
   }
 
+  const handleDownloadAllDNPDF = () => {
+    uploadedFiles.forEach((file, index) => {
+      setTimeout(() => {
+        handleDownloadIndividualDNPDF(file)
+      }, index * 1000) // Stagger the downloads by 1 second each
+    })
+  }
+
   const handleDownloadIndividualDNPDF = (file: UploadedFile) => {
     const printWindow = window.open("", "", "width=1200,height=800")
     if (!printWindow) return
@@ -621,76 +675,120 @@ export default function ExcelUploader() {
             margin: 15mm;
           }
           
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
           body {
             font-family: Arial, sans-serif;
             margin: 15px;
             color: #000;
+            background: #fff;
           }
+          
           .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #0057A8;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #0057A8;
           }
+          
           .logo img {
-            height: 40px;
+            height: 45px;
             width: auto;
           }
+          
           .date {
             text-align: right;
-            font-size: 12px;
+            font-size: 11px;
             color: #000;
-            font-weight: bold;
           }
+          
+          .date strong {
+            font-weight: bold;
+            font-size: 12px;
+          }
+          
           h1 {
             color: #000;
-            margin: 15px 0;
-            font-size: 20px;
+            margin: 15px 0 20px 0;
+            font-size: 22px;
             font-weight: bold;
+            text-align: center;
+            letter-spacing: 0.5px;
           }
+          
           table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
             font-size: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
+          
           th, td {
-            border: 1px solid #000;
-            padding: 8px 6px;
+            border: 1.5px solid #000;
+            padding: 10px 8px;
             text-align: center;
             word-wrap: break-word;
             color: #000;
           }
+          
           th {
-            background-color: #D3D3D3;
+            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
             color: #000;
             font-weight: bold;
             font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 12px 8px;
           }
+          
           tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: #F9F9F9;
           }
+          
+          tr:hover {
+            background-color: #F0F0F0;
+          }
+          
           .barcode-cell {
             font-family: Arial, sans-serif;
             font-weight: bold;
             color: #000;
-            font-size: 9px;
+            font-size: 10px;
+            letter-spacing: 0.5px;
           }
+          
           .material-code-cell {
-            font-weight: 600;
+            font-weight: bold;
             font-size: 10px;
             color: #000;
           }
+          
           .desc-cell {
             text-align: left;
             max-width: 200px;
             font-size: 9px;
             color: #000;
+            line-height: 1.4;
           }
+          
+          .dn-cell {
+            font-weight: bold;
+            color: #000;
+          }
+          
           @media print {
-            body { margin: 10px; }
+            body { 
+              margin: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
             .no-print { display: none; }
             @page {
               size: landscape;
@@ -702,7 +800,7 @@ export default function ExcelUploader() {
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://i.imgur.com/YXK7RZE.png" alt="Haier Logo" />
+            <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
           </div>
           <div class="date">
             <strong>Date Printed:</strong><br/>
@@ -729,7 +827,7 @@ export default function ExcelUploader() {
               .map(
                 (row) => `
               <tr>
-                <td>${row.dnNo}</td>
+                <td class="dn-cell">${row.dnNo}</td>
                 <td class="desc-cell">${row.location}</td>
                 <td>${row.binCode}</td>
                 <td class="material-code-cell">${row.materialCode}</td>
@@ -1118,7 +1216,7 @@ export default function ExcelUploader() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-background via-background to-accent/20">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/20">
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -1476,19 +1574,31 @@ export default function ExcelUploader() {
               {activeTab === "individualDN" && (
                 <>
                   <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-2xl font-bold text-foreground">Individual DN Downloads</h2>
-                      <p className="text-base text-muted-foreground mt-1">
-                        Download each DN file separately without unnecessary columns
-                      </p>
+                    <div className="flex items-center gap-6">
+                      <HaierLogo />
+                      <div>
+                        <h2 className="text-2xl font-bold text-foreground">Individual DN Downloads</h2>
+                        <p className="text-base text-muted-foreground mt-1">
+                          Download each DN file separately with professional formatting
+                        </p>
+                      </div>
                     </div>
-                    <button
-                      onClick={handleDownloadAllDN}
-                      className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
-                    >
-                      <Download className="w-5 h-5" />
-                      Download All DN
-                    </button>
+                    <div className="flex flex-col items-end gap-3">
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-foreground">Date Printed:</p>
+                        <p className="text-sm text-muted-foreground">{formatDate()}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setIsDownloadingAllDN(true)
+                          setShowDownloadModal(true)
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download All DN
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-4">
@@ -1510,7 +1620,10 @@ export default function ExcelUploader() {
                           </div>
                         </div>
                         <button
-                          onClick={() => handleDownloadIndividualDN(file)}
+                          onClick={() => {
+                            setSelectedDownloadFile(file)
+                            setShowDownloadModal(true)
+                          }}
                           className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
                         >
                           <Download className="w-5 h-5" />
