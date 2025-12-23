@@ -433,7 +433,7 @@ export default function ExcelUploader() {
         <style>
           @page {
             size: landscape;
-            margin: 10mm;
+            margin: 15mm;
           }
           
           * {
@@ -443,95 +443,107 @@ export default function ExcelUploader() {
           }
           
           body {
-            font-family: Arial, sans-serif;
-            margin: 10px;
-            color: #000000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1a1a1a;
             background: #fff;
+            padding: 20px;
           }
           
           .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #000000;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #2563eb;
           }
           
           .logo img {
-            height: 80px;
+            height: 70px;
             width: auto;
           }
           
           .date {
             text-align: right;
-            font-size: 12px;
-            color: #000000;
-            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #4b5563;
+            line-height: 1.6;
           }
           
           .date strong {
-            font-weight: bold;
-            font-size: 13px;
+            font-weight: 600;
+            font-size: 12px;
+            color: #1f2937;
           }
           
           h1 {
-            color: #000000;
-            margin: 10px 0 15px 0;
-            font-size: 22px;
-            font-weight: bold;
+            color: #1f2937;
+            margin: 15px 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
             text-align: center;
-            font-family: Arial, sans-serif;
+            letter-spacing: 0.5px;
           }
           
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 10px;
-            font-family: Arial, sans-serif;
+            margin-top: 15px;
+            font-size: 9px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
           
           th, td {
-            border: 1px solid #000000;
-            padding: 6px 4px;
+            border: 1px solid #d1d5db;
+            padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
-            color: #000000;
-            background-color: transparent;
+            color: #374151;
           }
           
           th {
-            color: #000000;
-            font-weight: bold;
-            font-size: 11px;
+            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 10px;
             text-transform: uppercase;
-            padding: 8px 4px;
-            font-family: Arial, sans-serif;
+            letter-spacing: 0.5px;
+            padding: 10px 6px;
+          }
+          
+          tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+          }
+          
+          tbody tr:hover {
+            background-color: #eff6ff;
           }
           
           .qty-cell {
-            font-weight: bold;
-            color: #000000;
+            font-weight: 700;
+            color: #2563eb;
+            font-size: 10px;
           }
           
           .barcode-cell {
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: #000000;
-            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 9px;
           }
           
           .material-code-cell {
-            font-family: Arial, sans-serif;
-            color: #000000;
-            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            color: #374151;
+            font-size: 9px;
+            font-weight: 500;
           }
           
           .desc-cell {
             max-width: 200px;
             text-align: left;
-            padding-left: 8px;
+            padding-left: 10px;
+            line-height: 1.4;
           }
         </style>
       </head>
@@ -541,7 +553,7 @@ export default function ExcelUploader() {
             <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
           </div>
           <div class="date">
-            
+            <strong>Generated:</strong><br/>
             ${formatDate()}
           </div>
         </div>
@@ -557,7 +569,7 @@ export default function ExcelUploader() {
               <th>CATEGORY</th>
               <th>QTY.</th>
               <th>UM</th>
-              <th>SHIPNAME</th>
+              <th>SHIP NAME</th>
               <th>REMARKS</th>
             </tr>
           </thead>
@@ -623,7 +635,6 @@ export default function ExcelUploader() {
 
     printWindow.document.write(htmlContent)
     printWindow.document.close()
-    printWindow.focus()
 
     setTimeout(() => {
       printWindow.print()
@@ -635,23 +646,26 @@ export default function ExcelUploader() {
     if (!printWindow) return
 
     const allDNContent = uploadedFiles
-      .map((file) => {
+      .map((file, index) => {
         // Get the first Ship To Name from the file's data
         const shipToName = file.serialData[0]?.shipToName || "Unknown"
 
+        // Only add page-break class if this is NOT the last file
+        const pageBreakClass = index < uploadedFiles.length - 1 ? "page-break" : ""
+
         return `
-      <div class="page-break">
+      <div class="${pageBreakClass}">
         <div class="header">
           <div class="logo">
             <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
-          </div>     
+          </div>
+          <div class="date">
+            <strong>Generated:</strong><br/>
             ${formatDate()}
           </div>
-
-          <h2>${file.dnNo} | ${shipToName}</h2>
         </div>
-        
-          <div class="date">
+
+        <h2 style="color: #1f2937; font-size: 18px; font-weight: 600; margin: 15px 0; text-align: center;">${file.dnNo} | ${shipToName}</h2>
         
         <table>
           <thead>
@@ -699,7 +713,7 @@ export default function ExcelUploader() {
         <style>
           @page {
             size: landscape;
-            margin: 10mm;
+            margin: 15mm;
           }
           
           * {
@@ -709,99 +723,106 @@ export default function ExcelUploader() {
           }
           
           body {
-            font-family: Arial, sans-serif;
-            margin: 10px;
-            color: #000000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1a1a1a;
             background: #fff;
+            padding: 20px;
           }
           
           .page-break {
             page-break-after: always;
-            margin-bottom: 10px;
-          }
-          
-          .page-break:last-child {
-            page-break-after: auto;
+            margin-bottom: 0;
           }
           
           .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #000000;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #2563eb;
           }
           
           .logo img {
-            height: 80px;
+            height: 70px;
             width: auto;
           }
           
           .date {
             text-align: right;
-            font-size: 12px;
-            color: #000000;
-            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #4b5563;
+            line-height: 1.6;
           }
           
           .date strong {
-            font-weight: bold;
-            font-size: 13px;
+            font-weight: 600;
+            font-size: 12px;
+            color: #1f2937;
           }
           
-          h1 {
-            color: #000000;
-            margin: 10px 0 15px 0;
-            font-size: 22px;
-            font-weight: bold;
+          h1, h2 {
+            color: #1f2937;
+            margin: 15px 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
             text-align: center;
-            font-family: Arial, sans-serif;
+            letter-spacing: 0.5px;
           }
           
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 10px;
-            font-family: Arial, sans-serif;
+            margin-top: 15px;
+            font-size: 9px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
           
           th, td {
-            border: 1px solid #000000;
-            padding: 6px 4px;
+            border: 1px solid #d1d5db;
+            padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
-            color: #000000;
-            background-color: transparent;
+            color: #374151;
           }
           
           th {
-            color: #000000;
-            font-weight: bold;
-            font-size: 11px;
+            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 10px;
             text-transform: uppercase;
-            padding: 8px 4px;
-            font-family: Arial, sans-serif;
+            letter-spacing: 0.5px;
+            padding: 10px 6px;
+          }
+          
+          tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+          }
+          
+          tbody tr:hover {
+            background-color: #eff6ff;
           }
           
           .barcode-cell {
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: #000000;
-            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 9px;
           }
           
           .material-code-cell {
-            font-family: Arial, sans-serif;
-            color: #000000;
-            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            color: #374151;
+            font-size: 9px;
+            font-weight: 500;
           }
           
           .desc-cell {
             max-width: 200px;
             text-align: left;
-            padding-left: 8px;
+            padding-left: 10px;
+            line-height: 1.4;
           }
         </style>
       </head>
@@ -813,7 +834,6 @@ export default function ExcelUploader() {
 
     printWindow.document.write(htmlContent)
     printWindow.document.close()
-    printWindow.focus()
 
     setTimeout(() => {
       printWindow.print()
@@ -824,7 +844,6 @@ export default function ExcelUploader() {
     const printWindow = window.open("", "", "width=1200,height=800")
     if (!printWindow) return
 
-    // Get the first Ship To Name from the file's data
     const shipToName = file.serialData[0]?.shipToName || "Unknown"
 
     const htmlContent = `
@@ -835,7 +854,7 @@ export default function ExcelUploader() {
         <style>
           @page {
             size: landscape;
-            margin: 10mm;
+            margin: 15mm;
           }
           
           * {
@@ -845,90 +864,101 @@ export default function ExcelUploader() {
           }
           
           body {
-            font-family: Arial, sans-serif;
-            margin: 10px;
-            color: #000000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1a1a1a;
             background: #fff;
+            padding: 20px;
           }
           
           .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #000000;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #2563eb;
           }
           
           .logo img {
-            height: 80px;
+            height: 70px;
             width: auto;
           }
           
           .date {
             text-align: right;
-            font-size: 12px;
-            color: #000000;
-            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #4b5563;
+            line-height: 1.6;
           }
           
           .date strong {
-            font-weight: bold;
-            font-size: 13px;
+            font-weight: 600;
+            font-size: 12px;
+            color: #1f2937;
           }
           
           h1 {
-            color: #000000;
-            margin: 10px 0 15px 0;
-            font-size: 22px;
-            font-weight: bold;
+            color: #1f2937;
+            margin: 15px 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
             text-align: center;
-            font-family: Arial, sans-serif;
+            letter-spacing: 0.5px;
           }
           
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 10px;
-            font-family: Arial, sans-serif;
+            margin-top: 15px;
+            font-size: 9px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
           
           th, td {
-            border: 1px solid #000000;
-            padding: 6px 4px;
+            border: 1px solid #d1d5db;
+            padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
-            color: #000000;
-            background-color: transparent;
+            color: #374151;
           }
           
           th {
-            color: #000000;
-            font-weight: bold;
-            font-size: 11px;
+            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 10px;
             text-transform: uppercase;
-            padding: 8px 4px;
-            font-family: Arial, sans-serif;
+            letter-spacing: 0.5px;
+            padding: 10px 6px;
+          }
+          
+          tbody tr:nth-child(even) {
+            background-color: #f9fafb;
+          }
+          
+          tbody tr:hover {
+            background-color: #eff6ff;
           }
           
           .barcode-cell {
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: #000000;
-            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 9px;
           }
           
           .material-code-cell {
-            font-family: Arial, sans-serif;
-            color: #000000;
-            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            color: #374151;
+            font-size: 9px;
+            font-weight: 500;
           }
           
           .desc-cell {
             max-width: 200px;
             text-align: left;
-            padding-left: 8px;
+            padding-left: 10px;
+            line-height: 1.4;
           }
         </style>
       </head>
@@ -938,11 +968,13 @@ export default function ExcelUploader() {
             <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
           </div>
           <div class="date">
-           
+            <strong>Generated:</strong><br/>
             ${formatDate()}
           </div>
         </div>
-        <h1>DN No: ${file.dnNo} | ${shipToName}</h1>
+        
+        <h1>${file.dnNo} | ${shipToName}</h1>
+        
         <table>
           <thead>
             <tr>
@@ -982,7 +1014,6 @@ export default function ExcelUploader() {
 
     printWindow.document.write(htmlContent)
     printWindow.document.close()
-    printWindow.focus()
 
     setTimeout(() => {
       printWindow.print()
@@ -990,321 +1021,84 @@ export default function ExcelUploader() {
   }
 
   const handleDownloadExcel = () => {
-    const wb = XLSX.utils.book_new()
+    const worksheet =
+      activeTab === "consolidated"
+        ? XLSX.utils.json_to_sheet(
+            groupedData.map((row) => ({
+              "Material Code": row.materialCode,
+              "Material Description": row.materialDescription,
+              Category: row.category,
+              "Qty.": row.qty,
+              UM: "-",
+              ShipName: row.shipName,
+              Remarks: row.remarks,
+            })),
+          )
+        : XLSX.utils.json_to_sheet(
+            serialListData.map((row) => ({
+              "DN No": row.dnNo,
+              Location: row.location,
+              "Bin Code": row.binCode,
+              "Material Code": row.materialCode,
+              "Material Desc": row.materialDesc,
+              Barcode: row.barcode,
+              "Ship To Name": row.shipToName,
+              "Ship To Address": row.shipToAddress,
+            })),
+          )
 
-    if (activeTab === "consolidated") {
-      const wsData: any[][] = []
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, activeTab === "consolidated" ? "Consolidated" : "Serial List")
 
-      wsData.push(["MATERIAL CODE", "MATERIAL DESCRIPTION", "CATEGORY", "QTY.", "UM", "SHIPNAME", "REMARKS"])
-
-      groupedData.forEach((row) => {
-        wsData.push([row.materialCode, row.materialDescription, row.category, row.qty, "", row.shipName, row.remarks])
-      })
-
-      const ws = XLSX.utils.aoa_to_sheet(wsData)
-      ws["!cols"] = [{ wch: 18 }, { wch: 35 }, { wch: 22 }, { wch: 8 }, { wch: 6 }, { wch: 28 }, { wch: 18 }]
-
-      const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
-
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
-          if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
-
-          if (!ws[cellAddress].s) ws[cellAddress].s = {}
-
-          ws[cellAddress].s.border = {
-            top: { style: "thin", color: { rgb: "000000" } },
-            bottom: { style: "thin", color: { rgb: "000000" } },
-            left: { style: "thin", color: { rgb: "000000" } },
-            right: { style: "thin", color: { rgb: "000000" } },
-          }
-
-          ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
-          ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
-
-          if (R === 0) {
-            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
-            ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
-          }
-
-          if (C === 3 && R > 0) {
-            ws[cellAddress].s.font = { name: "Arial", bold: true, color: { rgb: "000000" } }
-          }
-        }
-      }
-
-      XLSX.utils.book_append_sheet(wb, ws, "Consolidated Materials")
-
-      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" })
-      const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = `Consolidated_Materials_${Date.now()}.xlsx`
-      link.click()
-      URL.revokeObjectURL(url)
-    } else if (activeTab === "serialList") {
-      const wsData: any[][] = []
-
-      wsData.push(["HAIER", "", "", "", "", "", "", `${formatDate()}`])
-      wsData.push([])
-      wsData.push([
-        "DN No",
-        "Location",
-        "binCode",
-        "Material Code",
-        "Material Desc",
-        "Barcode",
-        "Ship To Name",
-        "Ship To Address",
-      ])
-
-      serialListData.forEach((row) => {
-        wsData.push([
-          row.dnNo,
-          row.location,
-          row.binCode,
-          row.materialCode,
-          row.materialDesc,
-          row.barcode,
-          row.shipToName,
-          row.shipToAddress,
-        ])
-      })
-
-      const ws = XLSX.utils.aoa_to_sheet(wsData)
-      ws["!cols"] = [
-        { wch: 18 },
-        { wch: 20 },
-        { wch: 18 },
-        { wch: 20 },
-        { wch: 40 },
-        { wch: 30 },
-        { wch: 35 },
-        { wch: 45 },
-      ]
-
-      const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
-
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
-          if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
-
-          if (!ws[cellAddress].s) ws[cellAddress].s = {}
-
-          ws[cellAddress].s.border = {
-            top: { style: "thin", color: { rgb: "000000" } },
-            bottom: { style: "thin", color: { rgb: "000000" } },
-            left: { style: "thin", color: { rgb: "000000" } },
-            right: { style: "thin", color: { rgb: "000000" } },
-          }
-
-          ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
-          ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
-
-          if (R === 0) {
-            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 14, color: { rgb: "000000" } }
-            ws[cellAddress].s.fill = { fgColor: { rgb: "FFFFFF" } }
-            if (C === 0) {
-              ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center" }
-            } else if (C === 7) {
-              ws[cellAddress].s.alignment = { horizontal: "right", vertical: "center" }
-            }
-          }
-
-          if (R === 2) {
-            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
-            ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
-          }
-        }
-      }
-
-      XLSX.utils.book_append_sheet(wb, ws, "Bulking Serial List")
-
-      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
-      const blob = new Blob([wbout], { type: "application/octet-stream" })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = `Bulking_Serial_List_${Date.now()}.xlsx`
-      link.click()
-      URL.revokeObjectURL(url)
-    }
-  }
-
-  const handleDownloadIndividualDN = (file: UploadedFile) => {
-    const wb = XLSX.utils.book_new()
-    const wsData: any[][] = []
-
-    wsData.push([
-      "DN No",
-      "Location",
-      "binCode",
-      "Material Code",
-      "Material Desc",
-      "Barcode",
-      "Ship To Name",
-      "Ship To Address",
-    ])
-
-    file.serialData.forEach((row) => {
-      wsData.push([
-        row.dnNo,
-        row.location,
-        row.binCode,
-        row.materialCode,
-        row.materialDesc,
-        row.barcode,
-        row.shipToName,
-        row.shipToAddress,
-      ])
-    })
-
-    const ws = XLSX.utils.aoa_to_sheet(wsData)
-    ws["!cols"] = [
-      { wch: 18 },
-      { wch: 20 },
-      { wch: 18 },
-      { wch: 20 },
-      { wch: 40 },
-      { wch: 30 },
-      { wch: 35 },
-      { wch: 45 },
-    ]
-
-    const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
-
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
-        if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
-
-        if (!ws[cellAddress].s) ws[cellAddress].s = {}
-
-        ws[cellAddress].s.border = {
-          top: { style: "thin", color: { rgb: "000000" } },
-          bottom: { style: "thin", color: { rgb: "000000" } },
-          left: { style: "thin", color: { rgb: "000000" } },
-          right: { style: "thin", color: { rgb: "000000" } },
-        }
-
-        ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
-        ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
-
-        if (R === 0) {
-          ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
-          ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
-        }
-      }
-    }
-
-    XLSX.utils.book_append_sheet(wb, ws, file.dnNo)
-
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
-    const blob = new Blob([wbout], { type: "application/octet-stream" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `${file.dnNo}_${Date.now()}.xlsx`
-    link.click()
-    URL.revokeObjectURL(url)
+    XLSX.writeFile(workbook, activeTab === "consolidated" ? "Consolidated_Materials.xlsx" : "Bulking_Serial_List.xlsx")
   }
 
   const handleDownloadAllDN = () => {
-    const wb = XLSX.utils.book_new()
-    const sheetNames = new Map<string, number>()
+    const workbook = XLSX.utils.book_new()
 
     uploadedFiles.forEach((file) => {
-      const wsData: any[][] = []
+      const worksheet = XLSX.utils.json_to_sheet(
+        file.serialData.map((row) => ({
+          "DN No": row.dnNo,
+          Location: row.location,
+          "Bin Code": row.binCode,
+          "Material Code": row.materialCode,
+          "Material Desc": row.materialDesc,
+          Barcode: row.barcode,
+          "Ship To Name": row.shipToName,
+          "Ship To Address": row.shipToAddress,
+        })),
+      )
 
-      wsData.push([
-        "DN No",
-        "Location",
-        "binCode",
-        "Material Code",
-        "Material Desc",
-        "Barcode",
-        "Ship To Name",
-        "Ship To Address",
-      ])
-
-      file.serialData.forEach((row) => {
-        wsData.push([
-          row.dnNo,
-          row.location,
-          row.binCode,
-          row.materialCode,
-          row.materialDesc,
-          row.barcode,
-          row.shipToName,
-          row.shipToAddress,
-        ])
-      })
-
-      const ws = XLSX.utils.aoa_to_sheet(wsData)
-      ws["!cols"] = [
-        { wch: 18 },
-        { wch: 20 },
-        { wch: 18 },
-        { wch: 20 },
-        { wch: 40 },
-        { wch: 30 },
-        { wch: 35 },
-        { wch: 45 },
-      ]
-
-      const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
-
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
-          if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
-
-          if (!ws[cellAddress].s) ws[cellAddress].s = {}
-
-          ws[cellAddress].s.border = {
-            top: { style: "thin", color: { rgb: "000000" } },
-            bottom: { style: "thin", color: { rgb: "000000" } },
-            left: { style: "thin", color: { rgb: "000000" } },
-            right: { style: "thin", color: { rgb: "000000" } },
-          }
-
-          ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
-          ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
-
-          if (R === 0) {
-            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
-            ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
-          }
-        }
-      }
-
-      let sheetName = file.dnNo
-      if (sheetNames.has(file.dnNo)) {
-        const count = sheetNames.get(file.dnNo)! + 1
-        sheetNames.set(file.dnNo, count)
-        sheetName = `${file.dnNo} (${count})`
-      } else {
-        sheetNames.set(file.dnNo, 1)
-      }
-
-      XLSX.utils.book_append_sheet(wb, ws, sheetName)
+      const sheetName = file.dnNo.substring(0, 31)
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
     })
 
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
-    const blob = new Blob([wbout], { type: "application/octet-stream" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `All_DN_${Date.now()}.xlsx`
-    link.click()
-    URL.revokeObjectURL(url)
+    XLSX.writeFile(workbook, "All_DN_Serial_Lists.xlsx")
+  }
+
+  const handleDownloadIndividualDN = (file: UploadedFile) => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      file.serialData.map((row) => ({
+        "DN No": row.dnNo,
+        Location: row.location,
+        "Bin Code": row.binCode,
+        "Material Code": row.materialCode,
+        "Material Desc": row.materialDesc,
+        Barcode: row.barcode,
+        "Ship To Name": row.shipToName,
+        "Ship To Address": row.shipToAddress,
+      })),
+    )
+
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, file.dnNo.substring(0, 31))
+
+    XLSX.writeFile(workbook, `${file.dnNo}_Serial_List.xlsx`)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -1341,21 +1135,21 @@ export default function ExcelUploader() {
         }
       `}</style>
 
-      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-12 space-y-6">
-        <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-8 shadow-lg animate-section">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-8 space-y-6">
+        <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm animate-section">
           <label
             htmlFor="file-upload"
-            className="flex flex-col items-center justify-center h-48 border-2 border-dashed border-border/60 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-all duration-300 group"
+            className="flex flex-col items-center justify-center h-44 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-200 group"
           >
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
-                <Upload className="w-8 h-8 text-primary" />
+            <div className="flex flex-col items-center justify-center space-y-3">
+              <div className="p-3 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors duration-200">
+                <Upload className="w-7 h-7 text-blue-600" />
               </div>
               <div className="text-center">
-                <p className="text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+                <p className="text-lg font-semibold text-slate-700 mb-1 group-hover:text-blue-600 transition-colors duration-200">
                   Click to upload Excel file(s)
                 </p>
-                <p className="text-sm text-muted-foreground">or drag and drop</p>
+                <p className="text-sm text-slate-500">or drag and drop</p>
               </div>
             </div>
             <input
@@ -1370,20 +1164,20 @@ export default function ExcelUploader() {
 
           {isLoading && (
             <div className="mt-6 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent" />
-              <p className="mt-4 text-muted-foreground font-medium">Processing your files...</p>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
+              <p className="mt-3 text-slate-600 font-medium">Processing your files...</p>
             </div>
           )}
         </div>
 
         {uploadedFiles.length > 0 && (
-          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-8 shadow-lg animate-section">
+          <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm animate-section">
             <div className="flex items-center justify-between mb-6">
               <button
                 onClick={() => setShowFilesList(!showFilesList)}
-                className="flex items-center gap-3 text-xl font-bold text-foreground hover:text-primary transition-colors duration-300"
+                className="flex items-center gap-3 text-lg font-semibold text-slate-800 hover:text-blue-600 transition-colors duration-200"
               >
-                <FileSpreadsheet className="w-6 h-6" />
+                <FileSpreadsheet className="w-5 h-5" />
                 Uploaded Files ({uploadedFiles.length})
                 <span
                   className={`transform transition-transform duration-300 ${showFilesList ? "rotate-90" : ""}`}
@@ -1394,7 +1188,7 @@ export default function ExcelUploader() {
               </button>
               <button
                 onClick={handleClear}
-                className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-all duration-300 font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-200 font-medium text-sm"
               >
                 <X className="w-4 h-4" />
                 Clear All
@@ -1402,33 +1196,35 @@ export default function ExcelUploader() {
             </div>
 
             {showFilesList && (
-              <div className="space-y-3 max-h-80 overflow-y-auto">
+              <div className="space-y-2 max-h-80 overflow-y-auto">
                 {uploadedFiles.map((file, idx) => (
                   <div
                     key={file.id}
-                    className={`flex items-center justify-between p-4 bg-accent/30 rounded-lg border transition-all duration-300 animate-file ${
-                      selectedFileId === file.id ? "border-primary shadow-md bg-primary/10" : "border-border/50"
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-200 animate-file ${
+                      selectedFileId === file.id
+                        ? "border-blue-400 shadow-sm bg-blue-50"
+                        : "border-slate-200 bg-slate-50 hover:bg-slate-100"
                     }`}
                     style={{ animationDelay: `${idx * 0.1}s` }}
                   >
                     <button
                       onClick={() => handleSelectFile(file.id)}
-                      className="flex items-center gap-3 flex-1 hover:text-primary transition-colors duration-300"
+                      className="flex items-center gap-3 flex-1 hover:text-blue-600 transition-colors duration-200"
                     >
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <FileSpreadsheet className="w-5 h-5 text-primary" />
+                      <div className="p-2 rounded-lg bg-blue-100">
+                        <FileSpreadsheet className="w-5 h-5 text-blue-600" />
                       </div>
                       <div className="text-left">
-                        <p className="font-semibold text-foreground text-base">{file.name}</p>
-                        <p className="text-sm text-muted-foreground">DN: {file.dnNo}</p>
+                        <p className="font-semibold text-slate-800 text-sm">{file.name}</p>
+                        <p className="text-xs text-slate-500">DN: {file.dnNo}</p>
                       </div>
                     </button>
                     <button
                       onClick={() => handleDeleteFile(file.id)}
-                      className="p-2 hover:bg-destructive/20 text-destructive rounded-lg transition-all duration-300"
+                      className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-all duration-200"
                       title="Delete file"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -1438,38 +1234,35 @@ export default function ExcelUploader() {
         )}
 
         {(groupedData.length > 0 || serialListData.length > 0) && (
-          <div
-            ref={tableRef}
-            className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl shadow-lg animate-section"
-          >
-            <div className="border-b border-border/50">
+          <div ref={tableRef} className="bg-white border border-slate-200 rounded-xl shadow-sm animate-section">
+            <div className="border-b border-slate-200">
               <div className="flex">
                 <button
                   onClick={() => setActiveTab("consolidated")}
-                  className={`flex-1 px-6 py-4 text-base font-semibold transition-all duration-300 ${
+                  className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 ${
                     activeTab === "consolidated"
-                      ? "bg-primary/10 text-primary border-b-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                      ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   Consolidated Materials
                 </button>
                 <button
                   onClick={() => setActiveTab("serialList")}
-                  className={`flex-1 px-6 py-4 text-base font-semibold transition-all duration-300 ${
+                  className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 ${
                     activeTab === "serialList"
-                      ? "bg-primary/10 text-primary border-b-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                      ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   Bulking Serial List
                 </button>
                 <button
                   onClick={() => setActiveTab("individualDN")}
-                  className={`flex-1 px-6 py-4 text-base font-semibold transition-all duration-300 ${
+                  className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 ${
                     activeTab === "individualDN"
-                      ? "bg-primary/10 text-primary border-b-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/30"
+                      ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   Individual DN Downloads
@@ -1482,71 +1275,66 @@ export default function ExcelUploader() {
                 <>
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-foreground">Consolidated Materials</h2>
-                      <p className="text-base text-muted-foreground mt-1">
+                      <h2 className="text-xl font-bold text-slate-800">Consolidated Materials Report</h2>
+                      <p className="text-sm text-slate-500 mt-1">
                         {selectedFileId
-                          ? `Showing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
-                          : `Combined data from ${uploadedFiles.length} file(s)`}
+                          ? `Showing data for: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
+                          : "Showing combined data from all files"}
                       </p>
                     </div>
                     <button
                       onClick={handleDownload}
-                      className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow"
                     >
-                      <Download className="w-5 h-5" />
+                      <Download className="w-4 h-4" />
                       Download
                     </button>
                   </div>
-
-                  <div className="overflow-x-auto rounded-xl border border-border/50">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-accent/50 border-b border-border/50">
-                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">MATERIAL CODE</th>
-                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">
-                            MATERIAL DESCRIPTION
+                  <div className="overflow-x-auto rounded-lg border border-slate-200">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-100 border-b-2 border-slate-300">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Material Code
                           </th>
-                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">CATEGORY</th>
-                          <th className="px-6 py-4 text-center text-base font-bold text-foreground">QTY.</th>
-                          <th className="px-6 py-4 text-center text-base font-bold text-foreground">UM</th>
-                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">SHIPNAME</th>
-                          <th className="px-6 py-4 text-left text-base font-bold text-foreground">REMARKS</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Material Description
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Category
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Qty.
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            UM
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Ship Name
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Remarks
+                          </th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-slate-200 bg-white">
                         {groupedData
                           .filter((row) => row.materialCode && row.materialDescription)
                           .map((row, idx) => (
                             <tr
                               key={idx}
-                              className={`border-b border-border/30 hover:bg-accent/30 transition-colors duration-300 ${
-                                animatingRows.has(idx) ? "animate-row" : ""
-                              }`}
-                              style={{
-                                opacity: animatingRows.has(idx) ? 1 : 0,
-                              }}
+                              className={`${
+                                animatingRows.has(idx) ? "animate-row" : "opacity-0"
+                              } hover:bg-slate-50 transition-colors`}
+                              style={{ animationDelay: `${idx * 0.03}s` }}
                             >
-                              <td className="px-6 py-4 text-base font-medium text-foreground border border-border/50">
-                                {row.materialCode}
-                              </td>
-                              <td className="px-6 py-4 text-base text-foreground border border-border/50">
-                                {row.materialDescription}
-                              </td>
-                              <td className="px-6 py-4 text-base text-foreground border border-border/50">
-                                {row.category}
-                              </td>
-                              <td className="px-6 py-4 text-base text-center font-bold text-primary border border-border/50">
-                                {row.qty}
-                              </td>
-                              <td className="px-6 py-4 text-base text-center text-muted-foreground border border-border/50">
-                                -
-                              </td>
-                              <td className="px-6 py-4 text-base text-foreground border border-border/50">
-                                {row.shipName}
-                              </td>
-                              <td className="px-6 py-4 text-base text-muted-foreground border border-border/50">
-                                {row.remarks}
-                              </td>
+                              <td className="px-4 py-3 font-mono text-xs text-slate-700">{row.materialCode}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.materialDescription}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.category}</td>
+                              <td className="px-4 py-3 text-center font-semibold text-blue-600">{row.qty}</td>
+                              <td className="px-4 py-3 text-center text-slate-500">-</td>
+                              <td className="px-4 py-3 text-slate-700">{row.shipName}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.remarks}</td>
                             </tr>
                           ))}
                       </tbody>
@@ -1558,99 +1346,73 @@ export default function ExcelUploader() {
               {activeTab === "serialList" && (
                 <>
                   <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-6">
-                      <HaierLogo />
-                      <div>
-                        <h2 className="text-2xl font-bold text-foreground">Bulking Serial List</h2>
-                        <p className="text-base text-muted-foreground mt-1">
-                          {selectedFileId
-                            ? `Showing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
-                            : `Combined serial data from ${uploadedFiles.length} file(s)`}
-                        </p>
-                      </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-800">Bulking Serial List Report</h2>
+                      <p className="text-sm text-slate-500 mt-1">
+                        {selectedFileId
+                          ? `Showing data for: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
+                          : "Showing combined data from all files"}
+                      </p>
                     </div>
-                    <div className="flex flex-col items-end gap-3">
-                      <div className="text-right">
-                        {/* <p className="text-sm font-semibold text-foreground">Date Printed:</p> */}
-                        <p className="text-sm text-muted-foreground">{formatDate()}</p>
-                      </div>
-                      <button
-                        onClick={handleDownload}
-                        className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
-                      >
-                        <Download className="w-5 h-5" />
-                        Download
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleDownload}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
                   </div>
-
-                  <div className="overflow-x-auto rounded-xl border-2 border-border">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-accent/60">
-                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                  <div className="overflow-x-auto rounded-lg border border-slate-200">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-100 border-b-2 border-slate-300">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                             DN No
                           </th>
-                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                             Location
                           </th>
-                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                             Bin Code
                           </th>
-                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                             Material Code
                           </th>
-                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                             Material Desc
                           </th>
-                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                             Barcode
                           </th>
-                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                             Ship To Name
                           </th>
-                          <th className="px-6 py-5 text-center text-lg font-bold text-foreground border-2 border-border">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                             Ship To Address
                           </th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-slate-200 bg-white">
                         {serialListData
                           .filter((row) => row.materialCode && row.barcode)
                           .map((row, idx) => (
                             <tr
                               key={idx}
-                              className={`border-b-2 border-border hover:bg-accent/30 transition-colors duration-300 ${
-                                animatingRows.has(idx) ? "animate-row" : ""
-                              }`}
-                              style={{
-                                opacity: animatingRows.has(idx) ? 1 : 0,
-                              }}
+                              className={`${
+                                animatingRows.has(idx) ? "animate-row" : "opacity-0"
+                              } hover:bg-slate-50 transition-colors`}
+                              style={{ animationDelay: `${idx * 0.03}s` }}
                             >
-                              <td className="px-6 py-4 text-base font-semibold text-center text-foreground border-2 border-border">
-                                {row.dnNo}
-                              </td>
-                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
-                                {row.location}
-                              </td>
-                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
-                                {row.binCode}
-                              </td>
-                              <td className="px-6 py-4 text-base font-semibold text-center text-foreground border-2 border-border">
-                                {row.materialCode}
-                              </td>
-                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
-                                {row.materialDesc}
-                              </td>
-                              <td className="px-6 py-4 text-lg font-mono font-bold text-center text-primary border-2 border-border">
+                              <td className="px-4 py-3 text-slate-700">{row.dnNo}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.location}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.binCode}</td>
+                              <td className="px-4 py-3 font-mono text-xs text-slate-700">{row.materialCode}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.materialDesc}</td>
+                              <td className="px-4 py-3 font-mono font-semibold text-xs text-slate-900">
                                 {row.barcode}
                               </td>
-                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
-                                {row.shipToName}
-                              </td>
-                              <td className="px-6 py-4 text-base text-center text-foreground border-2 border-border">
-                                {row.shipToAddress}
-                              </td>
+                              <td className="px-4 py-3 text-slate-700">{row.shipToName}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.shipToAddress}</td>
                             </tr>
                           ))}
                       </tbody>
@@ -1661,60 +1423,59 @@ export default function ExcelUploader() {
 
               {activeTab === "individualDN" && (
                 <>
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-6">
-                      <HaierLogo />
-                      <div>
-                        <h2 className="text-2xl font-bold text-foreground">Individual DN Downloads</h2>
-                        <p className="text-base text-muted-foreground mt-1">
-                          Download each DN file separately with professional formatting
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-3">
-                      <div className="text-right">
-                        {/* <p className="text-sm font-semibold text-foreground">Date Printed:</p> */}
-                        <p className="text-sm text-muted-foreground">{formatDate()}</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setIsDownloadingAllDN(true)
-                          setShowDownloadModal(true)
-                        }}
-                        className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
-                      >
-                        <Download className="w-5 h-5" />
-                        Download All DN
-                      </button>
-                    </div>
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold text-slate-800">Individual DN Downloads</h2>
+                    <p className="text-sm text-slate-500 mt-1">Download individual DN serial lists or all at once</p>
                   </div>
+                  <div className="space-y-3">
+                    <div className="p-5 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <FileText className="w-6 h-6 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-800">Download All DN Serial Lists</p>
+                            <p className="text-sm text-slate-500">{uploadedFiles.length} file(s) available</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setIsDownloadingAllDN(true)
+                            setShowDownloadModal(true)
+                          }}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download All
+                        </button>
+                      </div>
+                    </div>
 
-                  <div className="space-y-4">
                     {uploadedFiles.map((file, idx) => (
                       <div
                         key={file.id}
-                        className="flex items-center justify-between p-6 bg-accent/30 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-accent/50 transition-all duration-300 animate-file"
+                        className="flex items-center justify-between p-5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors animate-file"
                         style={{ animationDelay: `${idx * 0.1}s` }}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 rounded-lg bg-primary/10">
-                            <FileSpreadsheet className="w-6 h-6 text-primary" />
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-slate-200 rounded-lg">
+                            <FileSpreadsheet className="w-5 h-5 text-slate-700" />
                           </div>
                           <div>
-                            <p className="font-semibold text-foreground text-lg">{file.name}</p>
-                            <p className="text-base text-muted-foreground">
-                              DN: {file.dnNo} • {file.serialData.length} items
-                            </p>
+                            <p className="font-semibold text-slate-800">{file.dnNo}</p>
+                            <p className="text-sm text-slate-500">{file.name}</p>
                           </div>
                         </div>
                         <button
                           onClick={() => {
                             setSelectedDownloadFile(file)
+                            setIsDownloadingAllDN(false)
                             setShowDownloadModal(true)
                           }}
-                          className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                          className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-all duration-200 font-medium text-sm"
                         >
-                          <Download className="w-5 h-5" />
+                          <Download className="w-4 h-4" />
                           Download
                         </button>
                       </div>
@@ -1728,49 +1489,65 @@ export default function ExcelUploader() {
       </div>
 
       {showDownloadModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl border border-border">
-            <h3 className="text-2xl font-bold text-foreground mb-4">Select Download Format</h3>
-            <p className="text-muted-foreground mb-6">Choose how you want to download your report:</p>
-
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4 text-slate-800">Choose Download Format</h3>
             <div className="space-y-3 mb-6">
               <button
                 onClick={() => setDownloadType("excel")}
-                className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-300 ${
-                  downloadType === "excel" ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
+                  downloadType === "excel"
+                    ? "border-blue-600 bg-blue-50 shadow-sm"
+                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                 }`}
               >
-                <FileSpreadsheet className="w-6 h-6 text-primary" />
+                <div
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    downloadType === "excel" ? "border-blue-600" : "border-slate-300"
+                  }`}
+                >
+                  {downloadType === "excel" && <div className="w-3 h-3 rounded-full bg-blue-600" />}
+                </div>
                 <div className="text-left">
-                  <p className="font-semibold text-foreground">Excel Format (.xlsx)</p>
-                  <p className="text-sm text-muted-foreground">Editable spreadsheet with formatting</p>
+                  <p className="font-semibold text-slate-800">Excel (.xlsx)</p>
+                  <p className="text-sm text-slate-500">Editable spreadsheet format</p>
                 </div>
               </button>
-
               <button
                 onClick={() => setDownloadType("pdf")}
-                className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-300 ${
-                  downloadType === "pdf" ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
+                  downloadType === "pdf"
+                    ? "border-blue-600 bg-blue-50 shadow-sm"
+                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                 }`}
               >
-                <FileText className="w-6 h-6 text-primary" />
+                <div
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    downloadType === "pdf" ? "border-blue-600" : "border-slate-300"
+                  }`}
+                >
+                  {downloadType === "pdf" && <div className="w-3 h-3 rounded-full bg-blue-600" />}
+                </div>
                 <div className="text-left">
-                  <p className="font-semibold text-foreground">PDF Format (.pdf)</p>
-                  <p className="text-sm text-muted-foreground">Print-ready document with logo</p>
+                  <p className="font-semibold text-slate-800">PDF</p>
+                  <p className="text-sm text-slate-500">Print-ready document format</p>
                 </div>
               </button>
             </div>
-
             <div className="flex gap-3">
               <button
-                onClick={() => setShowDownloadModal(false)}
-                className="flex-1 px-4 py-3 bg-accent text-foreground rounded-lg hover:bg-accent/80 transition-all duration-300 font-semibold"
+                onClick={() => {
+                  setShowDownloadModal(false)
+                  setSelectedDownloadFile(null)
+                  setIsDownloadingAllDN(false)
+                }}
+                className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDownloadConfirm}
-                className="flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold"
+                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm hover:shadow"
               >
                 Download
               </button>
