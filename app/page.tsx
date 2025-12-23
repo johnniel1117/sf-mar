@@ -491,15 +491,17 @@ export default function ExcelUploader() {
             margin-top: 15px;
             font-size: 9px;
             background: #fff;
+            font-family: Arial, sans-serif;
           }
           
           th, td {
-            border: 2px solid #000;
+            border: 1px solid #000;
             padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
             color: #374151;
             background: #fff;
+            font-family: Arial, sans-serif;
           }
           
           th {
@@ -511,6 +513,8 @@ export default function ExcelUploader() {
             letter-spacing: 0.5px;
             padding: 10px 6px;
             border: 2px solid #000;
+            text-align: center;
+            font-family: Arial, sans-serif;
           }
           
           tbody tr {
@@ -774,15 +778,17 @@ export default function ExcelUploader() {
             margin-top: 15px;
             font-size: 9px;
             background: #fff;
+            font-family: Arial, sans-serif;
           }
           
           th, td {
-            border: 2px solid #000;
+            border: 1px solid #000;
             padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
             color: #374151;
             background: #fff;
+            font-family: Arial, sans-serif;
           }
           
           th {
@@ -794,6 +800,8 @@ export default function ExcelUploader() {
             letter-spacing: 0.5px;
             padding: 10px 6px;
             border: 2px solid #000;
+            text-align: center;
+            font-family: Arial, sans-serif;
           }
           
           tbody tr {
@@ -908,15 +916,17 @@ export default function ExcelUploader() {
             margin-top: 15px;
             font-size: 9px;
             background: #fff;
+            font-family: Arial, sans-serif;
           }
           
           th, td {
-            border: 2px solid #000;
+            border: 1px solid #000;
             padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
             color: #374151;
             background: #fff;
+            font-family: Arial, sans-serif;
           }
           
           th {
@@ -928,6 +938,8 @@ export default function ExcelUploader() {
             letter-spacing: 0.5px;
             padding: 10px 6px;
             border: 2px solid #000;
+            text-align: center;
+            font-family: Arial, sans-serif;
           }
           
           tbody tr {
