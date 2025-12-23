@@ -492,10 +492,11 @@ export default function ExcelUploader() {
             font-size: 9px;
             background: #fff;
             font-family: Arial, sans-serif;
+            border: 2px solid #000; /* Add bold border to outside of table only */
           }
           
           th, td {
-            border: 1px solid #000;
+            border: 1px solid #000; /* Changed to thin borders for internal cells */
             padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
@@ -512,7 +513,7 @@ export default function ExcelUploader() {
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 10px 6px;
-            border: 2px solid #000;
+            border: 1px solid #000; /* Changed back to 1px for internal header borders */
             text-align: center;
             font-family: Arial, sans-serif;
           }
@@ -528,14 +529,14 @@ export default function ExcelUploader() {
           }
           
           .barcode-cell {
-            font-family: 'Courier New', monospace;
+            font-family: Arial, sans-serif; /* Changed to Arial font family */
             font-weight: 600;
             color: #1f2937;
             font-size: 9px;
           }
           
           .material-code-cell {
-            font-family: 'Courier New', monospace;
+            font-family: Arial, sans-serif; /* Changed to Arial font family */
             color: #374151;
             font-size: 9px;
             font-weight: 500;
@@ -543,9 +544,7 @@ export default function ExcelUploader() {
           
           .desc-cell {
             max-width: 200px;
-            text-align: left;
-            padding-left: 10px;
-            line-height: 1.4;
+            text-align: center; /* Added center text alignment */
           }
         </style>
       </head>
@@ -779,10 +778,11 @@ export default function ExcelUploader() {
             font-size: 9px;
             background: #fff;
             font-family: Arial, sans-serif;
+            border: 2px solid #000; /* Add bold border to outside of table only */
           }
           
           th, td {
-            border: 1px solid #000;
+            border: 1px solid #000; /* Changed to thin borders for internal cells */
             padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
@@ -799,7 +799,7 @@ export default function ExcelUploader() {
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 10px 6px;
-            border: 2px solid #000;
+            border: 1px solid #000; /* Changed back to 1px for internal header borders */
             text-align: center;
             font-family: Arial, sans-serif;
           }
@@ -809,14 +809,14 @@ export default function ExcelUploader() {
           }
           
           .barcode-cell {
-            font-family: 'Courier New', monospace;
+            font-family: Arial, sans-serif; /* Changed to Arial font family */
             font-weight: 600;
             color: #1f2937;
             font-size: 9px;
           }
           
           .material-code-cell {
-            font-family: 'Courier New', monospace;
+            font-family: Arial, sans-serif; /* Changed to Arial font family */
             color: #374151;
             font-size: 9px;
             font-weight: 500;
@@ -824,9 +824,7 @@ export default function ExcelUploader() {
           
           .desc-cell {
             max-width: 200px;
-            text-align: left;
-            padding-left: 10px;
-            line-height: 1.4;
+            text-align: center; /* Added center text alignment */
           }
         </style>
       </head>
@@ -917,10 +915,11 @@ export default function ExcelUploader() {
             font-size: 9px;
             background: #fff;
             font-family: Arial, sans-serif;
+            border: 2px solid #000; /* Add bold border to outside of table only */
           }
           
           th, td {
-            border: 1px solid #000;
+            border: 1px solid #000; /* Changed to thin borders for internal cells */
             padding: 8px 6px;
             text-align: center;
             word-wrap: break-word;
@@ -937,7 +936,7 @@ export default function ExcelUploader() {
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 10px 6px;
-            border: 2px solid #000;
+            border: 1px solid #000; /* Changed back to 1px for internal header borders */
             text-align: center;
             font-family: Arial, sans-serif;
           }
@@ -947,14 +946,14 @@ export default function ExcelUploader() {
           }
           
           .barcode-cell {
-            font-family: 'Courier New', monospace;
+            font-family: Arial, sans-serif; /* Changed to Arial font family */
             font-weight: 600;
             color: #1f2937;
             font-size: 9px;
           }
           
           .material-code-cell {
-            font-family: 'Courier New', monospace;
+            font-family: Arial, sans-serif; /* Changed to Arial font family */
             color: #374151;
             font-size: 9px;
             font-weight: 500;
@@ -962,9 +961,7 @@ export default function ExcelUploader() {
           
           .desc-cell {
             max-width: 200px;
-            text-align: left;
-            padding-left: 10px;
-            line-height: 1.4;
+            text-align: center; /* Added center text alignment */
           }
         </style>
       </head>
