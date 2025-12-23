@@ -572,7 +572,7 @@ export default function ExcelUploader() {
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://i.imgur.com/YXK7RZE.png" alt="Haier Logo" />
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s alt="Haier Logo" />
           </div>
           <div class="date">
             <strong>Date Printed:</strong><br/>
@@ -1028,7 +1028,7 @@ export default function ExcelUploader() {
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://i.imgur.com/YXK7RZE.png" alt="Haier Logo" />
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s alt="Haier Logo" />
           </div>
            <h1>${file.dnNo} | ${shipToName}</h1>
           <div class="date">
