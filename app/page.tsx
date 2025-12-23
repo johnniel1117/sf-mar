@@ -715,7 +715,7 @@ export default function ExcelUploader() {
           
           .page-break {
             page-break-after: always;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
           }
           
           .page-break:last-child {
