@@ -4,7 +4,6 @@ import type React from "react"
 import { useState, useRef } from "react"
 import * as XLSX from 'xlsx-js-style';
 import { Upload, X, FileSpreadsheet, Download, FileText } from "lucide-react"
-import { formatDate } from "date-fns";
 
 interface MaterialData {
   materialCode: string
@@ -70,11 +69,23 @@ export default function ExcelUploader() {
     return "Others"
   }
 
+  const formatDate = () => {
+    const now = new Date()
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+    return now.toLocaleDateString("en-US", options)
+  }
+
   const HaierLogo = () => (
     <img 
-      src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" 
+      src="`https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1`" 
       alt="Haier Logo" 
-      style={{ height: "60px", width: "auto" }}  // Made bigger in UI
+      style={{ height: "40px", width: "auto" }}
     />
   )
 
@@ -132,6 +143,7 @@ export default function ExcelUploader() {
             .trim(),
         )
 
+        // Parse for consolidated materials
         const dnNoIdx = headers.findIndex((h) => h.includes("dn no") || h.includes("dn_no") || h.includes("dnno"))
         const materialCodeIdx = headers.findIndex((h) => h.includes("material code") || h.includes("materialcode"))
         const materialDescIdx = headers.findIndex(
@@ -143,6 +155,7 @@ export default function ExcelUploader() {
             h.includes("ship to name") || h.includes("shiptoname") || h.includes("ship name") || h.includes("shipname"),
         )
 
+        // Parse for serial list - all columns
         const orderItemIdx = headers.findIndex((h) => h.includes("order item") || h.includes("orderitem"))
         const factoryCodeIdx = headers.findIndex((h) => h.includes("factory code") || h.includes("factorycode"))
         const locationIdx = headers.findIndex((h) => h.includes("location"))
@@ -176,6 +189,7 @@ export default function ExcelUploader() {
 
           if (!materialCode) continue
 
+          // Check if there's a quantity column in the Excel
           const qtyIdx = headers.findIndex((h) => h.includes("qty") || h.includes("quantity") || h.includes("qnt"))
           const qty = qtyIdx >= 0 ? Number.parseInt(String(row[qtyIdx] || "1"), 10) || 1 : 1
 
@@ -227,6 +241,7 @@ export default function ExcelUploader() {
       const newSerialListData = combineAllSerialData(allFiles)
       setSerialListData(newSerialListData)
 
+      // Trigger staggered animation
       setAnimatingRows(new Set())
       const dataLength = activeTab === "consolidated" ? newGroupedData.length : newSerialListData.length
       Array.from({ length: dataLength }).forEach((_, idx) => {
@@ -239,6 +254,7 @@ export default function ExcelUploader() {
         }, idx * 50)
       })
 
+      // Scroll to table after animation completes
       setTimeout(
         () => {
           tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -291,18 +307,44 @@ export default function ExcelUploader() {
   }
 
   const handleSelectFile = (fileId: string) => {
+    // Toggle: if already selected, unselect
     if (selectedFileId === fileId) {
       setSelectedFileId(null)
       if (activeTab === "consolidated") {
         const allGrouped = groupAllData(uploadedFiles)
         setGroupedData(allGrouped)
+        setAnimatingRows(new Set())
+
+        allGrouped.forEach((_, idx) => {
+          setTimeout(() => {
+            setAnimatingRows((prev) => {
+              const newSet = new Set(prev)
+              newSet.add(idx)
+              return newSet
+            })
+          }, idx * 30)
+        })
       } else {
         const allSerial = combineAllSerialData(uploadedFiles)
         setSerialListData(allSerial)
+        setAnimatingRows(new Set())
+
+        allSerial.forEach((_, idx) => {
+          setTimeout(() => {
+            setAnimatingRows((prev) => {
+              const newSet = new Set(prev)
+              newSet.add(idx)
+              return newSet
+            })
+          }, idx * 30)
+        })
       }
-      setAnimatingRows(new Set())
-      setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth" }), 300)
+
+      setTimeout(() => {
+        tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 300)
     } else {
+      // Select new file
       setSelectedFileId(fileId)
       setAnimatingRows(new Set())
 
@@ -311,11 +353,44 @@ export default function ExcelUploader() {
         if (activeTab === "consolidated") {
           const groupedData = groupSingleFileData(selectedFile.data)
           setGroupedData(groupedData)
+
+          groupedData.forEach((_, idx) => {
+            setTimeout(() => {
+              setAnimatingRows((prev) => {
+                const newSet = new Set(prev)
+                newSet.add(idx)
+                return newSet
+              })
+            }, idx * 50)
+          })
+
+          setTimeout(
+            () => {
+              tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            },
+            groupedData.length * 50 + 300,
+          )
         } else {
           setSerialListData(selectedFile.serialData)
+
+          selectedFile.serialData.forEach((_, idx) => {
+            setTimeout(() => {
+              setAnimatingRows((prev) => {
+                const newSet = new Set(prev)
+                newSet.add(idx)
+                return newSet
+              })
+            }, idx * 50)
+          })
+
+          setTimeout(
+            () => {
+              tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            },
+            selectedFile.serialData.length * 50 + 300,
+          )
         }
       }
-      setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth" }), 300)
     }
   }
 
@@ -346,8 +421,438 @@ export default function ExcelUploader() {
     setIsDownloadingAllDN(false)
   }
 
-  // PDF functions remain unchanged (they already have logo and date if you want them)
-  // ... (handleDownloadPDF, handleDownloadIndividualDNPDF, etc. unchanged)
+  const handleDownloadPDF = () => {
+    // Create a printable HTML document
+    const printWindow = window.open("", "", "width=1200,height=800")
+    if (!printWindow) return
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${activeTab === "consolidated" ? "Consolidated Materials" : "Bulking Serial List"}</title>
+        <style>
+          @page {
+            size: landscape;
+            margin: 15mm;
+          }
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: Arial, sans-serif;
+            margin: 15px;
+            color: #000;
+            background: #fff;
+          }
+          
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #0057A8;
+          }
+          
+          .logo img {
+            height: 45px;
+            width: auto;
+          }
+          
+          .date {
+            text-align: right;
+            font-size: 11px;
+            color: #000;
+          }
+          
+          .date strong {
+            font-weight: bold;
+            font-size: 12px;
+          }
+          
+          h1 {
+            color: #000;
+            margin: 15px 0 20px 0;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 0.5px;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          
+          th, td {
+            border: 1.5px solid #000;
+            padding: 10px 8px;
+            text-align: center;
+            word-wrap: break-word;
+            color: #000;
+          }
+          
+          th {
+            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
+            color: #000;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 12px 8px;
+          }
+          
+          tr:nth-child(even) {
+            background-color: #F9F9F9;
+          }
+          
+          tr:hover {
+            background-color: #F0F0F0;
+          }
+          
+          .qty-cell {
+            font-weight: bold;
+            color: #000;
+          }
+          
+          .barcode-cell {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: #000;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+          }
+          
+          .material-code-cell {
+            font-weight: bold;
+            font-size: 10px;
+            color: #000;
+          }
+          
+          .desc-cell {
+            text-align: left;
+            max-width: 200px;
+            font-size: 9px;
+            color: #000;
+            line-height: 1.4;
+          }
+          
+          @media print {
+            body { 
+              margin: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .no-print { display: none; }
+            @page {
+              size: landscape;
+              margin: 15mm;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
+          </div>
+          <div class="date">
+            <strong>Date Printed:</strong><br/>
+            ${formatDate()}
+          </div>
+        </div>
+        <h1>${activeTab === "consolidated" ? "Consolidated Materials Report" : "Bulking Serial List Report"}</h1>
+        ${
+          activeTab === "consolidated"
+            ? `
+        <table>
+          <thead>
+            <tr>
+              <th>MATERIAL CODE</th>
+              <th>MATERIAL DESCRIPTION</th>
+              <th>CATEGORY</th>
+              <th>QTY.</th>
+              <th>UM</th>
+              <th>SHIPNAME</th>
+              <th>REMARKS</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${groupedData
+              .filter((row) => row.materialCode && row.materialDescription)
+              .map(
+                (row) => `
+              <tr>
+                <td class="material-code-cell">${row.materialCode}</td>
+                <td class="desc-cell">${row.materialDescription}</td>
+                <td>${row.category}</td>
+                <td class="qty-cell">${row.qty}</td>
+                <td>-</td>
+                <td class="desc-cell">${row.shipName}</td>
+                <td>${row.remarks}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+        `
+            : `
+        <table>
+          <thead>
+            <tr>
+              <th>DN No</th>
+              <th>Location</th>
+              <th>Bin Code</th>
+              <th>Material Code</th>
+              <th>Material Desc</th>
+              <th>Barcode</th>
+              <th>Ship To Name</th>
+              <th>Ship To Address</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${serialListData
+              .filter((row) => row.materialCode && row.barcode)
+              .map(
+                (row) => `
+              <tr>
+                <td>${row.dnNo}</td>
+                <td class="desc-cell">${row.location}</td>
+                <td>${row.binCode}</td>
+                <td class="material-code-cell">${row.materialCode}</td>
+                <td class="desc-cell">${row.materialDesc}</td>
+                <td class="barcode-cell">${row.barcode}</td>
+                <td class="desc-cell">${row.shipToName}</td>
+                <td class="desc-cell">${row.shipToAddress}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+        `
+        }
+      </body>
+      </html>
+    `
+
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+    printWindow.onload = () => {
+      printWindow.print()
+    }
+  }
+
+  const handleDownloadAllDNPDF = () => {
+    uploadedFiles.forEach((file, index) => {
+      setTimeout(() => {
+        handleDownloadIndividualDNPDF(file)
+      }, index * 1000) // Stagger the downloads by 1 second each
+    })
+  }
+
+  const handleDownloadIndividualDNPDF = (file: UploadedFile) => {
+    const printWindow = window.open("", "", "width=1200,height=800")
+    if (!printWindow) return
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${file.dnNo} - Serial List</title>
+        <style>
+          @page {
+            size: landscape;
+            margin: 15mm;
+          }
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: Arial, sans-serif;
+            margin: 15px;
+            color: #000;
+            background: #fff;
+          }
+          
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #0057A8;
+          }
+          
+          .logo img {
+            height: 45px;
+            width: auto;
+          }
+          
+          .date {
+            text-align: right;
+            font-size: 11px;
+            color: #000;
+          }
+          
+          .date strong {
+            font-weight: bold;
+            font-size: 12px;
+          }
+          
+          h1 {
+            color: #000;
+            margin: 15px 0 20px 0;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 0.5px;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          
+          th, td {
+            border: 1.5px solid #000;
+            padding: 10px 8px;
+            text-align: center;
+            word-wrap: break-word;
+            color: #000;
+          }
+          
+          th {
+            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
+            color: #000;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 12px 8px;
+          }
+          
+          tr:nth-child(even) {
+            background-color: #F9F9F9;
+          }
+          
+          tr:hover {
+            background-color: #F0F0F0;
+          }
+          
+          .barcode-cell {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: #000;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+          }
+          
+          .material-code-cell {
+            font-weight: bold;
+            font-size: 10px;
+            color: #000;
+          }
+          
+          .desc-cell {
+            text-align: left;
+            max-width: 200px;
+            font-size: 9px;
+            color: #000;
+            line-height: 1.4;
+          }
+          
+          .dn-cell {
+            font-weight: bold;
+            color: #000;
+          }
+          
+          @media print {
+            body { 
+              margin: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .no-print { display: none; }
+            @page {
+              size: landscape;
+              margin: 15mm;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
+          </div>
+          <div class="date">
+            <strong>Date Printed:</strong><br/>
+            ${formatDate()}
+          </div>
+        </div>
+        <h1>DN ${file.dnNo} - Serial List Report</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>DN No</th>
+              <th>Location</th>
+              <th>Bin Code</th>
+              <th>Material Code</th>
+              <th>Material Desc</th>
+              <th>Barcode</th>
+              <th>Ship To Name</th>
+              <th>Ship To Address</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${file.serialData
+              .filter((row) => row.materialCode && row.barcode)
+              .map(
+                (row) => `
+              <tr>
+                <td class="dn-cell">${row.dnNo}</td>
+                <td class="desc-cell">${row.location}</td>
+                <td>${row.binCode}</td>
+                <td class="material-code-cell">${row.materialCode}</td>
+                <td class="desc-cell">${row.materialDesc}</td>
+                <td class="barcode-cell">${row.barcode}</td>
+                <td class="desc-cell">${row.shipToName}</td>
+                <td class="desc-cell">${row.shipToAddress}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `
+
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+    printWindow.onload = () => {
+      printWindow.print()
+    }
+  }
+
+  // ... (all your existing imports and code until handleDownloadExcel)
 
   const handleDownloadExcel = () => {
     const wb = XLSX.utils.book_new()
@@ -355,9 +860,9 @@ export default function ExcelUploader() {
     if (activeTab === "consolidated") {
       const wsData: any[][] = []
 
-      // Big centered title instead of HAIER + date
-      wsData.push(["", "", "", "Consolidated Materials Report", "", "", ""])
-      wsData.push([])
+      // Clean centered header (no HAIER text, no date)
+      wsData.push(["", "", "Consolidated Materials Report", "", "", "", ""])
+      wsData.push([]) // Spacing
 
       wsData.push(["MATERIAL CODE", "MATERIAL DESCRIPTION", "CATEGORY", "QTY.", "UM", "SHIPNAME", "REMARKS"])
 
@@ -366,122 +871,153 @@ export default function ExcelUploader() {
       })
 
       const ws = XLSX.utils.aoa_to_sheet(wsData)
-      ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }]
+
+      // Column widths
       ws["!cols"] = [{ wch: 18 }, { wch: 40 }, { wch: 22 }, { wch: 10 }, { wch: 8 }, { wch: 30 }, { wch: 20 }]
 
-      const range = XLSX.utils.decode_range(ws["!ref"]!)
+      // Merge title across columns for big centered look
+      ws["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Title spans all columns
+      ]
+
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
 
       for (let R = range.s.r; R <= range.e.r; ++R) {
         for (let C = range.s.c; C <= range.e.c; ++C) {
-          const addr = XLSX.utils.encode_cell({ r: R, c: C })
-          if (!ws[addr]) ws[addr] = { t: "s", v: "" }
-          if (!ws[addr].s) ws[addr].s = {}
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+          if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
+          if (!ws[cellAddress].s) ws[cellAddress].s = {}
 
-          ws[addr].s.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-          ws[addr].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
-          ws[addr].s.font = { name: "Arial", sz: 11 }
+          // Borders
+          ws[cellAddress].s.border = {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          }
 
+          // Default alignment: center
+          ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
+          ws[cellAddress].s.font = { name: "Arial", sz: 11, color: { rgb: "000000" } }
+
+          // Title row - big and bold
           if (R === 0) {
-            ws[addr].s.font = { bold: true, sz: 18, color: { rgb: "0057A8" } }
+            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 18, color: { rgb: "0057A8" } }
+            ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
           }
+
+          // Column headers
           if (R === 2) {
-            ws[addr].s.font = { bold: true, sz: 12 }
-            ws[addr].s.fill = { fgColor: { rgb: "D3D3D3" } }
+            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
           }
-          if (C === 3 && R > 2) ws[addr].s.font = { bold: true }
-          if (C === 1 && R > 2) ws[addr].s.alignment = { horizontal: "left", wrapText: true }
+
+          // QTY bold
+          if (C === 3 && R > 2) {
+            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 11, color: { rgb: "000000" } }
+          }
+
+          // Description left-aligned for readability
+          if (C === 1 && R > 2) {
+            ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center", wrapText: true }
+          }
         }
       }
 
-      XLSX.utils.book_append_sheet(wb, ws, "Consolidated")
+      XLSX.utils.book_append_sheet(wb, ws, "Consolidated Materials")
       const fileName = `Consolidated_Materials_${new Date().toISOString().slice(0,10)}.xlsx`
-      XLSX.writeFile(wb, fileName)
-    } 
-    else if (activeTab === "serialList") {
-      const wsData: any[][] = []
-
-      wsData.push(["", "", "", "", "Bulking Serial List Report", "", "", ""])
-      wsData.push([])
-
-      wsData.push(["DN No", "Location", "Bin Code", "Material Code", "Material Desc", "Barcode", "Ship To Name", "Ship To Address"])
-
-      serialListData.forEach((row) => {
-        wsData.push([row.dnNo, row.location, row.binCode, row.materialCode, row.materialDesc, row.barcode, row.shipToName, row.shipToAddress])
-      })
-
-      const ws = XLSX.utils.aoa_to_sheet(wsData)
-      ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }]
-      ws["!cols"] = [{ wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 40 }, { wch: 30 }, { wch: 35 }, { wch: 45 }]
-
-      const range = XLSX.utils.decode_range(ws["!ref"]!)
-
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const addr = XLSX.utils.encode_cell({ r: R, c: C })
-          if (!ws[addr]) ws[addr] = { t: "s", v: "" }
-          if (!ws[addr].s) ws[addr].s = {}
-
-          ws[addr].s.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-          ws[addr].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
-          ws[addr].s.font = { name: "Arial", sz: 11 }
-
-          if (R === 0) {
-            ws[addr].s.font = { bold: true, sz: 18, color: { rgb: "0057A8" } }
-          }
-          if (R === 2) {
-            ws[addr].s.font = { bold: true, sz: 12 }
-            ws[addr].s.fill = { fgColor: { rgb: "D3D3D3" } }
-          }
-          if (C === 4 && R > 2) ws[addr].s.alignment = { horizontal: "left", wrapText: true }
-        }
-      }
-
-      XLSX.utils.book_append_sheet(wb, ws, "Bulking Serial List")
-      const fileName = `Bulking_Serial_List_${new Date().toISOString().slice(0,10)}.xlsx`
-      XLSX.writeFile(wb, fileName)
-    }
-  }
 
   const handleDownloadIndividualDN = (file: UploadedFile) => {
     const wb = XLSX.utils.book_new()
     const wsData: any[][] = []
-
-    wsData.push(["", "", "", "", `DN ${file.dnNo} - Serial List Report`, "", "", ""])
-    wsData.push([])
-
-    wsData.push(["DN No", "Location", "Bin Code", "Material Code", "Material Desc", "Barcode", "Ship To Name", "Ship To Address"])
+    
+    // Add logo and date header rows
+    wsData.push(["HAIER", "", "", "", "", "", "", `Date Printed: ${formatDate()}`])
+    wsData.push([]) // Empty row for spacing
+    wsData.push([
+      "DN No",
+      "Location",
+      "binCode",
+      "Material Code",
+      "Material Desc",
+      "Barcode",
+      "Ship To Name",
+      "Ship To Address",
+    ])
 
     file.serialData.forEach((row) => {
-      wsData.push([row.dnNo, row.location, row.binCode, row.materialCode, row.materialDesc, row.barcode, row.shipToName, row.shipToAddress])
+      wsData.push([
+        row.dnNo,
+        row.location,
+        row.binCode,
+        row.materialCode,
+        row.materialDesc,
+        row.barcode,
+        row.shipToName,
+        row.shipToAddress,
+      ])
     })
 
     const ws = XLSX.utils.aoa_to_sheet(wsData)
-    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }]
-    ws["!cols"] = [{ wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 40 }, { wch: 30 }, { wch: 35 }, { wch: 45 }]
+    ws["!cols"] = [
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 40 },
+      { wch: 30 },
+      { wch: 35 },
+      { wch: 45 },
+    ]
 
-    const range = XLSX.utils.decode_range(ws["!ref"]!)
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
 
     for (let R = range.s.r; R <= range.e.r; ++R) {
       for (let C = range.s.c; C <= range.e.c; ++C) {
-        const addr = XLSX.utils.encode_cell({ r: R, c: C })
-        if (!ws[addr]) ws[addr] = { t: "s", v: "" }
-        if (!ws[addr].s) ws[addr].s = {}
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+        if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
 
-        ws[addr].s.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-        ws[addr].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
-        ws[addr].s.font = { name: "Arial", sz: 11 }
+        if (!ws[cellAddress].s) ws[cellAddress].s = {}
 
-        if (R === 0) ws[addr].s.font = { bold: true, sz: 18, color: { rgb: "0057A8" } }
-        if (R === 2) {
-          ws[addr].s.font = { bold: true, sz: 12 }
-          ws[addr].s.fill = { fgColor: { rgb: "D3D3D3" } }
+        ws[cellAddress].s.border = {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } },
         }
-        if (C === 4 && R > 2) ws[addr].s.alignment = { horizontal: "left", wrapText: true }
+
+        ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
+        ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
+
+        // Header row (row 0 - HAIER and Date)
+        if (R === 0) {
+          ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 14, color: { rgb: "000000" } }
+          ws[cellAddress].s.fill = { fgColor: { rgb: "FFFFFF" } }
+          if (C === 0) {
+            ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center" }
+          } else if (C === 7) {
+            ws[cellAddress].s.alignment = { horizontal: "right", vertical: "center" }
+          }
+        }
+
+        // Column headers (row 2)
+        if (R === 2) {
+          ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
+          ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
+        }
       }
     }
 
-    XLSX.utils.book_append_sheet(wb, ws, file.dnNo.slice(0, 31))
-    XLSX.writeFile(wb, `${file.dnNo}_Serial_List.xlsx`)
+    XLSX.utils.book_append_sheet(wb, ws, file.dnNo)
+
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
+    const blob = new Blob([wbout], { type: "application/octet-stream" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `${file.dnNo}_${Date.now()}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   const handleDownloadAllDN = () => {
@@ -490,53 +1026,104 @@ export default function ExcelUploader() {
 
     uploadedFiles.forEach((file) => {
       const wsData: any[][] = []
-      wsData.push(["", "", "", "", `DN ${file.dnNo} - Serial List Report`, "", "", ""])
-      wsData.push([])
-
-      wsData.push(["DN No", "Location", "Bin Code", "Material Code", "Material Desc", "Barcode", "Ship To Name", "Ship To Address"])
+      
+      // Add logo and date header rows
+      wsData.push(["HAIER", "", "", "", "", "", "", `Date Printed: ${formatDate()}`])
+      wsData.push([]) // Empty row for spacing
+      wsData.push([
+        "DN No",
+        "Location",
+        "binCode",
+        "Material Code",
+        "Material Desc",
+        "Barcode",
+        "Ship To Name",
+        "Ship To Address",
+      ])
 
       file.serialData.forEach((row) => {
-        wsData.push([row.dnNo, row.location, row.binCode, row.materialCode, row.materialDesc, row.barcode, row.shipToName, row.shipToAddress])
+        wsData.push([
+          row.dnNo,
+          row.location,
+          row.binCode,
+          row.materialCode,
+          row.materialDesc,
+          row.barcode,
+          row.shipToName,
+          row.shipToAddress,
+        ])
       })
 
       const ws = XLSX.utils.aoa_to_sheet(wsData)
-      ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }]
-      ws["!cols"] = [{ wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 40 }, { wch: 30 }, { wch: 35 }, { wch: 45 }]
+      ws["!cols"] = [
+        { wch: 18 },
+        { wch: 20 },
+        { wch: 18 },
+        { wch: 20 },
+        { wch: 40 },
+        { wch: 30 },
+        { wch: 35 },
+        { wch: 45 },
+      ]
 
-      const range = XLSX.utils.decode_range(ws["!ref"]!)
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
 
       for (let R = range.s.r; R <= range.e.r; ++R) {
         for (let C = range.s.c; C <= range.e.c; ++C) {
-          const addr = XLSX.utils.encode_cell({ r: R, c: C })
-          if (!ws[addr]) ws[addr] = { t: "s", v: "" }
-          if (!ws[addr].s) ws[addr].s = {}
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+          if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
 
-          ws[addr].s.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
-          ws[addr].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
-          ws[addr].s.font = { name: "Arial", sz: 11 }
+          if (!ws[cellAddress].s) ws[cellAddress].s = {}
 
-          if (R === 0) ws[addr].s.font = { bold: true, sz: 18, color: { rgb: "0057A8" } }
-          if (R === 2) {
-            ws[addr].s.font = { bold: true, sz: 12 }
-            ws[addr].s.fill = { fgColor: { rgb: "D3D3D3" } }
+          ws[cellAddress].s.border = {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
           }
-          if (C === 4 && R > 2) ws[addr].s.alignment = { horizontal: "left", wrapText: true }
+
+          ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
+          ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
+
+          // Header row (row 0 - HAIER and Date)
+          if (R === 0) {
+            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 14, color: { rgb: "000000" } }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "FFFFFF" } }
+            if (C === 0) {
+              ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center" }
+            } else if (C === 7) {
+              ws[cellAddress].s.alignment = { horizontal: "right", vertical: "center" }
+            }
+          }
+
+          // Column headers (row 2)
+          if (R === 2) {
+            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
+          }
         }
       }
 
-      let sheetName = file.dnNo.slice(0, 31)
-      if (sheetNames.has(sheetName)) {
-        const count = sheetNames.get(sheetName)! + 1
-        sheetNames.set(sheetName, count)
-        sheetName = `${file.dnNo.slice(0, 27)} (${count})`
+      let sheetName = file.dnNo
+      if (sheetNames.has(file.dnNo)) {
+        const count = sheetNames.get(file.dnNo)! + 1
+        sheetNames.set(file.dnNo, count)
+        sheetName = `${file.dnNo} (${count})`
       } else {
-        sheetNames.set(sheetName, 1)
+        sheetNames.set(file.dnNo, 1)
       }
 
       XLSX.utils.book_append_sheet(wb, ws, sheetName)
     })
 
-    XLSX.writeFile(wb, `All_DN_Serial_Lists_${new Date().toISOString().slice(0,10)}.xlsx`)
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
+    const blob = new Blob([wbout], { type: "application/octet-stream" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `All_DN_${Date.now()}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
