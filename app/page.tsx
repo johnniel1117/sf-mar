@@ -645,12 +645,14 @@ export default function ExcelUploader() {
           <div class="logo">
             <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
           </div>
+          
+          <h1>${file.dnNo} | ${shipToName}</h1>
           <div class="date">
-            <strong>Date Printed:</strong><br/>
+            
             ${formatDate()}
           </div>
         </div>
-        <h1>DN No: ${file.dnNo} | ${shipToName}</h1>
+        
         <table>
           <thead>
             <tr>
