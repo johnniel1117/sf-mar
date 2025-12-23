@@ -1030,13 +1030,14 @@ export default function ExcelUploader() {
           <div class="logo">
             <img src="https://i.imgur.com/YXK7RZE.png" alt="Haier Logo" />
           </div>
+           <h1>${file.dnNo} | ${shipToName}</h1>
           <div class="date">
             <strong>Date Printed:</strong><br/>
             ${formatDate()}
           </div>
         </div>
         
-        <h1>${file.dnNo} | ${shipToName}</h1>
+       
         
         <table>
           <thead>
