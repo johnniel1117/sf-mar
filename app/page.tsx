@@ -852,18 +852,15 @@ export default function ExcelUploader() {
     }
   }
 
-  // ... (all your existing imports and code until handleDownloadExcel)
-
   const handleDownloadExcel = () => {
     const wb = XLSX.utils.book_new()
 
     if (activeTab === "consolidated") {
       const wsData: any[][] = []
-
-      // Clean centered header (no HAIER text, no date)
-      wsData.push(["", "", "Consolidated Materials Report", "", "", "", ""])
-      wsData.push([]) // Spacing
-
+      
+      // Add logo and date header rows
+      wsData.push(["HAIER", "", "", "", "", "", `Date Printed: ${formatDate()}`])
+      wsData.push([]) // Empty row for spacing
       wsData.push(["MATERIAL CODE", "MATERIAL DESCRIPTION", "CATEGORY", "QTY.", "UM", "SHIPNAME", "REMARKS"])
 
       groupedData.forEach((row) => {
@@ -871,13 +868,101 @@ export default function ExcelUploader() {
       })
 
       const ws = XLSX.utils.aoa_to_sheet(wsData)
+      ws["!cols"] = [{ wch: 18 }, { wch: 35 }, { wch: 22 }, { wch: 8 }, { wch: 6 }, { wch: 28 }, { wch: 18 }]
 
-      // Column widths
-      ws["!cols"] = [{ wch: 18 }, { wch: 40 }, { wch: 22 }, { wch: 10 }, { wch: 8 }, { wch: 30 }, { wch: 20 }]
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
 
-      // Merge title across columns for big centered look
-      ws["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Title spans all columns
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
+          if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
+
+          if (!ws[cellAddress].s) ws[cellAddress].s = {}
+
+          ws[cellAddress].s.border = {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          }
+
+          ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
+          ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
+
+          // Header row (row 0 - HAIER and Date)
+          if (R === 0) {
+            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 14, color: { rgb: "000000" } }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "FFFFFF" } }
+            if (C === 0) {
+              ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center" }
+            } else if (C === 6) {
+              ws[cellAddress].s.alignment = { horizontal: "right", vertical: "center" }
+            }
+          }
+
+          // Column headers (row 2)
+          if (R === 2) {
+            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
+          }
+
+          // QTY column bold
+          if (C === 3 && R > 2) {
+            ws[cellAddress].s.font = { name: "Arial", bold: true, color: { rgb: "000000" } }
+          }
+        }
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, "Consolidated Materials")
+
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" })
+      const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `Consolidated_Materials_${Date.now()}.xlsx`
+      link.click()
+      URL.revokeObjectURL(url)
+    } else if (activeTab === "serialList") {
+      const wsData: any[][] = []
+      
+      // Add logo and date header rows
+      wsData.push(["HAIER", "", "", "", "", "", "", `Date Printed: ${formatDate()}`])
+      wsData.push([]) // Empty row for spacing
+      wsData.push([
+        "DN No",
+        "Location",
+        "binCode",
+        "Material Code",
+        "Material Desc",
+        "Barcode",
+        "Ship To Name",
+        "Ship To Address",
+      ])
+
+      serialListData.forEach((row) => {
+        wsData.push([
+          row.dnNo,
+          row.location,
+          row.binCode,
+          row.materialCode,
+          row.materialDesc,
+          row.barcode,
+          row.shipToName,
+          row.shipToAddress,
+        ])
+      })
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData)
+      ws["!cols"] = [
+        { wch: 18 },
+        { wch: 20 },
+        { wch: 18 },
+        { wch: 20 },
+        { wch: 40 },
+        { wch: 30 },
+        { wch: 35 },
+        { wch: 45 },
       ]
 
       const range = XLSX.utils.decode_range(ws["!ref"] || "A1")
@@ -886,9 +971,9 @@ export default function ExcelUploader() {
         for (let C = range.s.c; C <= range.e.c; ++C) {
           const cellAddress = XLSX.utils.encode_cell({ r: R, c: C })
           if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }
+
           if (!ws[cellAddress].s) ws[cellAddress].s = {}
 
-          // Borders
           ws[cellAddress].s.border = {
             top: { style: "thin", color: { rgb: "000000" } },
             bottom: { style: "thin", color: { rgb: "000000" } },
@@ -896,36 +981,40 @@ export default function ExcelUploader() {
             right: { style: "thin", color: { rgb: "000000" } },
           }
 
-          // Default alignment: center
           ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center", wrapText: true }
-          ws[cellAddress].s.font = { name: "Arial", sz: 11, color: { rgb: "000000" } }
+          ws[cellAddress].s.font = { name: "Arial", color: { rgb: "000000" } }
 
-          // Title row - big and bold
+          // Header row (row 0 - HAIER and Date)
           if (R === 0) {
-            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 18, color: { rgb: "0057A8" } }
-            ws[cellAddress].s.alignment = { horizontal: "center", vertical: "center" }
+            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 14, color: { rgb: "000000" } }
+            ws[cellAddress].s.fill = { fgColor: { rgb: "FFFFFF" } }
+            if (C === 0) {
+              ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center" }
+            } else if (C === 7) {
+              ws[cellAddress].s.alignment = { horizontal: "right", vertical: "center" }
+            }
           }
 
-          // Column headers
+          // Column headers (row 2)
           if (R === 2) {
             ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 12, color: { rgb: "000000" } }
             ws[cellAddress].s.fill = { fgColor: { rgb: "D3D3D3" } }
           }
-
-          // QTY bold
-          if (C === 3 && R > 2) {
-            ws[cellAddress].s.font = { name: "Arial", bold: true, sz: 11, color: { rgb: "000000" } }
-          }
-
-          // Description left-aligned for readability
-          if (C === 1 && R > 2) {
-            ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center", wrapText: true }
-          }
         }
       }
 
-      XLSX.utils.book_append_sheet(wb, ws, "Consolidated Materials")
-      const fileName = `Consolidated_Materials_${new Date().toISOString().slice(0,10)}.xlsx`
+      XLSX.utils.book_append_sheet(wb, ws, "Bulking Serial List")
+
+      const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true })
+      const blob = new Blob([wbout], { type: "application/octet-stream" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `Bulking_Serial_List_${Date.now()}.xlsx`
+      link.click()
+      URL.revokeObjectURL(url)
+    }
+  }
 
   const handleDownloadIndividualDN = (file: UploadedFile) => {
     const wb = XLSX.utils.book_new()
