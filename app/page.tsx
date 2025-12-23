@@ -648,9 +648,9 @@ export default function ExcelUploader() {
             ${formatDate()}
           </div>
         </div>
-        <h3>${file.dnNo} | ${shipToName}</h3>
-          <div class="date">
         
+          <div class="date">
+        <h3>${file.dnNo} | ${shipToName}</h3>
         <table>
           <thead>
             <tr>
