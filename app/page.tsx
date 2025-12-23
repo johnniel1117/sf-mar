@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef } from "react"
 import * as XLSX from 'xlsx-js-style';
-import { Upload, X, FileSpreadsheet, Download } from "lucide-react"
+import { Upload, X, FileSpreadsheet, Download, FileText } from "lucide-react"
 
 interface MaterialData {
   materialCode: string
@@ -54,6 +54,8 @@ export default function ExcelUploader() {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const [showFilesList, setShowFilesList] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("consolidated")
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
+  const [downloadType, setDownloadType] = useState<"pdf" | "excel">("excel")
 
   const getCategoryFromBinCode = (binCode: string): string => {
     const code = String(binCode || "").toUpperCase()
@@ -64,6 +66,33 @@ export default function ExcelUploader() {
     if (code.includes("FAN")) return "Fan"
     return "Others"
   }
+
+  const formatDate = () => {
+    const now = new Date()
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+    return now.toLocaleDateString("en-US", options)
+  }
+
+  const HaierLogo = () => (
+    <svg width="120" height="40" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <text
+        x="10"
+        y="45"
+        fontFamily="Arial, sans-serif"
+        fontSize="48"
+        fontWeight="bold"
+        fill="#0057A8"
+      >
+        Haier
+      </text>
+    </svg>
+  )
 
   const groupAllData = (files: UploadedFile[]): MaterialData[] => {
     const groupedMap = new Map<string, MaterialData>()
@@ -371,6 +400,181 @@ export default function ExcelUploader() {
   }
 
   const handleDownload = () => {
+    setShowDownloadModal(true)
+  }
+
+  const handleDownloadConfirm = () => {
+    setShowDownloadModal(false)
+    if (downloadType === "pdf") {
+      handleDownloadPDF()
+    } else {
+      handleDownloadExcel()
+    }
+  }
+
+  const handleDownloadPDF = () => {
+    // Create a printable HTML document
+    const printWindow = window.open("", "", "width=800,height=600")
+    if (!printWindow) return
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${activeTab === "consolidated" ? "Consolidated Materials" : "Bulking Serial List"}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0057A8;
+          }
+          .logo {
+            font-size: 36px;
+            font-weight: bold;
+            color: #0057A8;
+          }
+          .date {
+            text-align: right;
+            font-size: 14px;
+            color: #666;
+          }
+          h1 {
+            color: #0057A8;
+            margin: 20px 0;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+          }
+          th {
+            background-color: #0057A8;
+            color: white;
+            font-weight: bold;
+          }
+          tr:nth-child(even) {
+            background-color: #f9f9f9;
+          }
+          .qty-cell {
+            font-weight: bold;
+            color: #0057A8;
+          }
+          .barcode-cell {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #0057A8;
+          }
+          @media print {
+            body { margin: 10px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">Haier</div>
+          <div class="date">
+            <strong>Date Printed:</strong><br/>
+            ${formatDate()}
+          </div>
+        </div>
+        <h1>${activeTab === "consolidated" ? "Consolidated Materials Report" : "Bulking Serial List Report"}</h1>
+        ${
+          activeTab === "consolidated"
+            ? `
+        <table>
+          <thead>
+            <tr>
+              <th>MATERIAL CODE</th>
+              <th>MATERIAL DESCRIPTION</th>
+              <th>CATEGORY</th>
+              <th>QTY.</th>
+              <th>UM</th>
+              <th>SHIPNAME</th>
+              <th>REMARKS</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${groupedData
+              .filter((row) => row.materialCode && row.materialDescription)
+              .map(
+                (row) => `
+              <tr>
+                <td>${row.materialCode}</td>
+                <td>${row.materialDescription}</td>
+                <td>${row.category}</td>
+                <td class="qty-cell">${row.qty}</td>
+                <td>-</td>
+                <td>${row.shipName}</td>
+                <td>${row.remarks}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+        `
+            : `
+        <table>
+          <thead>
+            <tr>
+              <th>DN No</th>
+              <th>Location</th>
+              <th>Bin Code</th>
+              <th>Material Code</th>
+              <th>Material Desc</th>
+              <th>Barcode</th>
+              <th>Ship To Name</th>
+              <th>Ship To Address</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${serialListData
+              .filter((row) => row.materialCode && row.barcode)
+              .map(
+                (row) => `
+              <tr>
+                <td>${row.dnNo}</td>
+                <td>${row.location}</td>
+                <td>${row.binCode}</td>
+                <td>${row.materialCode}</td>
+                <td>${row.materialDesc}</td>
+                <td class="barcode-cell">${row.barcode}</td>
+                <td>${row.shipToName}</td>
+                <td>${row.shipToAddress}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+        `
+        }
+      </body>
+      </html>
+    `
+
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+    printWindow.onload = () => {
+      printWindow.print()
+    }
+  }
+
+  const handleDownloadExcel = () => {
     const wb = XLSX.utils.book_new()
 
     if (activeTab === "consolidated") {
@@ -855,7 +1059,7 @@ export default function ExcelUploader() {
                       className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
                     >
                       <Download className="w-5 h-5" />
-                      Download Excel
+                      Download
                     </button>
                   </div>
 
@@ -919,21 +1123,30 @@ export default function ExcelUploader() {
               {activeTab === "serialList" && (
                 <>
                   <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-2xl font-bold text-foreground">Bulking Serial List</h2>
-                      <p className="text-base text-muted-foreground mt-1">
-                        {selectedFileId
-                          ? `Showing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
-                          : `Combined serial data from ${uploadedFiles.length} file(s)`}
-                      </p>
+                    <div className="flex items-center gap-6">
+                      <HaierLogo />
+                      <div>
+                        <h2 className="text-2xl font-bold text-foreground">Bulking Serial List</h2>
+                        <p className="text-base text-muted-foreground mt-1">
+                          {selectedFileId
+                            ? `Showing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
+                            : `Combined serial data from ${uploadedFiles.length} file(s)`}
+                        </p>
+                      </div>
                     </div>
-                    <button
-                      onClick={handleDownload}
-                      className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
-                    >
-                      <Download className="w-5 h-5" />
-                      Download Excel
-                    </button>
+                    <div className="flex flex-col items-end gap-3">
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-foreground">Date Printed:</p>
+                        <p className="text-sm text-muted-foreground">{formatDate()}</p>
+                      </div>
+                      <button
+                        onClick={handleDownload}
+                        className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download
+                      </button>
+                    </div>
                   </div>
 
                   <div className="overflow-x-auto rounded-xl border-2 border-border">
@@ -1063,6 +1276,62 @@ export default function ExcelUploader() {
           </div>
         )}
       </div>
+
+      {showDownloadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl border border-border">
+            <h3 className="text-2xl font-bold text-foreground mb-4">Select Download Format</h3>
+            <p className="text-muted-foreground mb-6">Choose how you want to download your report:</p>
+            
+            <div className="space-y-3 mb-6">
+              <button
+                onClick={() => setDownloadType("excel")}
+                className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-300 ${
+                  downloadType === "excel"
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <FileSpreadsheet className="w-6 h-6 text-primary" />
+                <div className="text-left">
+                  <p className="font-semibold text-foreground">Excel Format (.xlsx)</p>
+                  <p className="text-sm text-muted-foreground">Editable spreadsheet with formatting</p>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => setDownloadType("pdf")}
+                className={`w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-300 ${
+                  downloadType === "pdf"
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <FileText className="w-6 h-6 text-primary" />
+                <div className="text-left">
+                  <p className="font-semibold text-foreground">PDF Format (.pdf)</p>
+                  <p className="text-sm text-muted-foreground">Print-ready document with logo</p>
+                </div>
+              </button>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDownloadModal(false)}
+                className="flex-1 px-4 py-3 bg-accent text-foreground rounded-lg hover:bg-accent/80 transition-all duration-300 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDownloadConfirm}
+                className="flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-300 font-semibold"
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
