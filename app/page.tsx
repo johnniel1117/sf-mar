@@ -83,7 +83,7 @@ export default function ExcelUploader() {
 
   const HaierLogo = () => (
     <img
-      src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1"
+      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s"
       alt="Haier Logo"
       style={{ height: "80px", width: "auto" }}
     />
@@ -676,15 +676,16 @@ export default function ExcelUploader() {
       <div class="${pageBreakClass}">
         <div class="header">
           <div class="logo">
-            <img src="https://i0.wp.com/technode.com/wp-content/uploads/2024/11/%E6%88%AA%E5%B1%8F2024-11-20-17.05.54.png?fit=1696,1136&ssl=1" alt="Haier Logo" />
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s" alt="Haier Logo" />
           </div>
+          <h2 style="color: #000; font-size: 18px; font-weight: bold; margin: 15px 0; text-align: center;">${file.dnNo} | ${shipToName}</h2>
           <div class="date">
             <strong>Generated:</strong><br/>
             ${formatDate()}
           </div>
         </div>
 
-        <h2 style="color: #000; font-size: 18px; font-weight: bold; margin: 15px 0; text-align: center;">${file.dnNo} | ${shipToName}</h2>
+        
         
         <table>
           <thead>
@@ -759,7 +760,7 @@ export default function ExcelUploader() {
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 3px solid #0057A8;
+           
           }
           
           .logo img {
