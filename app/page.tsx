@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useRef } from "react"
 import * as XLSX from "xlsx-js-style"
 import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers } from "lucide-react"
+import LogoGridBackground from "../components/LogoBackground"
 
 interface MaterialData {
   materialCode: string
@@ -1191,6 +1192,7 @@ export default function ExcelUploader() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -1355,9 +1357,13 @@ export default function ExcelUploader() {
           animation: glow 2s ease-in-out infinite;
         }
       `}</style>
+      
 
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-12 space-y-8">
         {/* Upload Section - Enhanced Design */}
+        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none [mask-image:linear-gradient(to_top_right,white,transparent,transparent)]">
+        <LogoGridBackground />
+      </div>
         <div className="relative rounded-3xl p-12  overflow-hidden">
           {/* Decorative Background Elements */}
           {/* <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/40 to-purple-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
