@@ -1423,7 +1423,7 @@ export default function ExcelUploader() {
                       {isDragging ? '✨ Drop your files here' : 'Drop files or click to upload'}
                     </p>
                     <p className="text-gray-600">
-                      Support for multiple Excel files at once
+                      Barcode Excel Files of Haier
                     </p>
                     
                     {/* File Type Badges */}
