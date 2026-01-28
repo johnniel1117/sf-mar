@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef } from "react"
 import * as XLSX from "xlsx-js-style"
-import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers } from "lucide-react"
+import { Upload, X, FileSpreadsheet, Download, FileText } from "lucide-react"
 
 interface MaterialData {
   materialCode: string
@@ -44,7 +44,7 @@ interface UploadedFile {
 
 type TabType = "consolidated" | "serialList" | "individualDN"
 
-export default function ExcelUploader() {
+export function ExcelUploader() {
   const [groupedData, setGroupedData] = useState<MaterialData[]>([])
   const [serialListData, setSerialListData] = useState<SerialData[]>([])
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
@@ -58,7 +58,6 @@ export default function ExcelUploader() {
   const [downloadType, setDownloadType] = useState<"pdf" | "excel">("excel")
   const [selectedDownloadFile, setSelectedDownloadFile] = useState<UploadedFile | null>(null)
   const [isDownloadingAllDN, setIsDownloadingAllDN] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
 
   const getCategoryFromBinCode = (binCode: string): string => {
     const code = String(binCode || "").toUpperCase()
@@ -87,6 +86,7 @@ export default function ExcelUploader() {
       src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s"
       alt="Haier Logo"
       style={{ height: "80px", width: "auto" }}
+      className="transition-transform duration-300 hover:scale-105"
     />
   )
 
@@ -1163,39 +1163,13 @@ export default function ExcelUploader() {
     XLSX.writeFile(workbook, `${file.dnNo}_Serial_List.xlsx`)
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    
-    const files = e.dataTransfer.files
-    if (files && files.length > 0) {
-      const input = document.getElementById('file-upload') as HTMLInputElement
-      if (input) {
-        const dataTransfer = new DataTransfer()
-        Array.from(files).forEach(file => dataTransfer.items.add(file))
-        input.files = dataTransfer.files
-        input.dispatchEvent(new Event('change', { bubbles: true }))
-      }
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <div>
       <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
@@ -1206,7 +1180,7 @@ export default function ExcelUploader() {
         @keyframes slideInLeft {
           from {
             opacity: 0;
-            transform: translateX(-30px);
+            transform: translateX(-20px);
           }
           to {
             opacity: 1;
@@ -1214,29 +1188,7 @@ export default function ExcelUploader() {
           }
         }
 
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        @keyframes pulse {
+        @keyframes pulse-soft {
           0%, 100% {
             opacity: 1;
           }
@@ -1245,119 +1197,53 @@ export default function ExcelUploader() {
           }
         }
 
-        @keyframes shimmer {
-          0% {
-            background-position: -1000px 0;
-          }
-          100% {
-            background-position: 1000px 0;
-          }
-        }
-
         .animate-row {
-          animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          animation: fadeInUp 0.5s ease-out forwards;
         }
 
         .animate-file {
-          animation: slideInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          animation: slideInLeft 0.4s ease-out forwards;
         }
 
         .animate-section {
-          animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          animation: fadeInUp 0.6s ease-out forwards;
         }
 
-        .animate-slide-right {
-          animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        .upload-zone {
+          position: relative;
+          overflow: hidden;
         }
 
-        .loading-shimmer {
-          background: linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0) 0%,
-            rgba(255, 255, 255, 0.5) 50%,
-            rgba(255, 255, 255, 0) 100%
-          );
-          background-size: 1000px 100%;
-          animation: shimmer 2s infinite;
-        }
-
-        .hover-lift {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .hover-lift:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15);
-        }
-
-        .tab-indicator {
+        .upload-zone::before {
+          content: '';
           position: absolute;
-          bottom: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #3b82f6, #2563eb);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border-radius: 3px 3px 0 0;
+          inset: 0;
+          background: linear-gradient(135deg, transparent 0%, rgba(59, 130, 246, 0.05) 50%, transparent 100%);
+          opacity: 0;
+          transition: opacity 0.3s ease-out;
+          pointer-events: none;
         }
 
-        .pulse-animation {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes expandWidth {
-          from {
-            width: 0;
-          }
-          to {
-            width: 100%;
-          }
-        }
-
-        .progress-bar {
-          animation: expandWidth 2s ease-out forwards;
-        }
-
-        @keyframes rotate {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .rotate-animation {
-          animation: rotate 1s linear infinite;
+        .upload-zone:hover::before {
+          opacity: 1;
         }
       `}</style>
 
-      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-12 space-y-8">
-        {/* Upload Section */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 animate-section hover-lift">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-8 space-y-6">
+        <div className="bg-card/60 border border-border/40 backdrop-blur-sm rounded-2xl p-8 shadow-sm animate-section hover:shadow-md transition-shadow duration-300">
           <label
             htmlFor="file-upload"
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ${
-              isDragging
-                ? 'border-blue-500 bg-blue-50 scale-[1.02]'
-                : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-            }`}
+            className="upload-zone flex flex-col items-center justify-center h-44 border-2 border-dashed border-border/60 rounded-xl cursor-pointer hover:border-primary/60 hover:bg-primary/5 transition-all duration-300 group"
           >
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <div className={`p-4 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 transition-all duration-300 ${
-                isDragging ? 'scale-110' : 'group-hover:scale-105'
-              }`}>
-                <Upload className={`w-8 h-8 text-blue-600 transition-transform duration-300 ${
-                  isDragging ? 'animate-bounce' : ''
-                }`} />
+            <div className="flex flex-col items-center justify-center space-y-3 relative z-10">
+              <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-110">
+                <Upload className="w-7 h-7 text-primary" />
               </div>
               <div className="text-center">
-                <p className="text-xl font-semibold text-gray-800 mb-2 transition-colors duration-300">
-                  {isDragging ? 'Drop files here' : 'Upload Excel Files'}
+                <p className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">
+                  Click to upload Excel file(s)
                 </p>
-                <p className="text-sm text-gray-500">Drag & drop or click to browse</p>
-                <p className="text-xs text-gray-400 mt-2">Supports .xlsx, .xls, .csv</p>
+                <p className="text-sm text-muted-foreground">or drag and drop</p>
               </div>
             </div>
             <input
@@ -1371,92 +1257,68 @@ export default function ExcelUploader() {
           </label>
 
           {isLoading && (
-            <div className="mt-8 text-center space-y-4">
-              <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent" />
-              <div className="space-y-2">
-                <p className="text-gray-700 font-semibold">Processing your files...</p>
-                <div className="max-w-xs mx-auto h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 progress-bar loading-shimmer" />
-                </div>
-              </div>
+            <div className="mt-6 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent" />
+              <p className="mt-3 text-muted-foreground font-medium">Processing your files...</p>
             </div>
           )}
         </div>
 
-        {/* Files List Section */}
         {uploadedFiles.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-section hover-lift">
-            <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => setShowFilesList(!showFilesList)}
-                  className="flex items-center gap-3 text-lg font-bold text-gray-800 hover:text-blue-600 transition-all duration-300 group"
+          <div className="bg-card/60 border border-border/40 backdrop-blur-sm rounded-2xl p-8 shadow-sm animate-section hover:shadow-md transition-shadow duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <button
+                onClick={() => setShowFilesList(!showFilesList)}
+                className="flex items-center gap-3 text-lg font-semibold text-foreground hover:text-primary transition-colors duration-300"
+              >
+                <FileSpreadsheet className="w-5 h-5" />
+                Uploaded Files ({uploadedFiles.length})
+                <span
+                  className={`transform transition-transform duration-300 ${showFilesList ? "rotate-90" : ""}`}
+                  style={{ display: "inline-block" }}
                 >
-                  <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
-                    <FileSpreadsheet className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <span>Uploaded Files</span>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                    {uploadedFiles.length}
-                  </span>
-                  <span
-                    className={`transform transition-all duration-300 text-gray-400 ${showFilesList ? "rotate-90" : ""}`}
-                  >
-                    ▶
-                  </span>
-                </button>
-                <button
-                  onClick={handleClear}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-300 font-semibold text-sm hover-lift"
-                >
-                  <X className="w-4 h-4" />
-                  Clear All
-                </button>
-              </div>
+                  ▶
+                </span>
+              </button>
+              <button
+                onClick={handleClear}
+                className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-all duration-300 font-medium text-sm"
+              >
+                <X className="w-4 h-4" />
+                Clear All
+              </button>
             </div>
 
             {showFilesList && (
-              <div className="p-6 space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-2 max-h-80 overflow-y-auto">
                 {uploadedFiles.map((file, idx) => (
                   <div
                     key={file.id}
-                    className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 animate-file hover-lift cursor-pointer ${
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-200 animate-file ${
                       selectedFileId === file.id
-                        ? "border-blue-400 bg-gradient-to-r from-blue-50 to-blue-100 shadow-md scale-[1.02]"
-                        : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100"
+                        ? "border-blue-400 shadow-sm bg-blue-50"
+                        : "border-slate-200 bg-slate-50 hover:bg-slate-100"
                     }`}
                     style={{ animationDelay: `${idx * 0.1}s` }}
-                    onClick={() => handleSelectFile(file.id)}
                   >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className={`p-3 rounded-xl transition-all duration-300 ${
-                        selectedFileId === file.id ? 'bg-blue-200' : 'bg-blue-100'
-                      }`}>
-                        <FileSpreadsheet className={`w-6 h-6 transition-all duration-300 ${
-                          selectedFileId === file.id ? 'text-blue-700' : 'text-blue-600'
-                        }`} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-800 mb-1">{file.name}</p>
-                        <p className="text-xs text-gray-500 flex items-center gap-2">
-                          <span className="px-2 py-0.5 bg-gray-200 rounded text-gray-700">DN: {file.dnNo}</span>
-                          <span className="text-gray-400">•</span>
-                          <span>{file.data.length} items</span>
-                        </p>
-                      </div>
-                      {selectedFileId === file.id && (
-                        <CheckCircle2 className="w-5 h-5 text-blue-600 animate-slide-right" />
-                      )}
-                    </div>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteFile(file.id)
-                      }}
-                      className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-all duration-300 ml-2"
+                      onClick={() => handleSelectFile(file.id)}
+                      className="flex items-center gap-3 flex-1 hover:text-blue-600 transition-colors duration-200"
+                    >
+                      <div className="p-2 rounded-lg bg-blue-100">
+                        <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-slate-800 text-sm">{file.name}</p>
+                        <p className="text-xs text-slate-500">DN: {file.dnNo}</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteFile(file.id)}
+                      className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-all duration-200"
                       title="Delete file"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -1465,76 +1327,91 @@ export default function ExcelUploader() {
           </div>
         )}
 
-        {/* Data Display Section */}
         {(groupedData.length > 0 || serialListData.length > 0) && (
-          <div ref={tableRef} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-section">
-            {/* Tabs */}
-            <div className="border-b border-gray-200 bg-gray-50 relative">
+          <div ref={tableRef} className="bg-white border border-slate-200 rounded-xl shadow-sm animate-section">
+            <div className="border-b border-slate-200">
               <div className="flex">
-                {[
-                  { id: "consolidated", label: "Consolidated Materials", icon: Layers },
-                  { id: "serialList", label: "Serial List", icon: FileText },
-                  { id: "individualDN", label: "Individual DN", icon: Download },
-                ].map((tab, index) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as TabType)}
-                    className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-300 relative group ${
-                      activeTab === tab.id
-                        ? "text-blue-600"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <tab.icon className={`w-4 h-4 transition-transform duration-300 ${
-                        activeTab === tab.id ? 'scale-110' : 'group-hover:scale-105'
-                      }`} />
-                      {tab.label}
-                    </span>
-                    {activeTab === tab.id && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t" />
-                    )}
-                  </button>
-                ))}
+                <button
+                  onClick={() => setActiveTab("consolidated")}
+                  className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 ${
+                    activeTab === "consolidated"
+                      ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  Consolidated Materials
+                </button>
+                <button
+                  onClick={() => setActiveTab("serialList")}
+                  className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 ${
+                    activeTab === "serialList"
+                      ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  Bulking Serial List
+                </button>
+                <button
+                  onClick={() => setActiveTab("individualDN")}
+                  className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 ${
+                    activeTab === "individualDN"
+                      ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  Individual DN Downloads
+                </button>
               </div>
             </div>
 
             <div className="p-8">
               {activeTab === "consolidated" && (
                 <>
-                  <div className="flex items-center justify-between mb-6 animate-slide-right">
+                  <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-800 mb-2">Consolidated Materials Report</h2>
-                      <p className="text-sm text-gray-500">
+                      <h2 className="text-xl font-bold text-slate-800">Consolidated Materials Report</h2>
+                      <p className="text-sm text-slate-500 mt-1">
                         {selectedFileId
-                          ? `Viewing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
-                          : "Combined data from all uploaded files"}
+                          ? `Showing data for: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
+                          : "Showing combined data from all files"}
                       </p>
                     </div>
                     <button
                       onClick={handleDownload}
-                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow"
                     >
-                      <Download className="w-5 h-5" />
+                      <Download className="w-4 h-4" />
                       Download
                     </button>
                   </div>
-                  <div className="overflow-x-auto rounded-xl border-2 border-gray-200 shadow-sm">
+                  <div className="overflow-x-auto rounded-lg border border-slate-200">
                     <table className="w-full text-sm">
-                      <thead className="bg-gradient-to-r from-gray-100 to-gray-50 border-b-2 border-gray-300">
+                      <thead className="bg-slate-100 border-b-2 border-slate-300">
                         <tr>
-                          {["Material Code", "Material Description", "Category", "Qty.", "UM", "Ship Name", "Remarks"].map((header, i) => (
-                            <th
-                              key={i}
-                              className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider"
-                            >
-                              {header}
-                            </th>
-                          ))}
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Material Code
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Material Description
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Category
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Qty.
+                          </th>
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            UM
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Ship Name
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Remarks
+                          </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
+                      <tbody className="divide-y divide-slate-200 bg-white">
                         {groupedData
                           .filter((row) => row.materialCode && row.materialDescription)
                           .map((row, idx) => (
@@ -1542,24 +1419,16 @@ export default function ExcelUploader() {
                               key={idx}
                               className={`${
                                 animatingRows.has(idx) ? "animate-row" : "opacity-0"
-                              } hover:bg-blue-50 transition-all duration-200`}
-                              style={{ animationDelay: `${idx * 0.02}s` }}
+                              } hover:bg-slate-50 transition-colors`}
+                              style={{ animationDelay: `${idx * 0.03}s` }}
                             >
-                              <td className="px-4 py-4 font-mono text-xs text-gray-700 font-semibold">{row.materialCode}</td>
-                              <td className="px-4 py-4 text-gray-700">{row.materialDescription}</td>
-                              <td className="px-4 py-4">
-                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
-                                  {row.category}
-                                </span>
-                              </td>
-                              <td className="px-4 py-4 text-center">
-                                <span className="px-3 py-1 bg-blue-600 text-white rounded-lg font-bold text-sm">
-                                  {row.qty}
-                                </span>
-                              </td>
-                              <td className="px-4 py-4 text-center text-gray-400">-</td>
-                              <td className="px-4 py-4 text-gray-700">{row.shipName}</td>
-                              <td className="px-4 py-4 text-gray-600 text-xs">{row.remarks}</td>
+                              <td className="px-4 py-3 font-mono text-xs text-slate-700">{row.materialCode}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.materialDescription}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.category}</td>
+                              <td className="px-4 py-3 text-center font-semibold text-blue-600">{row.qty}</td>
+                              <td className="px-4 py-3 text-center text-slate-500">-</td>
+                              <td className="px-4 py-3 text-slate-700">{row.shipName}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.remarks}</td>
                             </tr>
                           ))}
                       </tbody>
@@ -1570,38 +1439,54 @@ export default function ExcelUploader() {
 
               {activeTab === "serialList" && (
                 <>
-                  <div className="flex items-center justify-between mb-6 animate-slide-right">
+                  <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-800 mb-2">Bulking Serial List Report</h2>
-                      <p className="text-sm text-gray-500">
+                      <h2 className="text-xl font-bold text-slate-800">Bulking Serial List Report</h2>
+                      <p className="text-sm text-slate-500 mt-1">
                         {selectedFileId
-                          ? `Viewing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
-                          : "Combined serial data from all uploaded files"}
+                          ? `Showing data for: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
+                          : "Showing combined data from all files"}
                       </p>
                     </div>
                     <button
                       onClick={handleDownload}
-                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow"
                     >
-                      <Download className="w-5 h-5" />
+                      <Download className="w-4 h-4" />
                       Download
                     </button>
                   </div>
-                  <div className="overflow-x-auto rounded-xl border-2 border-gray-200 shadow-sm">
+                  <div className="overflow-x-auto rounded-lg border border-slate-200">
                     <table className="w-full text-sm">
-                      <thead className="bg-gradient-to-r from-gray-100 to-gray-50 border-b-2 border-gray-300">
+                      <thead className="bg-slate-100 border-b-2 border-slate-300">
                         <tr>
-                          {["DN No", "Location", "Bin Code", "Material Code", "Material Desc", "Barcode", "Ship To Name", "Ship To Address"].map((header, i) => (
-                            <th
-                              key={i}
-                              className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider"
-                            >
-                              {header}
-                            </th>
-                          ))}
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            DN No
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Location
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Bin Code
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Material Code
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Material Desc
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Barcode
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Ship To Name
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                            Ship To Address
+                          </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
+                      <tbody className="divide-y divide-slate-200 bg-white">
                         {serialListData
                           .filter((row) => row.materialCode && row.barcode)
                           .map((row, idx) => (
@@ -1609,19 +1494,19 @@ export default function ExcelUploader() {
                               key={idx}
                               className={`${
                                 animatingRows.has(idx) ? "animate-row" : "opacity-0"
-                              } hover:bg-blue-50 transition-all duration-200`}
-                              style={{ animationDelay: `${idx * 0.02}s` }}
+                              } hover:bg-slate-50 transition-colors`}
+                              style={{ animationDelay: `${idx * 0.03}s` }}
                             >
-                              <td className="px-4 py-4 text-gray-700 font-medium">{row.dnNo}</td>
-                              <td className="px-4 py-4 text-gray-700">{row.location}</td>
-                              <td className="px-4 py-4 text-gray-700">{row.binCode}</td>
-                              <td className="px-4 py-4 font-mono text-xs text-gray-700 font-semibold">{row.materialCode}</td>
-                              <td className="px-4 py-4 text-gray-700">{row.materialDesc}</td>
-                              <td className="px-4 py-4 font-mono font-bold text-xs bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900">
+                              <td className="px-4 py-3 text-slate-700">{row.dnNo}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.location}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.binCode}</td>
+                              <td className="px-4 py-3 font-mono text-xs text-slate-700">{row.materialCode}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.materialDesc}</td>
+                              <td className="px-4 py-3 font-mono font-semibold text-xs text-slate-900">
                                 {row.barcode}
                               </td>
-                              <td className="px-4 py-4 text-gray-700">{row.shipToName}</td>
-                              <td className="px-4 py-4 text-gray-600 text-xs">{row.shipToAddress}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.shipToName}</td>
+                              <td className="px-4 py-3 text-slate-700">{row.shipToAddress}</td>
                             </tr>
                           ))}
                       </tbody>
@@ -1632,22 +1517,20 @@ export default function ExcelUploader() {
 
               {activeTab === "individualDN" && (
                 <>
-                  <div className="mb-6 animate-slide-right">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Individual DN Downloads</h2>
-                    <p className="text-sm text-gray-500">Download individual DN serial lists or all at once</p>
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold text-slate-800">Individual DN Downloads</h2>
+                    <p className="text-sm text-slate-500 mt-1">Download individual DN serial lists or all at once</p>
                   </div>
-                  <div className="space-y-4">
-                    <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl hover-lift">
+                  <div className="space-y-3">
+                    <div className="p-5 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-blue-200 rounded-xl">
-                            <Layers className="w-7 h-7 text-blue-700" />
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <FileText className="w-6 h-6 text-blue-600" />
                           </div>
                           <div>
-                            <p className="font-bold text-gray-800 text-lg">Download All DN Serial Lists</p>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available
-                            </p>
+                            <p className="font-semibold text-slate-800">Download All DN Serial Lists</p>
+                            <p className="text-sm text-slate-500">{uploadedFiles.length} file(s) available</p>
                           </div>
                         </div>
                         <button
@@ -1655,9 +1538,9 @@ export default function ExcelUploader() {
                             setIsDownloadingAllDN(true)
                             setShowDownloadModal(true)
                           }}
-                          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
+                          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow"
                         >
-                          <Download className="w-5 h-5" />
+                          <Download className="w-4 h-4" />
                           Download All
                         </button>
                       </div>
@@ -1666,16 +1549,16 @@ export default function ExcelUploader() {
                     {uploadedFiles.map((file, idx) => (
                       <div
                         key={file.id}
-                        className="flex items-center justify-between p-5 bg-gray-50 border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-100 transition-all duration-300 animate-file hover-lift"
+                        className="flex items-center justify-between p-5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors animate-file"
                         style={{ animationDelay: `${idx * 0.1}s` }}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-gray-200 rounded-xl">
-                            <FileSpreadsheet className="w-6 h-6 text-gray-700" />
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-slate-200 rounded-lg">
+                            <FileSpreadsheet className="w-5 h-5 text-slate-700" />
                           </div>
                           <div>
-                            <p className="font-bold text-gray-800">{file.dnNo}</p>
-                            <p className="text-sm text-gray-500 mt-1">{file.name}</p>
+                            <p className="font-semibold text-slate-800">{file.dnNo}</p>
+                            <p className="text-sm text-slate-500">{file.name}</p>
                           </div>
                         </div>
                         <button
@@ -1684,7 +1567,7 @@ export default function ExcelUploader() {
                             setIsDownloadingAllDN(false)
                             setShowDownloadModal(true)
                           }}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-xl hover:from-gray-800 hover:to-gray-900 transition-all duration-300 font-semibold text-sm hover-lift"
+                          className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-all duration-200 font-medium text-sm"
                         >
                           <Download className="w-4 h-4" />
                           Download
@@ -1699,39 +1582,51 @@ export default function ExcelUploader() {
         )}
       </div>
 
-      {/* Download Modal */}
       {showDownloadModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-section">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full transform transition-all duration-300 scale-100">
-            <h3 className="text-2xl font-bold mb-6 text-gray-800">Choose Download Format</h3>
-            <div className="space-y-3 mb-8">
-              {[
-                { type: 'excel', label: 'Excel (.xlsx)', desc: 'Editable spreadsheet format', icon: FileSpreadsheet },
-                { type: 'pdf', label: 'PDF', desc: 'Print-ready document format', icon: FileText }
-              ].map((option) => (
-                <button
-                  key={option.type}
-                  onClick={() => setDownloadType(option.type as 'pdf' | 'excel')}
-                  className={`w-full flex items-center gap-4 p-5 border-2 rounded-xl transition-all duration-300 hover-lift ${
-                    downloadType === option.type
-                      ? "border-blue-500 bg-gradient-to-r from-blue-50 to-blue-100 shadow-md scale-[1.02]"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4 text-slate-800">Choose Download Format</h3>
+            <div className="space-y-3 mb-6">
+              <button
+                onClick={() => setDownloadType("excel")}
+                className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
+                  downloadType === "excel"
+                    ? "border-blue-600 bg-blue-50 shadow-sm"
+                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    downloadType === "excel" ? "border-blue-600" : "border-slate-300"
                   }`}
                 >
-                  <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                    downloadType === option.type ? "border-blue-600" : "border-gray-300"
-                  }`}>
-                    {downloadType === option.type && (
-                      <div className="w-3.5 h-3.5 rounded-full bg-blue-600 animate-scaleIn" />
-                    )}
-                  </div>
-                  <option.icon className={`w-6 h-6 ${downloadType === option.type ? 'text-blue-600' : 'text-gray-400'}`} />
-                  <div className="text-left flex-1">
-                    <p className="font-bold text-gray-800">{option.label}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{option.desc}</p>
-                  </div>
-                </button>
-              ))}
+                  {downloadType === "excel" && <div className="w-3 h-3 rounded-full bg-blue-600" />}
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-slate-800">Excel (.xlsx)</p>
+                  <p className="text-sm text-slate-500">Editable spreadsheet format</p>
+                </div>
+              </button>
+              <button
+                onClick={() => setDownloadType("pdf")}
+                className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
+                  downloadType === "pdf"
+                    ? "border-blue-600 bg-blue-50 shadow-sm"
+                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    downloadType === "pdf" ? "border-blue-600" : "border-slate-300"
+                  }`}
+                >
+                  {downloadType === "pdf" && <div className="w-3 h-3 rounded-full bg-blue-600" />}
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-slate-800">PDF</p>
+                  <p className="text-sm text-slate-500">Print-ready document format</p>
+                </div>
+              </button>
             </div>
             <div className="flex gap-3">
               <button
@@ -1740,13 +1635,13 @@ export default function ExcelUploader() {
                   setSelectedDownloadFile(null)
                   setIsDownloadingAllDN(false)
                 }}
-                className="flex-1 px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-semibold"
+                className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDownloadConfirm}
-                className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
+                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm hover:shadow"
               >
                 Download
               </button>
