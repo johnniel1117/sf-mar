@@ -1328,59 +1328,197 @@ export default function ExcelUploader() {
         .rotate-animation {
           animation: rotate 1s linear infinite;
         }
+
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+
+        .float-animation {
+          animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+          }
+        }
+
+        .glow-animation {
+          animation: glow 2s ease-in-out infinite;
+        }
       `}</style>
 
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-12 space-y-8">
-        {/* Upload Section */}
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 animate-section hover-lift">
-          <label
-            htmlFor="file-upload"
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ${
-              isDragging
-                ? 'border-blue-500 bg-blue-50 scale-[1.02]'
-                : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-            }`}
-          >
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <div className={`p-4 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 transition-all duration-300 ${
-                isDragging ? 'scale-110' : 'group-hover:scale-105'
-              }`}>
-                <Upload className={`w-8 h-8 text-blue-600 transition-transform duration-300 ${
-                  isDragging ? 'animate-bounce' : ''
-                }`} />
+        {/* Upload Section - Enhanced Design */}
+        <div className="relative rounded-3xl p-12  overflow-hidden">
+          {/* Decorative Background Elements */}
+          {/* <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/40 to-purple-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-green-100/40 to-blue-100/40 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+           */}
+          {/* Content */}
+          <div className="relative z-10">
+            {/* Header Section */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 rounded-full text-lg font-bold mb-4 animate-slide-right">
+                <img
+                  src="/sf-express.png"
+                  alt="SF Express Logo"
+                  className="w-10 h-10 object-contain"
+                />
+                SF EXPRESS
               </div>
-              <div className="text-center">
-                <p className="text-xl font-semibold text-gray-800 mb-2 transition-colors duration-300">
-                  {isDragging ? 'Drop files here' : 'Upload Excel Files'}
-                </p>
-                <p className="text-sm text-gray-500">Drag & drop or click to browse</p>
-                <p className="text-xs text-gray-400 mt-2">Supports .xlsx, .xls, .csv</p>
-              </div>
-            </div>
-            <input
-              id="file-upload"
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </label>
 
-          {isLoading && (
-            <div className="mt-8 text-center space-y-4">
-              <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent" />
-              <div className="space-y-2">
-                <p className="text-gray-700 font-semibold">Processing your files...</p>
-                <div className="max-w-xs mx-auto h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 progress-bar loading-shimmer" />
+              {/* <h1 className="text-4xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent">
+                Upload Your Files 
+              </h1>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Transform your Excel data into organized reports. Upload multiple files and get consolidated materials and serial lists instantly.
+              </p> */}
+            </div>
+
+            {/* Upload Box */}
+            <label
+              htmlFor="file-upload"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`relative block transition-all duration-300 cursor-pointer group ${
+                isDragging ? 'scale-[1.02]' : ''
+              }`}
+            >
+              <div className={`relative border-2 border-dashed rounded-2xl transition-all duration-300 overflow-hidden ${
+                isDragging
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-300 hover:border-blue-400 bg-gradient-to-br from-gray-50 to-white hover:from-blue-50 hover:to-white'
+              }`}>
+                {/* Upload Icon Circle with Animation */}
+                <div className="flex flex-col items-center justify-center py-16 px-8">
+                  <div className="relative mb-6">
+                    {/* Pulsing Ring */}
+                    <div className={`absolute inset-0 rounded-full bg-blue-400 opacity-20 ${
+                      isDragging ? 'animate-ping' : ''
+                    }`} style={{ animation: isDragging ? 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' : 'none' }} />
+                    
+                    {/* Icon Container */}
+                    <div className={`relative p-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg transition-all duration-300 ${
+                      isDragging ? 'scale-110 shadow-xl' : 'group-hover:scale-105 group-hover:shadow-xl'
+                    }`}>
+                      <Upload className={`w-10 h-10 text-white transition-transform duration-300 ${
+                        isDragging ? 'animate-bounce' : 'group-hover:scale-110'
+                      }`} />
+                    </div>
+                  </div>
+
+                  {/* Text Content */}
+                  <div className="text-center space-y-2">
+                    <p className="text-2xl font-bold text-gray-800 transition-colors duration-300 group-hover:text-blue-600">
+                      {isDragging ? '✨ Drop your files here' : 'Drop files or click to upload'}
+                    </p>
+                    <p className="text-gray-600">
+                      Support for multiple Excel files at once
+                    </p>
+                    
+                    {/* File Type Badges */}
+                    <div className="flex items-center justify-center gap-2 pt-4">
+                      {['.xlsx', '.xls', '.csv'].map((ext) => (
+                        <span
+                          key={ext}
+                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium border border-gray-200"
+                        >
+                          {ext}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Decorative Corner Elements */}
+                <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-blue-300 rounded-tl-lg opacity-50" />
+                <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-blue-300 rounded-tr-lg opacity-50" />
+                <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-blue-300 rounded-bl-lg opacity-50" />
+                <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-blue-300 rounded-br-lg opacity-50" />
+              </div>
+
+              <input
+                id="file-upload"
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </label>
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="mt-10 text-center space-y-6">
+                <div className="relative inline-flex items-center justify-center">
+                  <div className="absolute animate-spin rounded-full h-16 w-16 border-4 border-blue-200" />
+                  <div className="absolute animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+                  <FileSpreadsheet className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="space-y-3">
+                  <p className="text-lg text-gray-800 font-bold">Processing your files...</p>
+                  <p className="text-sm text-gray-500">This may take a few moments</p>
+                  <div className="max-w-sm mx-auto h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                    <div className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 progress-bar loading-shimmer rounded-full" />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Feature Cards */}
+            {!isLoading && uploadedFiles.length === 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                {[
+                  {
+                    icon: Layers,
+                    title: 'Consolidated Reports',
+                    description: 'Merge multiple files into unified material reports',
+                    bgColor: 'bg-blue-100',
+                    textColor: 'text-blue-600',
+                    borderColor: 'hover:border-blue-300'
+                  },
+                  {
+                    icon: FileText,
+                    title: 'Serial Lists',
+                    description: 'Generate detailed serial number tracking lists',
+                    bgColor: 'bg-purple-100',
+                    textColor: 'text-purple-600',
+                    borderColor: 'hover:border-purple-300'
+                  },
+                  {
+                    icon: Download,
+                    title: 'Export Options',
+                    description: 'Download as Excel or PDF with professional formatting',
+                    bgColor: 'bg-green-100',
+                    textColor: 'text-green-600',
+                    borderColor: 'hover:border-green-300'
+                  }
+                ].map((feature, index) => (
+                  <div
+                    key={index}
+                    className={`p-6 bg-white rounded-xl border border-gray-200 ${feature.borderColor} hover:shadow-md transition-all duration-300 animate-file hover-lift`}
+                    style={{ animationDelay: `${index * 0.1 + 0.3}s` }}
+                  >
+                    <div className={`inline-flex p-3 rounded-lg ${feature.bgColor} mb-4`}>
+                      <feature.icon className={`w-6 h-6 ${feature.textColor}`} />
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-2">{feature.title}</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Files List Section */}
