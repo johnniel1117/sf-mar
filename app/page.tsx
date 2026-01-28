@@ -1476,7 +1476,7 @@ export default function ExcelUploader() {
             )}
 
             {/* Feature Cards */}
-            {!isLoading && uploadedFiles.length === 0 && (
+            {/* {!isLoading && uploadedFiles.length === 0 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
                 {[
                   {
@@ -1517,7 +1517,7 @@ export default function ExcelUploader() {
                   </div>
                 ))}
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
