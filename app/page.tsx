@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import * as XLSX from "xlsx-js-style"
-import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers } from "lucide-react"
+import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers, AlertCircle, ArrowUp } from "lucide-react"
 import LogoGridBackground from "../components/LogoBackground"
 
 interface MaterialData {
@@ -45,6 +45,12 @@ interface UploadedFile {
 
 type TabType = "consolidated" | "serialList" | "individualDN"
 
+interface Notification {
+  id: string
+  type: "error" | "warning" | "success"
+  message: string
+}
+
 export default function ExcelUploader() {
   const [groupedData, setGroupedData] = useState<MaterialData[]>([])
   const [serialListData, setSerialListData] = useState<SerialData[]>([])
@@ -60,6 +66,39 @@ export default function ExcelUploader() {
   const [selectedDownloadFile, setSelectedDownloadFile] = useState<UploadedFile | null>(null)
   const [isDownloadingAllDN, setIsDownloadingAllDN] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show button when scrolled down 400px
+      setShowScrollTop(window.scrollY > 400)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+  }
+
+  const addNotification = (type: "error" | "warning" | "success", message: string) => {
+    const id = `${Date.now()}-${Math.random()}`
+    setNotifications(prev => [...prev, { id, type, message }])
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id))
+    }, 5000)
+  }
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id))
+  }
 
   const getCategoryFromBinCode = (binCode: string): string => {
     const code = String(binCode || "").toUpperCase()
@@ -88,6 +127,14 @@ export default function ExcelUploader() {
       src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s"
       alt="Haier Logo"
       style={{ height: "80px", width: "auto" }}
+    />
+  )
+
+  const SFLogo = () => (
+    <img
+      src="/sf-express.png"
+      alt="SF Express Logo"
+      className="h-8 w-auto"
     />
   )
 
@@ -129,6 +176,8 @@ export default function ExcelUploader() {
 
     try {
       const newFiles: UploadedFile[] = []
+      const duplicateDNs: string[] = []
+      const existingDNs = new Set(uploadedFiles.map(f => f.dnNo))
 
       for (let fileIdx = 0; fileIdx < files.length; fileIdx++) {
         const file = files[fileIdx]
@@ -174,6 +223,12 @@ export default function ExcelUploader() {
         let dnNo = "N/A"
         if (dnNoIdx >= 0 && jsonData[1]) {
           dnNo = String(jsonData[1][dnNoIdx] || "N/A")
+        }
+
+        // Check for duplicate DN
+        if (existingDNs.has(dnNo)) {
+          duplicateDNs.push(dnNo)
+          continue // Skip this file
         }
 
         const fileData: MaterialData[] = []
@@ -234,6 +289,26 @@ export default function ExcelUploader() {
           data: fileData,
           serialData: serialData,
         })
+
+        // Add to existing DNs set
+        existingDNs.add(dnNo)
+      }
+
+      // Show notifications for duplicates
+      if (duplicateDNs.length > 0) {
+        const dnList = duplicateDNs.join(", ")
+        addNotification(
+          "warning",
+          `Duplicate DN${duplicateDNs.length > 1 ? 's' : ''} detected and skipped: ${dnList}`
+        )
+      }
+
+      // Show success notification if files were uploaded
+      if (newFiles.length > 0) {
+        addNotification(
+          "success",
+          `Successfully uploaded ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}`
+        )
       }
 
       const allFiles = [...uploadedFiles, ...newFiles]
@@ -257,15 +332,17 @@ export default function ExcelUploader() {
       })
 
       // Scroll to table after animation completes
-      setTimeout(
-        () => {
-          tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-        },
-        dataLength * 50 + 300,
-      )
+      if (newFiles.length > 0) {
+        setTimeout(
+          () => {
+            tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+          },
+          dataLength * 50 + 300,
+        )
+      }
     } catch (error) {
       console.error("Error parsing Excel file:", error)
-      alert("Error parsing Excel file. Please make sure it contains the required columns.")
+      addNotification("error", "Error parsing Excel file. Please make sure it contains the required columns.")
     } finally {
       setIsLoading(false)
       e.target.value = ""
@@ -574,7 +651,7 @@ export default function ExcelUploader() {
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s alt="Haier Logo" />
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s" alt="Haier Logo" />
           </div>
           <div class="date">
             <strong>Date Printed:</strong><br/>
@@ -1031,7 +1108,7 @@ export default function ExcelUploader() {
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s alt="Haier Logo" />
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s" alt="Haier Logo" />
           </div>
            <h1>${file.dnNo} | ${shipToName}</h1>
           <div class="date">
@@ -1192,7 +1269,57 @@ export default function ExcelUploader() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`flex items-start gap-3 p-4 rounded-xl shadow-lg border-2 animate-slide-right ${
+              notification.type === "error"
+                ? "bg-red-50 border-red-200"
+                : notification.type === "warning"
+                ? "bg-yellow-50 border-yellow-200"
+                : "bg-green-50 border-green-200"
+            }`}
+          >
+            <div className="flex-shrink-0 mt-0.5">
+              {notification.type === "error" ? (
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              ) : notification.type === "warning" ? (
+                <AlertCircle className="w-5 h-5 text-yellow-600" />
+              ) : (
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+              )}
+            </div>
+            <div className="flex-1">
+              <p
+                className={`text-sm font-medium ${
+                  notification.type === "error"
+                    ? "text-red-800"
+                    : notification.type === "warning"
+                    ? "text-yellow-800"
+                    : "text-green-800"
+                }`}
+              >
+                {notification.message}
+              </p>
+            </div>
+            <button
+              onClick={() => removeNotification(notification.id)}
+              className={`flex-shrink-0 rounded-lg p-1 transition-colors ${
+                notification.type === "error"
+                  ? "hover:bg-red-100"
+                  : notification.type === "warning"
+                  ? "hover:bg-yellow-100"
+                  : "hover:bg-green-100"
+              }`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -1365,29 +1492,14 @@ export default function ExcelUploader() {
         <LogoGridBackground />
       </div>
         <div className="relative rounded-3xl p-12  overflow-hidden">
-          {/* Decorative Background Elements */}
-          {/* <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/40 to-purple-100/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-green-100/40 to-blue-100/40 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-           */}
           {/* Content */}
           <div className="relative z-10">
             {/* Header Section */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 rounded-full text-lg font-bold mb-4 animate-slide-right">
-                <img
-                  src="/sf-express.png"
-                  alt="SF Express Logo"
-                  className="w-10 h-10 object-contain"
-                />
+                <SFLogo />
                 SF EXPRESS
               </div>
-
-              {/* <h1 className="text-4xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 bg-clip-text text-transparent">
-                Upload Your Files 
-              </h1>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Transform your Excel data into organized reports. Upload multiple files and get consolidated materials and serial lists instantly.
-              </p> */}
             </div>
 
             {/* Upload Box */}
@@ -1480,50 +1592,6 @@ export default function ExcelUploader() {
                 </div>
               </div>
             )}
-
-            {/* Feature Cards */}
-            {/* {!isLoading && uploadedFiles.length === 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-                {[
-                  {
-                    icon: Layers,
-                    title: 'Consolidated Reports',
-                    description: 'Merge multiple files into unified material reports',
-                    bgColor: 'bg-blue-100',
-                    textColor: 'text-blue-600',
-                    borderColor: 'hover:border-blue-300'
-                  },
-                  {
-                    icon: FileText,
-                    title: 'Serial Lists',
-                    description: 'Generate detailed serial number tracking lists',
-                    bgColor: 'bg-purple-100',
-                    textColor: 'text-purple-600',
-                    borderColor: 'hover:border-purple-300'
-                  },
-                  {
-                    icon: Download,
-                    title: 'Export Options',
-                    description: 'Download as Excel or PDF with professional formatting',
-                    bgColor: 'bg-green-100',
-                    textColor: 'text-green-600',
-                    borderColor: 'hover:border-green-300'
-                  }
-                ].map((feature, index) => (
-                  <div
-                    key={index}
-                    className={`p-6 bg-white rounded-xl border border-gray-200 ${feature.borderColor} hover:shadow-md transition-all duration-300 animate-file hover-lift`}
-                    style={{ animationDelay: `${index * 0.1 + 0.3}s` }}
-                  >
-                    <div className={`inline-flex p-3 rounded-lg ${feature.bgColor} mb-4`}>
-                      <feature.icon className={`w-6 h-6 ${feature.textColor}`} />
-                    </div>
-                    <h3 className="font-bold text-gray-800 mb-2">{feature.title}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
-                  </div>
-                ))}
-              </div>
-            )} */}
           </div>
         </div>
 
@@ -1589,7 +1657,7 @@ export default function ExcelUploader() {
                         </p>
                       </div>
                       {selectedFileId === file.id && (
-                        <CheckCircle2 className="w-5 h-5 text-blue-600 animate-slide-right" />
+                        <CheckCircle2 className="w-5 h-5 text-green-600 animate-slide-right" />
                       )}
                     </div>
                     <button
@@ -1781,11 +1849,11 @@ export default function ExcelUploader() {
                     <p className="text-sm text-gray-500">Download individual DN serial lists or all at once</p>
                   </div>
                   <div className="space-y-4">
-                    <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl hover-lift">
+                    <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-xl hover-lift">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="p-3 bg-blue-200 rounded-xl">
-                            <Layers className="w-7 h-7 text-blue-700" />
+                          <div className="p-3 bg-green-200 rounded-xl">
+                            <Layers className="w-7 h-7 text-green-700" />
                           </div>
                           <div>
                             <p className="font-bold text-gray-800 text-lg">Download All DN Serial Lists</p>
@@ -1799,7 +1867,7 @@ export default function ExcelUploader() {
                             setIsDownloadingAllDN(true)
                             setShowDownloadModal(true)
                           }}
-                          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
+                          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
                         >
                           <Download className="w-5 h-5" />
                           Download All
@@ -1898,6 +1966,28 @@ export default function ExcelUploader() {
           </div>
         </div>
       )}
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-40 p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-2xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-110 animate-slide-right group"
+          title="Scroll to top"
+        >
+          <ArrowUp className="w-6 h-6 transition-transform duration-300 group-hover:-translate-y-1" />
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+            Back to top
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
+          </div>
+        </button>
+      )}
+
+      {/* Footer */}
+      <footer className="mt-12 pb-8 text-center">
+        <div className="text-sm text-gray-500">
+          Developed by <span className="font-semibold text-gray-700">MAR</span> • All Rights Reserved © {new Date().getFullYear()}
+        </div>
+      </footer>
     </div>
   )
 }
