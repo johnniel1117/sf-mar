@@ -80,6 +80,18 @@ export default function ExcelUploader() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  useEffect(() => {
+    if (showDownloadModal) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showDownloadModal])
+
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -89,7 +101,7 @@ export default function ExcelUploader() {
 
   const addNotification = (type: "error" | "warning" | "success", message: string) => {
     const id = `${Date.now()}-${Math.random()}`
-    setNotifications(prev => [...prev, { id, type, message }])
+    setNotifications(prev => [...prev, { id, type, message }])  
     
     // Auto-remove after 5 seconds
     setTimeout(() => {
@@ -1961,8 +1973,8 @@ export default function ExcelUploader() {
 
       {/* Download Modal */}
       {showDownloadModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-section">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full transform transition-all duration-300 scale-100">
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-section">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full transform transition-all duration-50 scale-100">
             <h3 className="text-2xl font-bold mb-6 text-gray-800">Choose Download Format</h3>
             <div className="space-y-3 mb-8">
               {[
@@ -2006,7 +2018,7 @@ export default function ExcelUploader() {
               </button>
               <button
                 onClick={handleDownloadConfirm}
-                className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
+                className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl"
               >
                 Download
               </button>
