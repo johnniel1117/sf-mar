@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import * as XLSX from "xlsx-js-style"
-import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers, AlertCircle, ArrowUp } from "lucide-react"
+import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers, AlertCircle, ArrowUp, Search } from "lucide-react"
 import LogoGridBackground from "../components/LogoBackground"
 
 interface MaterialData {
@@ -68,6 +68,7 @@ export default function ExcelUploader() {
   const [isDragging, setIsDragging] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     const handleScroll = () => {
@@ -137,6 +138,29 @@ export default function ExcelUploader() {
       className="h-8 w-auto"
     />
   )
+
+  const filterDNsBySearch = (files: UploadedFile[]): UploadedFile[] => {
+    if (!searchQuery.trim()) return files
+    const query = searchQuery.toLowerCase().trim()
+    return files.filter((file) => file.dnNo.toLowerCase().includes(query))
+  }
+
+  const filterGroupedDataBySearch = (data: MaterialData[]): MaterialData[] => {
+    if (!searchQuery.trim()) return data
+    const query = searchQuery.toLowerCase().trim()
+    return data.filter((item) => item.remarks.toLowerCase().includes(query))
+  }
+
+  const filterSerialDataBySearch = (data: SerialData[]): SerialData[] => {
+    if (!searchQuery.trim()) return data
+    const query = searchQuery.toLowerCase().trim()
+    return data.filter(
+      (item) =>
+        item.dnNo.toLowerCase().includes(query) ||
+        item.barcode.toLowerCase().includes(query) ||
+        item.materialCode.toLowerCase().includes(query)
+    )
+  }
 
   const groupAllData = (files: UploadedFile[]): MaterialData[] => {
     const groupedMap = new Map<string, MaterialData>()
@@ -1693,7 +1717,7 @@ export default function ExcelUploader() {
                     onClick={() => setActiveTab(tab.id as TabType)}
                     className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-300 relative group ${
                       activeTab === tab.id
-                        ? "text-blue-600"
+                        ? "text-green-600"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                     }`}
                     style={{ animationDelay: `${index * 0.1}s` }}
@@ -1705,7 +1729,7 @@ export default function ExcelUploader() {
                       {tab.label}
                     </span>
                     {activeTab === tab.id && (
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t" />
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-600 rounded-t" />
                     )}
                   </button>
                 ))}
@@ -1713,6 +1737,30 @@ export default function ExcelUploader() {
             </div>
 
             <div className="p-8">
+              {/* Search Bar - Visible for all tabs */}
+              {(groupedData.length > 0 || serialListData.length > 0) && (
+                <div className="mb-6 flex gap-3">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by DN No., Barcode, or Material Code..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                    />
+                  </div>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                    >
+                      Clear Search
+                    </button>
+                  )}
+                </div>
+              )}
+
               {activeTab === "consolidated" && (
                 <>
                   <div className="flex items-center justify-between mb-6 animate-slide-right">
@@ -1747,7 +1795,7 @@ export default function ExcelUploader() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {groupedData
+                        {filterGroupedDataBySearch(groupedData)
                           .filter((row) => row.materialCode && row.materialDescription)
                           .map((row, idx) => (
                             <tr
@@ -1814,7 +1862,7 @@ export default function ExcelUploader() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {serialListData
+                        {filterSerialDataBySearch(serialListData)
                           .filter((row) => row.materialCode && row.barcode)
                           .map((row, idx) => (
                             <tr
@@ -1875,7 +1923,7 @@ export default function ExcelUploader() {
                       </div>
                     </div>
 
-                    {uploadedFiles.map((file, idx) => (
+                    {filterDNsBySearch(uploadedFiles).map((file, idx) => (
                       <div
                         key={file.id}
                         className="flex items-center justify-between p-5 bg-gray-50 border-2 border-gray-200 rounded-xl  transition-all duration-300 animate-file "
@@ -1896,7 +1944,7 @@ export default function ExcelUploader() {
                             setIsDownloadingAllDN(false)
                             setShowDownloadModal(true)
                           }}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-xl hover:from-gray-800 hover:to-gray-900 transition-all duration-300 font-semibold text-sm hover-lift"
+                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-700 to-green-800 text-white rounded-xl hover:from-green-800 hover:to-green-900 transition-all duration-300 font-semibold text-sm hover-lift"
                         >
                           <Download className="w-4 h-4" />
                           Download
