@@ -1944,7 +1944,7 @@ export default function ExcelUploader() {
                             setIsDownloadingAllDN(false)
                             setShowDownloadModal(true)
                           }}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-700 to-green-800 text-white rounded-xl hover:from-green-800 hover:to-green-900 transition-all duration-300 font-semibold text-sm hover-lift"
+                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-xl hover:from-gray-800 hover:to-gray-900 transition-all duration-300 font-semibold text-sm hover-lift"
                         >
                           <Download className="w-4 h-4" />
                           Download
