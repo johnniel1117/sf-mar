@@ -1634,7 +1634,7 @@ export default function ExcelUploader() {
                     key={file.id}
                     className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 animate-file hover-lift cursor-pointer ${
                       selectedFileId === file.id
-                        ? "border-blue-400 bg-gradient-to-r from-blue-50 to-blue-100 shadow-md scale-[1.02]"
+                        ? "border-green-400 bg-gradient-to-r from-green-50 to-green-100 shadow-md scale-[1.02]"
                         : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100"
                     }`}
                     style={{ animationDelay: `${idx * 0.1}s` }}
@@ -1642,10 +1642,10 @@ export default function ExcelUploader() {
                   >
                     <div className="flex items-center gap-4 flex-1">
                       <div className={`p-3 rounded-xl transition-all duration-300 ${
-                        selectedFileId === file.id ? 'bg-blue-200' : 'bg-blue-100'
+                        selectedFileId === file.id ? 'bg-green-200' : 'bg-blue-100'
                       }`}>
                         <FileSpreadsheet className={`w-6 h-6 transition-all duration-300 ${
-                          selectedFileId === file.id ? 'text-blue-700' : 'text-blue-600'
+                          selectedFileId === file.id ? 'text-green-700' : 'text-blue-600'
                         }`} />
                       </div>
                       <div className="flex-1">
@@ -1849,11 +1849,11 @@ export default function ExcelUploader() {
                     <p className="text-sm text-gray-500">Download individual DN serial lists or all at once</p>
                   </div>
                   <div className="space-y-4">
-                    <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-xl hover-lift">
+                    <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl hover-lift">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="p-3 bg-green-200 rounded-xl">
-                            <Layers className="w-7 h-7 text-green-700" />
+                          <div className="p-3 bg-blue-200 rounded-xl">
+                            <Layers className="w-7 h-7 text-blue-700" />
                           </div>
                           <div>
                             <p className="font-bold text-gray-800 text-lg">Download All DN Serial Lists</p>
@@ -1867,7 +1867,7 @@ export default function ExcelUploader() {
                             setIsDownloadingAllDN(true)
                             setShowDownloadModal(true)
                           }}
-                          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
+                          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl"
                         >
                           <Download className="w-5 h-5" />
                           Download All
@@ -1878,7 +1878,7 @@ export default function ExcelUploader() {
                     {uploadedFiles.map((file, idx) => (
                       <div
                         key={file.id}
-                        className="flex items-center justify-between p-5 bg-gray-50 border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-100 transition-all duration-300 animate-file hover-lift"
+                        className="flex items-center justify-between p-5 bg-gray-50 border-2 border-gray-200 rounded-xl  transition-all duration-300 animate-file "
                         style={{ animationDelay: `${idx * 0.1}s` }}
                       >
                         <div className="flex items-center gap-4">
@@ -1924,20 +1924,20 @@ export default function ExcelUploader() {
                 <button
                   key={option.type}
                   onClick={() => setDownloadType(option.type as 'pdf' | 'excel')}
-                  className={`w-full flex items-center gap-4 p-5 border-2 rounded-xl transition-all duration-300 hover-lift ${
+                  className={`w-full flex items-center gap-4 p-5 border-2 rounded-xl transition-all duration-300  ${
                     downloadType === option.type
-                      ? "border-blue-500 bg-gradient-to-r from-blue-50 to-blue-100 shadow-md scale-[1.02]"
+                      ? "border-green-500 bg-gradient-to-r from-green-50 to-green-100 shadow-md scale-[1.02]"
                       : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                    downloadType === option.type ? "border-blue-600" : "border-gray-300"
+                    downloadType === option.type ? "border-green-600" : "border-gray-300"
                   }`}>
                     {downloadType === option.type && (
-                      <div className="w-3.5 h-3.5 rounded-full bg-blue-600 animate-scaleIn" />
+                      <div className="w-3.5 h-3.5 rounded-full bg-green-600 animate-scaleIn" />
                     )}
                   </div>
-                  <option.icon className={`w-6 h-6 ${downloadType === option.type ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <option.icon className={`w-6 h-6 ${downloadType === option.type ? 'text-green-600' : 'text-gray-400'}`} />
                   <div className="text-left flex-1">
                     <p className="font-bold text-gray-800">{option.label}</p>
                     <p className="text-sm text-gray-500 mt-0.5">{option.desc}</p>
