@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   //   ],
   //   apple: '/apple-icon.png',
   // },
+  icons: {
+    icon: '/sf-express.png', 
+  },
 }
 
 export default function RootLayout({
