@@ -137,8 +137,8 @@ export default function ExcelUploader() {
 
   const HaierLogo = () => (
     <img
-      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s"
-      alt="Haier Logo"
+      src="https://vectorise.net/logo/wp-content/uploads/2019/10/SF-Express.png"
+      alt="SF EXPRESS Logo"
       style={{ height: "80px", width: "auto" }}
     />
   )
@@ -687,7 +687,7 @@ export default function ExcelUploader() {
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s" alt="Haier Logo" />
+            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF EXPRESS Logo" />
           </div>
           <div class="date">
             <strong>Date Printed:</strong><br/>
@@ -739,7 +739,7 @@ export default function ExcelUploader() {
               <th>BIN CODE</th>
               <th>MATERIAL CODE</th>
               <th>MATERIAL DESC</th>
-              <th>BARCODE</th>
+              <th>SERIAL NUMBER</th>
               <th>SHIP TO NAME</th>
               <th>SHIP TO ADDRESS</th>
             </tr>
@@ -791,7 +791,7 @@ export default function ExcelUploader() {
       <div class="${pageBreakClass}">
         <div class="header">
           <div class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s" alt="Haier Logo" />
+            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="Haier Logo" />
           </div>
           <h2 style="color: #000; font-size: 18px; font-weight: bold; margin: 15px 0; text-align: center;">${file.dnNo} | ${shipToName}</h2>
           <div class="date">
@@ -810,7 +810,7 @@ export default function ExcelUploader() {
               <th>BIN CODE</th>
               <th>MATERIAL CODE</th>
               <th>MATERIAL DESC</th>
-              <th>BARCODE</th>
+              <th>SERIAL NUMBER</th>
               <th>SHIP TO NAME</th>
               <th>SHIP TO ADDRESS</th>
             </tr>
@@ -1144,7 +1144,7 @@ export default function ExcelUploader() {
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s" alt="Haier Logo" />
+            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="Haier Logo" />
           </div>
            <h1>${file.dnNo} | ${shipToName}</h1>
           <div class="date">
@@ -1163,7 +1163,7 @@ export default function ExcelUploader() {
               <th>BIN CODE</th>
               <th>MATERIAL CODE</th>
               <th>MATERIAL DESC</th>
-              <th>BARCODE</th>
+              <th>SERIAL NUMBER</th>
               <th>SHIP TO NAME</th>
               <th>SHIP TO ADDRESS</th>
             </tr>
@@ -1756,7 +1756,7 @@ export default function ExcelUploader() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Search by DN No., Barcode, or Material Code..."
+                      placeholder="Search by DN No., Serial Number, or Material Code..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-sm"
