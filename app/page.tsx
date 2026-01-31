@@ -361,7 +361,7 @@ if (
 if (
   code.startsWith("CAABT") || code.startsWith("CA0GF") || code.startsWith("CA0JD") || code.startsWith("CAAC6AE00") ||
 
-  code.startsWith("CA0K4") || code.startsWith("CA0KQ") || code.startsWith("CAACA") || code.startsWith("CEAA37E00") ||
+  code.startsWith("CA0K4") || code.startsWith("CA0KQ") || code.startsWith("CAACA") || code.startsWith("CEAA37E00") || code.startsWith("CBAM") ||
 
   code.startsWith("CAABS") || code.startsWith("CB0MU") || code.startsWith("CB0MR") ||
   code.startsWith("CBAH7") || code.startsWith("CBAH9") || code.startsWith("CBAJP") ||
