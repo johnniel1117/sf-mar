@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import * as XLSX from "xlsx-js-style"
+import { getCategoryFromBinCode } from '../components/CategoryMapping'
 import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers, AlertCircle, ArrowUp, Search } from "lucide-react"
 import LogoGridBackground from "../components/LogoBackground"
 
@@ -51,6 +52,8 @@ interface Notification {
   message: string
 }
 
+
+
 export default function ExcelUploader() {
   const [groupedData, setGroupedData] = useState<MaterialData[]>([])
   const [serialListData, setSerialListData] = useState<SerialData[]>([])
@@ -69,6 +72,7 @@ export default function ExcelUploader() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  
 
   useEffect(() => {
     const handleScroll = () => {
@@ -111,356 +115,8 @@ export default function ExcelUploader() {
     setNotifications(prev => prev.filter(n => n.id !== id))
   }
 
-const MATCODE_CATEGORY_MAP: Record<string, string> = {
-  // Exact full MATCODE → Category mapping (highest priority)
-  "TD0027283": "Small Appliances",
-  "FB28UQM00": "Cooktop",
-  "FB28UPM00": "Cooktop",
-  "FB28URM00": "Cooktop",
-  "TD0027815": "Cooktop",
-  "F705V5M02": "Small Appliances",
-  "F705V6M02": "Small Appliances",
-  "F705V7M02": "Small Appliances",
-  "F705V8M02": "Small Appliances",
-  "TD0041312": "Cooker",
-  "FY01KJM01": "Cooker",
-  "TD0038391": "Cooker",
-  "TD0038855": "Cooker",
-  "FY01KCM01": "Cooker",
-  "TD0025710": "Cooker",
-  "TD0031890": "Cooker",
-  "TD0037147": "Cooker",
-  "TD0038392": "Cooker",
-  "TD0038854": "Cooker",
-  "TD0035664": "Cooker",
-  "TD0031891": "Cooker",
-  "TD0027816": "Cooker",
-  "TD0039389": "Cooker",
-  "TD0042656": "Cooker",
-  "TD0039388": "Cooker",
-  "TD0032570": "Cooker",
-  "TD0042657": "Cooker",
-  "FY01KGM01": "Cooker",
-  "TD0035663": "Cooker",
-  "TD0030850": "Cooker",
-  "FY01KFM01": "Cooker",
-  "TD0041954": "Cooker",
-  "TD0042659": "Cooker",
-  "TD0017818": "Small Appliances",
-  "TD0017819": "Small Appliances",
-  "TD0017820": "Small Appliances",
-  "TD0017823": "Small Appliances",
-  "TD0017822": "Small Appliances",
-  "TD0017826": "Small Appliances",
-  "F705V9M02": "Small Appliances",
-  "TD0026191": "Range Hood",
-  "TD0026189": "Range Hood",
-  "TD0032571": "Range Hood",
-  "TD0038390": "Range Hood",
-  "TD0041953": "Range Hood",
-  "TD0038853": "Range Hood",
-  "FB28UNM00": "Cooktop",
-  "TD0042658": "Cooker",
-  "B30FZ4M6K": "Freezer",
-  "B30FM4M6K": "Freezer",
-  "B300G5M6K": "Freezer",
-  "B30GK2M6J": "Freezer",
-  "BD07U2M00": "Freezer",
-  "BF0GS8M00": "Freezer",
-  "BF0GS5M00": "Freezer",
-  "AD0KG4U00": "Home Air Conditioner",
-  "AA93Z2E07": "Home Air Conditioner",
-  "AA1P5NE09": "Home Air Conditioner",
-  "AAA363E03": "Home Air Conditioner",
-  "AAA7B1E00": "Home Air Conditioner",
-  "AAA369E03": "Home Air Conditioner",
-  "AAA7B8E00": "Home Air Conditioner",
-  "AAXN4E07": "Home Air Conditioner",
-  "AAXG3E07": "Home Air Conditioner",
-  "AAXN2E07": "Home Air Conditioner",
-  "AAXG1E07": "Home Air Conditioner",
-  "AAC1NUE00": "Home Air Conditioner",
-  "AAC1QBE00": "Home Air Conditioner",
-  "AAC1NWE00": "Home Air Conditioner",
-  "AAC1QDE00": "Home Air Conditioner",
-  "AAAV51E07": "Home Air Conditioner",
-  "AAAV11E07": "Home Air Conditioner",
-  "AABT67E00": "Home Air Conditioner",
-  "AABQZ6E00": "Home Air Conditioner",
-  "AABT6GE00": "Home Air Conditioner",
-  "AABQZDE00": "Home Air Conditioner",
-  "AA9401E09": "Home Air Conditioner",
-  "AA1PE2E09": "Home Air Conditioner",
-  "AAA2HAE00": "Home Air Conditioner",
-  "AAA7CDE00": "Home Air Conditioner",
-  "AA8X40E4U": "Commercial AC",
-  "AA8XD0E4U": "Commercial AC",
-  "AA99T0E4U": "Commercial AC",
-  "AA9AQ0E29": "Commercial AC",
-  "AA8LF0E5W": "Commercial AC",
-  "AA8XJ0E4U": "Commercial AC",
-  "AA8MR0E5W": "Commercial AC",
-  "AZ0Q90E04": "Commercial AC",
-  "AA9ZG1E29": "Commercial AC",
-  "AZ0Y30E01": "Commercial AC",
-  "AA9AE0E29": "Commercial AC",
-  "DH1U6BD00": "TV",
-  "DH1U6PD01": "TV",
-  "DH1U6ND02": "TV",
-  "DH1U6CD03": "TV",
-  "DH1U8PD03": "TV",
-  "DH1U8JD02": "TV",
-  "DH1VK3D00": "TV",
-  "B00TU8E8N": "Refrigerator",
-  "B00U05B8V": "Refrigerator",
-  "BS08X2EA6": "Refrigerator",
-  "BS08Z2EA6": "Refrigerator",
-  "BS09TBM90": "Refrigerator",
-  "BS0B830AE": "Refrigerator",
-  "BA0A6JM04": "Refrigerator",
-  "BS0B9208Z": "Refrigerator",
-  "TD0025229": "Refrigerator",
-  "BM03U1M4Z": "Refrigerator",
-  "BM03U0M4Z": "Refrigerator",
 
-  "CF0HV7E00": "Drum Washing Machine",
-  "CEAB9HE00": "Drum Washing Machine",
-  "CF05Y7E0H": "Drum Washing Machine",
-  "CAABT5M01": "Washing Machine",
-  "CAABT7M00": "Washing Machine",
-  "CAABT2M01": "Washing Machine",
-  "CAAC6AE00": "Washing Machine",
-  "CBAMZH00001W1R8F0132": "Washing Machine",
-  "CE0J9HE0G": "Drum Washing Machine",
-  "CE0JKNE00": "Drum Washing Machine",
-  "CE0JYCE0H": "Drum Washing Machine",
-  "CC0JRHM00": "Washing Machine",
 
-  "TD0047781": "Home Air Conditioner",
-  "AD0P31U00": "Home Air Conditioner",
-  "AAC1UDU00": "Home Air Conditioner",
-  "AD0P21U00": "Home Air Conditioner",
-};
-
-const getCategoryFromBinCode = (barcode: string): string => {
-  if (!barcode) return "Others";
-
-  const code = String(barcode).toUpperCase().trim();
-
-  // 1. Exact full MATCODE match (most accurate)
-  if (MATCODE_CATEGORY_MAP[code]) {
-    return MATCODE_CATEGORY_MAP[code];
-  }
-
-  // 2. Keyword-based quick catches (promos, mockups, reserves, TV brackets, etc.)
-  if (
-    code.includes("MOCKUP") ||
-    code.includes("#N/A") ||
-    code.startsWith("RESERVE") ||
-    code.includes("APRON") ||
-    code.includes("GLOVES") ||
-    code.includes("FLAG") ||
-    code.includes("UMBRELLA") ||
-    code.includes("T-SHIRT") ||
-    code.includes("CALENDAR") ||
-    code.includes("CLOCK") ||
-    code.includes("TEARDROP") ||
-    code.includes("ROLL-UP") ||
-    code.includes("POWERED FAN") ||
-    code.includes("JBL FLIP") ||
-    code.includes("LUMINARC")
-  ) {
-    return "Others";
-  }
-
-  // 3. TV detection (strong patterns)
-  if (
-    code.startsWith("DH1") ||
-    code.startsWith("DC1") ||
-    code.startsWith("DD1") ||
-    code.startsWith("DA1") ||
-    code.startsWith("DT0") ||
-    code.startsWith("DZ0") ||
-    code.includes("LE") ||
-    code.includes("H") && (code.includes("K") || code.includes("S") || code.includes("U")) ||
-    code.includes("BRKT") ||
-    code.includes("BRACKET") ||
-    code.includes("HHT-MIT") ||
-    code.includes("MEDIA TANK") ||
-    code.includes("Q70") ||
-    code.includes("TVR-") ||
-    code.includes("WIRELESS KEYBOARD")
-  ) {
-    return "TV";
-  }
-
-  // 4. Exact full-MATCODE-style fallback (longer & more specific prefixes first)
-// This runs only if no exact match was found in MATCODE_CATEGORY_MAP
-
-// Freezer
-if (
-  code.startsWith("B30FZ") || code.startsWith("B30FM") || code.startsWith("B300G") ||
-  code.startsWith("B30GK") || code.startsWith("B30GL") || code.startsWith("B30GM") ||
-  code.startsWith("B30JU") || code.startsWith("BD07U") || code.startsWith("BF0GS") ||
-  code.startsWith("BF0G3") || code.startsWith("BW0AC") || code.startsWith("BW0AD") ||
-  code.startsWith("BW03N") || code.startsWith("BY0H4") || code.startsWith("BY0K1") ||
-  code.startsWith("BY0ET") || code.startsWith("BY0H5") || code.startsWith("BY0JQ") ||
-  code.startsWith("BB09U") || code.startsWith("B401N") ||
-  code.startsWith("TD00438") || code.startsWith("TD00453")  // CF-0* freezers
-) return "Freezer";
-
-// Refrigerator
-if (
-  code.startsWith("B00TU") || code.startsWith("B00U0") ||
-  code.startsWith("BA0A6") || code.startsWith("BH02X") || code.startsWith("BH03Y") ||
-  code.startsWith("BH034") || code.startsWith("BJ0XC") || code.startsWith("BJ0XD") ||
-  code.startsWith("BJ0XE") || code.startsWith("BL05")  || code.startsWith("BL06") ||
-  code.startsWith("BM03L") || code.startsWith("BM03M") || code.startsWith("BM03N") || code.startsWith("BM03U1M") ||
-  code.startsWith("BM03U") || code.startsWith("BM03Y") || code.startsWith("BM03Z") ||
-  code.startsWith("BS08X") || code.startsWith("BS08Z") || code.startsWith("BS09R") ||
-  code.startsWith("BS09A") || code.startsWith("BS099") || code.startsWith("BS0B8") ||
-  code.startsWith("BS0B9") || code.startsWith("BS0BE") || code.startsWith("BS0BF") ||
-  code.startsWith("BS0BG") || code.startsWith("HRF-")  || code.startsWith("HR-IV") ||
-  code.startsWith("HR-S")  || code.startsWith("HR-B")  || code.startsWith("HR-C") ||
-  code.startsWith("TD00252") || code.startsWith("TD00449") || code.startsWith("TD00463")
-) return "Refrigerator";
-
-// TV
-if (
-  code.startsWith("DH1U6") || code.startsWith("DH1U8") || code.startsWith("DH1U9") ||
-  code.startsWith("DH1VK") || code.startsWith("DH1VL") || code.startsWith("DH1VM") ||
-  code.startsWith("DH1VV") || code.startsWith("DH1VW") || code.startsWith("DH1X")  ||
-  code.startsWith("DH1SX") || code.startsWith("DC1J") || code.startsWith("DC1M") ||
-  code.startsWith("DC1Q") || code.startsWith("DD10P") || code.startsWith("DA109") ||
-  code.startsWith("DA0QW") || code.startsWith("DT001") || code.startsWith("DZ0Z2") ||
-  code.startsWith("FA08G") || code.startsWith("FP243") || code.startsWith("LE22") ||
-  code.startsWith("LE24") || code.startsWith("LE28") || code.startsWith("LE32") ||
-  code.startsWith("LE39") || code.startsWith("LE40") || code.startsWith("LE42") ||
-  code.startsWith("LE43") || code.startsWith("LE46") || code.startsWith("LE48") ||
-  code.startsWith("LE49") || code.startsWith("LE50") || code.startsWith("LE55") ||
-  code.startsWith("LE58") || code.startsWith("LE65") || code.startsWith("H32")   ||
-  code.startsWith("H40")   || code.startsWith("H42")   || code.startsWith("H43")   ||
-  code.startsWith("H50")   || code.startsWith("H55")   || code.startsWith("H58")   ||
-  code.startsWith("H65")   || code.startsWith("H70")   || code.startsWith("H75")   ||
-  code.startsWith("H85")   || code.startsWith("H98")   ||
-  code.includes("BRKT") || code.includes("BRACKET") || code.includes("HHT-MIT") ||
-  code.includes("MEDIA TANK") || code.includes("Q70") || code.includes("TVR-") ||
-  code.includes("WIRELESS KEYBOARD") || code.includes("LCD-") || code.includes("LCE-")
-) return "TV";
-
-// Drum Washing Machine
-if (
-  code.startsWith("CE0J9") || code.startsWith("CE0JK") || code.startsWith("CE0JW") ||
-  code.startsWith("CEAAJ") || code.startsWith("CEAB9") || code.startsWith("CEABX") ||
-  code.startsWith("CEACE") || code.startsWith("CF0HV") || code.startsWith("CF0J4") ||
-  code.startsWith("HWD1") || code.startsWith("HW100") || code.startsWith("HW80-") ||
-  code.startsWith("HWD80") || code.startsWith("HWD12")
-) return "Drum Washing Machine";
-
-// Washing Machine (mostly top-load/semi-auto)
-if (
-  code.startsWith("CAABT") || code.startsWith("CA0GF") || code.startsWith("CA0JD") || code.startsWith("CAAC6AE00") ||
-
-  code.startsWith("CA0K4") || code.startsWith("CA0KQ") || code.startsWith("CAACA") || code.startsWith("CEAA37E00") || code.startsWith("CBAM") ||
-
-  code.startsWith("CAABS") || code.startsWith("CB0MU") || code.startsWith("CB0MR") ||
-  code.startsWith("CBAH7") || code.startsWith("CBAH9") || code.startsWith("CBAJP") ||
-  code.startsWith("CBAJZ") || code.startsWith("CBAK5") || code.startsWith("CC0JR") ||
-  code.startsWith("CG0LL") || code.startsWith("HTW60") || code.startsWith("HTW70") ||
-  code.startsWith("HTW90") || code.startsWith("HTW11") || code.startsWith("HTW13") ||
-  code.startsWith("HWM50") || code.startsWith("HWM60") || code.startsWith("HWM70") ||
-  code.startsWith("HWM80") || code.startsWith("HWM90") || code.startsWith("HWM10") ||
-  code.startsWith("HW-P7") || code.startsWith("HW-P9") || code.startsWith("HW-60") ||
-  code.startsWith("HW-70") || code.startsWith("HW-80") || code.startsWith("HW-90") ||
-  code.startsWith("SW-60") || code.startsWith("SW-73") || code.startsWith("SW-74") ||
-  code.startsWith("SW-83") || code.startsWith("ASW-") || code.startsWith("HW-100")
-) return "Washing Machine";
-
-// Home Air Conditioner
-if (
-  code.startsWith("AA93Z") || code.startsWith("AA94")  || code.startsWith("AA1P5") ||
-  code.startsWith("AAA36") || code.startsWith("AAA7B") || code.startsWith("AAAXN") ||
-  code.startsWith("AAAXG") || code.startsWith("AAAV5") || code.startsWith("AAAV1") ||
-  code.startsWith("AABT6") || code.startsWith("AABQZ") || code.startsWith("AAC1N") ||
-  code.startsWith("AAC1Q") || code.startsWith("AD0FF") || code.startsWith("AD0FN") ||  code.startsWith("AAC") ||
-  code.startsWith("AD0KG") || code.startsWith("AD0KH") || code.startsWith("AD0L5") || code.startsWith("AD0") ||
-  code.startsWith("AD0ME") || code.startsWith("AD0MF") || code.startsWith("AD0P2") ||
-  code.startsWith("AD0P3") || code.startsWith("AD0P8") || code.startsWith("HSU-09") ||
-  code.startsWith("HSU-10") || code.startsWith("HSU-12") || code.startsWith("HSU-13") ||
-  code.startsWith("HSU-18") || code.startsWith("HSU-24") || code.startsWith("HSU-25") ||
-  code.startsWith("HSU-30") || code.startsWith("HW-05") || code.startsWith("HW-07") ||
-  code.startsWith("HW-09") || code.startsWith("HW-10") || code.startsWith("HW-12") ||
-  code.startsWith("HW-13") || code.startsWith("HW-18") || code.startsWith("HW-20") ||
-  code.startsWith("HW-24") || code.startsWith("SAP-")  || code.startsWith("AQA-R")
-) return "Home Air Conditioner";
-
-// Commercial AC
-if (
-  code.startsWith("AA8X4") || code.startsWith("AA8XD") || code.startsWith("AA8LF") ||
-  code.startsWith("AA8XJ") || code.startsWith("AA8MR") || code.startsWith("AA8WU") ||
-  code.startsWith("AA8WM") || code.startsWith("AA8WW") || code.startsWith("AA99T") ||
-  code.startsWith("AA9AQ") || code.startsWith("AA9AE") || code.startsWith("AA9AF") ||
-  code.startsWith("AA9AR") || code.startsWith("AA9AN") || code.startsWith("AA9ZG") ||
-  code.startsWith("AZ0Q9") || code.startsWith("AZ0Y3") || code.startsWith("AZ0Y4") ||
-  code.startsWith("AZ0Y5") || code.startsWith("AZ0LL") || code.startsWith("AC25Z") ||
-  code.startsWith("AC2B6") || code.startsWith("AC214") || code.startsWith("AC215") ||
-  code.startsWith("AC216") || code.startsWith("AC217") || code.startsWith("AE1QC") ||
-  code.startsWith("AE1WK") || code.startsWith("AE1WL") || code.startsWith("AE1XL") ||
-  code.startsWith("AB182") || code.startsWith("AB242") || code.startsWith("AB302") ||
-  code.startsWith("AB382") || code.startsWith("AB482") || code.startsWith("1U36H") ||
-  code.startsWith("1U60I") || code.startsWith("AV20N") || code.startsWith("AV26N")
-) return "Commercial AC";
-
-// Small Appliances
-if (
-  code.startsWith("F705V") || code.startsWith("TD00178") || code.startsWith("TD00178") ||
-  code.startsWith("HIC-C") || code.startsWith("HKT-2") || code.startsWith("HKT-6") ||
-  code.startsWith("HRC-G") || code.startsWith("HCT-")  || code.startsWith("HEO-")  ||
-  code.startsWith("FP00J") || code.startsWith("FX50Z") || code.startsWith("HMX-T")
-) return "Small Appliances";
-
-// Cooktop
-if (
-  code.startsWith("FB28U") || code.startsWith("FB28R") || code.startsWith("TCCK2") ||
-  code.startsWith("TCCK1") || code.startsWith("HCCK2")
-) return "Cooktop";
-
-// Cooker
-if (
-  code.startsWith("FY01K") || code.startsWith("HFS-5") || code.startsWith("HFS-6") ||
-  code.startsWith("HFS-9") || code.startsWith("HFS-1") || code.startsWith("HFS-8") ||
-  code.startsWith("HFS-12") || code.startsWith("HCX-T") || code.startsWith("HWO60")
-) return "Cooker";
-
-// Water Heater
-if (
-  code.startsWith("GA0T2") || code.startsWith("EI35E") || code.startsWith("EI35M")
-) return "Water Heater";
-
-// Micro-wave Oven
-if (
-  code.startsWith("GB0E3") || code.startsWith("GX015") || code.startsWith("HMWO-")
-) return "Micro-wave Oven";
-
-// Range Hood
-if (
-  code.startsWith("HRH-T") || code.startsWith("HRH-D")
-) return "Range Hood";
-
-// Others (promo, mockup, reserve, etc.)
-if (
-  code.startsWith("TD0037") || code.startsWith("TD0039") || code.startsWith("TD0040") ||
-  code.startsWith("RESERVE") || code.includes("MOCKUP") || code.includes("#N/A") ||
-  code.includes("APRON") || code.includes("GLOVES") || code.includes("FLAG") ||
-  code.includes("UMBRELLA") || code.includes("T-SHIRT") || code.includes("CALENDAR") ||
-  code.includes("CLOCK") || code.includes("TUMBLER") || code.includes("FAN") ||
-  code.includes("JBL FLIP") || code.includes("LUMINARC") || code.includes("RUBBERMAID") ||
-  code.includes("SURFPOWDER") || code.includes("LOOT BAG")
-) return "Others";
-
-// True final fallback
-return "Others";
-};
 
 
   const formatDate = () => {
@@ -496,16 +152,45 @@ return "Others";
     />
   )
 
+
+  // Improved search: search across more fields and more robust matching
   const filterDNsBySearch = (files: UploadedFile[]): UploadedFile[] => {
     if (!searchQuery.trim()) return files
     const query = searchQuery.toLowerCase().trim()
-    return files.filter((file) => file.dnNo.toLowerCase().includes(query))
+    return files.filter((file) => {
+      // Search in DN number, file name, and any material/serial data fields
+      if (file.dnNo.toLowerCase().includes(query) || file.name.toLowerCase().includes(query)) return true
+      // Search in material data
+      if (file.data.some(item =>
+        item.materialCode.toLowerCase().includes(query) ||
+        item.materialDescription.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        item.remarks.toLowerCase().includes(query) ||
+        item.shipName.toLowerCase().includes(query)
+      )) return true
+      // Search in serial data
+      if (file.serialData.some(item =>
+        item.dnNo.toLowerCase().includes(query) ||
+        item.barcode.toLowerCase().includes(query) ||
+        item.materialCode.toLowerCase().includes(query) ||
+        item.materialDesc.toLowerCase().includes(query) ||
+        item.shipToName.toLowerCase().includes(query) ||
+        item.shipToAddress.toLowerCase().includes(query)
+      )) return true
+      return false
+    })
   }
 
   const filterGroupedDataBySearch = (data: MaterialData[]): MaterialData[] => {
     if (!searchQuery.trim()) return data
     const query = searchQuery.toLowerCase().trim()
-    return data.filter((item) => item.remarks.toLowerCase().includes(query))
+    return data.filter((item) =>
+      item.materialCode.toLowerCase().includes(query) ||
+      item.materialDescription.toLowerCase().includes(query) ||
+      item.category.toLowerCase().includes(query) ||
+      item.remarks.toLowerCase().includes(query) ||
+      item.shipName.toLowerCase().includes(query)
+    )
   }
 
   const filterSerialDataBySearch = (data: SerialData[]): SerialData[] => {
@@ -515,9 +200,17 @@ return "Others";
       (item) =>
         item.dnNo.toLowerCase().includes(query) ||
         item.barcode.toLowerCase().includes(query) ||
-        item.materialCode.toLowerCase().includes(query)
+        item.materialCode.toLowerCase().includes(query) ||
+        item.materialDesc.toLowerCase().includes(query) ||
+        item.shipToName.toLowerCase().includes(query) ||
+        item.shipToAddress.toLowerCase().includes(query) ||
+        item.location.toLowerCase().includes(query) ||
+        item.binCode.toLowerCase().includes(query)
     )
   }
+
+  // Use the accurate category mapping from CategoryMapping.ts
+
 
   const groupAllData = (files: UploadedFile[]): MaterialData[] => {
     const groupedMap = new Map<string, MaterialData>()
@@ -589,7 +282,6 @@ return "Others";
         const orderItemIdx = headers.findIndex((h) => h.includes("order item") || h.includes("orderitem"))
         const factoryCodeIdx = headers.findIndex((h) => h.includes("factory code") || h.includes("factorycode"))
         const locationIdx = headers.findIndex((h) => h.includes("location"))
-        const barcodeIdx = headers.findIndex((h) => h.includes("barcode"))
         const materialTypeIdx = headers.findIndex((h) => h.includes("material type") || h.includes("materialtype"))
         const productStatusIdx = headers.findIndex((h) => h.includes("product status") || h.includes("productstatus"))
         const shipToIdx = headers.findIndex((h) => h === "ship to" || h === "shipto")
@@ -1187,7 +879,7 @@ return "Others";
                 (row, idx) => `
               <tr>
                 <td style="text-align: center;">${idx + 1}</td>
-                <td style="text-align: center;">${getCategoryFromBinCode(row.binCode).toUpperCase()}</td>
+                <td style="text-align: center;">${getCategoryFromBinCode(row.barcode).toUpperCase()}</td>
                 <td style="text-align: center;">${row.materialDesc || row.materialCode}</td>
                 <td style="text-align: center; font-weight: bold;">${row.barcode}</td>
                 <td></td>
@@ -1617,7 +1309,7 @@ return "Others";
                 (row, idx) => `
               <tr>
                 <td style="text-align: center;">${idx + 1}</td>
-                <td style="text-align: center;">${getCategoryFromBinCode(row.binCode).toUpperCase()}</td>
+                <td style="text-align: center;">${getCategoryFromBinCode(row.barcode).toUpperCase()}</td>
                 <td style="text-align: center;">${row.materialDesc || row.materialCode}</td>
                 <td style="text-align: center; font-weight: bold;">${row.barcode}</td>
                 <td></td>
