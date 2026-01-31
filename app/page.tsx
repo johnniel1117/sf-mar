@@ -72,7 +72,6 @@ export default function ExcelUploader() {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show button when scrolled down 400px
       setShowScrollTop(window.scrollY > 400)
     }
 
@@ -103,7 +102,6 @@ export default function ExcelUploader() {
     const id = `${Date.now()}-${Math.random()}`
     setNotifications(prev => [...prev, { id, type, message }])  
     
-    // Auto-remove after 5 seconds
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id))
     }, 5000)
@@ -113,15 +111,357 @@ export default function ExcelUploader() {
     setNotifications(prev => prev.filter(n => n.id !== id))
   }
 
-  const getCategoryFromBinCode = (binCode: string): string => {
-    const code = String(binCode || "").toUpperCase()
-    if (code.includes("HAC")) return "Home Air Conditioner"
-    if (code.includes("TV") || code.includes("LED")) return "TV"
-    if (code.includes("WM") || code.includes("WASH")) return "Washing Machine"
-    if (code.includes("REF") || code.includes("FRIDGE")) return "Refrigerator"
-    if (code.includes("FAN")) return "Fan"
-    return "Others"
+const MATCODE_CATEGORY_MAP: Record<string, string> = {
+  // Exact full MATCODE → Category mapping (highest priority)
+  "TD0027283": "Small Appliances",
+  "FB28UQM00": "Cooktop",
+  "FB28UPM00": "Cooktop",
+  "FB28URM00": "Cooktop",
+  "TD0027815": "Cooktop",
+  "F705V5M02": "Small Appliances",
+  "F705V6M02": "Small Appliances",
+  "F705V7M02": "Small Appliances",
+  "F705V8M02": "Small Appliances",
+  "TD0041312": "Cooker",
+  "FY01KJM01": "Cooker",
+  "TD0038391": "Cooker",
+  "TD0038855": "Cooker",
+  "FY01KCM01": "Cooker",
+  "TD0025710": "Cooker",
+  "TD0031890": "Cooker",
+  "TD0037147": "Cooker",
+  "TD0038392": "Cooker",
+  "TD0038854": "Cooker",
+  "TD0035664": "Cooker",
+  "TD0031891": "Cooker",
+  "TD0027816": "Cooker",
+  "TD0039389": "Cooker",
+  "TD0042656": "Cooker",
+  "TD0039388": "Cooker",
+  "TD0032570": "Cooker",
+  "TD0042657": "Cooker",
+  "FY01KGM01": "Cooker",
+  "TD0035663": "Cooker",
+  "TD0030850": "Cooker",
+  "FY01KFM01": "Cooker",
+  "TD0041954": "Cooker",
+  "TD0042659": "Cooker",
+  "TD0017818": "Small Appliances",
+  "TD0017819": "Small Appliances",
+  "TD0017820": "Small Appliances",
+  "TD0017823": "Small Appliances",
+  "TD0017822": "Small Appliances",
+  "TD0017826": "Small Appliances",
+  "F705V9M02": "Small Appliances",
+  "TD0026191": "Range Hood",
+  "TD0026189": "Range Hood",
+  "TD0032571": "Range Hood",
+  "TD0038390": "Range Hood",
+  "TD0041953": "Range Hood",
+  "TD0038853": "Range Hood",
+  "FB28UNM00": "Cooktop",
+  "TD0042658": "Cooker",
+  "B30FZ4M6K": "Freezer",
+  "B30FM4M6K": "Freezer",
+  "B300G5M6K": "Freezer",
+  "B30GK2M6J": "Freezer",
+  "BD07U2M00": "Freezer",
+  "BF0GS8M00": "Freezer",
+  "BF0GS5M00": "Freezer",
+  "AD0KG4U00": "Home Air Conditioner",
+  "AA93Z2E07": "Home Air Conditioner",
+  "AA1P5NE09": "Home Air Conditioner",
+  "AAA363E03": "Home Air Conditioner",
+  "AAA7B1E00": "Home Air Conditioner",
+  "AAA369E03": "Home Air Conditioner",
+  "AAA7B8E00": "Home Air Conditioner",
+  "AAXN4E07": "Home Air Conditioner",
+  "AAXG3E07": "Home Air Conditioner",
+  "AAXN2E07": "Home Air Conditioner",
+  "AAXG1E07": "Home Air Conditioner",
+  "AAC1NUE00": "Home Air Conditioner",
+  "AAC1QBE00": "Home Air Conditioner",
+  "AAC1NWE00": "Home Air Conditioner",
+  "AAC1QDE00": "Home Air Conditioner",
+  "AAAV51E07": "Home Air Conditioner",
+  "AAAV11E07": "Home Air Conditioner",
+  "AABT67E00": "Home Air Conditioner",
+  "AABQZ6E00": "Home Air Conditioner",
+  "AABT6GE00": "Home Air Conditioner",
+  "AABQZDE00": "Home Air Conditioner",
+  "AA9401E09": "Home Air Conditioner",
+  "AA1PE2E09": "Home Air Conditioner",
+  "AAA2HAE00": "Home Air Conditioner",
+  "AAA7CDE00": "Home Air Conditioner",
+  "AA8X40E4U": "Commercial AC",
+  "AA8XD0E4U": "Commercial AC",
+  "AA99T0E4U": "Commercial AC",
+  "AA9AQ0E29": "Commercial AC",
+  "AA8LF0E5W": "Commercial AC",
+  "AA8XJ0E4U": "Commercial AC",
+  "AA8MR0E5W": "Commercial AC",
+  "AZ0Q90E04": "Commercial AC",
+  "AA9ZG1E29": "Commercial AC",
+  "AZ0Y30E01": "Commercial AC",
+  "AA9AE0E29": "Commercial AC",
+  "DH1U6BD00": "TV",
+  "DH1U6PD01": "TV",
+  "DH1U6ND02": "TV",
+  "DH1U6CD03": "TV",
+  "DH1U8PD03": "TV",
+  "DH1U8JD02": "TV",
+  "DH1VK3D00": "TV",
+  "B00TU8E8N": "Refrigerator",
+  "B00U05B8V": "Refrigerator",
+  "BS08X2EA6": "Refrigerator",
+  "BS08Z2EA6": "Refrigerator",
+  "BS09TBM90": "Refrigerator",
+  "BS0B830AE": "Refrigerator",
+  "BA0A6JM04": "Refrigerator",
+  "BS0B9208Z": "Refrigerator",
+  "TD0025229": "Refrigerator",
+  "BM03U1M4Z": "Refrigerator",
+  "BM03U0M4Z": "Refrigerator",
+
+  "CF0HV7E00": "Drum Washing Machine",
+  "CEAB9HE00": "Drum Washing Machine",
+  "CF05Y7E0H": "Drum Washing Machine",
+  "CAABT5M01": "Washing Machine",
+  "CAABT7M00": "Washing Machine",
+  "CAABT2M01": "Washing Machine",
+  "CAAC6AE00": "Washing Machine",
+  "CBAMZH00001W1R8F0132": "Washing Machine",
+  "CE0J9HE0G": "Drum Washing Machine",
+  "CE0JKNE00": "Drum Washing Machine",
+  "CE0JYCE0H": "Drum Washing Machine",
+  "CC0JRHM00": "Washing Machine",
+
+  "TD0047781": "Home Air Conditioner",
+  "AD0P31U00": "Home Air Conditioner",
+  "AAC1UDU00": "Home Air Conditioner",
+  "AD0P21U00": "Home Air Conditioner",
+};
+
+const getCategoryFromBinCode = (barcode: string): string => {
+  if (!barcode) return "Others";
+
+  const code = String(barcode).toUpperCase().trim();
+
+  // 1. Exact full MATCODE match (most accurate)
+  if (MATCODE_CATEGORY_MAP[code]) {
+    return MATCODE_CATEGORY_MAP[code];
   }
+
+  // 2. Keyword-based quick catches (promos, mockups, reserves, TV brackets, etc.)
+  if (
+    code.includes("MOCKUP") ||
+    code.includes("#N/A") ||
+    code.startsWith("RESERVE") ||
+    code.includes("APRON") ||
+    code.includes("GLOVES") ||
+    code.includes("FLAG") ||
+    code.includes("UMBRELLA") ||
+    code.includes("T-SHIRT") ||
+    code.includes("CALENDAR") ||
+    code.includes("CLOCK") ||
+    code.includes("TEARDROP") ||
+    code.includes("ROLL-UP") ||
+    code.includes("POWERED FAN") ||
+    code.includes("JBL FLIP") ||
+    code.includes("LUMINARC")
+  ) {
+    return "Others";
+  }
+
+  // 3. TV detection (strong patterns)
+  if (
+    code.startsWith("DH1") ||
+    code.startsWith("DC1") ||
+    code.startsWith("DD1") ||
+    code.startsWith("DA1") ||
+    code.startsWith("DT0") ||
+    code.startsWith("DZ0") ||
+    code.includes("LE") ||
+    code.includes("H") && (code.includes("K") || code.includes("S") || code.includes("U")) ||
+    code.includes("BRKT") ||
+    code.includes("BRACKET") ||
+    code.includes("HHT-MIT") ||
+    code.includes("MEDIA TANK") ||
+    code.includes("Q70") ||
+    code.includes("TVR-") ||
+    code.includes("WIRELESS KEYBOARD")
+  ) {
+    return "TV";
+  }
+
+  // 4. Exact full-MATCODE-style fallback (longer & more specific prefixes first)
+// This runs only if no exact match was found in MATCODE_CATEGORY_MAP
+
+// Freezer
+if (
+  code.startsWith("B30FZ") || code.startsWith("B30FM") || code.startsWith("B300G") ||
+  code.startsWith("B30GK") || code.startsWith("B30GL") || code.startsWith("B30GM") ||
+  code.startsWith("B30JU") || code.startsWith("BD07U") || code.startsWith("BF0GS") ||
+  code.startsWith("BF0G3") || code.startsWith("BW0AC") || code.startsWith("BW0AD") ||
+  code.startsWith("BW03N") || code.startsWith("BY0H4") || code.startsWith("BY0K1") ||
+  code.startsWith("BY0ET") || code.startsWith("BY0H5") || code.startsWith("BY0JQ") ||
+  code.startsWith("BB09U") || code.startsWith("B401N") ||
+  code.startsWith("TD00438") || code.startsWith("TD00453")  // CF-0* freezers
+) return "Freezer";
+
+// Refrigerator
+if (
+  code.startsWith("B00TU") || code.startsWith("B00U0") ||
+  code.startsWith("BA0A6") || code.startsWith("BH02X") || code.startsWith("BH03Y") ||
+  code.startsWith("BH034") || code.startsWith("BJ0XC") || code.startsWith("BJ0XD") ||
+  code.startsWith("BJ0XE") || code.startsWith("BL05")  || code.startsWith("BL06") ||
+  code.startsWith("BM03L") || code.startsWith("BM03M") || code.startsWith("BM03N") || code.startsWith("BM03U1M") ||
+  code.startsWith("BM03U") || code.startsWith("BM03Y") || code.startsWith("BM03Z") ||
+  code.startsWith("BS08X") || code.startsWith("BS08Z") || code.startsWith("BS09R") ||
+  code.startsWith("BS09A") || code.startsWith("BS099") || code.startsWith("BS0B8") ||
+  code.startsWith("BS0B9") || code.startsWith("BS0BE") || code.startsWith("BS0BF") ||
+  code.startsWith("BS0BG") || code.startsWith("HRF-")  || code.startsWith("HR-IV") ||
+  code.startsWith("HR-S")  || code.startsWith("HR-B")  || code.startsWith("HR-C") ||
+  code.startsWith("TD00252") || code.startsWith("TD00449") || code.startsWith("TD00463")
+) return "Refrigerator";
+
+// TV
+if (
+  code.startsWith("DH1U6") || code.startsWith("DH1U8") || code.startsWith("DH1U9") ||
+  code.startsWith("DH1VK") || code.startsWith("DH1VL") || code.startsWith("DH1VM") ||
+  code.startsWith("DH1VV") || code.startsWith("DH1VW") || code.startsWith("DH1X")  ||
+  code.startsWith("DH1SX") || code.startsWith("DC1J") || code.startsWith("DC1M") ||
+  code.startsWith("DC1Q") || code.startsWith("DD10P") || code.startsWith("DA109") ||
+  code.startsWith("DA0QW") || code.startsWith("DT001") || code.startsWith("DZ0Z2") ||
+  code.startsWith("FA08G") || code.startsWith("FP243") || code.startsWith("LE22") ||
+  code.startsWith("LE24") || code.startsWith("LE28") || code.startsWith("LE32") ||
+  code.startsWith("LE39") || code.startsWith("LE40") || code.startsWith("LE42") ||
+  code.startsWith("LE43") || code.startsWith("LE46") || code.startsWith("LE48") ||
+  code.startsWith("LE49") || code.startsWith("LE50") || code.startsWith("LE55") ||
+  code.startsWith("LE58") || code.startsWith("LE65") || code.startsWith("H32")   ||
+  code.startsWith("H40")   || code.startsWith("H42")   || code.startsWith("H43")   ||
+  code.startsWith("H50")   || code.startsWith("H55")   || code.startsWith("H58")   ||
+  code.startsWith("H65")   || code.startsWith("H70")   || code.startsWith("H75")   ||
+  code.startsWith("H85")   || code.startsWith("H98")   ||
+  code.includes("BRKT") || code.includes("BRACKET") || code.includes("HHT-MIT") ||
+  code.includes("MEDIA TANK") || code.includes("Q70") || code.includes("TVR-") ||
+  code.includes("WIRELESS KEYBOARD") || code.includes("LCD-") || code.includes("LCE-")
+) return "TV";
+
+// Drum Washing Machine
+if (
+  code.startsWith("CE0J9") || code.startsWith("CE0JK") || code.startsWith("CE0JW") ||
+  code.startsWith("CEAAJ") || code.startsWith("CEAB9") || code.startsWith("CEABX") ||
+  code.startsWith("CEACE") || code.startsWith("CF0HV") || code.startsWith("CF0J4") ||
+  code.startsWith("HWD1") || code.startsWith("HW100") || code.startsWith("HW80-") ||
+  code.startsWith("HWD80") || code.startsWith("HWD12")
+) return "Drum Washing Machine";
+
+// Washing Machine (mostly top-load/semi-auto)
+if (
+  code.startsWith("CAABT") || code.startsWith("CA0GF") || code.startsWith("CA0JD") || code.startsWith("CAAC6AE00") ||
+
+  code.startsWith("CA0K4") || code.startsWith("CA0KQ") || code.startsWith("CAACA") || code.startsWith("CEAA37E00") ||
+
+  code.startsWith("CAABS") || code.startsWith("CB0MU") || code.startsWith("CB0MR") ||
+  code.startsWith("CBAH7") || code.startsWith("CBAH9") || code.startsWith("CBAJP") ||
+  code.startsWith("CBAJZ") || code.startsWith("CBAK5") || code.startsWith("CC0JR") ||
+  code.startsWith("CG0LL") || code.startsWith("HTW60") || code.startsWith("HTW70") ||
+  code.startsWith("HTW90") || code.startsWith("HTW11") || code.startsWith("HTW13") ||
+  code.startsWith("HWM50") || code.startsWith("HWM60") || code.startsWith("HWM70") ||
+  code.startsWith("HWM80") || code.startsWith("HWM90") || code.startsWith("HWM10") ||
+  code.startsWith("HW-P7") || code.startsWith("HW-P9") || code.startsWith("HW-60") ||
+  code.startsWith("HW-70") || code.startsWith("HW-80") || code.startsWith("HW-90") ||
+  code.startsWith("SW-60") || code.startsWith("SW-73") || code.startsWith("SW-74") ||
+  code.startsWith("SW-83") || code.startsWith("ASW-") || code.startsWith("HW-100")
+) return "Washing Machine";
+
+// Home Air Conditioner
+if (
+  code.startsWith("AA93Z") || code.startsWith("AA94")  || code.startsWith("AA1P5") ||
+  code.startsWith("AAA36") || code.startsWith("AAA7B") || code.startsWith("AAAXN") ||
+  code.startsWith("AAAXG") || code.startsWith("AAAV5") || code.startsWith("AAAV1") ||
+  code.startsWith("AABT6") || code.startsWith("AABQZ") || code.startsWith("AAC1N") ||
+  code.startsWith("AAC1Q") || code.startsWith("AD0FF") || code.startsWith("AD0FN") ||  code.startsWith("AAC") ||
+  code.startsWith("AD0KG") || code.startsWith("AD0KH") || code.startsWith("AD0L5") || code.startsWith("AD0") ||
+  code.startsWith("AD0ME") || code.startsWith("AD0MF") || code.startsWith("AD0P2") ||
+  code.startsWith("AD0P3") || code.startsWith("AD0P8") || code.startsWith("HSU-09") ||
+  code.startsWith("HSU-10") || code.startsWith("HSU-12") || code.startsWith("HSU-13") ||
+  code.startsWith("HSU-18") || code.startsWith("HSU-24") || code.startsWith("HSU-25") ||
+  code.startsWith("HSU-30") || code.startsWith("HW-05") || code.startsWith("HW-07") ||
+  code.startsWith("HW-09") || code.startsWith("HW-10") || code.startsWith("HW-12") ||
+  code.startsWith("HW-13") || code.startsWith("HW-18") || code.startsWith("HW-20") ||
+  code.startsWith("HW-24") || code.startsWith("SAP-")  || code.startsWith("AQA-R")
+) return "Home Air Conditioner";
+
+// Commercial AC
+if (
+  code.startsWith("AA8X4") || code.startsWith("AA8XD") || code.startsWith("AA8LF") ||
+  code.startsWith("AA8XJ") || code.startsWith("AA8MR") || code.startsWith("AA8WU") ||
+  code.startsWith("AA8WM") || code.startsWith("AA8WW") || code.startsWith("AA99T") ||
+  code.startsWith("AA9AQ") || code.startsWith("AA9AE") || code.startsWith("AA9AF") ||
+  code.startsWith("AA9AR") || code.startsWith("AA9AN") || code.startsWith("AA9ZG") ||
+  code.startsWith("AZ0Q9") || code.startsWith("AZ0Y3") || code.startsWith("AZ0Y4") ||
+  code.startsWith("AZ0Y5") || code.startsWith("AZ0LL") || code.startsWith("AC25Z") ||
+  code.startsWith("AC2B6") || code.startsWith("AC214") || code.startsWith("AC215") ||
+  code.startsWith("AC216") || code.startsWith("AC217") || code.startsWith("AE1QC") ||
+  code.startsWith("AE1WK") || code.startsWith("AE1WL") || code.startsWith("AE1XL") ||
+  code.startsWith("AB182") || code.startsWith("AB242") || code.startsWith("AB302") ||
+  code.startsWith("AB382") || code.startsWith("AB482") || code.startsWith("1U36H") ||
+  code.startsWith("1U60I") || code.startsWith("AV20N") || code.startsWith("AV26N")
+) return "Commercial AC";
+
+// Small Appliances
+if (
+  code.startsWith("F705V") || code.startsWith("TD00178") || code.startsWith("TD00178") ||
+  code.startsWith("HIC-C") || code.startsWith("HKT-2") || code.startsWith("HKT-6") ||
+  code.startsWith("HRC-G") || code.startsWith("HCT-")  || code.startsWith("HEO-")  ||
+  code.startsWith("FP00J") || code.startsWith("FX50Z") || code.startsWith("HMX-T")
+) return "Small Appliances";
+
+// Cooktop
+if (
+  code.startsWith("FB28U") || code.startsWith("FB28R") || code.startsWith("TCCK2") ||
+  code.startsWith("TCCK1") || code.startsWith("HCCK2")
+) return "Cooktop";
+
+// Cooker
+if (
+  code.startsWith("FY01K") || code.startsWith("HFS-5") || code.startsWith("HFS-6") ||
+  code.startsWith("HFS-9") || code.startsWith("HFS-1") || code.startsWith("HFS-8") ||
+  code.startsWith("HFS-12") || code.startsWith("HCX-T") || code.startsWith("HWO60")
+) return "Cooker";
+
+// Water Heater
+if (
+  code.startsWith("GA0T2") || code.startsWith("EI35E") || code.startsWith("EI35M")
+) return "Water Heater";
+
+// Micro-wave Oven
+if (
+  code.startsWith("GB0E3") || code.startsWith("GX015") || code.startsWith("HMWO-")
+) return "Micro-wave Oven";
+
+// Range Hood
+if (
+  code.startsWith("HRH-T") || code.startsWith("HRH-D")
+) return "Range Hood";
+
+// Others (promo, mockup, reserve, etc.)
+if (
+  code.startsWith("TD0037") || code.startsWith("TD0039") || code.startsWith("TD0040") ||
+  code.startsWith("RESERVE") || code.includes("MOCKUP") || code.includes("#N/A") ||
+  code.includes("APRON") || code.includes("GLOVES") || code.includes("FLAG") ||
+  code.includes("UMBRELLA") || code.includes("T-SHIRT") || code.includes("CALENDAR") ||
+  code.includes("CLOCK") || code.includes("TUMBLER") || code.includes("FAN") ||
+  code.includes("JBL FLIP") || code.includes("LUMINARC") || code.includes("RUBBERMAID") ||
+  code.includes("SURFPOWDER") || code.includes("LOOT BAG")
+) return "Others";
+
+// True final fallback
+return "Others";
+};
+
 
   const formatDate = () => {
     const now = new Date()
@@ -133,6 +473,11 @@ export default function ExcelUploader() {
       minute: "2-digit",
     }
     return now.toLocaleDateString("en-US", options)
+  }
+
+  const formatDateShort = () => {
+    const now = new Date()
+    return now.toLocaleDateString("en-US", { month: '2-digit', day: '2-digit', year: 'numeric' })
   }
 
   const HaierLogo = () => (
@@ -230,19 +575,17 @@ export default function ExcelUploader() {
             .trim(),
         )
 
-        // Parse for consolidated materials
         const dnNoIdx = headers.findIndex((h) => h.includes("dn no") || h.includes("dn_no") || h.includes("dnno"))
         const materialCodeIdx = headers.findIndex((h) => h.includes("material code") || h.includes("materialcode"))
         const materialDescIdx = headers.findIndex(
           (h) => h.includes("material desc") || h.includes("material description"),
         )
-        const binCodeIdx = headers.findIndex((h) => h.includes("bincode") || h.includes("bin code"))
+        const barCodeIdx = headers.findIndex((h) => h.includes("barcode") || h.includes("bar code"))
         const shipToNameIdx = headers.findIndex(
           (h) =>
             h.includes("ship to name") || h.includes("shiptoname") || h.includes("ship name") || h.includes("shipname"),
         )
 
-        // Parse for serial list - all columns
         const orderItemIdx = headers.findIndex((h) => h.includes("order item") || h.includes("orderitem"))
         const factoryCodeIdx = headers.findIndex((h) => h.includes("factory code") || h.includes("factorycode"))
         const locationIdx = headers.findIndex((h) => h.includes("location"))
@@ -261,10 +604,9 @@ export default function ExcelUploader() {
           dnNo = String(jsonData[1][dnNoIdx] || "N/A")
         }
 
-        // Check for duplicate DN
         if (existingDNs.has(dnNo)) {
           duplicateDNs.push(dnNo)
-          continue // Skip this file
+          continue
         }
 
         const fileData: MaterialData[] = []
@@ -277,16 +619,15 @@ export default function ExcelUploader() {
 
           const materialCode = String(row[materialCodeIdx] || "").trim()
           const materialDescription = materialDescIdx >= 0 ? String(row[materialDescIdx] || "").trim() : ""
-          const binCode = binCodeIdx >= 0 ? String(row[binCodeIdx] || "") : ""
+          const barCode = barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : ""
           const shipName = shipToNameIdx >= 0 ? String(row[shipToNameIdx] || "").trim() : ""
 
           if (!materialCode) continue
 
-          // Check if there's a quantity column in the Excel
           const qtyIdx = headers.findIndex((h) => h.includes("qty") || h.includes("quantity") || h.includes("qnt"))
           const qty = qtyIdx >= 0 ? Number.parseInt(String(row[qtyIdx] || "1"), 10) || 1 : 1
 
-          const category = getCategoryFromBinCode(binCode)
+          const category = getCategoryFromBinCode(barCode)
 
           fileData.push({
             materialCode,
@@ -302,10 +643,10 @@ export default function ExcelUploader() {
             orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "",
             factoryCode: factoryCodeIdx >= 0 ? String(row[factoryCodeIdx] || "") : "",
             location: locationIdx >= 0 ? String(row[locationIdx] || "") : "",
-            binCode: binCode,
+            binCode: barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : "",
             materialCode: materialCode,
             materialDesc: materialDescription,
-            barcode: barcodeIdx >= 0 ? String(row[barcodeIdx] || "") : "",
+            barcode: barCode,
             materialType: materialTypeIdx >= 0 ? String(row[materialTypeIdx] || "") : "",
             productStatus: productStatusIdx >= 0 ? String(row[productStatusIdx] || "") : "",
             shipTo: shipToIdx >= 0 ? String(row[shipToIdx] || "") : "",
@@ -326,11 +667,9 @@ export default function ExcelUploader() {
           serialData: serialData,
         })
 
-        // Add to existing DNs set
         existingDNs.add(dnNo)
       }
 
-      // Show notifications for duplicates
       if (duplicateDNs.length > 0) {
         const dnList = duplicateDNs.join(", ")
         addNotification(
@@ -339,7 +678,6 @@ export default function ExcelUploader() {
         )
       }
 
-      // Show success notification if files were uploaded
       if (newFiles.length > 0) {
         addNotification(
           "success",
@@ -354,7 +692,6 @@ export default function ExcelUploader() {
       const newSerialListData = combineAllSerialData(allFiles)
       setSerialListData(newSerialListData)
 
-      // Trigger staggered animation
       setAnimatingRows(new Set())
       const dataLength = activeTab === "consolidated" ? newGroupedData.length : newSerialListData.length
       Array.from({ length: dataLength }).forEach((_, idx) => {
@@ -367,7 +704,6 @@ export default function ExcelUploader() {
         }, idx * 50)
       })
 
-      // Scroll to table after animation completes
       if (newFiles.length > 0) {
         setTimeout(
           () => {
@@ -422,7 +758,6 @@ export default function ExcelUploader() {
   }
 
   const handleSelectFile = (fileId: string) => {
-    // Toggle: if already selected, unselect
     if (selectedFileId === fileId) {
       setSelectedFileId(null)
       if (activeTab === "consolidated") {
@@ -459,7 +794,6 @@ export default function ExcelUploader() {
         tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 300)
     } else {
-      // Select new file
       setSelectedFileId(fileId)
       setAnimatingRows(new Set())
 
@@ -785,56 +1119,93 @@ export default function ExcelUploader() {
     const allDNContent = uploadedFiles
       .map((file, index) => {
         const shipToName = file.serialData[0]?.shipToName || "Unknown"
+        const shipToAddress = file.serialData[0]?.shipToAddress || ""
         const pageBreakClass = index < uploadedFiles.length - 1 ? "page-break" : ""
+        const totalQty = file.serialData.filter((row) => row.materialCode && row.barcode).length
 
         return `
       <div class="${pageBreakClass}">
-        <div class="header">
-          <div class="logo">
-            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="Haier Logo" />
+        <div class="header-section">
+          <div class="logo-section">
+            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height: 60px; width: auto;" />
+            <div class="warehouse-info">
+              <div style="font-size: 9px; line-height: 1.4; margin-top: 5px;">
+                <strong>SF Express Warehouse</strong><br/>
+                UPPER TINGUB, MANDAUE, CEBU<br/>
+                
+              </div>
+            </div>
           </div>
-          <h2 style="color: #000; font-size: 18px; font-weight: bold; margin: 15px 0; text-align: center;">${file.dnNo} | ${shipToName}</h2>
-          <div class="date">
-            <strong>Generated:</strong><br/>
-            ${formatDate()}
+          
+          <div class="title-section">
+            
+            <div class="dealer-copy">DEALER'S COPY</div>
+            <div class="info-value">${formatDateShort()}</div>
           </div>
         </div>
 
+        <div class="document-header">
+          
+          <div class="doc-number">DN: ${file.dnNo}</div>
+        </div>
+
+        <div >
+          <div class="info-row">
+            <div class="info-label">Client</div>
+            <div class="info-value">: HAIER PHILIPPINES INC.</div>
+            
+            
+          </div>
+      
         
-        
-        <table>
+          <div class="info-row">
+            <div class="info-label">Customer</div>
+            <div class="info-value">: ${shipToName}</div>
+           
+            <div class="info-value"></div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Address</div>
+            <div class="info-value" style="grid-column: span 3;">: ${shipToAddress}</div>
+          </div>
+        </div>
+
+        <table class="data-table">
           <thead>
             <tr>
-              <th>DN NO</th>
-              <th>LOCATION</th>
-              <th>BIN CODE</th>
-              <th>MATERIAL CODE</th>
-              <th>MATERIAL DESC</th>
-              <th>SERIAL NUMBER</th>
-              <th>SHIP TO NAME</th>
-              <th>SHIP TO ADDRESS</th>
+              <th style="width: 40px;">NO.</th>
+              <th style="width: 120px;">CATEGORY</th>
+              <th style="width: 280px;">MATERIAL DESCRIPTION</th>
+              <th style="width: 200px;">SERIAL NUMBER</th>
+              <th style="width: 100px;">REMARKS</th>
             </tr>
           </thead>
           <tbody>
             ${file.serialData
               .filter((row) => row.materialCode && row.barcode)
               .map(
-                (row) => `
+                (row, idx) => `
               <tr>
-                <td>${row.dnNo}</td>
-                <td>${row.location}</td>
-                <td>${row.binCode}</td>
-                <td class="material-code-cell">${row.materialCode}</td>
-                <td class="desc-cell">${row.materialDesc}</td>
-                <td class="barcode-cell">${row.barcode}</td>
-                <td class="desc-cell">${row.shipToName}</td>
-                <td class="desc-cell">${row.shipToAddress}</td>
+                <td style="text-align: center;">${idx + 1}</td>
+                <td style="text-align: center;">${getCategoryFromBinCode(row.binCode).toUpperCase()}</td>
+                <td style="text-align: center;">${row.materialDesc || row.materialCode}</td>
+                <td style="text-align: center; font-weight: bold;">${row.barcode}</td>
+                <td></td>
               </tr>
             `,
               )
               .join("")}
           </tbody>
         </table>
+ 
+
+        <div class="footer-info">
+          <div><strong>TOTAL QTY: ${totalQty}</strong></div>
+         
+          
+        </div>
+
+       
       </div>
     `
       })
@@ -847,8 +1218,8 @@ export default function ExcelUploader() {
         <title>All DN Serial Lists</title>
         <style>
           @page {
-            size: landscape;
-            margin: 15mm;
+            size: portrait;
+            margin: 10mm;
           }
           
           * {
@@ -861,124 +1232,145 @@ export default function ExcelUploader() {
             font-family: Arial, sans-serif;
             color: #000;
             background: #fff;
-            padding: 20px;
+            padding: 15px;
+            font-size: 11px;
           }
           
           .page-break {
             page-break-after: always;
-            margin-bottom: 0;
+            margin-bottom: 20px;
           }
-          
-          .header {
+
+          .header-section {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-           
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
           }
-          
-          .logo img {
-            height: 45px;
-            width: auto;
+
+          .logo-section {
+            display: flex;
+            flex-direction: column;
           }
-          
-          .date {
+
+          .warehouse-info {
+            margin-top: 5px;
+          }
+
+          .title-section {
             text-align: right;
-            font-size: 11px;
-            color: #000;
-            line-height: 1.6;
           }
-          
-          .date strong {
+
+          .company-name {
+            font-size: 16px;
             font-weight: bold;
-            font-size: 12px;
-            color: #000;
+            line-height: 1.2;
+            margin-bottom: 10px;
           }
-          
-          h1, h2 {
-            color: #000;
-            margin: 15px 0 20px 0;
-            font-size: 22px;
+
+          .dealer-copy {
+            font-size: 18px;
             font-weight: bold;
+            letter-spacing: 1px;
+          }
+
+          .document-header {
             text-align: center;
-            letter-spacing: 0.5px;
+            margin: 15px 0;
+            font-size: 30px;
           }
-          
-          table {
+
+          .serial-list-title {
+            font-size: 16px;
+            font-weight: bold;
+          }
+
+          .doc-number {
+            font-size: 20px;
+            font-weight: bold;
+          }
+
+          .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+            border: 1px solid #000;
+          }
+
+          .info-row {
+            display: table-row;
+          }
+
+          .info-label, .info-value {
+            display: table-cell;
+            padding: 4px 8px;
+            margin-bottom: 15px;
+            font-size: 10px;
+          }
+
+          .info-label {
+            font-weight: bold;
+            width: 100px;
+            
+          }
+
+          .info-value {
+            width: 200px;
+            margin-bottom: 15px;
+          }
+
+          .data-table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 15px;
             margin-top: 15px;
-            font-size: 10px;
-            background: #fff;
-            font-family: Arial, sans-serif;
             border: 2px solid #000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
+
+          .data-table th {
           
-          th, td {
-            border: 1.5px solid #000;
-            padding: 10px 8px;
-            text-align: center;
-            word-wrap: break-word;
-            color: #000;
-            background: #fff;
-            font-family: Arial, sans-serif;
-          }
-          
-          th {
-            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
-            color: #000;
+            border: 1px solid #000;
+            padding: 8px 6px;
             font-weight: bold;
+            font-size: 10px;
+            text-align: center;
+          }
+
+          .data-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 10px;
+          }
+
+          .data-table tbody tr:nth-child(even) {
+            
+          }
+
+          .footer-info {
+            display: flex;
+            gap: 30px;
+            margin: 10px 0;
             font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            padding: 12px 8px;
+          }
+
+          .separator {
             text-align: center;
-            font-family: Arial, sans-serif;
-          }
-          
-          tbody tr:nth-child(even) {
-            background: #F9F9F9;
-          }
-          
-          tbody tr:hover {
-            background: #F0F0F0;
-          }
-          
-          .barcode-cell {
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: #000;
+            margin: 15px 0;
             font-size: 10px;
-            letter-spacing: 0.5px;
           }
-          
-          .material-code-cell {
-            font-family: Arial, sans-serif;
-            color: #000;
-            font-size: 10px;
-            font-weight: bold;
-          }
-          
-          .desc-cell {
-            text-align: center;
-            max-width: 200px;
-            font-size: 9px;
-            color: #000;
-            line-height: 1.4;
-          }
-          
+
           @media print {
             body { 
-              margin: 10px;
+              margin: 0;
+              padding: 10px;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
-            .no-print { display: none; }
             @page {
-              size: landscape;
-              margin: 15mm;
+              size: portrait;
+              margin: 10mm;
             }
           }
         </style>
@@ -1002,6 +1394,8 @@ export default function ExcelUploader() {
     if (!printWindow) return
 
     const shipToName = file.serialData[0]?.shipToName || "Unknown"
+    const shipToAddress = file.serialData[0]?.shipToAddress || ""
+    const totalQuantity = file.serialData.filter((row) => row.materialCode && row.barcode).length
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -1010,8 +1404,8 @@ export default function ExcelUploader() {
         <title>${file.dnNo} - Serial List</title>
         <style>
           @page {
-            size: landscape;
-            margin: 15mm;
+            size: portrait;
+            margin: 10mm;
           }
           
           * {
@@ -1024,170 +1418,223 @@ export default function ExcelUploader() {
             font-family: Arial, sans-serif;
             color: #000;
             background: #fff;
-            padding: 20px;
+            padding: 15px;
+            font-size: 11px;
           }
-          
-          .header {
+
+          .header-section {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #0057A8;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
           }
-          
-          .logo img {
-            height: 45px;
-            width: auto;
+
+          .logo-section {
+            display: flex;
+            flex-direction: column;
           }
-          
-          .date {
+
+          .warehouse-info {
+            margin-top: 5px;
+          }
+
+          .title-section {
             text-align: right;
-            font-size: 11px;
-            color: #000;
-            line-height: 1.6;
           }
-          
-          .date strong {
+
+          .company-name {
+            font-size: 16px;
             font-weight: bold;
-            font-size: 12px;
-            color: #000;
+            line-height: 1.2;
+            margin-bottom: 10px;
           }
-          
-          h1 {
-            color: #000;
-            margin: 15px 0 20px 0;
-            font-size: 22px;
+
+          .dealer-copy {
+            font-size: 18px;
             font-weight: bold;
+            letter-spacing: 1px;
+          }
+
+          .document-header {
             text-align: center;
-            letter-spacing: 0.5px;
+            margin: 15px 0;
           }
-          
-          table {
+
+          .serial-list-title {
+            font-size: 16px;
+            font-weight: bold;
+          }
+
+          .doc-number {
+            font-size: 20px;
+            font-weight: bold;
+          }
+
+          .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+            border: 1px solid #000;
+          }
+
+          .info-row {
+            display: table-row;
+          }
+
+          .info-label, .info-value {
+            display: table-cell;
+            padding: 4px 8px;
+            border: 1px solid #000;
+            font-size: 10px;
+          }
+
+          .info-label {
+            font-weight: bold;
+            width: 100px;
+            background: #f0f0f0;
+          }
+
+          .info-value {
+            width: 200px;
+          }
+
+          .data-table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 15px;
             margin-top: 15px;
-            font-size: 10px;
-            background: #fff;
-            font-family: Arial, sans-serif;
             border: 2px solid #000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
-          
-          th, td {
-            border: 1.5px solid #000;
-            padding: 10px 8px;
-            text-align: center;
-            word-wrap: break-word;
-            color: #000;
-            background: #fff;
-            font-family: Arial, sans-serif;
-          }
-          
-          th {
-            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
-            color: #000;
+
+          .data-table th {
+           
+            border: 1px solid #000;
+            padding: 8px 6px;
             font-weight: bold;
+            font-size: 10px;
+            text-align: center;
+          }
+
+          .data-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 10px;
+          }
+
+          .data-table tbody tr:nth-child(even) {
+            
+          }
+
+          .footer-info {
+            display: flex;
+            gap: 30px;
+            margin: 10px 0;
             font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            padding: 12px 8px;
+          }
+
+          .separator {
             text-align: center;
-            font-family: Arial, sans-serif;
-          }
-          
-          tbody tr:nth-child(even) {
-            background: #F9F9F9;
-          }
-          
-          tbody tr:hover {
-            background: #F0F0F0;
-          }
-          
-          .barcode-cell {
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: #000;
+            margin: 15px 0;
             font-size: 10px;
-            letter-spacing: 0.5px;
           }
-          
-          .material-code-cell {
-            font-family: Arial, sans-serif;
-            color: #000;
-            font-size: 10px;
-            font-weight: bold;
-          }
-          
-          .desc-cell {
-            text-align: center;
-            max-width: 200px;
-            font-size: 9px;
-            color: #000;
-            line-height: 1.4;
-          }
-          
+
           @media print {
             body { 
-              margin: 10px;
+              margin: 0;
+              padding: 10px;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
-            .no-print { display: none; }
             @page {
-              size: landscape;
-              margin: 15mm;
+              size: portrait;
+              margin: 10mm;
             }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="logo">
-            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="Haier Logo" />
+        <div class="header-section">
+          <div class="logo-section">
+            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height: 60px; width: auto;" />
+            <div class="warehouse-info">
+              <div style="font-size: 9px; line-height: 1.4; margin-top: 5px;">
+                <strong>SF Express Warehouse</strong><br/>
+                TINGUB, MANDAUE, CEBU <br/>
+                
+              </div>
+            </div>
           </div>
-           <h1>${file.dnNo} | ${shipToName}</h1>
-          <div class="date">
-            <strong>Date Printed:</strong><br/>
-            ${formatDate()}
+          
+          <div class="title-section">
+    
+            <div class="dealer-copy">DEALER'S COPY</div>
+            <div class="info-value">${formatDateShort()}</div>
           </div>
         </div>
-        
-       
-        
-        <table>
+
+        <div class="document-header">
+          
+          <div class="doc-number">Doc # : ${file.dnNo}</div>
+        </div>
+
+        <div >
+          <div >
+            <div class="info-label">Client</div>
+            <div class="info-value">HAIER PHILIPPINES INCsss.</div>
+            <div class="info-label">Date</div>
+            
+          </div>
+          
+     
+          <div class="info-row">
+            <div class="info-label">Customer</div>
+            <div class="info-value">${shipToName}</div>
+            <div class="info-label">Time Dispatched</div>
+            <div class="info-value"></div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Address</div>
+            <div class="info-value" style="grid-column: span 3;">${shipToAddress}</div>
+          </div>
+        </div>
+
+        <table class="data-table">
           <thead>
             <tr>
-              <th>DN NO</th>
-              <th>LOCATION</th>
-              <th>BIN CODE</th>
-              <th>MATERIAL CODE</th>
-              <th>MATERIAL DESC</th>
-              <th>SERIAL NUMBER</th>
-              <th>SHIP TO NAME</th>
-              <th>SHIP TO ADDRESS</th>
+              <th style="width: 40px;">#</th>
+              <th style="width: 120px;">CATEGORY</th>
+              <th style="width: 280px;">MATERIAL DESCRIPTION</th>
+              <th style="width: 200px;">SERIAL NUMBER</th>
+              <th style="width: 100px;">REMARKS</th>
             </tr>
           </thead>
           <tbody>
             ${file.serialData
               .filter((row) => row.materialCode && row.barcode)
               .map(
-                (row) => `
+                (row, idx) => `
               <tr>
-                <td>${row.dnNo}</td>
-                <td>${row.location}</td>
-                <td>${row.binCode}</td>
-                <td class="material-code-cell">${row.materialCode}</td>
-                <td class="desc-cell">${row.materialDesc}</td>
-                <td class="barcode-cell">${row.barcode}</td>
-                <td class="desc-cell">${row.shipToName}</td>
-                <td class="desc-cell">${row.shipToAddress}</td>
+                <td style="text-align: center;">${idx + 1}</td>
+                <td style="text-align: center;">${getCategoryFromBinCode(row.binCode).toUpperCase()}</td>
+                <td style="text-align: center;">${row.materialDesc || row.materialCode}</td>
+                <td style="text-align: center; font-weight: bold;">${row.barcode}</td>
+                <td></td>
               </tr>
             `,
               )
               .join("")}
           </tbody>
         </table>
+
+        <div class="footer-info">
+          <div><strong>TOTAL QTY: ${totalQuantity}</strong></div>
+          
+          
+        </div>
+
+        <div class="separator">********** Nothing Follows **********</div>
       </body>
       </html>
     `
@@ -1523,14 +1970,12 @@ export default function ExcelUploader() {
       
 
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-12 space-y-8">
-        {/* Upload Section - Enhanced Design */}
+        {/* Upload Section */}
         <div className="absolute inset-0 z-0 opacity-40 pointer-events-none [mask-image:linear-gradient(to_top_right,white,transparent,transparent)]">
         <LogoGridBackground />
       </div>
         <div className="relative rounded-3xl p-12  overflow-hidden">
-          {/* Content */}
           <div className="relative z-10">
-            {/* Header Section */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 rounded-full text-lg font-bold mb-4 animate-slide-right">
                 <SFLogo />
@@ -1538,7 +1983,6 @@ export default function ExcelUploader() {
               </div>
             </div>
 
-            {/* Upload Box */}
             <label
               htmlFor="file-upload"
               onDragOver={handleDragOver}
@@ -1553,15 +1997,12 @@ export default function ExcelUploader() {
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-300 hover:border-blue-400 bg-gradient-to-br from-gray-50 to-white hover:from-blue-50 hover:to-white'
               }`}>
-                {/* Upload Icon Circle with Animation */}
                 <div className="flex flex-col items-center justify-center py-16 px-8">
                   <div className="relative mb-6">
-                    {/* Pulsing Ring */}
                     <div className={`absolute inset-0 rounded-full bg-blue-400 opacity-20 ${
                       isDragging ? 'animate-ping' : ''
                     }`} style={{ animation: isDragging ? 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' : 'none' }} />
                     
-                    {/* Icon Container */}
                     <div className={`relative p-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg transition-all duration-300 ${
                       isDragging ? 'scale-110 shadow-xl' : 'group-hover:scale-105 group-hover:shadow-xl'
                     }`}>
@@ -1571,7 +2012,6 @@ export default function ExcelUploader() {
                     </div>
                   </div>
 
-                  {/* Text Content */}
                   <div className="text-center space-y-2">
                     <p className="text-2xl font-bold text-gray-800 transition-colors duration-300 group-hover:text-blue-600">
                       {isDragging ? '✨ Drop your files here' : 'Drop files or click to upload'}
@@ -1580,7 +2020,6 @@ export default function ExcelUploader() {
                       Barcode Excel Files of Haier
                     </p>
                     
-                    {/* File Type Badges */}
                     <div className="flex items-center justify-center gap-2 pt-4">
                       {['.xlsx', '.xls', '.csv'].map((ext) => (
                         <span
@@ -1594,7 +2033,6 @@ export default function ExcelUploader() {
                   </div>
                 </div>
 
-                {/* Decorative Corner Elements */}
                 <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-blue-300 rounded-tl-lg opacity-50" />
                 <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-blue-300 rounded-tr-lg opacity-50" />
                 <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-blue-300 rounded-bl-lg opacity-50" />
@@ -1611,7 +2049,6 @@ export default function ExcelUploader() {
               />
             </label>
 
-            {/* Loading State */}
             {isLoading && (
               <div className="mt-10 text-center space-y-6">
                 <div className="relative inline-flex items-center justify-center">
@@ -1749,7 +2186,7 @@ export default function ExcelUploader() {
             </div>
 
             <div className="p-8">
-              {/* Search Bar - Visible for all tabs */}
+              {/* Search Bar */}
               {(groupedData.length > 0 || serialListData.length > 0) && (
                 <div className="mb-6 flex gap-3">
                   <div className="relative flex-1 max-w-md">
