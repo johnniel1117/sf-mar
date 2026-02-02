@@ -844,7 +844,7 @@ export default function ExcelUploader() {
         <div >
           <div class="info-row">
             <div class="info-label">Client</div>
-            <div class="info-value">: HAIER PHILIPPINES INC.</div>
+            <div class="info-value">HAIER PHILIPPINES INC.</div>
             
             
           </div>
@@ -852,13 +852,13 @@ export default function ExcelUploader() {
         
           <div class="info-row">
             <div class="info-label">Customer</div>
-            <div class="info-value">: ${shipToName}</div>
+            <div class="info-value">${shipToName}</div>
            
             <div class="info-value"></div>
           </div>
           <div class="info-row">
             <div class="info-label">Address</div>
-            <div class="info-value" style="grid-column: span 3;">: ${shipToAddress}</div>
+            <div class="info-value" style="grid-column: span 3;">${shipToAddress}</div>
           </div>
         </div>
 
