@@ -1010,42 +1010,24 @@ export const getCategoryFromBinCode = (barcode: string): string => {
     return "Freezer";
   }
 
-  // FREEZER patterns
+  // REFRIGERATOR patterns
   if (
-    code.startsWith("B30") ||
-    code.startsWith("BD07") ||
-    code.startsWith("BF0G") ||
-    code.startsWith("BW0") ||
-    code.startsWith("BY0") ||
-    code.startsWith("BB09") ||
-    code.startsWith("B401") ||
-    code.startsWith("BE06") ||
+    code.startsWith("B00") ||
+    code.startsWith("BS0") ||
+    code.startsWith("BA0A") ||
+    code.startsWith("BH0") ||
+    code.startsWith("BJ0") ||
+    code.startsWith("BL0") ||
+    code.startsWith("BM03") ||
+    code.startsWith("BC1") ||
+    code.startsWith("B70") ||
+    code.startsWith("BK0Y") ||
+    code.startsWith("BC0XD30AE") ||
     (code.startsWith("TD") && (
-      code.startsWith("TD00438") ||
-      code.startsWith("TD00453") ||
-      code.startsWith("TD00141")
-    ))
-  ) {
-    return "Freezer";
-  }
-
-  // WATER patterns
-  if (
-    code.startsWith("FS03") ||
-    (code.startsWith("FS03B7E") && (
-      
-      code.startsWith("FS03B7E00")
-    ))
-  ) {
-    return "Water System";
-  }
-
-   // WATER patterns
-  if (
-    code.startsWith("TD002") ||
-    (code.startsWith("TD0025") && (
-      
-      code.startsWith("TD0025229")
+      code.startsWith("TD00252") ||
+      code.startsWith("TD00449") ||
+      code.startsWith("TD00463") ||
+      code.startsWith("TD00272")
     ))
   ) {
     return "Refrigerator";
