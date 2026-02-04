@@ -1009,6 +1009,16 @@ export const getCategoryFromBinCode = (barcode: string): string => {
   ) {
     return "Freezer";
   }
+// WATER patterns
+  if (
+    code.startsWith("FS03") ||
+    (code.startsWith("FS03B7E") && (
+      
+      code.startsWith("FS03B7E00")
+    ))
+  ) {
+    return "Water System";
+  }
 
   // REFRIGERATOR patterns
   if (
