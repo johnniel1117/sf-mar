@@ -322,6 +322,8 @@ export const MATCODE_CATEGORY_MAP: Record<string, string> = {
   "TD0013991": "Refrigerator",
   "FB28UZM00": "Refrigerator",
   "FA08G9M00": "Refrigerator",
+
+  "FS03B7E": "Water System",
   
   // ==================== HOME AIR CONDITIONER ====================
   "AD0KG4U00": "Home Air Conditioner",
