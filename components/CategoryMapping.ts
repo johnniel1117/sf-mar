@@ -1022,6 +1022,7 @@ export const getCategoryFromBinCode = (barcode: string): string => {
     code.startsWith("BC1") ||
     code.startsWith("B70") ||
     code.startsWith("BK0Y") ||
+    code === "TD0044921" ||
     code.startsWith("BC0XD30AE") ||
     (code.startsWith("TD") && (
       code.startsWith("TD00252") ||
