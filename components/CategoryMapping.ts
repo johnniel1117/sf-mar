@@ -81,6 +81,7 @@ export const MATCODE_CATEGORY_MAP: Record<string, string> = {
   "BS0BB3000": "Freezer",
 
   // ==================== REFRIGERATOR ====================
+  
   "B00TU8E8N": "Refrigerator",
   "B00U05B8V": "Refrigerator",
   "BS08X2EA6": "Refrigerator",
@@ -1009,7 +1010,7 @@ export const getCategoryFromBinCode = (barcode: string): string => {
     return "Freezer";
   }
 
-  // WATER patterns
+  // FREEZER patterns
   if (
     code.startsWith("B30") ||
     code.startsWith("BD07") ||
@@ -1037,6 +1038,17 @@ export const getCategoryFromBinCode = (barcode: string): string => {
     ))
   ) {
     return "Water System";
+  }
+
+   // WATER patterns
+  if (
+    code.startsWith("TD002") ||
+    (code.startsWith("TD0025") && (
+      
+      code.startsWith("TD0025229")
+    ))
+  ) {
+    return "Refrigerator";
   }
 
   // TV patterns
