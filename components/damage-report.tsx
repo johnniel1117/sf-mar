@@ -306,7 +306,7 @@ export default function DamageReportForm() {
   }
 
   const canProceedToStep2 = () => {
-    return report.rcv_control_no && report.driver_name && report.plate_no
+    return report.driver_name && report.plate_no
   }
 
   const canProceedToStep3 = () => {
@@ -550,22 +550,20 @@ export default function DamageReportForm() {
           <!-- Info Section -->
           <div class="info-section">
             <div class="info-row">
-              <div class="info-label">RCV Control No.</div>
-              <div class="info-value">${reportData.rcv_control_no}</div>
               <div class="info-label">Report Date</div>
               <div class="info-value">${reportData.report_date}</div>
-            </div>
-            
-            <div class="info-row">
               <div class="info-label">Driver Name</div>
               <div class="info-value">${reportData.driver_name}</div>
-              <div class="info-label">Plate No.</div>
-              <div class="info-value">${reportData.plate_no}</div>
             </div>
             
             <div class="info-row">
+              <div class="info-label">Plate No.</div>
+              <div class="info-value">${reportData.plate_no}</div>
               <div class="info-label">Seal No.</div>
               <div class="info-value">${reportData.seal_no}</div>
+            </div>
+            
+            <div class="info-row">
               <div class="info-label">Container No.</div>
               <div class="info-value">${reportData.container_no}</div>
             </div>
@@ -742,20 +740,7 @@ export default function DamageReportForm() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          RCV Control No. <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={report.rcv_control_no}
-                          onChange={(e) => setReport({ ...report, rcv_control_no: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                          placeholder="Enter control number"
-                        />
-                      </div>
-
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Report Date
@@ -1051,11 +1036,7 @@ export default function DamageReportForm() {
                       {/* Summary */}
                       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mt-6">
                         <h3 className="font-bold text-gray-900 mb-3">Report Summary</h3>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-gray-600">RCV Control:</span>
-                            <span className="ml-2 font-semibold text-gray-900">{report.rcv_control_no}</span>
-                          </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                           <div>
                             <span className="text-gray-600">Driver:</span>
                             <span className="ml-2 font-semibold text-gray-900">{report.driver_name}</span>
@@ -1094,7 +1075,7 @@ export default function DamageReportForm() {
                   <button
                     onClick={() => {
                       if (currentStep === 1 && !canProceedToStep2()) {
-                        alert('Please fill in all required fields (RCV Control No., Driver Name, Plate No.)')
+                        alert('Please fill in all required fields (Driver Name, Plate No.)')
                         return
                       }
                       if (currentStep === 2 && !canProceedToStep3()) {
