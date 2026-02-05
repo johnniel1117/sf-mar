@@ -533,7 +533,6 @@ export default function DamageReportForm() {
               <div class="warehouse-info">
                 <strong>SF EXPRESS WAREHOUSE</strong><br/>
                 UPPER TINGUB, MANDAUE, CEBU<br/>
-                Damage Report Section
               </div>
             </div>
             <div class="title-section">
