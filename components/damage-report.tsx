@@ -329,10 +329,10 @@ export default function DamageReportForm() {
         (item, idx) => `
       <tr>
         <td style="text-align: center; padding: 8px;">${item.item_number}</td>
-        <td style="text-align: left; padding: 8px;">${item.material_description || 'Unknown'}</td>
+        <td style="text-align: center; padding: 8px;">${item.material_description || 'Unknown'}</td>
         <td style="text-align: center; padding: 8px; font-weight: bold;">${item.serial_number || item.barcode}</td>
-        <td style="text-align: left; padding: 8px;">${item.damage_type || ''}</td>
-        <td style="text-align: left; padding: 8px;">${item.damage_description || ''}</td>
+        <td style="text-align: center; padding: 8px;">${item.damage_type || ''}</td>
+        <td style="text-align: center; padding: 8px;">${item.damage_description || ''}</td>
       </tr>
     `
       )
@@ -692,7 +692,7 @@ export default function DamageReportForm() {
           <div className="space-y-6">
             {/* Progress Steps */}
             <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
-              <div className="flex items-center justify-between gap-1 sm:gap-2 mb-6 sm:mb-8">
+              <div className="flex items-start justify-between gap-1 sm:gap-2 mb-6 sm:mb-8">
                 {steps.map((step, index) => (
                   <React.Fragment key={step.number}>
                     {/* Step Item */}
@@ -722,7 +722,7 @@ export default function DamageReportForm() {
 
                     {/* Connector Line */}
                     {index < steps.length - 1 && (
-                      <div className={`h-0.5 sm:h-1 flex-1 transition-all duration-300 mb-4 sm:mb-6 lg:mb-8 ${
+                      <div className={`h-0.5 sm:h-1 flex-1 transition-all duration-300 self-start mt-5 sm:mt-6 lg:mt-7 ${
                         currentStep > step.number ? 'bg-green-500' : 'bg-gray-300'
                       }`} />
                     )}
@@ -1164,7 +1164,7 @@ export default function DamageReportForm() {
                       <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <button
                           onClick={() => generatePDF(savedReport)}
-                          className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md"
+                          className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-md"
                         >
                           <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="hidden sm:inline">PDF</span>
