@@ -1046,46 +1046,7 @@ export default function DamageReportForm() {
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Prepared By
-                          </label>
-                          <input
-                            type="text"
-                            value={report.prepared_by}
-                            onChange={(e) => setReport({ ...report, prepared_by: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            placeholder="Your name"
-                          />
-                        </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Noted By (Guard)
-                          </label>
-                          <input
-                            type="text"
-                            value={report.noted_by}
-                            onChange={(e) => setReport({ ...report, noted_by: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            placeholder="Guard name"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Acknowledged By
-                          </label>
-                          <input
-                            type="text"
-                            value={report.acknowledged_by}
-                            onChange={(e) => setReport({ ...report, acknowledged_by: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            placeholder="Supervisor name"
-                          />
-                        </div>
-                      </div>
 
                       {/* Summary */}
                       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mt-6">
