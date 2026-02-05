@@ -490,7 +490,7 @@ export default function DamageReportForm() {
           .footer-info {
             margin-top: 15px;
             padding: 10px;
-            border: 1px solid #000;
+            
             text-align: right;
             font-size: 11px;
             font-weight: bold;
