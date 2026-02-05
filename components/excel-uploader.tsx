@@ -1,9 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import * as XLSX from "xlsx-js-style"
-import { Upload, X, FileSpreadsheet, Download, FileText } from "lucide-react"
+import { MATCODE_CATEGORY_MAP, getCategoryFromBinCode } from '../components/CategoryMapping'
+import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers, AlertCircle, ArrowUp, Search, AlertTriangle } from "lucide-react"
+import LogoGridBackground from "../components/LogoBackground"
+// import DamageReportForm from "../components/damage-report"
 
 interface MaterialData {
   materialCode: string
@@ -42,9 +45,17 @@ interface UploadedFile {
   serialData: SerialData[]
 }
 
-type TabType = "consolidated" | "serialList" | "individualDN"
+type TabType = "consolidated" | "serialList" | "individualDN" | "damageReport"
 
-export function ExcelUploader() {
+interface Notification {
+  id: string
+  type: "error" | "warning" | "success"
+  message: string
+}
+
+
+
+export default function ExcelUploader() {
   const [groupedData, setGroupedData] = useState<MaterialData[]>([])
   const [serialListData, setSerialListData] = useState<SerialData[]>([])
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
@@ -58,16 +69,56 @@ export function ExcelUploader() {
   const [downloadType, setDownloadType] = useState<"pdf" | "excel">("excel")
   const [selectedDownloadFile, setSelectedDownloadFile] = useState<UploadedFile | null>(null)
   const [isDownloadingAllDN, setIsDownloadingAllDN] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [showScrollTop, setShowScrollTop] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  
 
-  const getCategoryFromBinCode = (binCode: string): string => {
-    const code = String(binCode || "").toUpperCase()
-    if (code.includes("HAC")) return "Home Air Conditioner"
-    if (code.includes("TV") || code.includes("LED")) return "TV"
-    if (code.includes("WM") || code.includes("WASH")) return "Washing Machine"
-    if (code.includes("REF") || code.includes("FRIDGE")) return "Refrigerator"
-    if (code.includes("FAN")) return "Fan"
-    return "Others"
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    if (showDownloadModal) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showDownloadModal])
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
   }
+
+  const addNotification = (type: "error" | "warning" | "success", message: string) => {
+    const id = `${Date.now()}-${Math.random()}`
+    setNotifications(prev => [...prev, { id, type, message }])  
+    
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id))
+    }, 5000)
+  }
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id))
+  }
+
+
+
+
 
   const formatDate = () => {
     const now = new Date()
@@ -81,14 +132,86 @@ export function ExcelUploader() {
     return now.toLocaleDateString("en-US", options)
   }
 
+  const formatDateShort = () => {
+    const now = new Date()
+    return now.toLocaleDateString("en-US", { month: '2-digit', day: '2-digit', year: 'numeric' })
+  }
+
   const HaierLogo = () => (
     <img
-      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s"
-      alt="Haier Logo"
+      src="https://vectorise.net/logo/wp-content/uploads/2019/10/SF-Express.png"
+      alt="SF EXPRESS Logo"
       style={{ height: "80px", width: "auto" }}
-      className="transition-transform duration-300 hover:scale-105"
     />
   )
+
+  const SFLogo = () => (
+    <img
+      src="/sf-express.png"
+      alt="SF Express Logo"
+      className="h-8 w-auto"
+    />
+  )
+
+
+  // Improved search: search across more fields and more robust matching
+  const filterDNsBySearch = (files: UploadedFile[]): UploadedFile[] => {
+    if (!searchQuery.trim()) return files
+    const query = searchQuery.toLowerCase().trim()
+    return files.filter((file) => {
+      // Search in DN number, file name, and any material/serial data fields
+      if (file.dnNo.toLowerCase().includes(query) || file.name.toLowerCase().includes(query)) return true
+      // Search in material data
+      if (file.data.some(item =>
+        item.materialCode.toLowerCase().includes(query) ||
+        item.materialDescription.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        item.remarks.toLowerCase().includes(query) ||
+        item.shipName.toLowerCase().includes(query)
+      )) return true
+      // Search in serial data
+      if (file.serialData.some(item =>
+        item.dnNo.toLowerCase().includes(query) ||
+        item.barcode.toLowerCase().includes(query) ||
+        item.materialCode.toLowerCase().includes(query) ||
+        item.materialDesc.toLowerCase().includes(query) ||
+        item.shipToName.toLowerCase().includes(query) ||
+        item.shipToAddress.toLowerCase().includes(query)
+      )) return true
+      return false
+    })
+  }
+
+  const filterGroupedDataBySearch = (data: MaterialData[]): MaterialData[] => {
+    if (!searchQuery.trim()) return data
+    const query = searchQuery.toLowerCase().trim()
+    return data.filter((item) =>
+      item.materialCode.toLowerCase().includes(query) ||
+      item.materialDescription.toLowerCase().includes(query) ||
+      item.category.toLowerCase().includes(query) ||
+      item.remarks.toLowerCase().includes(query) ||
+      item.shipName.toLowerCase().includes(query)
+    )
+  }
+
+  const filterSerialDataBySearch = (data: SerialData[]): SerialData[] => {
+    if (!searchQuery.trim()) return data
+    const query = searchQuery.toLowerCase().trim()
+    return data.filter(
+      (item) =>
+        item.dnNo.toLowerCase().includes(query) ||
+        item.barcode.toLowerCase().includes(query) ||
+        item.materialCode.toLowerCase().includes(query) ||
+        item.materialDesc.toLowerCase().includes(query) ||
+        item.shipToName.toLowerCase().includes(query) ||
+        item.shipToAddress.toLowerCase().includes(query) ||
+        item.location.toLowerCase().includes(query) ||
+        item.binCode.toLowerCase().includes(query)
+    )
+  }
+
+  // Use the accurate category mapping from CategoryMapping.ts
+
 
   const groupAllData = (files: UploadedFile[]): MaterialData[] => {
     const groupedMap = new Map<string, MaterialData>()
@@ -128,6 +251,8 @@ export function ExcelUploader() {
 
     try {
       const newFiles: UploadedFile[] = []
+      const duplicateDNs: string[] = []
+      const existingDNs = new Set(uploadedFiles.map(f => f.dnNo))
 
       for (let fileIdx = 0; fileIdx < files.length; fileIdx++) {
         const file = files[fileIdx]
@@ -144,23 +269,20 @@ export function ExcelUploader() {
             .trim(),
         )
 
-        // Parse for consolidated materials
         const dnNoIdx = headers.findIndex((h) => h.includes("dn no") || h.includes("dn_no") || h.includes("dnno"))
         const materialCodeIdx = headers.findIndex((h) => h.includes("material code") || h.includes("materialcode"))
         const materialDescIdx = headers.findIndex(
           (h) => h.includes("material desc") || h.includes("material description"),
         )
-        const binCodeIdx = headers.findIndex((h) => h.includes("bincode") || h.includes("bin code"))
+        const barCodeIdx = headers.findIndex((h) => h.includes("barcode") || h.includes("bar code"))
         const shipToNameIdx = headers.findIndex(
           (h) =>
             h.includes("ship to name") || h.includes("shiptoname") || h.includes("ship name") || h.includes("shipname"),
         )
 
-        // Parse for serial list - all columns
         const orderItemIdx = headers.findIndex((h) => h.includes("order item") || h.includes("orderitem"))
         const factoryCodeIdx = headers.findIndex((h) => h.includes("factory code") || h.includes("factorycode"))
         const locationIdx = headers.findIndex((h) => h.includes("location"))
-        const barcodeIdx = headers.findIndex((h) => h.includes("barcode"))
         const materialTypeIdx = headers.findIndex((h) => h.includes("material type") || h.includes("materialtype"))
         const productStatusIdx = headers.findIndex((h) => h.includes("product status") || h.includes("productstatus"))
         const shipToIdx = headers.findIndex((h) => h === "ship to" || h === "shipto")
@@ -175,6 +297,11 @@ export function ExcelUploader() {
           dnNo = String(jsonData[1][dnNoIdx] || "N/A")
         }
 
+        if (existingDNs.has(dnNo)) {
+          duplicateDNs.push(dnNo)
+          continue
+        }
+
         const fileData: MaterialData[] = []
         const serialData: SerialData[] = []
 
@@ -185,16 +312,15 @@ export function ExcelUploader() {
 
           const materialCode = String(row[materialCodeIdx] || "").trim()
           const materialDescription = materialDescIdx >= 0 ? String(row[materialDescIdx] || "").trim() : ""
-          const binCode = binCodeIdx >= 0 ? String(row[binCodeIdx] || "") : ""
+          const barCode = barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : ""
           const shipName = shipToNameIdx >= 0 ? String(row[shipToNameIdx] || "").trim() : ""
 
           if (!materialCode) continue
 
-          // Check if there's a quantity column in the Excel
           const qtyIdx = headers.findIndex((h) => h.includes("qty") || h.includes("quantity") || h.includes("qnt"))
           const qty = qtyIdx >= 0 ? Number.parseInt(String(row[qtyIdx] || "1"), 10) || 1 : 1
 
-          const category = getCategoryFromBinCode(binCode)
+          const category = MATCODE_CATEGORY_MAP[materialCode] || "Others"
 
           fileData.push({
             materialCode,
@@ -210,10 +336,10 @@ export function ExcelUploader() {
             orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "",
             factoryCode: factoryCodeIdx >= 0 ? String(row[factoryCodeIdx] || "") : "",
             location: locationIdx >= 0 ? String(row[locationIdx] || "") : "",
-            binCode: binCode,
+            binCode: barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : "",
             materialCode: materialCode,
             materialDesc: materialDescription,
-            barcode: barcodeIdx >= 0 ? String(row[barcodeIdx] || "") : "",
+            barcode: barCode,
             materialType: materialTypeIdx >= 0 ? String(row[materialTypeIdx] || "") : "",
             productStatus: productStatusIdx >= 0 ? String(row[productStatusIdx] || "") : "",
             shipTo: shipToIdx >= 0 ? String(row[shipToIdx] || "") : "",
@@ -233,6 +359,23 @@ export function ExcelUploader() {
           data: fileData,
           serialData: serialData,
         })
+
+        existingDNs.add(dnNo)
+      }
+
+      if (duplicateDNs.length > 0) {
+        const dnList = duplicateDNs.join(", ")
+        addNotification(
+          "warning",
+          `Duplicate DN${duplicateDNs.length > 1 ? 's' : ''} detected and skipped: ${dnList}`
+        )
+      }
+
+      if (newFiles.length > 0) {
+        addNotification(
+          "success",
+          `Successfully uploaded ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}`
+        )
       }
 
       const allFiles = [...uploadedFiles, ...newFiles]
@@ -242,7 +385,6 @@ export function ExcelUploader() {
       const newSerialListData = combineAllSerialData(allFiles)
       setSerialListData(newSerialListData)
 
-      // Trigger staggered animation
       setAnimatingRows(new Set())
       const dataLength = activeTab === "consolidated" ? newGroupedData.length : newSerialListData.length
       Array.from({ length: dataLength }).forEach((_, idx) => {
@@ -255,16 +397,17 @@ export function ExcelUploader() {
         }, idx * 50)
       })
 
-      // Scroll to table after animation completes
-      setTimeout(
-        () => {
-          tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-        },
-        dataLength * 50 + 300,
-      )
+      if (newFiles.length > 0) {
+        setTimeout(
+          () => {
+            tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+          },
+          dataLength * 50 + 300,
+        )
+      }
     } catch (error) {
       console.error("Error parsing Excel file:", error)
-      alert("Error parsing Excel file. Please make sure it contains the required columns.")
+      addNotification("error", "Error parsing Excel file. Please make sure it contains the required columns.")
     } finally {
       setIsLoading(false)
       e.target.value = ""
@@ -308,7 +451,6 @@ export function ExcelUploader() {
   }
 
   const handleSelectFile = (fileId: string) => {
-    // Toggle: if already selected, unselect
     if (selectedFileId === fileId) {
       setSelectedFileId(null)
       if (activeTab === "consolidated") {
@@ -345,7 +487,6 @@ export function ExcelUploader() {
         tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 300)
     } else {
-      // Select new file
       setSelectedFileId(fileId)
       setAnimatingRows(new Set())
 
@@ -573,7 +714,7 @@ export function ExcelUploader() {
       <body>
         <div class="header">
           <div class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s alt="Haier Logo" />
+            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF EXPRESS Logo" />
           </div>
           <div class="date">
             <strong>Date Printed:</strong><br/>
@@ -625,7 +766,7 @@ export function ExcelUploader() {
               <th>BIN CODE</th>
               <th>MATERIAL CODE</th>
               <th>MATERIAL DESC</th>
-              <th>BARCODE</th>
+              <th>SERIAL NUMBER</th>
               <th>SHIP TO NAME</th>
               <th>SHIP TO ADDRESS</th>
             </tr>
@@ -671,56 +812,93 @@ export function ExcelUploader() {
     const allDNContent = uploadedFiles
       .map((file, index) => {
         const shipToName = file.serialData[0]?.shipToName || "Unknown"
+        const shipToAddress = file.serialData[0]?.shipToAddress || ""
         const pageBreakClass = index < uploadedFiles.length - 1 ? "page-break" : ""
+        const totalQty = file.serialData.filter((row) => row.materialCode && row.barcode).length
 
         return `
       <div class="${pageBreakClass}">
-        <div class="header">
-          <div class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s" alt="Haier Logo" />
+        <div class="header-section">
+          <div class="logo-section">
+            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height: 60px; width: auto;" />
+            <div class="warehouse-info">
+              <div style="font-size: 9px; line-height: 1.4; margin-top: 5px;">
+                <strong>SF Express Warehouse</strong><br/>
+                UPPER TINGUB, MANDAUE, CEBU<br/>
+                
+              </div>
+            </div>
           </div>
-          <h2 style="color: #000; font-size: 18px; font-weight: bold; margin: 15px 0; text-align: center;">${file.dnNo} | ${shipToName}</h2>
-          <div class="date">
-            <strong>Generated:</strong><br/>
-            ${formatDate()}
+          
+          <div class="title-section">
+            
+            <div class="dealer-copy">DEALER'S COPY</div>
+            <div class="info-value">${formatDateShort()}</div>
           </div>
         </div>
 
+        <div class="document-header">
+          
+          <div class="doc-number">DN: ${file.dnNo}</div>
+        </div>
+
+        <div >
+          <div class="info-row">
+            <div class="info-label">Client</div>
+            <div class="info-value">HAIER PHILIPPINES INC.</div>
+            
+            
+          </div>
+      
         
-        
-        <table>
+          <div class="info-row">
+            <div class="info-label">Customer</div>
+            <div class="info-value">${shipToName}</div>
+           
+            <div class="info-value"></div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Address</div>
+            <div class="info-value" style="grid-column: span 3;">${shipToAddress}</div>
+          </div>
+        </div>
+
+        <table class="data-table">
           <thead>
             <tr>
-              <th>DN NO</th>
-              <th>LOCATION</th>
-              <th>BIN CODE</th>
-              <th>MATERIAL CODE</th>
-              <th>MATERIAL DESC</th>
-              <th>BARCODE</th>
-              <th>SHIP TO NAME</th>
-              <th>SHIP TO ADDRESS</th>
+              <th style="width: 40px;">NO.</th>
+              <th style="width: 120px;">CATEGORY</th>
+              <th style="width: 280px;">MATERIAL DESCRIPTION</th>
+              <th style="width: 200px;">SERIAL NUMBER</th>
+              <th style="width: 100px;">REMARKS</th>
             </tr>
           </thead>
           <tbody>
             ${file.serialData
               .filter((row) => row.materialCode && row.barcode)
               .map(
-                (row) => `
+                (row, idx) => `
               <tr>
-                <td>${row.dnNo}</td>
-                <td>${row.location}</td>
-                <td>${row.binCode}</td>
-                <td class="material-code-cell">${row.materialCode}</td>
-                <td class="desc-cell">${row.materialDesc}</td>
-                <td class="barcode-cell">${row.barcode}</td>
-                <td class="desc-cell">${row.shipToName}</td>
-                <td class="desc-cell">${row.shipToAddress}</td>
+                <td style="text-align: center;">${idx + 1}</td>
+                <td style="text-align: center;">${getCategoryFromBinCode(row.barcode).toUpperCase()}</td>
+                <td style="text-align: center;">${row.materialDesc || row.materialCode}</td>
+                <td style="text-align: center; font-weight: bold;">${row.barcode}</td>
+                <td></td>
               </tr>
             `,
               )
               .join("")}
           </tbody>
         </table>
+ 
+
+        <div class="footer-info">
+          <div><strong>TOTAL QTY: ${totalQty}</strong></div>
+         
+          
+        </div>
+
+       
       </div>
     `
       })
@@ -733,8 +911,8 @@ export function ExcelUploader() {
         <title>All DN Serial Lists</title>
         <style>
           @page {
-            size: landscape;
-            margin: 15mm;
+            size: portrait;
+            margin: 10mm;
           }
           
           * {
@@ -747,124 +925,145 @@ export function ExcelUploader() {
             font-family: Arial, sans-serif;
             color: #000;
             background: #fff;
-            padding: 20px;
+            padding: 15px;
+            font-size: 11px;
           }
           
           .page-break {
             page-break-after: always;
-            margin-bottom: 0;
+            margin-bottom: 20px;
           }
-          
-          .header {
+
+          .header-section {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-           
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
           }
-          
-          .logo img {
-            height: 45px;
-            width: auto;
+
+          .logo-section {
+            display: flex;
+            flex-direction: column;
           }
-          
-          .date {
+
+          .warehouse-info {
+            margin-top: 5px;
+          }
+
+          .title-section {
             text-align: right;
-            font-size: 11px;
-            color: #000;
-            line-height: 1.6;
           }
-          
-          .date strong {
+
+          .company-name {
+            font-size: 16px;
             font-weight: bold;
-            font-size: 12px;
-            color: #000;
+            line-height: 1.2;
+            margin-bottom: 10px;
           }
-          
-          h1, h2 {
-            color: #000;
-            margin: 15px 0 20px 0;
-            font-size: 22px;
+
+          .dealer-copy {
+            font-size: 18px;
             font-weight: bold;
+            letter-spacing: 1px;
+          }
+
+          .document-header {
             text-align: center;
-            letter-spacing: 0.5px;
+            margin: 15px 0;
+            font-size: 30px;
           }
-          
-          table {
+
+          .serial-list-title {
+            font-size: 16px;
+            font-weight: bold;
+          }
+
+          .doc-number {
+            font-size: 20px;
+            font-weight: bold;
+          }
+
+          .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+            border: 1px solid #000;
+          }
+
+          .info-row {
+            display: table-row;
+          }
+
+          .info-label, .info-value {
+            display: table-cell;
+            padding: 4px 8px;
+            margin-bottom: 15px;
+            font-size: 10px;
+          }
+
+          .info-label {
+            font-weight: bold;
+            width: 100px;
+            
+          }
+
+          .info-value {
+            width: 200px;
+            margin-bottom: 15px;
+          }
+
+          .data-table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 15px;
             margin-top: 15px;
-            font-size: 10px;
-            background: #fff;
-            font-family: Arial, sans-serif;
             border: 2px solid #000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
+
+          .data-table th {
           
-          th, td {
-            border: 1.5px solid #000;
-            padding: 10px 8px;
-            text-align: center;
-            word-wrap: break-word;
-            color: #000;
-            background: #fff;
-            font-family: Arial, sans-serif;
-          }
-          
-          th {
-            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
-            color: #000;
+            border: 1px solid #000;
+            padding: 8px 6px;
             font-weight: bold;
+            font-size: 10px;
+            text-align: center;
+          }
+
+          .data-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 10px;
+          }
+
+          .data-table tbody tr:nth-child(even) {
+            
+          }
+
+          .footer-info {
+            display: flex;
+            gap: 30px;
+            margin: 10px 0;
             font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            padding: 12px 8px;
+          }
+
+          .separator {
             text-align: center;
-            font-family: Arial, sans-serif;
-          }
-          
-          tbody tr:nth-child(even) {
-            background: #F9F9F9;
-          }
-          
-          tbody tr:hover {
-            background: #F0F0F0;
-          }
-          
-          .barcode-cell {
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: #000;
+            margin: 15px 0;
             font-size: 10px;
-            letter-spacing: 0.5px;
           }
-          
-          .material-code-cell {
-            font-family: Arial, sans-serif;
-            color: #000;
-            font-size: 10px;
-            font-weight: bold;
-          }
-          
-          .desc-cell {
-            text-align: center;
-            max-width: 200px;
-            font-size: 9px;
-            color: #000;
-            line-height: 1.4;
-          }
-          
+
           @media print {
             body { 
-              margin: 10px;
+              margin: 0;
+              padding: 10px;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
-            .no-print { display: none; }
             @page {
-              size: landscape;
-              margin: 15mm;
+              size: portrait;
+              margin: 10mm;
             }
           }
         </style>
@@ -888,6 +1087,8 @@ export function ExcelUploader() {
     if (!printWindow) return
 
     const shipToName = file.serialData[0]?.shipToName || "Unknown"
+    const shipToAddress = file.serialData[0]?.shipToAddress || ""
+    const totalQuantity = file.serialData.filter((row) => row.materialCode && row.barcode).length
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -896,8 +1097,8 @@ export function ExcelUploader() {
         <title>${file.dnNo} - Serial List</title>
         <style>
           @page {
-            size: landscape;
-            margin: 15mm;
+            size: portrait;
+            margin: 10mm;
           }
           
           * {
@@ -910,170 +1111,223 @@ export function ExcelUploader() {
             font-family: Arial, sans-serif;
             color: #000;
             background: #fff;
-            padding: 20px;
+            padding: 15px;
+            font-size: 11px;
           }
-          
-          .header {
+
+          .header-section {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #0057A8;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
           }
-          
-          .logo img {
-            height: 45px;
-            width: auto;
+
+          .logo-section {
+            display: flex;
+            flex-direction: column;
           }
-          
-          .date {
+
+          .warehouse-info {
+            margin-top: 5px;
+          }
+
+          .title-section {
             text-align: right;
-            font-size: 11px;
-            color: #000;
-            line-height: 1.6;
           }
-          
-          .date strong {
+
+          .company-name {
+            font-size: 16px;
             font-weight: bold;
-            font-size: 12px;
-            color: #000;
+            line-height: 1.2;
+            margin-bottom: 10px;
           }
-          
-          h1 {
-            color: #000;
-            margin: 15px 0 20px 0;
-            font-size: 22px;
+
+          .dealer-copy {
+            font-size: 18px;
             font-weight: bold;
+            letter-spacing: 1px;
+          }
+
+          .document-header {
             text-align: center;
-            letter-spacing: 0.5px;
+            margin: 15px 0;
           }
-          
-          table {
+
+          .serial-list-title {
+            font-size: 16px;
+            font-weight: bold;
+          }
+
+          .doc-number {
+            font-size: 20px;
+            font-weight: bold;
+          }
+
+          .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+            border: 1px solid #000;
+          }
+
+          .info-row {
+            display: table-row;
+          }
+
+          .info-label, .info-value {
+            display: table-cell;
+            padding: 4px 8px;
+            border: 1px solid #000;
+            font-size: 10px;
+          }
+
+          .info-label {
+            font-weight: bold;
+            width: 100px;
+            background: #f0f0f0;
+          }
+
+          .info-value {
+            width: 200px;
+          }
+
+          .data-table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 15px;
             margin-top: 15px;
-            font-size: 10px;
-            background: #fff;
-            font-family: Arial, sans-serif;
             border: 2px solid #000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
-          
-          th, td {
-            border: 1.5px solid #000;
-            padding: 10px 8px;
-            text-align: center;
-            word-wrap: break-word;
-            color: #000;
-            background: #fff;
-            font-family: Arial, sans-serif;
-          }
-          
-          th {
-            background: linear-gradient(180deg, #E8E8E8 0%, #D3D3D3 100%);
-            color: #000;
+
+          .data-table th {
+           
+            border: 1px solid #000;
+            padding: 8px 6px;
             font-weight: bold;
+            font-size: 10px;
+            text-align: center;
+          }
+
+          .data-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 10px;
+          }
+
+          .data-table tbody tr:nth-child(even) {
+            
+          }
+
+          .footer-info {
+            display: flex;
+            gap: 30px;
+            margin: 10px 0;
             font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            padding: 12px 8px;
+          }
+
+          .separator {
             text-align: center;
-            font-family: Arial, sans-serif;
-          }
-          
-          tbody tr:nth-child(even) {
-            background: #F9F9F9;
-          }
-          
-          tbody tr:hover {
-            background: #F0F0F0;
-          }
-          
-          .barcode-cell {
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: #000;
+            margin: 15px 0;
             font-size: 10px;
-            letter-spacing: 0.5px;
           }
-          
-          .material-code-cell {
-            font-family: Arial, sans-serif;
-            color: #000;
-            font-size: 10px;
-            font-weight: bold;
-          }
-          
-          .desc-cell {
-            text-align: center;
-            max-width: 200px;
-            font-size: 9px;
-            color: #000;
-            line-height: 1.4;
-          }
-          
+
           @media print {
             body { 
-              margin: 10px;
+              margin: 0;
+              padding: 10px;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
-            .no-print { display: none; }
             @page {
-              size: landscape;
-              margin: 15mm;
+              size: portrait;
+              margin: 10mm;
             }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZR-in8sMiX5s52tx76-bB6gw6BqWQzoxiA&s alt="Haier Logo" />
+        <div class="header-section">
+          <div class="logo-section">
+            <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height: 60px; width: auto;" />
+            <div class="warehouse-info">
+              <div style="font-size: 9px; line-height: 1.4; margin-top: 5px;">
+                <strong>SF Express Warehouse</strong><br/>
+                TINGUB, MANDAUE, CEBU <br/>
+                
+              </div>
+            </div>
           </div>
-           <h1>${file.dnNo} | ${shipToName}</h1>
-          <div class="date">
-            <strong>Date Printed:</strong><br/>
-            ${formatDate()}
+          
+          <div class="title-section">
+    
+            <div class="dealer-copy">DEALER'S COPY</div>
+            <div class="info-value">${formatDateShort()}</div>
           </div>
         </div>
-        
-       
-        
-        <table>
+
+        <div class="document-header">
+          
+          <div class="doc-number">Doc # : ${file.dnNo}</div>
+        </div>
+
+        <div >
+          <div >
+            <div class="info-label">Client</div>
+            <div class="info-value">HAIER PHILIPPINES INCsss.</div>
+            <div class="info-label">Date</div>
+            
+          </div>
+          
+     
+          <div class="info-row">
+            <div class="info-label">Customer</div>
+            <div class="info-value">${shipToName}</div>
+            <div class="info-label">Time Dispatched</div>
+            <div class="info-value"></div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Address</div>
+            <div class="info-value" style="grid-column: span 3;">${shipToAddress}</div>
+          </div>
+        </div>
+
+        <table class="data-table">
           <thead>
             <tr>
-              <th>DN NO</th>
-              <th>LOCATION</th>
-              <th>BIN CODE</th>
-              <th>MATERIAL CODE</th>
-              <th>MATERIAL DESC</th>
-              <th>BARCODE</th>
-              <th>SHIP TO NAME</th>
-              <th>SHIP TO ADDRESS</th>
+              <th style="width: 40px;">#</th>
+              <th style="width: 120px;">CATEGORY</th>
+              <th style="width: 280px;">MATERIAL DESCRIPTION</th>
+              <th style="width: 200px;">SERIAL NUMBER</th>
+              <th style="width: 100px;">REMARKS</th>
             </tr>
           </thead>
           <tbody>
             ${file.serialData
               .filter((row) => row.materialCode && row.barcode)
               .map(
-                (row) => `
+                (row, idx) => `
               <tr>
-                <td>${row.dnNo}</td>
-                <td>${row.location}</td>
-                <td>${row.binCode}</td>
-                <td class="material-code-cell">${row.materialCode}</td>
-                <td class="desc-cell">${row.materialDesc}</td>
-                <td class="barcode-cell">${row.barcode}</td>
-                <td class="desc-cell">${row.shipToName}</td>
-                <td class="desc-cell">${row.shipToAddress}</td>
+                <td style="text-align: center;">${idx + 1}</td>
+                <td style="text-align: center;">${getCategoryFromBinCode(row.barcode).toUpperCase()}</td>
+                <td style="text-align: center;">${row.materialDesc || row.materialCode}</td>
+                <td style="text-align: center; font-weight: bold;">${row.barcode}</td>
+                <td></td>
               </tr>
             `,
               )
               .join("")}
           </tbody>
         </table>
+
+        <div class="footer-info">
+          <div><strong>TOTAL QTY: ${totalQuantity}</strong></div>
+          
+          
+        </div>
+
+        <div class="separator">********** Nothing Follows **********</div>
       </body>
       </html>
     `
@@ -1163,13 +1417,90 @@ export function ExcelUploader() {
     XLSX.writeFile(workbook, `${file.dnNo}_Serial_List.xlsx`)
   }
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const input = document.getElementById('file-upload') as HTMLInputElement
+      if (input) {
+        const dataTransfer = new DataTransfer()
+        Array.from(files).forEach(file => dataTransfer.items.add(file))
+        input.files = dataTransfer.files
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+    }
+  }
+
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`flex items-start gap-3 p-4 rounded-xl shadow-lg border-2 animate-slide-right ${
+              notification.type === "error"
+                ? "bg-red-50 border-red-200"
+                : notification.type === "warning"
+                ? "bg-yellow-50 border-yellow-200"
+                : "bg-green-50 border-green-200"
+            }`}
+          >
+            <div className="flex-shrink-0 mt-0.5">
+              {notification.type === "error" ? (
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              ) : notification.type === "warning" ? (
+                <AlertCircle className="w-5 h-5 text-yellow-600" />
+              ) : (
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+              )}
+            </div>
+            <div className="flex-1">
+              <p
+                className={`text-sm font-medium ${
+                  notification.type === "error"
+                    ? "text-red-800"
+                    : notification.type === "warning"
+                    ? "text-yellow-800"
+                    : "text-green-800"
+                }`}
+              >
+                {notification.message}
+              </p>
+            </div>
+            <button
+              onClick={() => removeNotification(notification.id)}
+              className={`flex-shrink-0 rounded-lg p-1 transition-colors ${
+                notification.type === "error"
+                  ? "hover:bg-red-100"
+                  : notification.type === "warning"
+                  ? "hover:bg-yellow-100"
+                  : "hover:bg-green-100"
+              }`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
       <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(30px);
           }
           to {
             opacity: 1;
@@ -1180,7 +1511,7 @@ export function ExcelUploader() {
         @keyframes slideInLeft {
           from {
             opacity: 0;
-            transform: translateX(-20px);
+            transform: translateX(-30px);
           }
           to {
             opacity: 1;
@@ -1188,7 +1519,29 @@ export function ExcelUploader() {
           }
         }
 
-        @keyframes pulse-soft {
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes pulse {
           0%, 100% {
             opacity: 1;
           }
@@ -1197,128 +1550,291 @@ export function ExcelUploader() {
           }
         }
 
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+
         .animate-row {
-          animation: fadeInUp 0.5s ease-out forwards;
+          animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
         .animate-file {
-          animation: slideInLeft 0.4s ease-out forwards;
+          animation: slideInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
         .animate-section {
-          animation: fadeInUp 0.6s ease-out forwards;
+          animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        .upload-zone {
-          position: relative;
-          overflow: hidden;
+        .animate-slide-right {
+          animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        .upload-zone::before {
-          content: '';
+        .loading-shimmer {
+          background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.5) 50%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite;
+        }
+
+        .hover-lift {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-lift:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15);
+        }
+
+        .tab-indicator {
           position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, transparent 0%, rgba(59, 130, 246, 0.05) 50%, transparent 100%);
-          opacity: 0;
-          transition: opacity 0.3s ease-out;
-          pointer-events: none;
+          bottom: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #3b82f6, #2563eb);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 3px 3px 0 0;
         }
 
-        .upload-zone:hover::before {
-          opacity: 1;
+        .pulse-animation {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes expandWidth {
+          from {
+            width: 0;
+          }
+          to {
+            width: 100%;
+          }
+        }
+
+        .progress-bar {
+          animation: expandWidth 2s ease-out forwards;
+        }
+
+        @keyframes rotate {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .rotate-animation {
+          animation: rotate 1s linear infinite;
+        }
+
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+
+        .float-animation {
+          animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+          }
+        }
+
+        .glow-animation {
+          animation: glow 2s ease-in-out infinite;
         }
       `}</style>
+      
 
-      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-8 space-y-6">
-        <div className="bg-card/60 border border-border/40 backdrop-blur-sm rounded-2xl p-8 shadow-sm animate-section hover:shadow-md transition-shadow duration-300">
-          <label
-            htmlFor="file-upload"
-            className="upload-zone flex flex-col items-center justify-center h-44 border-2 border-dashed border-border/60 rounded-xl cursor-pointer hover:border-primary/60 hover:bg-primary/5 transition-all duration-300 group"
-          >
-            <div className="flex flex-col items-center justify-center space-y-3 relative z-10">
-              <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-110">
-                <Upload className="w-7 h-7 text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-300">
-                  Click to upload Excel file(s)
-                </p>
-                <p className="text-sm text-muted-foreground">or drag and drop</p>
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 py-12 space-y-8">
+        {/* Upload Section */}
+        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none [mask-image:linear-gradient(to_top_right,white,transparent,transparent)]">
+        <LogoGridBackground />
+      </div>
+        <div className="relative rounded-3xl p-12  overflow-hidden">
+          <div className="relative z-10">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 rounded-full text-lg font-bold mb-4 animate-slide-right">
+                <SFLogo />
+                SF EXPRESS
               </div>
             </div>
-            <input
-              id="file-upload"
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </label>
 
-          {isLoading && (
-            <div className="mt-6 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent" />
-              <p className="mt-3 text-muted-foreground font-medium">Processing your files...</p>
-            </div>
-          )}
+            <label
+              htmlFor="file-upload"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`relative block transition-all duration-300 cursor-pointer group ${
+                isDragging ? 'scale-[1.02]' : ''
+              }`}
+            >
+              <div className={`relative border-2 border-dashed rounded-2xl transition-all duration-300 overflow-hidden ${
+                isDragging
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-300 hover:border-blue-400 bg-gradient-to-br from-gray-50 to-white hover:from-blue-50 hover:to-white'
+              }`}>
+                <div className="flex flex-col items-center justify-center py-16 px-8">
+                  <div className="relative mb-6">
+                    <div className={`absolute inset-0 rounded-full bg-blue-400 opacity-20 ${
+                      isDragging ? 'animate-ping' : ''
+                    }`} style={{ animation: isDragging ? 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' : 'none' }} />
+                    
+                    <div className={`relative p-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg transition-all duration-300 ${
+                      isDragging ? 'scale-110 shadow-xl' : 'group-hover:scale-105 group-hover:shadow-xl'
+                    }`}>
+                      <Upload className={`w-10 h-10 text-white transition-transform duration-300 ${
+                        isDragging ? 'animate-bounce' : 'group-hover:scale-110'
+                      }`} />
+                    </div>
+                  </div>
+
+                  <div className="text-center space-y-2">
+                    <p className="text-2xl font-bold text-gray-800 transition-colors duration-300 group-hover:text-blue-600">
+                      {isDragging ? '✨ Drop your files here' : 'Drop files or click to upload'}
+                    </p>
+                    <p className="text-gray-600">
+                      Barcode Excel Files of Haier
+                    </p>
+                    
+                    <div className="flex items-center justify-center gap-2 pt-4">
+                      {['.xlsx', '.xls', '.csv'].map((ext) => (
+                        <span
+                          key={ext}
+                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium border border-gray-200"
+                        >
+                          {ext}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-blue-300 rounded-tl-lg opacity-50" />
+                <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-blue-300 rounded-tr-lg opacity-50" />
+                <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-blue-300 rounded-bl-lg opacity-50" />
+                <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-blue-300 rounded-br-lg opacity-50" />
+              </div>
+
+              <input
+                id="file-upload"
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </label>
+
+            {isLoading && (
+              <div className="mt-10 text-center space-y-6">
+                <div className="relative inline-flex items-center justify-center">
+                  <div className="absolute animate-spin rounded-full h-16 w-16 border-4 border-blue-200" />
+                  <div className="absolute animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+                  <FileSpreadsheet className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="space-y-3">
+                  <p className="text-lg text-gray-800 font-bold">Processing your files...</p>
+                  <p className="text-sm text-gray-500">This may take a few moments</p>
+                  <div className="max-w-sm mx-auto h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                    <div className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 progress-bar loading-shimmer rounded-full" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Files List Section */}
         {uploadedFiles.length > 0 && (
-          <div className="bg-card/60 border border-border/40 backdrop-blur-sm rounded-2xl p-8 shadow-sm animate-section hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-center justify-between mb-6">
-              <button
-                onClick={() => setShowFilesList(!showFilesList)}
-                className="flex items-center gap-3 text-lg font-semibold text-foreground hover:text-primary transition-colors duration-300"
-              >
-                <FileSpreadsheet className="w-5 h-5" />
-                Uploaded Files ({uploadedFiles.length})
-                <span
-                  className={`transform transition-transform duration-300 ${showFilesList ? "rotate-90" : ""}`}
-                  style={{ display: "inline-block" }}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-section hover-lift">
+            <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setShowFilesList(!showFilesList)}
+                  className="flex items-center gap-3 text-lg font-bold text-gray-800 hover:text-blue-600 transition-all duration-300 group"
                 >
-                  ▶
-                </span>
-              </button>
-              <button
-                onClick={handleClear}
-                className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-all duration-300 font-medium text-sm"
-              >
-                <X className="w-4 h-4" />
-                Clear All
-              </button>
+                  <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                    <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <span>Uploaded Files</span>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                    {uploadedFiles.length}
+                  </span>
+                  <span
+                    className={`transform transition-all duration-300 text-gray-400 ${showFilesList ? "rotate-90" : ""}`}
+                  >
+                    ▶
+                  </span>
+                </button>
+                <button
+                  onClick={handleClear}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-300 font-semibold text-sm hover-lift"
+                >
+                  <X className="w-4 h-4" />
+                  Clear All
+                </button>
+              </div>
             </div>
 
             {showFilesList && (
-              <div className="space-y-2 max-h-80 overflow-y-auto">
+              <div className="p-6 space-y-3 max-h-96 overflow-y-auto">
                 {uploadedFiles.map((file, idx) => (
                   <div
                     key={file.id}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-200 animate-file ${
+                    className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 animate-file hover-lift cursor-pointer ${
                       selectedFileId === file.id
-                        ? "border-blue-400 shadow-sm bg-blue-50"
-                        : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+                        ? "border-green-400 bg-gradient-to-r from-green-50 to-green-100 shadow-md scale-[1.02]"
+                        : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100"
                     }`}
                     style={{ animationDelay: `${idx * 0.1}s` }}
+                    onClick={() => handleSelectFile(file.id)}
                   >
-                    <button
-                      onClick={() => handleSelectFile(file.id)}
-                      className="flex items-center gap-3 flex-1 hover:text-blue-600 transition-colors duration-200"
-                    >
-                      <div className="p-2 rounded-lg bg-blue-100">
-                        <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className={`p-3 rounded-xl transition-all duration-300 ${
+                        selectedFileId === file.id ? 'bg-green-200' : 'bg-blue-100'
+                      }`}>
+                        <FileSpreadsheet className={`w-6 h-6 transition-all duration-300 ${
+                          selectedFileId === file.id ? 'text-green-700' : 'text-blue-600'
+                        }`} />
                       </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-slate-800 text-sm">{file.name}</p>
-                        <p className="text-xs text-slate-500">DN: {file.dnNo}</p>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800 mb-1">{file.name}</p>
+                        <p className="text-xs text-gray-500 flex items-center gap-2">
+                          <span className="px-2 py-0.5 bg-gray-200 rounded text-gray-700">DN: {file.dnNo}</span>
+                          <span className="text-gray-400">•</span>
+                          <span>{file.data.length} items</span>
+                        </p>
                       </div>
-                    </button>
+                      {selectedFileId === file.id && (
+                        <CheckCircle2 className="w-5 h-5 text-green-600 animate-slide-right" />
+                      )}
+                    </div>
                     <button
-                      onClick={() => handleDeleteFile(file.id)}
-                      className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-all duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteFile(file.id)
+                      }}
+                      className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-all duration-300 ml-2"
                       title="Delete file"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
                 ))}
@@ -1327,108 +1843,126 @@ export function ExcelUploader() {
           </div>
         )}
 
+        {/* Data Display Section */}
         {(groupedData.length > 0 || serialListData.length > 0) && (
-          <div ref={tableRef} className="bg-white border border-slate-200 rounded-xl shadow-sm animate-section">
-            <div className="border-b border-slate-200">
+          <div ref={tableRef} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-section">
+            {/* Tabs */}
+            <div className="border-b border-gray-200 bg-gray-50 relative">
               <div className="flex">
-                <button
-                  onClick={() => setActiveTab("consolidated")}
-                  className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 ${
-                    activeTab === "consolidated"
-                      ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  }`}
-                >
-                  Consolidated Materials
-                </button>
-                <button
-                  onClick={() => setActiveTab("serialList")}
-                  className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 ${
-                    activeTab === "serialList"
-                      ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  }`}
-                >
-                  Bulking Serial List
-                </button>
-                <button
-                  onClick={() => setActiveTab("individualDN")}
-                  className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 ${
-                    activeTab === "individualDN"
-                      ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  }`}
-                >
-                  Individual DN Downloads
-                </button>
+                {[
+                  { id: "consolidated", label: "Consolidated Materials", icon: Layers },
+                  { id: "serialList", label: "Serial List", icon: FileText },
+                  { id: "individualDN", label: "Individual DN", icon: Download },
+                  { id: "damageReport", label: "Damage Report", icon: AlertTriangle },
+                ].map((tab, index) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as TabType)}
+                    className={`flex-1 px-6 py-4 text-sm font-semibold transition-all duration-300 relative group ${
+                      activeTab === tab.id
+                        ? "text-green-600"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <tab.icon className={`w-4 h-4 transition-transform duration-300 ${
+                        activeTab === tab.id ? 'scale-110' : 'group-hover:scale-105'
+                      }`} />
+                      {tab.label}
+                    </span>
+                    {activeTab === tab.id && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-600 rounded-t" />
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
 
             <div className="p-8">
+              {/* Search Bar */}
+              {(groupedData.length > 0 || serialListData.length > 0) && (
+                <div className="mb-6 flex gap-3">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by DN No., Serial Number, or Material Code..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                    />
+                  </div>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                    >
+                      Clear Search
+                    </button>
+                  )}
+                </div>
+              )}
+
               {activeTab === "consolidated" && (
                 <>
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-6 animate-slide-right">
                     <div>
-                      <h2 className="text-xl font-bold text-slate-800">Consolidated Materials Report</h2>
-                      <p className="text-sm text-slate-500 mt-1">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-2">Consolidated Materials Report</h2>
+                      <p className="text-sm text-gray-500">
                         {selectedFileId
-                          ? `Showing data for: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
-                          : "Showing combined data from all files"}
+                          ? `Viewing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
+                          : "Combined data from all uploaded files"}
                       </p>
                     </div>
                     <button
                       onClick={handleDownload}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow"
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
                     >
-                      <Download className="w-4 h-4" />
+                      <Download className="w-5 h-5" />
                       Download
                     </button>
                   </div>
-                  <div className="overflow-x-auto rounded-lg border border-slate-200">
+                  <div className="overflow-x-auto rounded-xl border-2 border-gray-200 shadow-sm">
                     <table className="w-full text-sm">
-                      <thead className="bg-slate-100 border-b-2 border-slate-300">
+                      <thead className="bg-gradient-to-r from-gray-100 to-gray-50 border-b-2 border-gray-300">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Material Code
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Material Description
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Category
-                          </th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Qty.
-                          </th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            UM
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Ship Name
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Remarks
-                          </th>
+                          {["Material Code", "Material Description", "Category", "Qty.", "UM", "Ship Name", "Remarks"].map((header, i) => (
+                            <th
+                              key={i}
+                              className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider"
+                            >
+                              {header}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200 bg-white">
-                        {groupedData
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {filterGroupedDataBySearch(groupedData)
                           .filter((row) => row.materialCode && row.materialDescription)
                           .map((row, idx) => (
                             <tr
                               key={idx}
                               className={`${
                                 animatingRows.has(idx) ? "animate-row" : "opacity-0"
-                              } hover:bg-slate-50 transition-colors`}
-                              style={{ animationDelay: `${idx * 0.03}s` }}
+                              } hover:bg-blue-50 transition-all duration-200`}
+                              style={{ animationDelay: `${idx * 0.02}s` }}
                             >
-                              <td className="px-4 py-3 font-mono text-xs text-slate-700">{row.materialCode}</td>
-                              <td className="px-4 py-3 text-slate-700">{row.materialDescription}</td>
-                              <td className="px-4 py-3 text-slate-700">{row.category}</td>
-                              <td className="px-4 py-3 text-center font-semibold text-blue-600">{row.qty}</td>
-                              <td className="px-4 py-3 text-center text-slate-500">-</td>
-                              <td className="px-4 py-3 text-slate-700">{row.shipName}</td>
-                              <td className="px-4 py-3 text-slate-700">{row.remarks}</td>
+                              <td className="px-4 py-4 font-mono text-xs text-gray-700 font-semibold">{row.materialCode}</td>
+                              <td className="px-4 py-4 text-gray-700">{row.materialDescription}</td>
+                              <td className="px-4 py-4">
+                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                                  {row.category}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 text-center">
+                                <span className="px-3 py-1 bg-blue-600 text-white rounded-lg font-bold text-sm">
+                                  {row.qty}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 text-center text-gray-400">-</td>
+                              <td className="px-4 py-4 text-gray-700">{row.shipName}</td>
+                              <td className="px-4 py-4 text-gray-600 text-xs">{row.remarks}</td>
                             </tr>
                           ))}
                       </tbody>
@@ -1439,74 +1973,58 @@ export function ExcelUploader() {
 
               {activeTab === "serialList" && (
                 <>
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-6 animate-slide-right">
                     <div>
-                      <h2 className="text-xl font-bold text-slate-800">Bulking Serial List Report</h2>
-                      <p className="text-sm text-slate-500 mt-1">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-2">Bulking Serial List Report</h2>
+                      <p className="text-sm text-gray-500">
                         {selectedFileId
-                          ? `Showing data for: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
-                          : "Showing combined data from all files"}
+                          ? `Viewing: ${uploadedFiles.find((f) => f.id === selectedFileId)?.name}`
+                          : "Combined serial data from all uploaded files"}
                       </p>
                     </div>
                     <button
                       onClick={handleDownload}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow"
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl hover-lift"
                     >
-                      <Download className="w-4 h-4" />
+                      <Download className="w-5 h-5" />
                       Download
                     </button>
                   </div>
-                  <div className="overflow-x-auto rounded-lg border border-slate-200">
+                  <div className="overflow-x-auto rounded-xl border-2 border-gray-200 shadow-sm">
                     <table className="w-full text-sm">
-                      <thead className="bg-slate-100 border-b-2 border-slate-300">
+                      <thead className="bg-gradient-to-r from-gray-100 to-gray-50 border-b-2 border-gray-300">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            DN No
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Location
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Bin Code
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Material Code
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Material Desc
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Barcode
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Ship To Name
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                            Ship To Address
-                          </th>
+                          {["DN No", "Location", "Bin Code", "Material Code", "Material Desc", "Barcode", "Ship To Name", "Ship To Address"].map((header, i) => (
+                            <th
+                              key={i}
+                              className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider"
+                            >
+                              {header}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200 bg-white">
-                        {serialListData
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {filterSerialDataBySearch(serialListData)
                           .filter((row) => row.materialCode && row.barcode)
                           .map((row, idx) => (
                             <tr
                               key={idx}
                               className={`${
                                 animatingRows.has(idx) ? "animate-row" : "opacity-0"
-                              } hover:bg-slate-50 transition-colors`}
-                              style={{ animationDelay: `${idx * 0.03}s` }}
+                              } hover:bg-blue-50 transition-all duration-200`}
+                              style={{ animationDelay: `${idx * 0.02}s` }}
                             >
-                              <td className="px-4 py-3 text-slate-700">{row.dnNo}</td>
-                              <td className="px-4 py-3 text-slate-700">{row.location}</td>
-                              <td className="px-4 py-3 text-slate-700">{row.binCode}</td>
-                              <td className="px-4 py-3 font-mono text-xs text-slate-700">{row.materialCode}</td>
-                              <td className="px-4 py-3 text-slate-700">{row.materialDesc}</td>
-                              <td className="px-4 py-3 font-mono font-semibold text-xs text-slate-900">
+                              <td className="px-4 py-4 text-gray-700 font-medium">{row.dnNo}</td>
+                              <td className="px-4 py-4 text-gray-700">{row.location}</td>
+                              <td className="px-4 py-4 text-gray-700">{row.binCode}</td>
+                              <td className="px-4 py-4 font-mono text-xs text-gray-700 font-semibold">{row.materialCode}</td>
+                              <td className="px-4 py-4 text-gray-700">{row.materialDesc}</td>
+                              <td className="px-4 py-4 font-mono font-bold text-xs bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900">
                                 {row.barcode}
                               </td>
-                              <td className="px-4 py-3 text-slate-700">{row.shipToName}</td>
-                              <td className="px-4 py-3 text-slate-700">{row.shipToAddress}</td>
+                              <td className="px-4 py-4 text-gray-700">{row.shipToName}</td>
+                              <td className="px-4 py-4 text-gray-600 text-xs">{row.shipToAddress}</td>
                             </tr>
                           ))}
                       </tbody>
@@ -1517,20 +2035,22 @@ export function ExcelUploader() {
 
               {activeTab === "individualDN" && (
                 <>
-                  <div className="mb-6">
-                    <h2 className="text-xl font-bold text-slate-800">Individual DN Downloads</h2>
-                    <p className="text-sm text-slate-500 mt-1">Download individual DN serial lists or all at once</p>
+                  <div className="mb-6 animate-slide-right">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Individual DN Downloads</h2>
+                    <p className="text-sm text-gray-500">Download individual DN serial lists or all at once</p>
                   </div>
-                  <div className="space-y-3">
-                    <div className="p-5 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="space-y-4">
+                    <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl hover-lift">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <FileText className="w-6 h-6 text-blue-600" />
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 bg-blue-200 rounded-xl">
+                            <Layers className="w-7 h-7 text-blue-700" />
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-800">Download All DN Serial Lists</p>
-                            <p className="text-sm text-slate-500">{uploadedFiles.length} file(s) available</p>
+                            <p className="font-bold text-gray-800 text-lg">Download All DN Serial Lists</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available
+                            </p>
                           </div>
                         </div>
                         <button
@@ -1538,27 +2058,27 @@ export function ExcelUploader() {
                             setIsDownloadingAllDN(true)
                             setShowDownloadModal(true)
                           }}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-sm hover:shadow"
+                          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl"
                         >
-                          <Download className="w-4 h-4" />
+                          <Download className="w-5 h-5" />
                           Download All
                         </button>
                       </div>
                     </div>
 
-                    {uploadedFiles.map((file, idx) => (
+                    {filterDNsBySearch(uploadedFiles).map((file, idx) => (
                       <div
                         key={file.id}
-                        className="flex items-center justify-between p-5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors animate-file"
+                        className="flex items-center justify-between p-5 bg-gray-50 border-2 border-gray-200 rounded-xl  transition-all duration-300 animate-file "
                         style={{ animationDelay: `${idx * 0.1}s` }}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-slate-200 rounded-lg">
-                            <FileSpreadsheet className="w-5 h-5 text-slate-700" />
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 bg-gray-200 rounded-xl">
+                            <FileSpreadsheet className="w-6 h-6 text-gray-700" />
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-800">{file.dnNo}</p>
-                            <p className="text-sm text-slate-500">{file.name}</p>
+                            <p className="font-bold text-gray-800">{file.dnNo}</p>
+                            <p className="text-sm text-gray-500 mt-1">{file.name}</p>
                           </div>
                         </div>
                         <button
@@ -1567,7 +2087,7 @@ export function ExcelUploader() {
                             setIsDownloadingAllDN(false)
                             setShowDownloadModal(true)
                           }}
-                          className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-all duration-200 font-medium text-sm"
+                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-xl hover:from-gray-800 hover:to-gray-900 transition-all duration-300 font-semibold text-sm hover-lift"
                         >
                           <Download className="w-4 h-4" />
                           Download
@@ -1577,56 +2097,48 @@ export function ExcelUploader() {
                   </div>
                 </>
               )}
+
+              {/* {activeTab === "damageReport" && (
+                <DamageReportForm />
+              )} */}
             </div>
           </div>
         )}
       </div>
 
+      {/* Download Modal */}
       {showDownloadModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4 text-slate-800">Choose Download Format</h3>
-            <div className="space-y-3 mb-6">
-              <button
-                onClick={() => setDownloadType("excel")}
-                className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
-                  downloadType === "excel"
-                    ? "border-blue-600 bg-blue-50 shadow-sm"
-                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    downloadType === "excel" ? "border-blue-600" : "border-slate-300"
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-section">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full transform transition-all duration-50 scale-100">
+            <h3 className="text-2xl font-bold mb-6 text-gray-800">Choose Download Format</h3>
+            <div className="space-y-3 mb-8">
+              {[
+                { type: 'excel', label: 'Excel (.xlsx)', desc: 'Editable spreadsheet format', icon: FileSpreadsheet },
+                { type: 'pdf', label: 'PDF', desc: 'Print-ready document format', icon: FileText }
+              ].map((option) => (
+                <button
+                  key={option.type}
+                  onClick={() => setDownloadType(option.type as 'pdf' | 'excel')}
+                  className={`w-full flex items-center gap-4 p-5 border-2 rounded-xl transition-all duration-300  ${
+                    downloadType === option.type
+                      ? "border-green-500 bg-gradient-to-r from-green-50 to-green-100 shadow-md scale-[1.02]"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  {downloadType === "excel" && <div className="w-3 h-3 rounded-full bg-blue-600" />}
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-slate-800">Excel (.xlsx)</p>
-                  <p className="text-sm text-slate-500">Editable spreadsheet format</p>
-                </div>
-              </button>
-              <button
-                onClick={() => setDownloadType("pdf")}
-                className={`w-full flex items-center gap-3 p-4 border-2 rounded-lg transition-all duration-200 ${
-                  downloadType === "pdf"
-                    ? "border-blue-600 bg-blue-50 shadow-sm"
-                    : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    downloadType === "pdf" ? "border-blue-600" : "border-slate-300"
-                  }`}
-                >
-                  {downloadType === "pdf" && <div className="w-3 h-3 rounded-full bg-blue-600" />}
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-slate-800">PDF</p>
-                  <p className="text-sm text-slate-500">Print-ready document format</p>
-                </div>
-              </button>
+                  <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                    downloadType === option.type ? "border-green-600" : "border-gray-300"
+                  }`}>
+                    {downloadType === option.type && (
+                      <div className="w-3.5 h-3.5 rounded-full bg-green-600 animate-scaleIn" />
+                    )}
+                  </div>
+                  <option.icon className={`w-6 h-6 ${downloadType === option.type ? 'text-green-600' : 'text-gray-400'}`} />
+                  <div className="text-left flex-1">
+                    <p className="font-bold text-gray-800">{option.label}</p>
+                    <p className="text-sm text-gray-500 mt-0.5">{option.desc}</p>
+                  </div>
+                </button>
+              ))}
             </div>
             <div className="flex gap-3">
               <button
@@ -1635,13 +2147,13 @@ export function ExcelUploader() {
                   setSelectedDownloadFile(null)
                   setIsDownloadingAllDN(false)
                 }}
-                className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
+                className="flex-1 px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-semibold"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDownloadConfirm}
-                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm hover:shadow"
+                className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl"
               >
                 Download
               </button>
@@ -1649,6 +2161,28 @@ export function ExcelUploader() {
           </div>
         </div>
       )}
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-40 p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-2xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-110 animate-slide-right group"
+          title="Scroll to top"
+        >
+          <ArrowUp className="w-6 h-6 transition-transform duration-300 group-hover:-translate-y-1" />
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
+            Back to top
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
+          </div>
+        </button>
+      )}
+
+      {/* Footer */}
+      <footer className="mt-12 pb-8 text-center">
+        <div className="text-sm text-gray-500">
+          Developed by <span className="font-semibold text-gray-700">MAR</span> • All Rights Reserved © {new Date().getFullYear()}
+        </div>
+      </footer>
     </div>
   )
 }
