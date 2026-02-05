@@ -430,7 +430,6 @@ export default function DamageReportForm() {
             text-align: center;
             margin: 15px 0;
             border-top: 2px solid #000;
-            border-bottom: 2px solid #000;
             padding: 10px 0;
           }
           
@@ -527,7 +526,7 @@ export default function DamageReportForm() {
           <!-- Header Section -->
           <div class="header-section">
             <div class="logo-section">
-              <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" />
+              <img src="https://brandlogos.net/wp-content/uploads/2025/06/sf_express-logo_brandlogos.net_shwfy-512x512.png" alt="SF Express Logo" />
               <div class="warehouse-info">
                 <strong>SF EXPRESS WAREHOUSE</strong><br/>
                 UPPER TINGUB, MANDAUE, CEBU<br/>
