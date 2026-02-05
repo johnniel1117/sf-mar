@@ -611,17 +611,17 @@ export default function DamageReportForm() {
           <div class="signature-section">
             <div class="signature-box">
               <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line" style="font-weight: bold;">${reportData.prepared_by || '_________________'}</div>
+              <div class="signature-line" style="font-weight: bold;">${reportData.prepared_by || ''}</div>
               <div style="margin-top: 5px; ">Prepared By</div>
             </div>
             <div class="signature-box">
               <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line" style="font-weight: bold;>${reportData.noted_by || '_________________'}</div>
+              <div class="signature-line" style="font-weight: bold;>${reportData.noted_by || ''}</div>
               <div style="margin-top: 5px;">Noted By (Guard)</div>
             </div>
             <div class="signature-box">
               <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line" style="font-weight: bold;>${reportData.acknowledged_by || '_________________'}</div>
+              <div class="signature-line" style="font-weight: bold;>${reportData.acknowledged_by || ''}</div>
               <div style="margin-top: 5px;">Acknowledged By</div>
             </div>
           </div>
