@@ -646,42 +646,44 @@ export default function DamageReportForm() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-8 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6 sm:py-8 px-3 sm:px-4">
+      <div className="w-full max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-lg">SF</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">SF EXPRESS</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">SF EXPRESS</h1>
           </div>
-          <p className="text-gray-600">Damage & Deviation Report System</p>
+          <p className="text-sm sm:text-base text-gray-600">Damage & Deviation Report System</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-white p-1 rounded-lg shadow-sm max-w-md mx-auto">
+        <div className="flex gap-2 mb-6 bg-white p-1 rounded-lg shadow-sm justify-center w-full">
           <button
             onClick={() => setActiveTab('create')}
-            className={`flex-1 py-2 px-4 rounded-md font-semibold transition-all ${
+            className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
               activeTab === 'create'
                 ? 'bg-orange-600 text-white shadow'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <FileText className="w-4 h-4 inline mr-2" />
-            Create Report
+            <FileText className="w-4 h-4 inline mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Create Report</span>
+            <span className="sm:hidden">Create</span>
           </button>
           <button
             onClick={() => setActiveTab('saved')}
-            className={`flex-1 py-2 px-4 rounded-md font-semibold transition-all ${
+            className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
               activeTab === 'saved'
                 ? 'bg-orange-600 text-white shadow'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <Download className="w-4 h-4 inline mr-2" />
-            Saved Reports
+            <Download className="w-4 h-4 inline mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Saved Reports</span>
+            <span className="sm:hidden">Saved</span>
           </button>
         </div>
 
@@ -689,13 +691,13 @@ export default function DamageReportForm() {
         {activeTab === 'create' && (
           <div className="space-y-6">
             {/* Progress Steps */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-8">
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-2 mb-6 sm:mb-8 overflow-x-auto pb-2 sm:pb-0">
                 {steps.map((step, index) => (
                   <React.Fragment key={step.number}>
-                    <div className="flex flex-col items-center flex-1">
+                    <div className="flex flex-col items-center flex-shrink-0">
                       <div
-                        className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
+                        className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
                           currentStep === step.number
                             ? 'bg-orange-600 text-white shadow-lg scale-110'
                             : currentStep > step.number
@@ -704,20 +706,20 @@ export default function DamageReportForm() {
                         }`}
                       >
                         {currentStep > step.number ? (
-                          <CheckCircle2 className="w-6 h-6" />
+                          <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
                         ) : (
-                          <step.icon className="w-6 h-6" />
+                          <step.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                         )}
                       </div>
-                      <p className={`text-xs font-semibold mt-2 ${
+                      <p className={`text-xs font-semibold mt-2 whitespace-nowrap ${
                         currentStep === step.number ? 'text-orange-600' : 'text-gray-600'
                       }`}>
                         {step.title}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5 hidden sm:block">{step.description}</p>
+                      <p className="text-xs text-gray-400 mt-0.5 hidden md:block text-center max-w-[80px]">{step.description}</p>
                     </div>
                     {index < steps.length - 1 && (
-                      <div className={`flex-1 h-1 mx-2 transition-all duration-300 ${
+                      <div className={`flex-shrink-0 w-6 sm:w-8 h-0.5 hidden sm:block transition-all duration-300 ${
                         currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'
                       }`} />
                     )}
@@ -729,78 +731,78 @@ export default function DamageReportForm() {
               <div className="mt-8">
                 {/* Step 1: Truck Info */}
                 {currentStep === 1 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Truck className="w-6 h-6 text-orange-600" />
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">Vehicle & Shipment Information</h2>
-                        <p className="text-sm text-gray-500">Enter the truck and delivery details</p>
+                      <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold text-gray-900">Vehicle & Shipment Information</h2>
+                        <p className="text-xs sm:text-sm text-gray-500">Enter the truck and delivery details</p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Report Date
                         </label>
                         <input
                           type="date"
                           value={report.report_date}
                           onChange={(e) => setReport({ ...report, report_date: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Driver Name <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
                           value={report.driver_name}
                           onChange={(e) => setReport({ ...report, driver_name: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                           placeholder="Driver's name"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Plate No. <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
                           value={report.plate_no}
                           onChange={(e) => setReport({ ...report, plate_no: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                           placeholder="Plate number"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Seal No.
                         </label>
                         <input
                           type="text"
                           value={report.seal_no}
                           onChange={(e) => setReport({ ...report, seal_no: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                           placeholder="Seal number"
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Container No.
                         </label>
                         <input
                           type="text"
                           value={report.container_no}
                           onChange={(e) => setReport({ ...report, container_no: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                           placeholder="Container number"
                         />
                       </div>
@@ -810,20 +812,20 @@ export default function DamageReportForm() {
 
                 {/* Step 2: Scan Items */}
                 {currentStep === 2 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Barcode className="w-6 h-6 text-orange-600" />
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Barcode className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">Scan Damaged Items</h2>
-                        <p className="text-sm text-gray-500">Scan barcodes to add items to the report</p>
+                      <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold text-gray-900">Scan Damaged Items</h2>
+                        <p className="text-xs sm:text-sm text-gray-500">Scan barcodes to add items to the report</p>
                       </div>
                     </div>
 
                     {/* Barcode Scanner */}
-                    <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-6 text-white">
-                      <label className="block text-lg font-semibold mb-3 flex items-center gap-2">
+                    <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-4 sm:p-6 text-white">
+                      <label className="block text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
                         <Barcode className="w-5 h-5" />
                         Scan Barcode
                       </label>
@@ -834,13 +836,13 @@ export default function DamageReportForm() {
                         onChange={(e) => setBarcodeInput(e.target.value)}
                         onKeyDown={handleBarcodeInput}
                         placeholder="Scan or type barcode and press Enter..."
-                        className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white text-gray-900 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-orange-300"
                         autoFocus
                       />
                       {materialLookup.material_description && (
-                        <div className="mt-3 p-3 bg-green-500 bg-opacity-20 border border-green-300 rounded-lg flex items-center gap-2">
-                          <CheckCircle2 className="w-5 h-5" />
-                          <p className="font-medium">
+                        <div className="mt-3 p-3 bg-green-500 bg-opacity-20 border border-green-300 rounded-lg flex items-start gap-2">
+                          <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                          <p className="font-medium text-sm break-words">
                             Found: {materialLookup.material_description} ({materialLookup.category})
                           </p>
                         </div>
@@ -849,13 +851,13 @@ export default function DamageReportForm() {
 
                     {/* Items List */}
                     <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-bold text-gray-900">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900">
                           Scanned Items ({report.items.length})
                         </h3>
                         <button
                           onClick={() => addItem()}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
+                          className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                         >
                           <Plus className="w-4 h-4" />
                           Add Manually
@@ -863,27 +865,27 @@ export default function DamageReportForm() {
                       </div>
 
                       {report.items.length === 0 ? (
-                        <div className="py-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                          <p className="text-gray-600 font-medium">No items scanned yet</p>
-                          <p className="text-gray-500 text-sm mt-1">Scan a barcode or click "Add Manually"</p>
+                        <div className="py-8 sm:py-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                          <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3" />
+                          <p className="text-gray-600 font-medium text-sm sm:text-base">No items scanned yet</p>
+                          <p className="text-gray-500 text-xs sm:text-sm mt-1">Scan a barcode or click "Add Manually"</p>
                         </div>
                       ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-2 sm:space-y-3">
                           {report.items.map((item, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all">
-                              <div className="flex items-center gap-3 flex-1">
-                                <div className="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                            <div key={idx} className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all">
+                              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                                   {item.item_number}
                                 </div>
-                                <div className="flex-1">
-                                  <p className="font-semibold text-gray-900">{item.material_description || 'Unknown Item'}</p>
-                                  <p className="text-xs text-gray-500">Code: {item.material_code || 'N/A'}</p>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900 text-sm truncate">{item.material_description || 'Unknown Item'}</p>
+                                  <p className="text-xs text-gray-500 truncate">Code: {item.material_code || 'N/A'}</p>
                                 </div>
                               </div>
                               <button
                                 onClick={() => removeItem(idx)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 ml-2"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -897,38 +899,38 @@ export default function DamageReportForm() {
 
                 {/* Step 3: Item Details */}
                 {currentStep === 3 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <ClipboardList className="w-6 h-6 text-orange-600" />
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <ClipboardList className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">Damage Details</h2>
-                        <p className="text-sm text-gray-500">Provide information for each damaged item</p>
+                      <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold text-gray-900">Damage Details</h2>
+                        <p className="text-xs sm:text-sm text-gray-500">Provide information for each damaged item</p>
                       </div>
                     </div>
 
-                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                    <div className="space-y-3 sm:space-y-4 max-h-[500px] overflow-y-auto pr-1 sm:pr-2">
                       {report.items.map((item, idx) => (
-                        <div key={idx} className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        <div key={idx} className="border-2 border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50">
+                          <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                               {item.item_number}
                             </div>
-                            <h4 className="font-semibold text-gray-900">
+                            <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
                               {item.material_description || 'Item Details'}
                             </h4>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                            <div>
+                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                                 Damage Type <span className="text-red-500">*</span>
                               </label>
                               <select
                                 value={item.damage_type}
                                 onChange={(e) => updateItem(idx, 'damage_type', e.target.value)}
-                                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                className="w-full px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                               >
                                 <option value="">Select type</option>
                                 {DAMAGE_TYPES.map((type) => (
@@ -939,8 +941,8 @@ export default function DamageReportForm() {
                               </select>
                             </div>
 
-                            <div className="md:col-span-2">
-                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                            <div>
+                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                                 Damage Description
                               </label>
                               <textarea
@@ -948,16 +950,16 @@ export default function DamageReportForm() {
                                 onChange={(e) => updateItem(idx, 'damage_description', e.target.value)}
                                 placeholder="Describe the damage..."
                                 rows={2}
-                                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                className="w-full px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                               />
                             </div>
 
-                            <div className="md:col-span-2">
-                              <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                                <Camera className="w-4 h-4" />
+                            <div>
+                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                                <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
                                 Photo Evidence
                               </label>
-                              <div className="flex gap-2 items-center">
+                              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -967,14 +969,14 @@ export default function DamageReportForm() {
                                     }
                                   }}
                                   disabled={uploadingItemIndex === idx}
-                                  className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                                  className="flex-1 px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg text-xs sm:text-sm file:mr-2 sm:file:mr-4 file:py-1 file:px-2 sm:file:px-3 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
                                 />
                                 {item.photo_url && (
                                   <a
                                     href={item.photo_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors"
+                                    className="w-full sm:w-auto px-3 py-2 bg-orange-600 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-orange-700 transition-colors text-center"
                                   >
                                     View
                                   </a>
@@ -993,61 +995,59 @@ export default function DamageReportForm() {
 
                 {/* Step 4: Review & Save */}
                 {currentStep === 4 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Users className="w-6 h-6 text-orange-600" />
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Users className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">Review & Finalize</h2>
-                        <p className="text-sm text-gray-500">Add final notes and signatures</p>
+                      <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold text-gray-900">Review & Finalize</h2>
+                        <p className="text-xs sm:text-sm text-gray-500">Add final notes and signatures</p>
                       </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Narrative Findings
                         </label>
                         <textarea
                           value={report.narrative_findings}
                           onChange={(e) => setReport({ ...report, narrative_findings: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                           placeholder="Describe what happened and what was found..."
                           rows={3}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Actions Required
                         </label>
                         <textarea
                           value={report.actions_required}
                           onChange={(e) => setReport({ ...report, actions_required: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                           placeholder="Specify what actions need to be taken..."
                           rows={2}
                         />
                       </div>
 
-
-
                       {/* Summary */}
-                      <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mt-6">
-                        <h3 className="font-bold text-gray-900 mb-3">Report Summary</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-gray-600">Driver:</span>
-                            <span className="ml-2 font-semibold text-gray-900">{report.driver_name}</span>
+                      <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 sm:p-4 mt-4 sm:mt-6">
+                        <h3 className="font-bold text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Report Summary</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                          <div className="flex justify-between sm:flex-col sm:gap-1">
+                            <span className="text-gray-600 font-medium">Driver:</span>
+                            <span className="font-semibold text-gray-900">{report.driver_name || 'N/A'}</span>
                           </div>
-                          <div>
-                            <span className="text-gray-600">Plate No:</span>
-                            <span className="ml-2 font-semibold text-gray-900">{report.plate_no}</span>
+                          <div className="flex justify-between sm:flex-col sm:gap-1">
+                            <span className="text-gray-600 font-medium">Plate No:</span>
+                            <span className="font-semibold text-gray-900">{report.plate_no || 'N/A'}</span>
                           </div>
-                          <div>
-                            <span className="text-gray-600">Total Items:</span>
-                            <span className="ml-2 font-semibold text-gray-900">{report.items.length}</span>
+                          <div className="flex justify-between sm:flex-col sm:gap-1">
+                            <span className="text-gray-600 font-medium">Total Items:</span>
+                            <span className="font-semibold text-gray-900">{report.items.length}</span>
                           </div>
                         </div>
                       </div>
@@ -1057,17 +1057,17 @@ export default function DamageReportForm() {
               </div>
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between mt-8 pt-6 border-t-2 border-gray-200">
+              <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t-2 border-gray-200">
                 <button
                   onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as Step)}
                   disabled={currentStep === 1}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
+                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold transition-all ${
                     currentStep === 1
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                   Previous
                 </button>
 
@@ -1088,26 +1088,26 @@ export default function DamageReportForm() {
                       }
                       setCurrentStep((currentStep + 1) as Step)
                     }}
-                    className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-all shadow-lg"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-all shadow-lg"
                   >
                     Next
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 ) : (
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
                     <button
                       onClick={resetForm}
-                      className="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all"
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
                       Clear
                     </button>
                     <button
                       onClick={saveReport}
                       disabled={isLoading}
-                      className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all shadow-lg disabled:bg-gray-400"
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all shadow-lg disabled:bg-gray-400"
                     >
-                      <Save className="w-5 h-5" />
+                      <Save className="w-4 h-4 sm:w-5 sm:h-5" />
                       {isLoading ? 'Saving...' : 'Save Report'}
                     </button>
                   </div>
@@ -1119,55 +1119,53 @@ export default function DamageReportForm() {
 
         {/* Saved Reports Tab */}
         {activeTab === 'saved' && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
               <Download className="w-5 h-5" />
               Saved Reports
             </h3>
 
             {savedReports.length === 0 ? (
-              <div className="py-12 text-center">
-                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 font-medium text-lg">No reports saved yet</p>
-                <p className="text-gray-500 text-sm mt-2">Create your first damage report to see it here</p>
+              <div className="py-8 sm:py-12 text-center">
+                <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                <p className="text-gray-600 font-medium text-base sm:text-lg">No reports saved yet</p>
+                <p className="text-gray-500 text-xs sm:text-sm mt-2">Create your first damage report to see it here</p>
               </div>
             ) : (
-              <div className="grid gap-4">
+              <div className="grid gap-3 sm:gap-4">
                 {savedReports.map((savedReport) => (
                   <div
                     key={savedReport.id}
-                    className="p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
+                    className="p-3 sm:p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-white" />
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                           </div>
-                          <div>
-                            <h4 className="font-bold text-gray-900 text-lg">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
                               {savedReport.report_number || savedReport.id}
                             </h4>
-                            {/* <p className="text-sm text-gray-600">
-                              RCV: {savedReport.rcv_control_no}
-                            </p> */}
                           </div>
                         </div>
-                        <div className="flex gap-4 text-sm text-gray-600 mt-3">
+                        <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                           <span className="flex items-center gap-1">
                             <span className="font-semibold">{((savedReport as any).damage_items || []).length}</span> items
                           </span>
-                          <span>•</span>
+                          <span className="hidden sm:inline">•</span>
                           <span>{new Date(savedReport.report_date).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <button
                           onClick={() => generatePDF(savedReport)}
-                          className="px-5 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-md"
+                          className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md"
                         >
-                          <Download className="w-4 h-4" />
-                          PDF
+                          <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">PDF</span>
+                          <span className="sm:hidden">Download</span>
                         </button>
                         <button
                           onClick={async () => {
@@ -1195,10 +1193,11 @@ export default function DamageReportForm() {
                               }
                             }
                           }}
-                          className="px-5 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-md"
+                          className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md"
                         >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">Delete</span>
+                          <span className="sm:hidden">Remove</span>
                         </button>
                       </div>
                     </div>
