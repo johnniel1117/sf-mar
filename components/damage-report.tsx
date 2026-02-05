@@ -77,6 +77,7 @@ export default function DamageReportForm() {
   const [materialLookup, setMaterialLookup] = useState<Record<string, any>>({})
   const [uploadingItemIndex, setUploadingItemIndex] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<'create' | 'saved'>('create')
+  const [serialWarnings, setSerialWarnings] = useState<Record<number, boolean>>({})
   const barcodeInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -130,6 +131,35 @@ export default function DamageReportForm() {
         }
       }
       return null
+    }
+  }
+
+  const checkSerialNumber = async (serialNumber: string) => {
+    if (!serialNumber.trim()) return null
+    
+    try {
+      const { data, error } = await supabase
+        .from('damage_items')
+        .select('*')
+        .eq('serial_number', serialNumber.trim())
+        .not('damage_report_id', 'is', null)
+
+      if (error) throw error
+      
+      if (data && data.length > 0) {
+        return {
+          exists: true,
+          reports: data.map(item => ({
+            reportId: item.damage_report_id,
+            itemNumber: item.item_number,
+          }))
+        }
+      }
+      
+      return { exists: false }
+    } catch (error) {
+      console.error('Error checking serial number:', error)
+      return { exists: false }
     }
   }
 
@@ -314,7 +344,7 @@ export default function DamageReportForm() {
   }
 
   const canProceedToStep4 = () => {
-    return report.items.every(item => item.damage_type)
+    return report.items.every(item => item.serial_number && item.damage_type)
   }
 
   const generatePDF = (reportData: DamageReport) => {
@@ -925,6 +955,54 @@ export default function DamageReportForm() {
                           </div>
 
                           <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                            <div>
+                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
+                                Serial Number <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={item.serial_number}
+                                onChange={async (e) => {
+                                  const newSerialNumber = e.target.value
+                                  updateItem(idx, 'serial_number', newSerialNumber)
+                                  
+                                  if (newSerialNumber.trim()) {
+                                    const result = await checkSerialNumber(newSerialNumber)
+                                    if (result?.exists) {
+                                      setSerialWarnings(prev => ({
+                                        ...prev,
+                                        [idx]: true
+                                      }))
+                                    } else {
+                                      setSerialWarnings(prev => ({
+                                        ...prev,
+                                        [idx]: false
+                                      }))
+                                    }
+                                  } else {
+                                    setSerialWarnings(prev => ({
+                                      ...prev,
+                                      [idx]: false
+                                    }))
+                                  }
+                                }}
+                                placeholder="Enter serial number..."
+                                className={`w-full px-2 sm:px-3 py-2 border-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-transparent transition-all ${
+                                  serialWarnings[idx] 
+                                    ? 'border-red-500 focus:ring-red-500' 
+                                    : 'border-gray-300 focus:ring-orange-500'
+                                }`}
+                              />
+                              {serialWarnings[idx] && (
+                                <div className="mt-2 p-2 sm:p-3 bg-red-50 border-2 border-red-300 rounded-lg flex items-start gap-2">
+                                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                  <p className="font-medium text-xs sm:text-sm text-red-700 break-words">
+                                    ⚠️ Warning: This serial number already exists in another damage report!
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                                 Damage Type <span className="text-red-500">*</span>
