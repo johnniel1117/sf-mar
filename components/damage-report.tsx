@@ -13,7 +13,6 @@ interface DamageItem {
   serial_number: string
   material_code: string
   material_description: string
-  category: string
   damage_type: string
   damage_description: string
   photo_url?: string
@@ -169,7 +168,6 @@ export default function DamageReportForm() {
       serial_number: '',
       material_code: material?.material_code || '',
       material_description: material?.material_description || '',
-      category: material?.category || '',
       damage_type: '',
       damage_description: '',
     }
@@ -262,10 +260,8 @@ export default function DamageReportForm() {
           serial_number: item.serial_number,
           material_code: item.material_code,
           material_description: item.material_description,
-          category: item.category,
           damage_type: item.damage_type,
           damage_description: item.damage_description,
-         
         }))
 
         const { error: itemsError } = await supabase
@@ -333,11 +329,10 @@ export default function DamageReportForm() {
         (item, idx) => `
       <tr>
         <td style="text-align: center; padding: 8px;">${item.item_number}</td>
-        <td style="text-align: center; padding: 8px;">${item.category || 'N/A'}</td>
         <td style="text-align: left; padding: 8px;">${item.material_description || 'Unknown'}</td>
         <td style="text-align: center; padding: 8px; font-weight: bold;">${item.serial_number || item.barcode}</td>
         <td style="text-align: left; padding: 8px;">${item.damage_type || ''}</td>
-       
+        <td style="text-align: left; padding: 8px;">${item.damage_description || ''}</td>
       </tr>
     `
       )
@@ -427,7 +422,7 @@ export default function DamageReportForm() {
           .document-header {
             text-align: center;
             margin: 15px 0;
-            border-bottom: 2px solid #000;
+           
             padding: 10px 0;
           }
           
@@ -548,7 +543,7 @@ export default function DamageReportForm() {
 
           <!-- Document Header -->
           <div class="document-header">
-            <div class="doc-title">\DAMAGE AND DEVIATION REPORT</div>
+            <div class="doc-title">DAMAGE AND DEVIATION REPORT</div>
             <div class="doc-number">Report No.: ${reportData.report_number}</div>
           </div>
 
@@ -584,6 +579,7 @@ export default function DamageReportForm() {
                 <th style="width: 250px;">MATERIAL DESCRIPTION</th>
                 <th style="width: 150px;">SERIAL NO.</th>
                 <th style="width: 120px;">DAMAGE TYPE</th>
+                <th style="width: 200px;">DAMAGE DESCRIPTION</th>
               </tr>
             </thead>
             <tbody>
@@ -617,18 +613,18 @@ export default function DamageReportForm() {
           <div class="signature-section">
             <div class="signature-box">
               <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line">${reportData.prepared_by || '_________________'}</div>
-              <div style="margin-top: 5px; font-weight: bold;">Prepared By</div>
+              <div class="signature-line" style="font-weight: bold;">${reportData.prepared_by || '_________________'}</div>
+              <div style="margin-top: 5px; ">Prepared By</div>
             </div>
             <div class="signature-box">
               <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line">${reportData.noted_by || '_________________'}</div>
-              <div style="margin-top: 5px; font-weight: bold;">Noted By (Guard)</div>
+              <div class="signature-line" style="font-weight: bold;>${reportData.noted_by || '_________________'}</div>
+              <div style="margin-top: 5px;">Noted By (Guard)</div>
             </div>
             <div class="signature-box">
               <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line">${reportData.acknowledged_by || '_________________'}</div>
-              <div style="margin-top: 5px; font-weight: bold;">Acknowledged By</div>
+              <div class="signature-line" style="font-weight: bold;>${reportData.acknowledged_by || '_________________'}</div>
+              <div style="margin-top: 5px;">Acknowledged By</div>
             </div>
           </div>
         </div>
@@ -971,19 +967,6 @@ export default function DamageReportForm() {
                               />
                             </div>
 
-                            {/* <div className="md:col-span-2">
-                              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                Remarks
-                              </label>
-                              <textarea
-                                value={item.remarks}
-                                onChange={(e) => updateItem(idx, 'remarks', e.target.value)}
-                                placeholder="Add any additional remarks..."
-                                rows={2}
-                                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                              />
-                            </div> */}
-
                             <div className="md:col-span-2">
                               <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
                                 <Camera className="w-4 h-4" />
@@ -1236,13 +1219,46 @@ export default function DamageReportForm() {
                           <span>{new Date(savedReport.report_date).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <button
-                        onClick={() => generatePDF(savedReport)}
-                        className="px-5 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-md"
-                      >
-                        <Download className="w-4 h-4" />
-                        PDF
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => generatePDF(savedReport)}
+                          className="px-5 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-md"
+                        >
+                          <Download className="w-4 h-4" />
+                          PDF
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+                              try {
+                                const { error: itemsError } = await supabase
+                                  .from('damage_items')
+                                  .delete()
+                                  .eq('damage_report_id', savedReport.id)
+                                
+                                if (itemsError) throw itemsError
+
+                                const { error: reportError } = await supabase
+                                  .from('damage_reports')
+                                  .delete()
+                                  .eq('id', savedReport.id)
+                                
+                                if (reportError) throw reportError
+
+                                alert('Report deleted successfully!')
+                                loadReports()
+                              } catch (error) {
+                                console.error('Error deleting report:', error)
+                                alert('Error deleting report')
+                              }
+                            }
+                          }}
+                          className="px-5 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-md"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
