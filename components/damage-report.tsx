@@ -334,11 +334,12 @@ export default function DamageReportForm() {
       .map(
         (item, idx) => `
       <tr>
-        <td style="padding: 8px; border: 1px solid #ccc; text-align: center;">${item.item_number}</td>
-        <td style="padding: 8px; border: 1px solid #ccc;">${item.serial_number}</td>
-        <td style="padding: 8px; border: 1px solid #ccc;">${item.material_description}</td>
-        <td style="padding: 8px; border: 1px solid #ccc;">${item.damage_type}</td>
-        <td style="padding: 8px; border: 1px solid #ccc;">${item.remarks}</td>
+        <td style="text-align: center; padding: 8px;">${item.item_number}</td>
+        <td style="text-align: center; padding: 8px;">${item.category || 'N/A'}</td>
+        <td style="text-align: left; padding: 8px;">${item.material_description || 'Unknown'}</td>
+        <td style="text-align: center; padding: 8px; font-weight: bold;">${item.serial_number || item.barcode}</td>
+        <td style="text-align: left; padding: 8px;">${item.damage_type || ''}</td>
+        <td style="text-align: left; padding: 8px;">${item.remarks || ''}</td>
       </tr>
     `
       )
@@ -348,78 +349,283 @@ export default function DamageReportForm() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Damage and Deviation Report</title>
+        <title>Inventory Damage and Deviation Report</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          .header { text-align: center; margin-bottom: 20px; }
-          .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-          .report-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; }
-          .info-section { margin-bottom: 20px; }
-          .info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px; }
-          .info-label { font-weight: bold; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background-color: #f0f0f0; padding: 8px; border: 1px solid #ccc; text-align: left; }
-          td { padding: 8px; border: 1px solid #ccc; }
-          .signature-line { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; }
-          .signature { text-align: center; }
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #000;
+          }
+          
+          .page-container {
+            max-width: 900px;
+            margin: 0 auto;
+          }
+          
+          .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+          }
+          
+          .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+          }
+          
+          .logo-section img {
+            height: 60px;
+            width: auto;
+          }
+          
+          .warehouse-info {
+            font-size: 10px;
+            line-height: 1.3;
+          }
+          
+          .warehouse-info strong {
+            font-size: 12px;
+          }
+          
+          .title-section {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+          
+          .dealer-copy {
+            font-size: 14px;
+            font-weight: bold;
+            color: #d32f2f;
+            border: 2px solid #d32f2f;
+            padding: 4px 8px;
+            display: inline-block;
+            align-self: flex-end;
+          }
+          
+          .document-header {
+            text-align: center;
+            margin: 15px 0;
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            padding: 10px 0;
+          }
+          
+          .doc-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          
+          .doc-number {
+            font-size: 13px;
+            font-weight: bold;
+          }
+          
+          .info-section {
+            margin-bottom: 15px;
+          }
+          
+          .info-row {
+            display: grid;
+            grid-template-columns: 100px 1fr 100px 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: start;
+          }
+          
+          .info-label {
+            font-weight: bold;
+            font-size: 10px;
+          }
+          
+          .info-value {
+            font-size: 10px;
+            border-bottom: 1px solid #000;
+            padding: 2px 4px;
+            min-height: 18px;
+          }
+          
+          .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            border: 1px solid #000;
+          }
+          
+          .data-table thead {
+            background-color: #f0f0f0;
+            border: 1px solid #000;
+          }
+          
+          .data-table th {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 10px;
+          }
+          
+          .data-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 9px;
+          }
+          
+          .footer-info {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #000;
+            text-align: right;
+            font-size: 11px;
+            font-weight: bold;
+          }
+          
+          .signature-section {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+          }
+          
+          .signature-box {
+            text-align: center;
+            font-size: 10px;
+          }
+          
+          .signature-line {
+            margin-top: 30px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+          }
+          
+          @media print {
+            body {
+              padding: 0;
+            }
+            .page-container {
+              max-width: 100%;
+            }
+          }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="logo">SF EXPRESS</div>
-          <div class="report-title">Inventory Damage and Deviation Report</div>
-        </div>
-
-        <div class="info-section">
-          <div class="info-row">
-            <div><div class="info-label">RCV Control No.:</div><div>${reportData.rcv_control_no}</div></div>
-            <div><div class="info-label">Report Date:</div><div>${reportData.report_date}</div></div>
+        <div class="page-container">
+          <!-- Header Section -->
+          <div class="header-section">
+            <div class="logo-section">
+              <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" />
+              <div class="warehouse-info">
+                <strong>SF EXPRESS WAREHOUSE</strong><br/>
+                UPPER TINGUB, MANDAUE, CEBU<br/>
+                Damage Report Section
+              </div>
+            </div>
+            <div class="title-section">
+              <div class="dealer-copy">ORIGINAL</div>
+              <div class="info-value">${reportData.report_date}</div>
+            </div>
           </div>
-          <div class="info-row">
-            <div><div class="info-label">Seal No.:</div><div>${reportData.seal_no}</div></div>
-            <div><div class="info-label">Driver Name:</div><div>${reportData.driver_name}</div></div>
-          </div>
-          <div class="info-row">
-            <div><div class="info-label">Plate No.:</div><div>${reportData.plate_no}</div></div>
-            <div><div class="info-label">Container No.:</div><div>${reportData.container_no}</div></div>
-          </div>
-        </div>
 
-        <div class="info-section">
-          <div class="info-label">Narrative Findings:</div>
-          <div>${reportData.narrative_findings}</div>
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Serial Number</th>
-              <th>Material Description</th>
-              <th>Damage Type</th>
-              <th>Remarks</th>
-            </tr>
-          </thead>
-          <tbody>${itemsHtml}</tbody>
-        </table>
-
-        <div class="info-section">
-          <div class="info-label">Actions Required:</div>
-          <div>${reportData.actions_required}</div>
-        </div>
-
-        <div class="signature-line">
-          <div class="signature">
-            <div>${reportData.prepared_by}</div>
-            <div style="margin-top: 40px; border-top: 1px solid #000; padding-top: 10px;">Prepared By</div>
+          <!-- Document Header -->
+          <div class="document-header">
+            <div class="doc-title">INVENTORY DAMAGE AND DEVIATION REPORT</div>
+            <div class="doc-number">Report No.: ${reportData.report_number}</div>
           </div>
-          <div class="signature">
-            <div>${reportData.noted_by}</div>
-            <div style="margin-top: 40px; border-top: 1px solid #000; padding-top: 10px;">Noted By (Guard)</div>
+
+          <!-- Info Section -->
+          <div class="info-section">
+            <div class="info-row">
+              <div class="info-label">RCV Control No.</div>
+              <div class="info-value">${reportData.rcv_control_no}</div>
+              <div class="info-label">Report Date</div>
+              <div class="info-value">${reportData.report_date}</div>
+            </div>
+            
+            <div class="info-row">
+              <div class="info-label">Driver Name</div>
+              <div class="info-value">${reportData.driver_name}</div>
+              <div class="info-label">Plate No.</div>
+              <div class="info-value">${reportData.plate_no}</div>
+            </div>
+            
+            <div class="info-row">
+              <div class="info-label">Seal No.</div>
+              <div class="info-value">${reportData.seal_no}</div>
+              <div class="info-label">Container No.</div>
+              <div class="info-value">${reportData.container_no}</div>
+            </div>
           </div>
-          <div class="signature">
-            <div>${reportData.acknowledged_by}</div>
-            <div style="margin-top: 40px; border-top: 1px solid #000; padding-top: 10px;">Acknowledged By</div>
+
+          <!-- Data Table -->
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">NO.</th>
+                <th style="width: 100px;">CATEGORY</th>
+                <th style="width: 250px;">MATERIAL DESCRIPTION</th>
+                <th style="width: 150px;">SERIAL NO.</th>
+                <th style="width: 120px;">DAMAGE TYPE</th>
+                <th style="width: 150px;">REMARKS</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+
+          <!-- Footer Info -->
+          <div class="footer-info">
+            <div>TOTAL ITEMS: ${items.length}</div>
+          </div>
+
+          <!-- Narrative & Actions -->
+          <div class="info-section" style="margin-top: 15px;">
+            <div class="info-row" style="grid-template-columns: 1fr;">
+              <div><strong>Narrative Findings:</strong></div>
+            </div>
+            <div style="padding: 8px; border: 1px solid #000; min-height: 50px; margin-bottom: 10px;">
+              ${reportData.narrative_findings || 'N/A'}
+            </div>
+            
+            <div class="info-row" style="grid-template-columns: 1fr;">
+              <div><strong>Actions Required:</strong></div>
+            </div>
+            <div style="padding: 8px; border: 1px solid #000; min-height: 40px;">
+              ${reportData.actions_required || 'N/A'}
+            </div>
+          </div>
+
+          <!-- Signature Section -->
+          <div class="signature-section">
+            <div class="signature-box">
+              <div style="min-height: 50px; margin-bottom: 10px;"></div>
+              <div class="signature-line">${reportData.prepared_by || '_________________'}</div>
+              <div style="margin-top: 5px; font-weight: bold;">Prepared By</div>
+            </div>
+            <div class="signature-box">
+              <div style="min-height: 50px; margin-bottom: 10px;"></div>
+              <div class="signature-line">${reportData.noted_by || '_________________'}</div>
+              <div style="margin-top: 5px; font-weight: bold;">Noted By (Guard)</div>
+            </div>
+            <div class="signature-box">
+              <div style="min-height: 50px; margin-bottom: 10px;"></div>
+              <div class="signature-line">${reportData.acknowledged_by || '_________________'}</div>
+              <div style="margin-top: 5px; font-weight: bold;">Acknowledged By</div>
+            </div>
           </div>
         </div>
       </body>
