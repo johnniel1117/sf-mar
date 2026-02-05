@@ -691,13 +691,14 @@ export default function DamageReportForm() {
         {activeTab === 'create' && (
           <div className="space-y-6">
             {/* Progress Steps */}
-            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-2 mb-6 sm:mb-8 overflow-x-auto pb-2 sm:pb-0">
+            <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-1 sm:gap-2 mb-6 sm:mb-8">
                 {steps.map((step, index) => (
                   <React.Fragment key={step.number}>
-                    <div className="flex flex-col items-center flex-shrink-0">
+                    {/* Step Item */}
+                    <div className="flex flex-col items-center flex-1">
                       <div
-                        className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
+                        className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center font-bold text-sm sm:text-base lg:text-lg transition-all duration-300 flex-shrink-0 ${
                           currentStep === step.number
                             ? 'bg-orange-600 text-white shadow-lg scale-110'
                             : currentStep > step.number
@@ -706,21 +707,23 @@ export default function DamageReportForm() {
                         }`}
                       >
                         {currentStep > step.number ? (
-                          <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
+                          <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
                         ) : (
-                          <step.icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                          <step.icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
                         )}
                       </div>
-                      <p className={`text-xs font-semibold mt-2 whitespace-nowrap ${
+                      <p className={`text-[10px] sm:text-xs lg:text-sm font-semibold mt-1 sm:mt-2 text-center line-clamp-2 ${
                         currentStep === step.number ? 'text-orange-600' : 'text-gray-600'
                       }`}>
                         {step.title}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5 hidden md:block text-center max-w-[80px]">{step.description}</p>
+                      <p className="text-[9px] sm:text-xs text-gray-400 mt-0.5 hidden lg:block text-center max-w-[70px]">{step.description}</p>
                     </div>
+
+                    {/* Connector Line */}
                     {index < steps.length - 1 && (
-                      <div className={`flex-shrink-0 w-6 sm:w-8 h-0.5 hidden sm:block transition-all duration-300 ${
-                        currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'
+                      <div className={`h-0.5 sm:h-1 flex-1 transition-all duration-300 mb-4 sm:mb-6 lg:mb-8 ${
+                        currentStep > step.number ? 'bg-green-500' : 'bg-gray-300'
                       }`} />
                     )}
                   </React.Fragment>
