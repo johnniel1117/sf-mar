@@ -17,7 +17,6 @@ interface DamageItem {
   damage_type: string
   damage_description: string
   photo_url?: string
-  remarks: string
 }
 
 interface DamageReport {
@@ -173,7 +172,6 @@ export default function DamageReportForm() {
       category: material?.category || '',
       damage_type: '',
       damage_description: '',
-      remarks: '',
     }
     setReport({
       ...report,
@@ -267,7 +265,7 @@ export default function DamageReportForm() {
           category: item.category,
           damage_type: item.damage_type,
           damage_description: item.damage_description,
-          remarks: item.remarks,
+         
         }))
 
         const { error: itemsError } = await supabase
@@ -339,7 +337,7 @@ export default function DamageReportForm() {
         <td style="text-align: left; padding: 8px;">${item.material_description || 'Unknown'}</td>
         <td style="text-align: center; padding: 8px; font-weight: bold;">${item.serial_number || item.barcode}</td>
         <td style="text-align: left; padding: 8px;">${item.damage_type || ''}</td>
-        <td style="text-align: left; padding: 8px;">${item.remarks || ''}</td>
+       
       </tr>
     `
       )
@@ -429,7 +427,6 @@ export default function DamageReportForm() {
           .document-header {
             text-align: center;
             margin: 15px 0;
-            border-top: 2px solid #000;
             border-bottom: 2px solid #000;
             padding: 10px 0;
           }
@@ -537,7 +534,7 @@ export default function DamageReportForm() {
           <!-- Header Section -->
           <div class="header-section">
             <div class="logo-section">
-              <img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" />
+              <img src="https://brandlogos.net/wp-content/uploads/2025/06/sf_express-logo_brandlogos.net_shwfy-512x512.png" alt="SF Express Logo" />
               <div class="warehouse-info">
                 <strong>SF EXPRESS WAREHOUSE</strong><br/>
                 UPPER TINGUB, MANDAUE, CEBU<br/>
@@ -546,13 +543,12 @@ export default function DamageReportForm() {
             </div>
             <div class="title-section">
               <div class="dealer-copy">ORIGINAL</div>
-              <div class="info-value">${reportData.report_date}</div>
             </div>
           </div>
 
           <!-- Document Header -->
           <div class="document-header">
-            <div class="doc-title">INVENTORY DAMAGE AND DEVIATION REPORT</div>
+            <div class="doc-title">\DAMAGE AND DEVIATION REPORT</div>
             <div class="doc-number">Report No.: ${reportData.report_number}</div>
           </div>
 
@@ -585,11 +581,9 @@ export default function DamageReportForm() {
             <thead>
               <tr>
                 <th style="width: 40px;">NO.</th>
-                <th style="width: 100px;">CATEGORY</th>
                 <th style="width: 250px;">MATERIAL DESCRIPTION</th>
                 <th style="width: 150px;">SERIAL NO.</th>
                 <th style="width: 120px;">DAMAGE TYPE</th>
-                <th style="width: 150px;">REMARKS</th>
               </tr>
             </thead>
             <tbody>
@@ -977,7 +971,7 @@ export default function DamageReportForm() {
                               />
                             </div>
 
-                            <div className="md:col-span-2">
+                            {/* <div className="md:col-span-2">
                               <label className="block text-xs font-semibold text-gray-700 mb-1">
                                 Remarks
                               </label>
@@ -988,7 +982,7 @@ export default function DamageReportForm() {
                                 rows={2}
                                 className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                               />
-                            </div>
+                            </div> */}
 
                             <div className="md:col-span-2">
                               <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
