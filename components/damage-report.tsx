@@ -146,7 +146,19 @@ export default function DamageReportForm() {
         addItem(material)
         setBarcodeInput('')
       } else {
-        alert('Barcode not found. Please add material details manually.')
+        // If barcode not found, prompt user to enter material description manually
+        const description = prompt('Material not found in database. Please enter material description:')
+        if (description) {
+          const manualMaterial = {
+            barcode: barcode,
+            material_code: barcode,
+            material_description: description,
+            category: 'Manual Entry',
+          }
+          setMaterialLookup(manualMaterial)
+          addItem(manualMaterial)
+          setBarcodeInput('')
+        }
       }
     }
   }
@@ -308,7 +320,7 @@ export default function DamageReportForm() {
   }
 
   const canProceedToStep4 = () => {
-    return report.items.every(item => item.serial_number && item.damage_type)
+    return report.items.every(item => item.damage_type)
   }
 
   const generatePDF = (reportData: DamageReport) => {
@@ -715,20 +727,7 @@ export default function DamageReportForm() {
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                Serial Number <span className="text-red-500">*</span>
-                              </label>
-                              <input
-                                type="text"
-                                value={item.serial_number}
-                                onChange={(e) => updateItem(idx, 'serial_number', e.target.value)}
-                                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                placeholder="Enter serial number"
-                              />
-                            </div>
-
-                            <div>
+                            <div className="md:col-span-2">
                               <label className="block text-xs font-semibold text-gray-700 mb-1">
                                 Damage Type <span className="text-red-500">*</span>
                               </label>
@@ -754,6 +753,19 @@ export default function DamageReportForm() {
                                 value={item.damage_description}
                                 onChange={(e) => updateItem(idx, 'damage_description', e.target.value)}
                                 placeholder="Describe the damage..."
+                                rows={2}
+                                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                              />
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                Remarks
+                              </label>
+                              <textarea
+                                value={item.remarks}
+                                onChange={(e) => updateItem(idx, 'remarks', e.target.value)}
+                                placeholder="Add any additional remarks..."
                                 rows={2}
                                 className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                               />
