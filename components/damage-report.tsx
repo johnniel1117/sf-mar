@@ -1148,9 +1148,9 @@ export default function DamageReportForm() {
                             <h4 className="font-bold text-gray-900 text-lg">
                               {savedReport.report_number || savedReport.id}
                             </h4>
-                            <p className="text-sm text-gray-600">
+                            {/* <p className="text-sm text-gray-600">
                               RCV: {savedReport.rcv_control_no}
-                            </p>
+                            </p> */}
                           </div>
                         </div>
                         <div className="flex gap-4 text-sm text-gray-600 mt-3">
