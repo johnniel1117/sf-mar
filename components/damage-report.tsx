@@ -327,7 +327,10 @@ export default function DamageReportForm() {
     const printWindow = window.open('', '', 'width=1200,height=800')
     if (!printWindow) return
 
-    const itemsHtml = reportData.items
+    // Normalize items - handle both 'items' and 'damage_items' properties
+    const items = reportData.items || ((reportData as any).damage_items || [])
+
+    const itemsHtml = items
       .map(
         (item, idx) => `
       <tr>
