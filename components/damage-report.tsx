@@ -415,6 +415,16 @@ export default function DamageReportForm() {
             display: inline-block;
             align-self: flex-end;
           }
+
+          .report-number-box {
+            border: 2px solid #d32f2f;
+            padding: 8px 12px;
+            margin-top: 5px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #000;
+          }
           
           .document-header {
             text-align: center;
@@ -433,16 +443,6 @@ export default function DamageReportForm() {
           .doc-number {
             font-size: 13px;
             font-weight: bold;
-          }
-          
-          .info-section {
-            margin-bottom: 15px;
-          }
-          
-          .info-row {
-            display: grid;
-            grid-template-columns: 100px 1fr 100px 1fr;
-            gap: 10px;
             margin-bottom: 8px;
             align-items: start;
           }
