@@ -497,7 +497,7 @@ export default function DamageReportForm() {
           }
           
           .signature-section {
-            margin-top: 30px;
+            margin-top: 25px;
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 30px;
