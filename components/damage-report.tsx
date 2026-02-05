@@ -3,7 +3,7 @@
 import React from "react"
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, Trash2, Check } from 'lucide-react'
+import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users } from 'lucide-react'
 import { MATCODE_CATEGORY_MAP } from '@/lib/category-mapping'
 
 interface DamageItem {
@@ -52,7 +52,10 @@ const DAMAGE_TYPES = [
   'Other',
 ]
 
+type Step = 1 | 2 | 3 | 4
+
 export default function DamageReportForm() {
+  const [currentStep, setCurrentStep] = useState<Step>(1)
   const [report, setReport] = useState<DamageReport>({
     report_number: '',
     rcv_control_no: '',
@@ -293,6 +296,19 @@ export default function DamageReportForm() {
     })
     setBarcodeInput('')
     setMaterialLookup({})
+    setCurrentStep(1)
+  }
+
+  const canProceedToStep2 = () => {
+    return report.rcv_control_no && report.driver_name && report.plate_no
+  }
+
+  const canProceedToStep3 = () => {
+    return report.items.length > 0
+  }
+
+  const canProceedToStep4 = () => {
+    return report.items.every(item => item.serial_number && item.damage_type)
   }
 
   const generatePDF = (reportData: DamageReport) => {
@@ -397,12 +413,22 @@ export default function DamageReportForm() {
 
     printWindow.document.write(htmlContent)
     printWindow.document.close()
-    printWindow.print()
+
+    setTimeout(() => {
+      printWindow.print()
+    }, 250)
   }
 
+  const steps = [
+    { number: 1, title: 'Truck Info', icon: Truck, description: 'Vehicle & shipment details' },
+    { number: 2, title: 'Scan Items', icon: Barcode, description: 'Scan damaged items' },
+    { number: 3, title: 'Details', icon: ClipboardList, description: 'Damage information' },
+    { number: 4, title: 'Review', icon: Users, description: 'Finalize & save' },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-8 px-4">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">
@@ -420,7 +446,7 @@ export default function DamageReportForm() {
             onClick={() => setActiveTab('create')}
             className={`flex-1 py-2 px-4 rounded-md font-semibold transition-all ${
               activeTab === 'create'
-                ? 'bg-blue-600 text-white shadow'
+                ? 'bg-orange-600 text-white shadow'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -431,7 +457,7 @@ export default function DamageReportForm() {
             onClick={() => setActiveTab('saved')}
             className={`flex-1 py-2 px-4 rounded-md font-semibold transition-all ${
               activeTab === 'saved'
-                ? 'bg-blue-600 text-white shadow'
+                ? 'bg-orange-600 text-white shadow'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -443,365 +469,500 @@ export default function DamageReportForm() {
         {/* Create Report Tab */}
         {activeTab === 'create' && (
           <div className="space-y-6">
-            {/* Basic Info Card */}
+            {/* Progress Steps */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                </div>
-                Report Information
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    RCV Control No. *
-                  </label>
-                  <input
-                    type="text"
-                    value={report.rcv_control_no}
-                    onChange={(e) => setReport({ ...report, rcv_control_no: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter control number"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Report Date
-                  </label>
-                  <input
-                    type="date"
-                    value={report.report_date}
-                    onChange={(e) => setReport({ ...report, report_date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Driver Name
-                  </label>
-                  <input
-                    type="text"
-                    value={report.driver_name}
-                    onChange={(e) => setReport({ ...report, driver_name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Driver's name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Seal No.
-                  </label>
-                  <input
-                    type="text"
-                    value={report.seal_no}
-                    onChange={(e) => setReport({ ...report, seal_no: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Seal number"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Plate No.
-                  </label>
-                  <input
-                    type="text"
-                    value={report.plate_no}
-                    onChange={(e) => setReport({ ...report, plate_no: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Plate number"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Container No.
-                  </label>
-                  <input
-                    type="text"
-                    value={report.container_no}
-                    onChange={(e) => setReport({ ...report, container_no: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Container number"
-                  />
-                </div>
+              <div className="flex items-center justify-between mb-8">
+                {steps.map((step, index) => (
+                  <React.Fragment key={step.number}>
+                    <div className="flex flex-col items-center flex-1">
+                      <div
+                        className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
+                          currentStep === step.number
+                            ? 'bg-orange-600 text-white shadow-lg scale-110'
+                            : currentStep > step.number
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-200 text-gray-500'
+                        }`}
+                      >
+                        {currentStep > step.number ? (
+                          <CheckCircle2 className="w-6 h-6" />
+                        ) : (
+                          <step.icon className="w-6 h-6" />
+                        )}
+                      </div>
+                      <p className={`text-xs font-semibold mt-2 ${
+                        currentStep === step.number ? 'text-orange-600' : 'text-gray-600'
+                      }`}>
+                        {step.title}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5 hidden sm:block">{step.description}</p>
+                    </div>
+                    {index < steps.length - 1 && (
+                      <div className={`flex-1 h-1 mx-2 transition-all duration-300 ${
+                        currentStep > step.number ? 'bg-green-500' : 'bg-gray-200'
+                      }`} />
+                    )}
+                  </React.Fragment>
+                ))}
               </div>
-            </div>
 
-            {/* Barcode Scanner */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
-              <label className="block text-lg font-semibold mb-3 flex items-center gap-2">
-                <Barcode className="w-5 h-5" />
-                Scan Barcode to Add Item
-              </label>
-              <input
-                ref={barcodeInputRef}
-                type="text"
-                value={barcodeInput}
-                onChange={(e) => setBarcodeInput(e.target.value)}
-                onKeyDown={handleBarcodeInput}
-                placeholder="Scan or type barcode and press Enter..."
-                className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-                autoFocus
-              />
-              {materialLookup.material_description && (
-                <div className="mt-3 p-3 bg-green-500 bg-opacity-20 border border-green-300 rounded-lg flex items-center gap-2">
-                  <Check className="w-5 h-5" />
-                  <p className="font-medium">
-                    Found: {materialLookup.material_description} ({materialLookup.category})
-                  </p>
-                </div>
-              )}
-            </div>
+              {/* Step Content */}
+              <div className="mt-8">
+                {/* Step 1: Truck Info */}
+                {currentStep === 1 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Truck className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Vehicle & Shipment Information</h2>
+                        <p className="text-sm text-gray-500">Enter the truck and delivery details</p>
+                      </div>
+                    </div>
 
-            {/* Damage Items */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <AlertCircle className="w-4 h-4 text-orange-600" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          RCV Control No. <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={report.rcv_control_no}
+                          onChange={(e) => setReport({ ...report, rcv_control_no: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          placeholder="Enter control number"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Report Date
+                        </label>
+                        <input
+                          type="date"
+                          value={report.report_date}
+                          onChange={(e) => setReport({ ...report, report_date: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Driver Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={report.driver_name}
+                          onChange={(e) => setReport({ ...report, driver_name: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          placeholder="Driver's name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Plate No. <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={report.plate_no}
+                          onChange={(e) => setReport({ ...report, plate_no: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          placeholder="Plate number"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Seal No.
+                        </label>
+                        <input
+                          type="text"
+                          value={report.seal_no}
+                          onChange={(e) => setReport({ ...report, seal_no: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          placeholder="Seal number"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Container No.
+                        </label>
+                        <input
+                          type="text"
+                          value={report.container_no}
+                          onChange={(e) => setReport({ ...report, container_no: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                          placeholder="Container number"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  Damaged Items ({report.items.length})
-                </h3>
-                <button
-                  onClick={() => addItem()}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center gap-2 shadow-md"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Item
-                </button>
-              </div>
+                )}
 
-              {report.items.length === 0 ? (
-                <div className="py-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 font-medium">No items added yet</p>
-                  <p className="text-gray-500 text-sm mt-1">Scan a barcode or click "Add Item" to get started</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {report.items.map((item, idx) => (
-                    <div key={idx} className="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors bg-gray-50">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                            {item.item_number}
-                          </div>
-                          <h4 className="font-semibold text-gray-900">Item #{item.item_number}</h4>
+                {/* Step 2: Scan Items */}
+                {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Barcode className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Scan Damaged Items</h2>
+                        <p className="text-sm text-gray-500">Scan barcodes to add items to the report</p>
+                      </div>
+                    </div>
+
+                    {/* Barcode Scanner */}
+                    <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-6 text-white">
+                      <label className="block text-lg font-semibold mb-3 flex items-center gap-2">
+                        <Barcode className="w-5 h-5" />
+                        Scan Barcode
+                      </label>
+                      <input
+                        ref={barcodeInputRef}
+                        type="text"
+                        value={barcodeInput}
+                        onChange={(e) => setBarcodeInput(e.target.value)}
+                        onKeyDown={handleBarcodeInput}
+                        placeholder="Scan or type barcode and press Enter..."
+                        className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+                        autoFocus
+                      />
+                      {materialLookup.material_description && (
+                        <div className="mt-3 p-3 bg-green-500 bg-opacity-20 border border-green-300 rounded-lg flex items-center gap-2">
+                          <CheckCircle2 className="w-5 h-5" />
+                          <p className="font-medium">
+                            Found: {materialLookup.material_description} ({materialLookup.category})
+                          </p>
                         </div>
+                      )}
+                    </div>
+
+                    {/* Items List */}
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-bold text-gray-900">
+                          Scanned Items ({report.items.length})
+                        </h3>
                         <button
-                          onClick={() => removeItem(idx)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          onClick={() => addItem()}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Plus className="w-4 h-4" />
+                          Add Manually
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Serial Number *
-                          </label>
-                          <input
-                            type="text"
-                            value={item.serial_number}
-                            onChange={(e) => updateItem(idx, 'serial_number', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Enter serial number"
-                          />
+                      {report.items.length === 0 ? (
+                        <div className="py-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                          <p className="text-gray-600 font-medium">No items scanned yet</p>
+                          <p className="text-gray-500 text-sm mt-1">Scan a barcode or click "Add Manually"</p>
                         </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Material Description
-                          </label>
-                          <input
-                            type="text"
-                            value={item.material_description}
-                            onChange={(e) => updateItem(idx, 'material_description', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Description"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Damage Type *
-                          </label>
-                          <select
-                            value={item.damage_type}
-                            onChange={(e) => updateItem(idx, 'damage_type', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          >
-                            <option value="">Select type</option>
-                            {DAMAGE_TYPES.map((type) => (
-                              <option key={type} value={type}>
-                                {type}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Category
-                          </label>
-                          <input
-                            type="text"
-                            value={item.category}
-                            onChange={(e) => updateItem(idx, 'category', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Category"
-                          />
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Damage Description
-                          </label>
-                          <textarea
-                            value={item.damage_description}
-                            onChange={(e) => updateItem(idx, 'damage_description', e.target.value)}
-                            placeholder="Describe the damage in detail..."
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                            <Camera className="w-4 h-4" />
-                            Photo Evidence
-                          </label>
-                          <div className="flex gap-2 items-center">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                if (e.target.files?.[0]) {
-                                  handlePhotoUpload(idx, e.target.files[0])
-                                }
-                              }}
-                              disabled={uploadingItemIndex === idx}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                            />
-                            {item.photo_url && (
-                              <a
-                                href={item.photo_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                      ) : (
+                        <div className="space-y-3">
+                          {report.items.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all">
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                  {item.item_number}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-gray-900">{item.material_description || 'Unknown Item'}</p>
+                                  <p className="text-xs text-gray-500">Code: {item.material_code || 'N/A'}</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => removeItem(idx)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               >
-                                View Photo
-                              </a>
-                            )}
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Item Details */}
+                {currentStep === 3 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <ClipboardList className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Damage Details</h2>
+                        <p className="text-sm text-gray-500">Provide information for each damaged item</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                      {report.items.map((item, idx) => (
+                        <div key={idx} className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                              {item.item_number}
+                            </div>
+                            <h4 className="font-semibold text-gray-900">
+                              {item.material_description || 'Item Details'}
+                            </h4>
                           </div>
-                          {uploadingItemIndex === idx && (
-                            <p className="text-xs text-blue-600 mt-2 font-medium">Uploading photo...</p>
-                          )}
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                Serial Number <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={item.serial_number}
+                                onChange={(e) => updateItem(idx, 'serial_number', e.target.value)}
+                                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                placeholder="Enter serial number"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                Damage Type <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                value={item.damage_type}
+                                onChange={(e) => updateItem(idx, 'damage_type', e.target.value)}
+                                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                              >
+                                <option value="">Select type</option>
+                                {DAMAGE_TYPES.map((type) => (
+                                  <option key={type} value={type}>
+                                    {type}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                Damage Description
+                              </label>
+                              <textarea
+                                value={item.damage_description}
+                                onChange={(e) => updateItem(idx, 'damage_description', e.target.value)}
+                                placeholder="Describe the damage..."
+                                rows={2}
+                                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                              />
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                                <Camera className="w-4 h-4" />
+                                Photo Evidence
+                              </label>
+                              <div className="flex gap-2 items-center">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    if (e.target.files?.[0]) {
+                                      handlePhotoUpload(idx, e.target.files[0])
+                                    }
+                                  }}
+                                  disabled={uploadingItemIndex === idx}
+                                  className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                                />
+                                {item.photo_url && (
+                                  <a
+                                    href={item.photo_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors"
+                                  >
+                                    View
+                                  </a>
+                                )}
+                              </div>
+                              {uploadingItemIndex === idx && (
+                                <p className="text-xs text-orange-600 mt-2 font-medium">Uploading...</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Review & Save */}
+                {currentStep === 4 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Users className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">Review & Finalize</h2>
+                        <p className="text-sm text-gray-500">Add final notes and signatures</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Narrative Findings
+                        </label>
+                        <textarea
+                          value={report.narrative_findings}
+                          onChange={(e) => setReport({ ...report, narrative_findings: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          placeholder="Describe what happened and what was found..."
+                          rows={3}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Actions Required
+                        </label>
+                        <textarea
+                          value={report.actions_required}
+                          onChange={(e) => setReport({ ...report, actions_required: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          placeholder="Specify what actions need to be taken..."
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Prepared By
+                          </label>
+                          <input
+                            type="text"
+                            value={report.prepared_by}
+                            onChange={(e) => setReport({ ...report, prepared_by: e.target.value })}
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            placeholder="Your name"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Noted By (Guard)
+                          </label>
+                          <input
+                            type="text"
+                            value={report.noted_by}
+                            onChange={(e) => setReport({ ...report, noted_by: e.target.value })}
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            placeholder="Guard name"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Acknowledged By
+                          </label>
+                          <input
+                            type="text"
+                            value={report.acknowledged_by}
+                            onChange={(e) => setReport({ ...report, acknowledged_by: e.target.value })}
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            placeholder="Supervisor name"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Summary */}
+                      <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mt-6">
+                        <h3 className="font-bold text-gray-900 mb-3">Report Summary</h3>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-gray-600">RCV Control:</span>
+                            <span className="ml-2 font-semibold text-gray-900">{report.rcv_control_no}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Driver:</span>
+                            <span className="ml-2 font-semibold text-gray-900">{report.driver_name}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Plate No:</span>
+                            <span className="ml-2 font-semibold text-gray-900">{report.plate_no}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Total Items:</span>
+                            <span className="ml-2 font-semibold text-gray-900">{report.items.length}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Findings & Actions */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Additional Information</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Narrative Findings
-                  </label>
-                  <textarea
-                    value={report.narrative_findings}
-                    onChange={(e) => setReport({ ...report, narrative_findings: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Describe what happened and what was found..."
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Actions Required
-                  </label>
-                  <textarea
-                    value={report.actions_required}
-                    onChange={(e) => setReport({ ...report, actions_required: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Specify what actions need to be taken..."
-                    rows={2}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Prepared By
-                    </label>
-                    <input
-                      type="text"
-                      value={report.prepared_by}
-                      onChange={(e) => setReport({ ...report, prepared_by: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Your name"
-                    />
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Noted By (Guard)
-                    </label>
-                    <input
-                      type="text"
-                      value={report.noted_by}
-                      onChange={(e) => setReport({ ...report, noted_by: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Guard name"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Acknowledged By
-                    </label>
-                    <input
-                      type="text"
-                      value={report.acknowledged_by}
-                      onChange={(e) => setReport({ ...report, acknowledged_by: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Supervisor name"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 justify-end">
-              <button
-                onClick={resetForm}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center gap-2"
-              >
-                <X className="w-4 h-4" />
-                Clear Form
-              </button>
-              <button
-                onClick={saveReport}
-                disabled={isLoading}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg"
-              >
-                <Save className="w-4 h-4" />
-                {isLoading ? 'Saving...' : 'Save Report'}
-              </button>
+              {/* Navigation Buttons */}
+              <div className="flex justify-between mt-8 pt-6 border-t-2 border-gray-200">
+                <button
+                  onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as Step)}
+                  disabled={currentStep === 1}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
+                    currentStep === 1
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  Previous
+                </button>
+
+                {currentStep < 4 ? (
+                  <button
+                    onClick={() => {
+                      if (currentStep === 1 && !canProceedToStep2()) {
+                        alert('Please fill in all required fields (RCV Control No., Driver Name, Plate No.)')
+                        return
+                      }
+                      if (currentStep === 2 && !canProceedToStep3()) {
+                        alert('Please add at least one item')
+                        return
+                      }
+                      if (currentStep === 3 && !canProceedToStep4()) {
+                        alert('Please fill in Serial Number and Damage Type for all items')
+                        return
+                      }
+                      setCurrentStep((currentStep + 1) as Step)
+                    }}
+                    className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-all shadow-lg"
+                  >
+                    Next
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={resetForm}
+                      className="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all"
+                    >
+                      <X className="w-5 h-5" />
+                      Clear
+                    </button>
+                    <button
+                      onClick={saveReport}
+                      disabled={isLoading}
+                      className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all shadow-lg disabled:bg-gray-400"
+                    >
+                      <Save className="w-5 h-5" />
+                      {isLoading ? 'Saving...' : 'Save Report'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -825,12 +986,12 @@ export default function DamageReportForm() {
                 {savedReports.map((savedReport) => (
                   <div
                     key={savedReport.id}
-                    className="p-5 border-2 border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
+                    className="p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                          <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
                             <FileText className="w-5 h-5 text-white" />
                           </div>
                           <div>
@@ -855,7 +1016,7 @@ export default function DamageReportForm() {
                         className="px-5 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-md"
                       >
                         <Download className="w-4 h-4" />
-                        Download PDF
+                        PDF
                       </button>
                     </div>
                   </div>
