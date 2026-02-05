@@ -537,14 +537,14 @@ export default function DamageReportForm() {
               </div>
             </div>
             <div class="title-section">
-              <div class="dealer-copy">ORIGINAL</div>
+              <div class="dealer-copy">${reportData.report_number}</div>
             </div>
           </div>
 
           <!-- Document Header -->
           <div class="document-header">
             <div class="doc-title">DAMAGE AND DEVIATION REPORT</div>
-            <div class="doc-number">Report No.: ${reportData.report_number}</div>
+           
           </div>
 
           <!-- Info Section -->
