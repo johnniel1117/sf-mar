@@ -29,7 +29,7 @@ export default function LandingPage() {
                 <FileSpreadsheet className="w-12 h-12 text-white" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                Excel Uploader
+                Serial List
               </h2>
               <p className="text-gray-600 mb-4">
                 Upload and process barcode Excel files of Haier products
