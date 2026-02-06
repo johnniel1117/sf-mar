@@ -1681,12 +1681,12 @@ export default function ExcelUploader() {
       </div>
         <div className="relative rounded-3xl p-12  overflow-hidden">
           <div className="relative z-10">
-            <div className="text-center mb-8">
+            {/* <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 rounded-full text-lg font-bold mb-4 animate-slide-right">
                 <SFLogo />
                 SF EXPRESS
               </div>
-            </div>
+            </div> */}
 
             <label
               htmlFor="file-upload"
