@@ -488,11 +488,11 @@ export default function DamageReportForm() {
           .dealer-copy {
             font-size: 14px;
             font-weight: bold;
+            align-items: center;
             color: #d32f2f;
             border: 2px solid #d32f2f;
             padding: 4px 8px;
             display: inline-block;
-            align-self: flex-end;
           }
           
           .report-number-box {
