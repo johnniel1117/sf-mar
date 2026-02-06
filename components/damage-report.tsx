@@ -100,7 +100,6 @@ export default function DamageReportForm() {
     const newItem: DamageItem = {
       item_number: report.items.length + 1,
       barcode: material?.barcode || '',
-      serial_number: '',
       material_code: material?.material_code || '',
       material_description: material?.material_description || '',
       damage_type: '',
@@ -502,14 +501,14 @@ export default function DamageReportForm() {
                                 <icons.Barcode className="w-5 h-5 text-gray-600 flex-shrink-0" />
                               </div>
                               
-                              {item.serial_number && (
+                              {/* {item.serial_number && (
                                 <div className="mt-2 pt-2 border-t border-gray-300">
                                   <p className="text-xs font-semibold text-gray-700 mb-1">Extracted Serial</p>
                                   <p className="text-sm font-bold text-blue-600 break-all">
                                     {item.serial_number}
                                   </p>
                                 </div>
-                              )}
+                              )} */}
                             </div>
 
                             <div>
