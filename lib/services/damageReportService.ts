@@ -9,7 +9,7 @@ export interface DamageItem {
   id?: string
   item_number: number
   barcode: string
-  serial_number: string
+//   serial_number: string
   material_code: string
   material_description: string
   damage_type: string

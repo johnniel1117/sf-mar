@@ -13,7 +13,7 @@ export class PDFGenerator {
       <tr>
         <td style="text-align: center; padding: 8px;">${item.item_number}</td>
         <td style="text-align: center; padding: 8px;">${item.material_description || 'Unknown'}</td>
-        <td style="text-align: center; padding: 8px; font-weight: bold;">${item.serial_number || item.barcode}</td>
+        <td style="text-align: center; padding: 8px; font-weight: bold;">${item.barcode}</td>
         <td style="text-align: center; padding: 8px;">${item.damage_type || ''}</td>
         <td style="text-align: center; padding: 8px;">${item.damage_description || ''}</td>
       </tr>
