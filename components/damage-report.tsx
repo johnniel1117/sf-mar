@@ -1309,7 +1309,7 @@ export default function DamageReportForm() {
                           </div>
 
                           <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                            <div>
+                            {/* <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                                 Serial Number
                               </label>
@@ -1355,7 +1355,7 @@ export default function DamageReportForm() {
                                   </p>
                                 </div>
                               )}
-                            </div>
+                            </div> */}
 
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
