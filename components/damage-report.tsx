@@ -2,56 +2,31 @@
 
 import React from "react"
 import { useState, useRef, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users } from 'lucide-react'
-import { MATCODE_CATEGORY_MAP, getMaterialInfoFromMatcode } from '@/lib/category-mapping'
 import Navbar from '@/components/Navbar'
+import { useDamageReport } from '@/hooks/useDamageReport'
+import { PDFGenerator } from '@/lib/utils/pdfGenerator'
+import { DAMAGE_TYPES, STEPS, Step } from '@/lib/constants/damageReportConstants'
+import type { DamageItem, DamageReport } from '@/lib/services/damageReportService'
 
-interface DamageItem {
-  id?: string
-  item_number: number
-  barcode: string
-  serial_number: string
-  material_code: string
-  material_description: string
-  damage_type: string
-  damage_description: string
-  photo_url?: string
-}
-
-interface DamageReport {
-  id?: string
-  report_number: string
-  rcv_control_no: string
-  report_date: string
-  seal_no: string
-  driver_name: string
-  plate_no: string
-  container_no: string
-  prepared_by: string
-  noted_by: string
-  acknowledged_by: string
-  narrative_findings: string
-  actions_required: string
-  status: string
-  items: DamageItem[]
-}
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-const DAMAGE_TYPES = [
-  'Damage Box',
-  'Broken Item',
-  'Dent',
-  'Crack',
-  'Water Damage',
-  'Missing Parts',
-  'Other',
-]
-
-type Step = 1 | 2 | 3 | 4
+// Import icons from lucide-react
+const icons = {
+  Truck: Truck,
+  Barcode: Barcode,
+  ClipboardList: ClipboardList,
+  Users: Users,
+  Download: Download,
+  Camera: Camera,
+  Plus: Plus,
+  X: X,
+  AlertCircle: AlertCircle,
+  Save: Save,
+  FileText: FileText,
+  CheckCircle2: CheckCircle2,
+  Trash2: Trash2,
+  ChevronRight: ChevronRight,
+  ChevronLeft: ChevronLeft,
+} as const
 
 export default function DamageReportForm() {
   const [currentStep, setCurrentStep] = useState<Step>(1)
@@ -72,8 +47,6 @@ export default function DamageReportForm() {
     items: [],
   })
 
-  const [savedReports, setSavedReports] = useState<DamageReport[]>([])
-  const [isLoading, setIsLoading] = useState(false)
   const [barcodeInput, setBarcodeInput] = useState('')
   const [materialLookup, setMaterialLookup] = useState<Record<string, any>>({})
   const [uploadingItemIndex, setUploadingItemIndex] = useState<number | null>(null)
@@ -81,146 +54,20 @@ export default function DamageReportForm() {
   const [serialWarnings, setSerialWarnings] = useState<Record<number, boolean>>({})
   const barcodeInputRef = useRef<HTMLInputElement>(null)
 
+  const {
+    isLoading,
+    savedReports,
+    loadReports,
+    saveReport: saveReportService,
+    deleteReport,
+    uploadPhoto,
+    lookupBarcode,
+    checkSerialNumber: checkSerialNumberService,
+  } = useDamageReport()
+
   useEffect(() => {
     loadReports()
-  }, [])
-
-  const loadReports = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('damage_reports')
-        .select('*, damage_items(*)')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setSavedReports((data as any[]) || [])
-    } catch (error) {
-      console.error('Error loading reports:', error)
-    }
-  }
-
-  const lookupBarcode = async (barcode: string) => {
-  try {
-    // Clean the barcode - remove any extra characters
-    const cleanBarcode = barcode.trim();
-    
-    // First, try exact match in database
-    const { data: exactData, error: exactError } = await supabase
-      .from('barcode_material_mapping')
-      .select('*')
-      .eq('barcode', cleanBarcode)
-      .single()
-
-    if (exactData) return exactData;
-
-    // Try to extract material code from barcode
-    let materialCode = cleanBarcode;
-    
-    // Common patterns for Haier barcodes
-    // Try to extract the first part before any non-alphanumeric characters or extra digits
-    const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/);
-    if (materialCodeMatch) {
-      materialCode = materialCodeMatch[1];
-      
-      // Try database lookup with extracted code
-      const { data: partialData, error: partialError } = await supabase
-        .from('barcode_material_mapping')
-        .select('*')
-        .eq('barcode', materialCode)
-        .single()
-
-      if (partialData) return partialData;
-    }
-
-    // Use our material mapping
-    const materialInfo = getMaterialInfoFromMatcode(materialCode);
-    
-    // Check if we found a match in our mapping
-    if (materialInfo.model !== materialCode) {
-      // Found in our mapping
-      return {
-        barcode: cleanBarcode,
-        material_code: materialCode,
-        material_description: materialInfo.model,
-        category: materialInfo.category,
-      }
-    }
-
-    // Try with the original barcode in case it's a different format
-    const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode);
-    if (originalMaterialInfo.model !== cleanBarcode) {
-      return {
-        barcode: cleanBarcode,
-        material_code: cleanBarcode,
-        material_description: originalMaterialInfo.model,
-        category: originalMaterialInfo.category,
-      }
-    }
-
-    // Not found anywhere
-    return null;
-  } catch (error) {
-    console.error('Error looking up barcode:', error);
-    
-    // Try to extract material code on error
-    const cleanBarcode = barcode.trim();
-    const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/);
-    const materialCode = materialCodeMatch ? materialCodeMatch[1] : cleanBarcode;
-    
-    // Fallback to material mapping
-    const materialInfo = getMaterialInfoFromMatcode(materialCode);
-    if (materialInfo.model !== materialCode) {
-      return {
-        barcode: cleanBarcode,
-        material_code: materialCode,
-        material_description: materialInfo.model,
-        category: materialInfo.category,
-      }
-    }
-    
-    // Try original barcode
-    const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode);
-    if (originalMaterialInfo.model !== cleanBarcode) {
-      return {
-        barcode: cleanBarcode,
-        material_code: cleanBarcode,
-        material_description: originalMaterialInfo.model,
-        category: originalMaterialInfo.category,
-      }
-    }
-    
-    return null;
-  }
-}
-
-  const checkSerialNumber = async (serialNumber: string) => {
-    if (!serialNumber.trim()) return null
-    
-    try {
-      const { data, error } = await supabase
-        .from('damage_items')
-        .select('*')
-        .eq('serial_number', serialNumber.trim())
-        .not('damage_report_id', 'is', null)
-
-      if (error) throw error
-      
-      if (data && data.length > 0) {
-        return {
-          exists: true,
-          reports: data.map(item => ({
-            reportId: item.damage_report_id,
-            itemNumber: item.item_number,
-          }))
-        }
-      }
-      
-      return { exists: false }
-    } catch (error) {
-      console.error('Error checking serial number:', error)
-      return { exists: false }
-    }
-  }
+  }, [loadReports])
 
   const handleBarcodeInput = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -233,7 +80,6 @@ export default function DamageReportForm() {
         addItem(material)
         setBarcodeInput('')
       } else {
-        // If barcode not found, prompt user to enter material description manually
         const description = prompt('Material not found in database. Please enter material description:')
         if (description) {
           const manualMaterial = {
@@ -292,21 +138,9 @@ export default function DamageReportForm() {
   const handlePhotoUpload = async (index: number, file: File) => {
     try {
       setUploadingItemIndex(index)
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('reportId', report.report_number || 'temp')
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) throw new Error('Upload failed')
-
-      const { url } = await response.json()
+      const url = await uploadPhoto(file, report.report_number || 'temp')
       updateItem(index, 'photo_url', url)
     } catch (error) {
-      console.error('Error uploading photo:', error)
       alert('Failed to upload photo')
     } finally {
       setUploadingItemIndex(null)
@@ -314,61 +148,14 @@ export default function DamageReportForm() {
   }
 
   const saveReport = async () => {
-    setIsLoading(true)
     try {
-      const { data: reportData, error: reportError } = await supabase
-        .from('damage_reports')
-        .insert([
-          {
-            report_number: report.report_number || `DMG-${Date.now()}`,
-            rcv_control_no: report.rcv_control_no,
-            report_date: report.report_date,
-            seal_no: report.seal_no,
-            driver_name: report.driver_name,
-            plate_no: report.plate_no,
-            container_no: report.container_no,
-            prepared_by: report.prepared_by,
-            noted_by: report.noted_by,
-            acknowledged_by: report.acknowledged_by,
-            narrative_findings: report.narrative_findings,
-            actions_required: report.actions_required,
-            status: report.status,
-          },
-        ])
-        .select()
-
-      if (reportError) throw reportError
-
-      const reportId = reportData[0].id
-
-      if (report.items.length > 0) {
-        const itemsToInsert = report.items.map((item) => ({
-          damage_report_id: reportId,
-          item_number: item.item_number,
-          barcode: item.barcode,
-          serial_number: item.serial_number,
-          material_code: item.material_code,
-          material_description: item.material_description,
-          damage_type: item.damage_type,
-          damage_description: item.damage_description,
-        }))
-
-        const { error: itemsError } = await supabase
-          .from('damage_items')
-          .insert(itemsToInsert)
-
-        if (itemsError) throw itemsError
-      }
-
+      await saveReportService(report)
       alert('Report saved successfully!')
       resetForm()
       loadReports()
       setActiveTab('saved')
     } catch (error) {
-      console.error('Error saving report:', error)
       alert('Error saving report')
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -406,353 +193,35 @@ export default function DamageReportForm() {
     return report.items.every(item => item.damage_type)
   }
 
-  const generatePDF = (reportData: DamageReport) => {
-    const printWindow = window.open('', '', 'width=1200,height=800')
-    if (!printWindow) return
-
-    // Normalize items - handle both 'items' and 'damage_items' properties
-    const items = reportData.items || ((reportData as any).damage_items || [])
-
-    const itemsHtml = items
-      .map(
-        (item, idx) => `
-      <tr>
-        <td style="text-align: center; padding: 8px;">${item.item_number}</td>
-        <td style="text-align: center; padding: 8px;">${item.material_description || 'Unknown'}</td>
-        <td style="text-align: center; padding: 8px; font-weight: bold;">${item.serial_number || item.barcode}</td>
-        <td style="text-align: center; padding: 8px;">${item.damage_type || ''}</td>
-        <td style="text-align: center; padding: 8px;">${item.damage_description || ''}</td>
-      </tr>
-    `
-      )
-      .join('')
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Inventory Damage and Deviation Report</title>
-        <style>
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          
-          body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            font-size: 11px;
-            line-height: 1.4;
-            color: #000;
-          }
-          
-          .page-container {
-            max-width: 900px;
-            margin: 0 auto;
-          }
-          
-          .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-          }
-          
-          .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-          }
-          
-          .logo-section img {
-            height: 60px;
-            width: auto;
-          }
-          
-          .warehouse-info {
-            font-size: 10px;
-            line-height: 1.3;
-          }
-          
-          .warehouse-info strong {
-            font-size: 12px;
-          }
-          
-          .title-section {
-            text-align: right;
-          }
-          
-          .dealer-copy {
-            font-size: 14px;
-            font-weight: bold;
-            align-items: center;
-            color: #d32f2f;
-            border: 2px solid #d32f2f;
-            padding: 4px 8px;
-            display: inline-block;
-          }
-          
-          .report-number-box {
-            border: 2px solid #d32f2f;
-            padding: 8px 12px;
-            margin-top: 5px;
-            text-align: center;
-            font-size: 11px;
-            font-weight: bold;
-            color: #000;
-          }
-          
-          .document-header {
-            text-align: center;
-            margin: 15px 0;
-           
-            padding: 10px 0;
-          }
-          
-          .doc-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 5px;
-          }
-          
-          .doc-number {
-            font-size: 13px;
-            font-weight: bold;
-          }
-          
-          .info-section {
-            margin-bottom: 15px;
-          }
-          
-          .info-row {
-            display: grid;
-            grid-template-columns: 100px 1fr 100px 1fr;
-            gap: 10px;
-            margin-bottom: 8px;
-            align-items: start;
-          }
-          
-          .info-label {
-            font-weight: bold;
-            font-size: 10px;
-          }
-          
-          .info-value {
-            font-size: 10px;
-            padding: 2px 4px;
-            min-height: 18px;
-          }
-          
-          .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-            border: 1px solid #000;
-          }
-          
-          .data-table thead {
-            background-color: #f0f0f0;
-            border: 1px solid #000;
-          }
-          
-          .data-table th {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 10px;
-          }
-          
-          .data-table td {
-            border: 1px solid #000;
-            padding: 6px;
-            font-size: 9px;
-          }
-          
-          .footer-info {
-            margin-top: 15px;
-            padding: 10px;
-            
-            text-align: right;
-            font-size: 11px;
-            font-weight: bold;
-          }
-          
-          .signature-section {
-            margin-top: 25px;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 30px;
-          }
-          
-          .signature-box {
-            text-align: center;
-            font-size: 10px;
-          }
-          
-          .signature-line {
-            margin-top: 30px;
-            border-top: 1px solid #000;
-            padding-top: 5px;
-          }
-          
-          @media print {
-            body {
-              padding: 0;
-            }
-            .page-container {
-              max-width: 100%;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="page-container">
-          <!-- Header Section -->
-          <div class="header-section">
-            <div class="logo-section">
-              <img src="https://brandlogos.net/wp-content/uploads/2025/06/sf_express-logo_brandlogos.net_shwfy-512x512.png" alt="SF Express Logo" />
-              <div class="warehouse-info">
-                <strong>SF EXPRESS WAREHOUSE</strong><br/>
-                UPPER TINGUB, MANDAUE, CEBU<br/>
-              </div>
-            </div>
-            <div class="title-section">
-              <div class="dealer-copy">${reportData.report_number}</div>
-            </div>
-          </div>
-
-          <!-- Document Header -->
-          <div class="document-header">
-            <div class="doc-title">DAMAGE AND DEVIATION REPORT</div>
-           
-          </div>
-
-          <!-- Info Section -->
-          <div class="info-section">
-            <div class="info-row">
-              <div class="info-label">Report Date</div>
-              <div class="info-value">${reportData.report_date}</div>
-              <div class="info-label">Driver Name</div>
-              <div class="info-value">${reportData.driver_name}</div>
-            </div>
-            
-            <div class="info-row">
-              <div class="info-label">Plate No.</div>
-              <div class="info-value">${reportData.plate_no}</div>
-              <div class="info-label">Seal No.</div>
-              <div class="info-value">${reportData.seal_no}</div>
-            </div>
-            
-            <div class="info-row">
-              <div class="info-label">Container No.</div>
-              <div class="info-value">${reportData.container_no}</div>
-            </div>
-          </div>
-
-          <!-- Data Table -->
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th style="width: 40px;">NO.</th>
-                <th style="width: 250px;">MATERIAL DESCRIPTION</th>
-                <th style="width: 150px;">SERIAL NO.</th>
-                <th style="width: 120px;">DAMAGE TYPE</th>
-                <th style="width: 200px;">DAMAGE DESCRIPTION</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-
-          <!-- Footer Info -->
-          <div class="footer-info">
-            <div>TOTAL ITEMS: ${items.length}</div>
-          </div>
-
-          <!-- Narrative & Actions -->
-          <div class="info-section" style="margin-top: 15px;">
-            <div class="info-row" style="grid-template-columns: 1fr;">
-              <div><strong>Narrative Findings:</strong></div>
-            </div>
-            <div style="padding: 8px; border: 1px solid #000; min-height: 50px; margin-bottom: 10px;">
-              ${reportData.narrative_findings || 'N/A'}
-            </div>
-            
-            
-          </div>
-
-          <!-- Signature Section -->
-          <div class="signature-section">
-            <div class="signature-box">
-              <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line" style="font-weight: bold;>${reportData.prepared_by || ''}</div>
-              <div style="margin-top: 5px; ">Prepared By</div>
-            </div>
-            <div class="signature-box">
-              <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line" style="font-weight: bold;>${reportData.noted_by || ''}</div>
-              <div style="margin-top: 5px;">Noted By (Guard)</div>
-            </div>
-            <div class="signature-box">
-              <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line" style="font-weight: bold;>${reportData.acknowledged_by || ''}</div>
-              <div style="margin-top: 5px;">Acknowledged By</div>
-            </div>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
-
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-
-    setTimeout(() => {
-      printWindow.print()
-    }, 250)
+  const handleDeleteReport = async (reportId: string) => {
+    if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+      try {
+        await deleteReport(reportId)
+        alert('Report deleted successfully!')
+        loadReports()
+      } catch (error) {
+        alert('Error deleting report')
+      }
+    }
   }
 
-  const steps = [
-    { number: 1, title: 'Truck Info', icon: Truck, description: 'Vehicle & shipment details' },
-    { number: 2, title: 'Scan Items', icon: Barcode, description: 'Scan damaged items' },
-    { number: 3, title: 'Details', icon: ClipboardList, description: 'Damage information' },
-    { number: 4, title: 'Review', icon: Users, description: 'Finalize & save' },
-  ]
-
-   const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6 sm:py-8 px-3 sm:px-4">
-       <Navbar 
+      <Navbar 
         showBackButton 
         backHref="/" 
         animate={mounted}
         fixed={true}
       />
       <div className="w-full max-w-6xl mx-auto pt-16">
-        {/* Header
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-lg">SF</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">SF EXPRESS</h1>
-          </div>
-          <p className="text-sm sm:text-base text-gray-600">Damage & Deviation Report System</p>
-        </div> */}
-
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-white p-1  justify-center w-full">
+        <div className="flex gap-2 mb-6 bg-white p-1 rounded-lg justify-center w-full">
           <button
             onClick={() => setActiveTab('create')}
             className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
@@ -761,7 +230,7 @@ export default function DamageReportForm() {
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <FileText className="w-4 h-4 inline mr-1 sm:mr-2" />
+            <icons.FileText className="w-4 h-4 inline mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Create Report</span>
             <span className="sm:hidden">Create</span>
           </button>
@@ -773,7 +242,7 @@ export default function DamageReportForm() {
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <Download className="w-4 h-4 inline mr-1 sm:mr-2" />
+            <icons.Download className="w-4 h-4 inline mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Saved Reports</span>
             <span className="sm:hidden">Saved</span>
           </button>
@@ -785,41 +254,44 @@ export default function DamageReportForm() {
             {/* Progress Steps */}
             <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
               <div className="flex items-start justify-between gap-1 sm:gap-2 mb-6 sm:mb-8">
-                {steps.map((step, index) => (
-                  <React.Fragment key={step.number}>
-                    {/* Step Item */}
-                    <div className="flex flex-col items-center flex-1">
-                      <div
-                        className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center font-bold text-sm sm:text-base lg:text-lg transition-all duration-300 flex-shrink-0 ${
-                          currentStep === step.number
-                            ? 'bg-orange-600 text-white shadow-lg scale-110'
-                            : currentStep > step.number
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-200 text-gray-500'
-                        }`}
-                      >
-                        {currentStep > step.number ? (
-                          <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
-                        ) : (
-                          <step.icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
-                        )}
+                {STEPS.map((step, index) => {
+                  const StepIcon = icons[step.icon as keyof typeof icons]
+                  return (
+                    <React.Fragment key={step.number}>
+                      {/* Step Item */}
+                      <div className="flex flex-col items-center flex-1">
+                        <div
+                          className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center font-bold text-sm sm:text-base lg:text-lg transition-all duration-300 flex-shrink-0 ${
+                            currentStep === step.number
+                              ? 'bg-orange-600 text-white shadow-lg scale-110'
+                              : currentStep > step.number
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-200 text-gray-500'
+                          }`}
+                        >
+                          {currentStep > step.number ? (
+                            <icons.CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+                          ) : (
+                            <StepIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+                          )}
+                        </div>
+                        <p className={`text-[10px] sm:text-xs lg:text-sm font-semibold mt-1 sm:mt-2 text-center line-clamp-2 ${
+                          currentStep === step.number ? 'text-orange-600' : 'text-gray-600'
+                        }`}>
+                          {step.title}
+                        </p>
+                        <p className="text-[9px] sm:text-xs text-gray-400 mt-0.5 hidden lg:block text-center max-w-[70px]">{step.description}</p>
                       </div>
-                      <p className={`text-[10px] sm:text-xs lg:text-sm font-semibold mt-1 sm:mt-2 text-center line-clamp-2 ${
-                        currentStep === step.number ? 'text-orange-600' : 'text-gray-600'
-                      }`}>
-                        {step.title}
-                      </p>
-                      <p className="text-[9px] sm:text-xs text-gray-400 mt-0.5 hidden lg:block text-center max-w-[70px]">{step.description}</p>
-                    </div>
 
-                    {/* Connector Line */}
-                    {index < steps.length - 1 && (
-                      <div className={`h-0.5 sm:h-1 flex-1 transition-all duration-300 self-start mt-5 sm:mt-6 lg:mt-7 ${
-                        currentStep > step.number ? 'bg-green-500' : 'bg-gray-300'
-                      }`} />
-                    )}
-                  </React.Fragment>
-                ))}
+                      {/* Connector Line */}
+                      {index < STEPS.length - 1 && (
+                        <div className={`h-0.5 sm:h-1 flex-1 transition-all duration-300 self-start mt-5 sm:mt-6 lg:mt-7 ${
+                          currentStep > step.number ? 'bg-green-500' : 'bg-gray-300'
+                        }`} />
+                      )}
+                    </React.Fragment>
+                  )
+                })}
               </div>
 
               {/* Step Content */}
@@ -829,7 +301,7 @@ export default function DamageReportForm() {
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                        <icons.Truck className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
                       <div className="min-w-0">
                         <h2 className="text-lg sm:text-xl font-bold text-gray-900">Vehicle & Shipment Information</h2>
@@ -910,7 +382,7 @@ export default function DamageReportForm() {
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Barcode className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                        <icons.Barcode className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
                       <div className="min-w-0">
                         <h2 className="text-lg sm:text-xl font-bold text-gray-900">Scan Damaged Items</h2>
@@ -921,7 +393,7 @@ export default function DamageReportForm() {
                     {/* Barcode Scanner */}
                     <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-4 sm:p-6 text-white">
                       <label className="block text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
-                        <Barcode className="w-5 h-5" />
+                        <icons.Barcode className="w-5 h-5" />
                         Scan Barcode
                       </label>
                       <input
@@ -936,7 +408,7 @@ export default function DamageReportForm() {
                       />
                       {materialLookup.material_description && (
                         <div className="mt-3 p-3 bg-green-500 bg-opacity-20 border border-green-300 rounded-lg flex items-start gap-2">
-                          <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                          <icons.CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                           <p className="font-medium text-sm break-words">
                             Found: {materialLookup.material_description} ({materialLookup.category})
                           </p>
@@ -954,14 +426,14 @@ export default function DamageReportForm() {
                           onClick={() => addItem()}
                           className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                         >
-                          <Plus className="w-4 h-4" />
+                          <icons.Plus className="w-4 h-4" />
                           Add Manually
                         </button>
                       </div>
 
                       {report.items.length === 0 ? (
                         <div className="py-8 sm:py-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                          <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3" />
+                          <icons.AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3" />
                           <p className="text-gray-600 font-medium text-sm sm:text-base">No items scanned yet</p>
                           <p className="text-gray-500 text-xs sm:text-sm mt-1">Scan a barcode or click "Add Manually"</p>
                         </div>
@@ -982,7 +454,7 @@ export default function DamageReportForm() {
                                 onClick={() => removeItem(idx)}
                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 ml-2"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <icons.Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           ))}
@@ -997,7 +469,7 @@ export default function DamageReportForm() {
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <ClipboardList className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                        <icons.ClipboardList className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
                       <div className="min-w-0">
                         <h2 className="text-lg sm:text-xl font-bold text-gray-900">Damage Details</h2>
@@ -1018,77 +490,27 @@ export default function DamageReportForm() {
                           </div>
 
                           <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                            {/* <div>
-                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
-                                Serial Number <span className="text-red-500">*</span>
-                              </label>
-                              <input
-                                type="text"
-                                value={item.serial_number}
-                                onChange={async (e) => {
-                                  const newSerialNumber = e.target.value
-                                  updateItem(idx, 'serial_number', newSerialNumber)
-                                  
-                                  if (newSerialNumber.trim()) {
-                                    const result = await checkSerialNumber(newSerialNumber)
-                                    if (result?.exists) {
-                                      setSerialWarnings(prev => ({
-                                        ...prev,
-                                        [idx]: true
-                                      }))
-                                    } else {
-                                      setSerialWarnings(prev => ({
-                                        ...prev,
-                                        [idx]: false
-                                      }))
-                                    }
-                                  } else {
-                                    setSerialWarnings(prev => ({
-                                      ...prev,
-                                      [idx]: false
-                                    }))
-                                  }
-                                }}
-                                placeholder="Enter serial number..."
-                                className={`w-full px-2 sm:px-3 py-2 border-2 rounded-lg text-xs sm:text-sm focus:ring-2 focus:border-transparent transition-all ${
-                                  serialWarnings[idx] 
-                                    ? 'border-red-500 focus:ring-red-500' 
-                                    : 'border-gray-300 focus:ring-orange-500'
-                                }`}
-                              />
-                              {serialWarnings[idx] && (
-                                <div className="mt-2 p-2 sm:p-3 bg-red-50 border-2 border-red-300 rounded-lg flex items-start gap-2">
-                                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                                  <p className="font-medium text-xs sm:text-sm text-red-700 break-words">
-                                    ⚠️ Warning: This serial number already exists in another damage report!
+                            {/* Display Serial Number from scanned barcode */}
+                            <div className="bg-gray-100 p-3 rounded-lg border border-gray-300">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-700 mb-1">Scanned Serial Number</p>
+                                  <p className="text-sm font-bold text-gray-900 break-all">
+                                    {item.barcode || 'No barcode scanned'}
+                                  </p>
+                                </div>
+                                <icons.Barcode className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                              </div>
+                              
+                              {item.serial_number && (
+                                <div className="mt-2 pt-2 border-t border-gray-300">
+                                  <p className="text-xs font-semibold text-gray-700 mb-1">Extracted Serial</p>
+                                  <p className="text-sm font-bold text-blue-600 break-all">
+                                    {item.serial_number}
                                   </p>
                                 </div>
                               )}
-                            </div> */}
-                            
-                              {/* Display Serial Number from scanned barcode */}
-                              <div className="bg-gray-100 p-3 rounded-lg border border-gray-300">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="text-xs font-semibold text-gray-700 mb-1">Scanned Serial Number</p>
-                                    <p className="text-sm font-bold text-gray-900 break-all">
-                                      {item.barcode || 'No barcode scanned'}
-                                    </p>
-                                  </div>
-                                  <Barcode className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                                </div>
-                                
-                                {/* Optional: Show extracted serial number if you want to parse it */}
-                                {item.serial_number && (
-                                  <div className="mt-2 pt-2 border-t border-gray-300">
-                                    <p className="text-xs font-semibold text-gray-700 mb-1">Extracted Serial</p>
-                                    <p className="text-sm font-bold text-blue-600 break-all">
-                                      {item.serial_number}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-
+                            </div>
 
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
@@ -1123,7 +545,7 @@ export default function DamageReportForm() {
 
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                                <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <icons.Camera className="w-3 h-3 sm:w-4 sm:h-4" />
                                 Photo Evidence
                               </label>
                               <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -1165,7 +587,7 @@ export default function DamageReportForm() {
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Users className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                        <icons.Users className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
                       <div className="min-w-0">
                         <h2 className="text-lg sm:text-xl font-bold text-gray-900">Review & Finalize</h2>
@@ -1186,19 +608,6 @@ export default function DamageReportForm() {
                           rows={3}
                         />
                       </div>
-
-                      {/* <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                          Actions Required
-                        </label>
-                        <textarea
-                          value={report.actions_required}
-                          onChange={(e) => setReport({ ...report, actions_required: e.target.value })}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                          placeholder="Specify what actions need to be taken..."
-                          rows={2}
-                        />
-                      </div> */}
 
                       {/* Summary */}
                       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 sm:p-4 mt-4 sm:mt-6">
@@ -1234,7 +643,7 @@ export default function DamageReportForm() {
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
-                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <icons.ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                   Previous
                 </button>
 
@@ -1250,7 +659,7 @@ export default function DamageReportForm() {
                         return
                       }
                       if (currentStep === 3 && !canProceedToStep4()) {
-                        alert('Please fill in Serial Number and Damage Type for all items')
+                        alert('Please fill in Damage Type for all items')
                         return
                       }
                       setCurrentStep((currentStep + 1) as Step)
@@ -1258,7 +667,7 @@ export default function DamageReportForm() {
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-all shadow-lg"
                   >
                     Next
-                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <icons.ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 ) : (
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
@@ -1266,7 +675,7 @@ export default function DamageReportForm() {
                       onClick={resetForm}
                       className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all"
                     >
-                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <icons.X className="w-4 h-4 sm:w-5 sm:h-5" />
                       Clear
                     </button>
                     <button
@@ -1274,7 +683,7 @@ export default function DamageReportForm() {
                       disabled={isLoading}
                       className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all shadow-lg disabled:bg-gray-400"
                     >
-                      <Save className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <icons.Save className="w-4 h-4 sm:w-5 sm:h-5" />
                       {isLoading ? 'Saving...' : 'Save Report'}
                     </button>
                   </div>
@@ -1288,13 +697,13 @@ export default function DamageReportForm() {
         {activeTab === 'saved' && (
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
-              <Download className="w-5 h-5" />
+              <icons.Download className="w-5 h-5" />
               Saved Reports
             </h3>
 
             {savedReports.length === 0 ? (
               <div className="py-8 sm:py-12 text-center">
-                <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                <icons.FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
                 <p className="text-gray-600 font-medium text-base sm:text-lg">No reports saved yet</p>
                 <p className="text-gray-500 text-xs sm:text-sm mt-2">Create your first damage report to see it here</p>
               </div>
@@ -1309,7 +718,7 @@ export default function DamageReportForm() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
                           <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                            <icons.FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
@@ -1327,42 +736,18 @@ export default function DamageReportForm() {
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <button
-                          onClick={() => generatePDF(savedReport)}
+                          onClick={() => PDFGenerator.generatePDF(savedReport)}
                           className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-md"
                         >
-                          <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <icons.Download className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="hidden sm:inline">PDF</span>
                           <span className="sm:hidden">Download</span>
                         </button>
                         <button
-                          onClick={async () => {
-                            if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
-                              try {
-                                const { error: itemsError } = await supabase
-                                  .from('damage_items')
-                                  .delete()
-                                  .eq('damage_report_id', savedReport.id)
-                                
-                                if (itemsError) throw itemsError
-
-                                const { error: reportError } = await supabase
-                                  .from('damage_reports')
-                                  .delete()
-                                  .eq('id', savedReport.id)
-                                
-                                if (reportError) throw reportError
-
-                                alert('Report deleted successfully!')
-                                loadReports()
-                              } catch (error) {
-                                console.error('Error deleting report:', error)
-                                alert('Error deleting report')
-                              }
-                            }
-                          }}
+                          onClick={() => handleDeleteReport(savedReport.id!)}
                           className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md"
                         >
-                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="hidden sm:inline">Delete</span>
                           <span className="sm:hidden">Remove</span>
                         </button>
