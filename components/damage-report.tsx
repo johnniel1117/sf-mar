@@ -4,7 +4,8 @@ import React from "react"
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users } from 'lucide-react'
-import { MATCODE_CATEGORY_MAP } from '@/lib/category-mapping'
+import { MATCODE_CATEGORY_MAP, getMaterialInfoFromMatcode } from '@/lib/category-mapping'
+import Navbar from '@/components/Navbar'
 
 interface DamageItem {
   id?: string
@@ -109,12 +110,15 @@ export default function DamageReportForm() {
       if (data) return data
 
       const materialCode = barcode
-      if (MATCODE_CATEGORY_MAP[materialCode]) {
+      const materialInfo = getMaterialInfoFromMatcode(materialCode)
+      
+      if (materialInfo.model !== materialCode) {
+        // Found in our mapping
         return {
           barcode: materialCode,
           material_code: materialCode,
-          material_description: materialCode,
-          category: MATCODE_CATEGORY_MAP[materialCode],
+          material_description: materialInfo.model,
+          category: materialInfo.category,
         }
       }
 
@@ -122,12 +126,13 @@ export default function DamageReportForm() {
     } catch (error) {
       console.error('Error looking up barcode:', error)
       
-      if (MATCODE_CATEGORY_MAP[barcode]) {
+      const materialInfo = getMaterialInfoFromMatcode(barcode)
+      if (materialInfo.model !== barcode) {
         return {
           barcode: barcode,
           material_code: barcode,
-          material_description: barcode,
-          category: MATCODE_CATEGORY_MAP[barcode],
+          material_description: materialInfo.model,
+          category: materialInfo.category,
         }
       }
       return null
@@ -674,10 +679,23 @@ export default function DamageReportForm() {
     { number: 4, title: 'Review', icon: Users, description: 'Finalize & save' },
   ]
 
+   const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6 sm:py-8 px-3 sm:px-4">
-      <div className="w-full max-w-6xl mx-auto">
-        {/* Header */}
+       <Navbar 
+        showBackButton 
+        backHref="/" 
+        animate={mounted}
+        fixed={true}
+      />
+      <div className="w-full max-w-6xl mx-auto pt-16">
+        {/* Header
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">
             <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
@@ -686,10 +704,10 @@ export default function DamageReportForm() {
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">SF EXPRESS</h1>
           </div>
           <p className="text-sm sm:text-base text-gray-600">Damage & Deviation Report System</p>
-        </div>
+        </div> */}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-white p-1 rounded-lg shadow-sm justify-center w-full">
+        <div className="flex gap-2 mb-6 bg-white p-1  justify-center w-full">
           <button
             onClick={() => setActiveTab('create')}
             className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${

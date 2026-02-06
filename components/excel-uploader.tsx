@@ -6,6 +6,7 @@ import * as XLSX from "xlsx-js-style"
 import { MATCODE_CATEGORY_MAP, getCategoryFromBinCode } from '../components/CategoryMapping'
 import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers, AlertCircle, ArrowUp, Search, AlertTriangle } from "lucide-react"
 import LogoGridBackground from "../components/LogoBackground"
+import Navbar from '@/components/Navbar'
 // import DamageReportForm from "../components/damage-report"
 
 interface MaterialData {
@@ -1443,9 +1444,20 @@ export default function ExcelUploader() {
     }
   }
 
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Notifications */}
+      <Navbar 
+        showBackButton 
+        backHref="/" 
+        animate={mounted}
+      />
       <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
         {notifications.map((notification) => (
           <div

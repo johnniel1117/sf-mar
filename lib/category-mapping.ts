@@ -12,6 +12,150 @@
  * - Water Heater, Micro-wave Oven, Others
  */
 
+export interface MaterialInfo {
+  model: string;
+  category: string;
+}
+
+export const MATCODE_MATERIAL_MAP: Record<string, MaterialInfo> = {
+  // ==================== FREEZER ====================
+  "B30FZ4M6K": { model: "AQF-100(W)", category: "Freezer" },
+  "B30FM4M6K": { model: "AQF-160(W)", category: "Freezer" },
+  "B300G5M6K": { model: "AQF-200(W)", category: "Freezer" },
+  "B30GK2M6J": { model: "AQF-310(W)", category: "Freezer" },
+  "BD07U2M00": { model: "HF-S6L-A(S)", category: "Freezer" },
+  "BF0GS8M00": { model: "SF-C11KP(W)", category: "Freezer" },
+  "BF0GS5M00": { model: "SF-C30KP(A)", category: "Freezer" },
+  "B30FZ6E6A": { model: "BD-106HDV6", category: "Freezer" },
+  "B30FMAE6A": { model: "BD-146HDV6", category: "Freezer" },
+  "B300GDE6A": { model: "BD-206HDV6", category: "Freezer" },
+  "B30GKJE2J": { model: "BD-319HDV6", category: "Freezer" },
+  "BF0G30E04": { model: "BD-379HDV6", category: "Freezer" },
+  "B30GLFE2J": { model: "BD-429HDV6", category: "Freezer" },
+  "B30GMGE2J": { model: "BD-519HDV6", category: "Freezer" },
+  "B30JU3E00": { model: "BD-519HI+", category: "Freezer" },
+  "B300A3E2J": { model: "BD-719H", category: "Freezer" },
+  "B40791E6H": { model: "JC-87", category: "Freezer" },
+  "BW0ACEE00": { model: "SC-309(10.9cuft)", category: "Freezer" },
+  "BW0ADQE00": { model: "SC-339(12.0cuft)", category: "Freezer" },
+  "TA5602027": { model: "SC-340GA", category: "Freezer" },
+  "BY0H41E58": { model: "SD-296A", category: "Freezer" },
+  "BY0K10E00": { model: "SD-297", category: "Freezer" },
+  "BY0ETAE18": { model: "SD-332", category: "Freezer" },
+  "BY0H53E58": { model: "SD-376A", category: "Freezer" },
+  "BY0K28E00": { model: "SD-377", category: "Freezer" },
+  "TD0043841": { model: "CF-04", category: "Freezer" },
+  "TD0043842": { model: "CF-05", category: "Freezer" },
+  "TD0043843": { model: "CF-07", category: "Freezer" },
+  "TD0043844": { model: "CF-09", category: "Freezer" },
+  "TD0043845": { model: "CF-10", category: "Freezer" },
+  "TD0043846": { model: "CF-14", category: "Freezer" },
+  "TD0043847": { model: "CF-18", category: "Freezer" },
+  "TD0045303": { model: "CF-05IV", category: "Freezer" },
+  "TD0045304": { model: "CF-07IV", category: "Freezer" },
+  "TD0045305": { model: "CF-09IV", category: "Freezer" },
+  "TD0045306": { model: "CF-10IV", category: "Freezer" },
+  "BD07U0M00": { model: "HF-280", category: "Freezer" },
+  "BD07U1M00": { model: "HF-S4LL(S)", category: "Freezer" },
+  "BD07U3M00": { model: "HF-S6L-A", category: "Freezer" },
+  "BD07U4M00": { model: "HF-S4LL", category: "Freezer" },
+  "BF0GS6M00": { model: "SF-C21KP(A)", category: "Freezer" },
+  "BF0GS7M00": { model: "SF-C24KP(A)", category: "Freezer" },
+  "BF0GS9M00": { model: "SF-C50KP(W)", category: "Freezer" },
+  "BF0GS0M00": { model: "SF-C30KP(W)", category: "Freezer" },
+  "BF0GS2M00": { model: "SF-C40KP(W)", category: "Freezer" },
+  "BF0GS3M00": { model: "SF-C13KP(W)", category: "Freezer" },
+  "BW08D5M00": { model: "SC-218E", category: "Freezer" },
+  "BW08D0M00": { model: "SD-208(A)", category: "Freezer" },
+  "BW08D2M00": { model: "SC-258LP", category: "Freezer" },
+  "BW08D3M00": { model: "SC-178LP", category: "Freezer" },
+  "BF0GS1M00": { model: "SF-C40K(W)", category: "Freezer" },
+  "BW08D1M00": { model: "BD-468(A)", category: "Freezer" },
+  "BW08D4M00": { model: "SC-178E", category: "Freezer" },
+  "B30GJ6M56": { model: "AQF-40CP(A)", category: "Freezer" },
+  "B30GM0M6J": { model: "AQF-500(W)", category: "Freezer" },
+  "B30GL8M56": { model: "AQF-50CP(A)", category: "Freezer" },
+  "BE06MHE1T": { model: "HYC-290", category: "Freezer" },
+  "B30GL0M6J": { model: "AQF-420(W)", category: "Freezer" },
+  "BB09UGM02": { model: "HSF-140", category: "Freezer" },
+  "BF0GS4M00": { model: "SF-C24KP(W)", category: "Freezer" },
+  "BW03N4E0N": { model: "SC-300GA", category: "Freezer" },
+  "B401N9E6M": { model: "JC-167", category: "Freezer" },
+  "BY0JQ5E00RU": { model: "SD-332", category: "Freezer" },
+  "TD0014191": { model: "Cooler", category: "Freezer" },
+  "BS0BB3000": { model: "HUF-D170", category: "Freezer" },
+
+  // ==================== SMALL APPLIANCES ====================
+  "TD0027283": { model: "HAF-K25B1", category: "Small Appliances" },
+  "F705V5M02": { model: "HEO-09D1B", category: "Small Appliances" },
+  "F705V6M02": { model: "HEO-09D1W", category: "Small Appliances" },
+  "F705V7M02": { model: "HEO-19EPH", category: "Small Appliances" },
+  "F705V8M02": { model: "HEO-28DPH", category: "Small Appliances" },
+  "TD0017818": { model: "HIC-C20A13", category: "Small Appliances" },
+  "TD0017819": { model: "HIC-C20D14", category: "Small Appliances" },
+  "TD0017820": { model: "HIC-C21G1", category: "Small Appliances" },
+  "TD0017823": { model: "HKT-208F", category: "Small Appliances" },
+  "TD0017822": { model: "HKT-610FW", category: "Small Appliances" },
+  "TD0017826": { model: "HKT-615FB", category: "Small Appliances" },
+  "F705V9M02": { model: "HRC-GX15A", category: "Small Appliances" },
+  "FP00J9M00": { model: "HCT-2IHTGBI", category: "Small Appliances" },
+  "F705VAM02": { model: "HRC-GX8013A", category: "Small Appliances" },
+  "F705VBM02": { model: "HRC-GX10013A", category: "Small Appliances" },
+  "FX50Z1M00": { model: "HIC-C20D14", category: "Small Appliances" },
+  "FX50Z0M00": { model: "HIC-C20A13", category: "Small Appliances" },
+  "FP00J8M00": { model: "HCT-3IHTGBI", category: "Small Appliances" },
+
+  // ==================== COOKTOP ====================
+  "FB28UQM00": { model: "TCCK220E", category: "Cooktop" },
+  "FB28UPM00": { model: "TCCK230E", category: "Cooktop" },
+  "FB28URM00": { model: "HCCK230AGG", category: "Cooktop" },
+  "TD0027815": { model: "HCT-ADHQ736B", category: "Cooktop" },
+  "FB28UNM00": { model: "TCCK100A", category: "Cooktop" },
+
+  // ==================== COOKER ====================
+  "TD0041312": { model: "HFS-502G1E63GOBS", category: "Cooker" },
+  "FY01KJM01": { model: "HFS-503G1E60GO", category: "Cooker" },
+  "TD0038391": { model: "HFS-503G1E63GO", category: "Cooker" },
+  "TD0038855": { model: "HFS-503G63GO", category: "Cooker" },
+  "FY01KCM01": { model: "63", category: "Cooker" },
+  "TD0025710": { model: "HFS-504G60GOBS", category: "Cooker" },
+  "TD0031890": { model: "HFS-504G60GOSS", category: "Cooker" },
+  "TD0037147": { model: "HFS-504G63GO", category: "Cooker" },
+  "TD0038392": { model: "HFS-504G63GOBS", category: "Cooker" },
+  "TD0038854": { model: "HFS-504G63GOSS", category: "Cooker" },
+  "TD0035664": { model: "HFS-603G1E70GOT", category: "Cooker" },
+  "TD0031891": { model: "HFS-603G1E80GO", category: "Cooker" },
+  "TD0027816": { model: "HFS-603G1E80GOBS", category: "Cooker" },
+  "TD0039389": { model: "HFS-603G1E86GO", category: "Cooker" },
+  "TD0042656": { model: "HFS-603G1E86GOSS", category: "Cooker" },
+  "TD0039388": { model: "HFS-603G1E86GOBS", category: "Cooker" },
+  "TD0032570": { model: "HFS-604E60EO", category: "Cooker" },
+  "TD0042657": { model: "HFS-604G86GOBS", category: "Cooker" },
+  "FY01KGM01": { model: "HFS-604I60EO", category: "Cooker" },
+  "TD0035663": { model: "HFS-904G2E110FGOT", category: "Cooker" },
+  "TD0030850": { model: "HFS-904G2E130FGO", category: "Cooker" },
+  "FY01KFM01": { model: "HFS-905G109EO", category: "Cooker" },
+  "TD0041954": { model: "HFS-905G63HGOSS", category: "Cooker" },
+  "TD0042659": { model: "HFS-1206G65L124RGO", category: "Cooker" },
+  "TD0042658": { model: "HFS-804G1E96GOSS", category: "Cooker" },
+  "FY01KDM01": { model: "HFS-504G60EO", category: "Cooker" },
+  "FY01KEM01": { model: "HFS-604G60EO", category: "Cooker" },
+  "FY01KHM01": { model: "HWO60S7EX1", category: "Cooker" },
+  "FY01KKM01": { model: "HCX-T04NN4X", category: "Cooker" },
+  "FY01KLM01": { model: "HMX-T04NN4X", category: "Cooker" },
+  "TD0041313": { model: "HFS-603G1E86AOSS", category: "Cooker" },
+  "TD0051709": { model: "HFS-604E86EOSS", category: "Cooker" },
+  "TD0051708": { model: "HFS-502E63EOSS", category: "Cooker" },
+
+  // ==================== RANGE HOOD ====================
+  "TD0026191": { model: "HRH-TC60AB", category: "Range Hood" },
+  "TD0026189": { model: "HRH-TC60AW", category: "Range Hood" },
+  "TD0032571": { model: "HRH-TC60SS", category: "Range Hood" },
+  "TD0038390": { model: "HRH-TD60AB", category: "Range Hood" },
+  "TD0041953": { model: "HRH-TD60AC", category: "Range Hood" },
+  "TD0038853": { model: "HRH-TD90SS", category: "Range Hood" },
+};
+
 export const MATCODE_CATEGORY_MAP: Record<string, string> = {
   // ==================== FREEZER ====================
   "B30FZ4M6K": "Freezer",
@@ -1400,6 +1544,25 @@ export const MATCODE_CATEGORY_MAP: Record<string, string> = {
   "AAAV40U13": "Others",
   "AA93Z4U07": "Others",
   "AA9CY2U0N": "Others",
+};
+
+/**
+ * Get product material info (model & category) from matcode
+ * Returns both model description and category
+ */
+export const getMaterialInfoFromMatcode = (matcode: string): MaterialInfo => {
+  if (!matcode) return { model: "Unknown", category: "Others" };
+
+  const code = String(matcode).toUpperCase().trim();
+
+  // Check if we have material info for this code
+  if (Object.prototype.hasOwnProperty.call(MATCODE_MATERIAL_MAP, code)) {
+    return MATCODE_MATERIAL_MAP[code];
+  }
+
+  // Fallback to category map and return generic model
+  const category = getCategoryFromBinCode(code);
+  return { model: code, category };
 };
 
 /**
