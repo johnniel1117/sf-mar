@@ -483,7 +483,6 @@ export default function DamageReportForm() {
           
           .title-section {
             text-align: right;
-            align-items: center;
           }
           
           .dealer-copy {
