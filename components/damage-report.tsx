@@ -484,7 +484,6 @@ export default function DamageReportForm() {
           .title-section {
             text-align: right;
             align-items: center;
-            flex-direction: column;
           }
           
           .dealer-copy {
