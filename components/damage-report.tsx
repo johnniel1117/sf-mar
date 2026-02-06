@@ -623,6 +623,12 @@ export default function DamageReportForm() {
             </div>
             <div class="title-section">
               <div class="dealer-copy">${reportData.report_number}</div>
+              <div class="info-row">
+              <div class="info-label">Report Date</div>
+              <div class="info-value">${reportData.report_date}</div>
+              <div class="info-label">Driver Name</div>
+              <div class="info-value">${reportData.driver_name}</div>
+            </div>
             </div>
           </div>
 
@@ -634,12 +640,7 @@ export default function DamageReportForm() {
 
           <!-- Info Section -->
           <div class="info-section">
-            <div class="info-row">
-              <div class="info-label">Report Date</div>
-              <div class="info-value">${reportData.report_date}</div>
-              <div class="info-label">Driver Name</div>
-              <div class="info-value">${reportData.driver_name}</div>
-            </div>
+            
             
             <div class="info-row">
               <div class="info-label">Plate No.</div>
