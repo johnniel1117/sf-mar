@@ -189,7 +189,7 @@ export class DamageReportService {
           damage_report_id: reportId,
           item_number: item.item_number,
           barcode: item.barcode,
-          serial_number: item.serial_number,
+        //   serial_number: item.serial_number,
           material_code: item.material_code,
           material_description: item.material_description,
           damage_type: item.damage_type,
