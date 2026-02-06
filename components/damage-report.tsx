@@ -429,460 +429,285 @@ export default function DamageReportForm() {
 
     const htmlContent = `
       <!DOCTYPE html>
-<html>
-<head>
-  <title>Damage & Deviation Report - SF Express</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    @page {
-      size: letter;
-      margin: 0.5in;
-    }
-    
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
-      font-size: 11pt;
-      line-height: 1.5;
-      color: #333;
-      background: #fff;
-    }
-    
-    .page-container {
-      max-width: 8.5in;
-      margin: 0 auto;
-      position: relative;
-    }
-    
-    /* Header Section */
-    .header-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 3px solid #2c3e50;
-    }
-    
-    .company-info {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-    
-    .company-logo {
-      height: 65px;
-      width: auto;
-      filter: grayscale(100%) brightness(0%);
-    }
-    
-    .company-details {
-      font-size: 10pt;
-      line-height: 1.4;
-    }
-    
-    .company-name {
-      font-size: 14pt;
-      font-weight: 700;
-      color: #2c3e50;
-      margin-bottom: 4px;
-      letter-spacing: 0.5px;
-    }
-    
-    .company-address {
-      color: #666;
-      font-size: 9pt;
-    }
-    
-    .report-meta {
-      text-align: right;
-      padding-top: 5px;
-    }
-    
-    .report-badge {
-      background-color: #e74c3c;
-      color: white;
-      padding: 6px 15px;
-      border-radius: 4px;
-      font-size: 10pt;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      display: inline-block;
-      margin-bottom: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .report-number {
-      font-size: 11pt;
-      font-weight: 700;
-      color: #2c3e50;
-      background: #f8f9fa;
-      padding: 8px 15px;
-      border-radius: 4px;
-      border: 1px solid #e0e0e0;
-      display: inline-block;
-    }
-    
-    /* Document Header */
-    .document-header {
-      text-align: center;
-      margin: 25px 0 30px;
-      padding: 15px 0;
-      border-bottom: 2px solid #eee;
-    }
-    
-    .document-title {
-      font-size: 18pt;
-      font-weight: 700;
-      color: #2c3e50;
-      margin-bottom: 8px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    
-    .document-subtitle {
-      font-size: 11pt;
-      color: #7f8c8d;
-      font-weight: 500;
-    }
-    
-    /* Information Section */
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 25px;
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 6px;
-      border: 1px solid #e9ecef;
-    }
-    
-    .info-group {
-      display: flex;
-      align-items: center;
-      min-height: 28px;
-    }
-    
-    .info-label {
-      font-weight: 600;
-      color: #2c3e50;
-      font-size: 10pt;
-      min-width: 120px;
-      padding-right: 10px;
-    }
-    
-    .info-value {
-      flex: 1;
-      padding: 6px 0;
-      border-bottom: 1px solid #ddd;
-      font-size: 10pt;
-      color: #333;
-    }
-    
-    /* Data Table */
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 20px 0;
-      font-size: 9.5pt;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    
-    .data-table thead {
-      background-color: #2c3e50;
-      color: white;
-    }
-    
-    .data-table th {
-      padding: 10px 8px;
-      text-align: left;
-      font-weight: 600;
-      border-right: 1px solid #34495e;
-      letter-spacing: 0.3px;
-    }
-    
-    .data-table th:last-child {
-      border-right: none;
-    }
-    
-    .data-table tbody tr {
-      border-bottom: 1px solid #e0e0e0;
-      transition: background-color 0.2s;
-    }
-    
-    .data-table tbody tr:nth-child(even) {
-      background-color: #f8f9fa;
-    }
-    
-    .data-table tbody tr:hover {
-      background-color: #e8f4f8;
-    }
-    
-    .data-table td {
-      padding: 8px;
-      vertical-align: top;
-      border-right: 1px solid #f0f0f0;
-    }
-    
-    .data-table td:last-child {
-      border-right: none;
-    }
-    
-    /* Summary Section */
-    .summary-section {
-      margin: 20px 0 25px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      border: 1px solid #e9ecef;
-    }
-    
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    
-    .summary-label {
-      font-weight: 600;
-      color: #2c3e50;
-      font-size: 10.5pt;
-    }
-    
-    .summary-value {
-      font-size: 11pt;
-      font-weight: 700;
-      color: #e74c3c;
-      background: white;
-      padding: 6px 15px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-    }
-    
-    .narrative-section {
-      margin-top: 15px;
-      padding: 15px;
-      background: white;
-      border-radius: 6px;
-      border: 1px solid #e9ecef;
-    }
-    
-    .narrative-label {
-      font-weight: 600;
-      color: #2c3e50;
-      font-size: 10.5pt;
-      margin-bottom: 10px;
-      display: block;
-    }
-    
-    .narrative-content {
-      font-size: 10pt;
-      line-height: 1.6;
-      color: #333;
-      padding: 12px;
-      background: #f8f9fa;
-      border-radius: 4px;
-      min-height: 80px;
-      white-space: pre-wrap;
-      border: 1px solid #e0e0e0;
-    }
-    
-    /* Signature Section */
-    .signature-section {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 2px solid #eee;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 40px;
-    }
-    
-    .signature-box {
-      text-align: center;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      border: 1px solid #e9ecef;
-    }
-    
-    .signature-field {
-      min-height: 60px;
-      margin-bottom: 10px;
-      border-bottom: 2px solid #ddd;
-      padding-bottom: 8px;
-      font-size: 10.5pt;
-      color: #2c3e50;
-      font-weight: 600;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    
-    .signature-label {
-      font-size: 9.5pt;
-      color: #7f8c8d;
-      margin-top: 8px;
-      font-weight: 500;
-    }
-    
-    /* Footer */
-    .document-footer {
-      margin-top: 30px;
-      padding-top: 15px;
-      border-top: 1px solid #eee;
-      text-align: center;
-      font-size: 9pt;
-      color: #95a5a6;
-    }
-    
-    .footer-note {
-      font-style: italic;
-      margin-top: 5px;
-    }
-    
-    /* Print Optimizations */
-    @media print {
-      body {
-        padding: 0;
-        font-size: 10pt;
-      }
-      
-      .page-container {
-        max-width: 100%;
-        padding: 0.25in;
-      }
-      
-      .data-table {
-        page-break-inside: avoid;
-      }
-      
-      .signature-section {
-        page-break-inside: avoid;
-      }
-      
-      .no-print {
-        display: none;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="page-container">
-    <!-- Header -->
-    <div class="header-section">
-      <div class="company-info">
-        <img src="https://brandlogos.net/wp-content/uploads/2025/06/sf_express-logo_brandlogos.net_shwfy-512x512.png" 
-             alt="SF Express Logo" class="company-logo" />
-        <div class="company-details">
-          <div class="company-name">SF EXPRESS WAREHOUSE</div>
-          <div class="company-address">Upper Tingub, Mandaue, Cebu, Philippines</div>
+      <html>
+      <head>
+        <title>Inventory Damage and Deviation Report</title>
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #000;
+          }
+          
+          .page-container {
+            max-width: 900px;
+            margin: 0 auto;
+          }
+          
+          .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+          }
+          
+          .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+          }
+          
+          .logo-section img {
+            height: 60px;
+            width: auto;
+          }
+          
+          .warehouse-info {
+            font-size: 10px;
+            line-height: 1.3;
+          }
+          
+          .warehouse-info strong {
+            font-size: 12px;
+          }
+          
+          .title-section {
+            text-align: right;
+          }
+          
+          .dealer-copy {
+            font-size: 14px;
+            font-weight: bold;
+            align-items: center;
+            color: #d32f2f;
+            border: 2px solid #d32f2f;
+            padding: 4px 8px;
+            display: inline-block;
+          }
+          
+          .report-number-box {
+            border: 2px solid #d32f2f;
+            padding: 8px 12px;
+            margin-top: 5px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #000;
+          }
+          
+          .document-header {
+            text-align: center;
+            margin: 15px 0;
+           
+            padding: 10px 0;
+          }
+          
+          .doc-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          
+          .doc-number {
+            font-size: 13px;
+            font-weight: bold;
+          }
+          
+          .info-section {
+            margin-bottom: 15px;
+          }
+          
+          .info-row {
+            display: grid;
+            grid-template-columns: 100px 1fr 100px 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: start;
+          }
+          
+          .info-label {
+            font-weight: bold;
+            font-size: 10px;
+          }
+          
+          .info-value {
+            font-size: 10px;
+            border-bottom: 1px solid #000;
+            padding: 2px 4px;
+            min-height: 18px;
+          }
+          
+          .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            border: 1px solid #000;
+          }
+          
+          .data-table thead {
+            background-color: #f0f0f0;
+            border: 1px solid #000;
+          }
+          
+          .data-table th {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 10px;
+          }
+          
+          .data-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 9px;
+          }
+          
+          .footer-info {
+            margin-top: 15px;
+            padding: 10px;
+            
+            text-align: right;
+            font-size: 11px;
+            font-weight: bold;
+          }
+          
+          .signature-section {
+            margin-top: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+          }
+          
+          .signature-box {
+            text-align: center;
+            font-size: 10px;
+          }
+          
+          .signature-line {
+            margin-top: 30px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+          }
+          
+          @media print {
+            body {
+              padding: 0;
+            }
+            .page-container {
+              max-width: 100%;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="page-container">
+          <!-- Header Section -->
+          <div class="header-section">
+            <div class="logo-section">
+              <img src="https://brandlogos.net/wp-content/uploads/2025/06/sf_express-logo_brandlogos.net_shwfy-512x512.png" alt="SF Express Logo" />
+              <div class="warehouse-info">
+                <strong>SF EXPRESS WAREHOUSE</strong><br/>
+                UPPER TINGUB, MANDAUE, CEBU<br/>
+              </div>
+            </div>
+            <div class="title-section">
+              <div class="dealer-copy">${reportData.report_number}</div>
+            </div>
+          </div>
+
+          <!-- Document Header -->
+          <div class="document-header">
+            <div class="doc-title">DAMAGE AND DEVIATION REPORT</div>
+           
+          </div>
+
+          <!-- Info Section -->
+          <div class="info-section">
+            <div class="info-row">
+              <div class="info-label">Report Date</div>
+              <div class="info-value">${reportData.report_date}</div>
+              <div class="info-label">Driver Name</div>
+              <div class="info-value">${reportData.driver_name}</div>
+            </div>
+            
+            <div class="info-row">
+              <div class="info-label">Plate No.</div>
+              <div class="info-value">${reportData.plate_no}</div>
+              <div class="info-label">Seal No.</div>
+              <div class="info-value">${reportData.seal_no}</div>
+            </div>
+            
+            <div class="info-row">
+              <div class="info-label">Container No.</div>
+              <div class="info-value">${reportData.container_no}</div>
+            </div>
+          </div>
+
+          <!-- Data Table -->
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">NO.</th>
+                <th style="width: 250px;">MATERIAL DESCRIPTION</th>
+                <th style="width: 150px;">SERIAL NO.</th>
+                <th style="width: 120px;">DAMAGE TYPE</th>
+                <th style="width: 200px;">DAMAGE DESCRIPTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+
+          <!-- Footer Info -->
+          <div class="footer-info">
+            <div>TOTAL ITEMS: ${items.length}</div>
+          </div>
+
+          <!-- Narrative & Actions -->
+          <div class="info-section" style="margin-top: 15px;">
+            <div class="info-row" style="grid-template-columns: 1fr;">
+              <div><strong>Narrative Findings:</strong></div>
+            </div>
+            <div style="padding: 8px; border: 1px solid #000; min-height: 50px; margin-bottom: 10px;">
+              ${reportData.narrative_findings || 'N/A'}
+            </div>
+            
+            
+          </div>
+
+          <!-- Signature Section -->
+          <div class="signature-section">
+            <div class="signature-box">
+              <div style="min-height: 50px; margin-bottom: 10px;"></div>
+              <div class="signature-line" style="font-weight: bold;>${reportData.prepared_by || ''}</div>
+              <div style="margin-top: 5px; ">Prepared By</div>
+            </div>
+            <div class="signature-box">
+              <div style="min-height: 50px; margin-bottom: 10px;"></div>
+              <div class="signature-line" style="font-weight: bold;>${reportData.noted_by || ''}</div>
+              <div style="margin-top: 5px;">Noted By (Guard)</div>
+            </div>
+            <div class="signature-box">
+              <div style="min-height: 50px; margin-bottom: 10px;"></div>
+              <div class="signature-line" style="font-weight: bold;>${reportData.acknowledged_by || ''}</div>
+              <div style="margin-top: 5px;">Acknowledged By</div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="report-meta">
-        <div class="report-badge">OFFICIAL COPY</div>
-        <div class="report-number">${reportData.report_number}</div>
-      </div>
-    </div>
-
-    <!-- Document Title -->
-    <div class="document-header">
-      <div class="document-title">DAMAGE & DEVIATION REPORT</div>
-      <div class="document-subtitle">Inventory Inspection Documentation</div>
-    </div>
-
-    <!-- Information Grid -->
-    <div class="info-grid">
-      <div class="info-group">
-        <span class="info-label">Report Date:</span>
-        <span class="info-value">${reportData.report_date}</span>
-      </div>
-      <div class="info-group">
-        <span class="info-label">Driver Name:</span>
-        <span class="info-value">${reportData.driver_name}</span>
-      </div>
-      <div class="info-group">
-        <span class="info-label">Plate No.:</span>
-        <span class="info-value">${reportData.plate_no}</span>
-      </div>
-      <div class="info-group">
-        <span class="info-label">Seal No.:</span>
-        <span class="info-value">${reportData.seal_no}</span>
-      </div>
-      <div class="info-group">
-        <span class="info-label">Container No.:</span>
-        <span class="info-value">${reportData.container_no}</span>
-      </div>
-    </div>
-
-    <!-- Data Table -->
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th style="width: 5%;">NO.</th>
-          <th style="width: 30%;">MATERIAL DESCRIPTION</th>
-          <th style="width: 20%;">SERIAL NO.</th>
-          <th style="width: 15%;">DAMAGE TYPE</th>
-          <th style="width: 30%;">DAMAGE DESCRIPTION</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${itemsHtml}
-      </tbody>
-    </table>
-
-    <!-- Summary -->
-    <div class="summary-section">
-      <div class="summary-row">
-        <span class="summary-label">Total Items Inspected:</span>
-        <span class="summary-value">${items.length} item(s)</span>
-      </div>
-    </div>
-
-    <!-- Narrative Section -->
-    <div class="narrative-section">
-      <span class="narrative-label">NARRATIVE FINDINGS & OBSERVATIONS:</span>
-      <div class="narrative-content">
-        ${reportData.narrative_findings || 'No additional findings reported.'}
-      </div>
-    </div>
-
-    <!-- Signatures -->
-    <div class="signature-section">
-      <div class="signature-box">
-        <div class="signature-field">${reportData.prepared_by || ''}</div>
-        <div class="signature-label">Prepared By / Inspector</div>
-        <div class="signature-label" style="margin-top: 15px; font-size: 9pt; color: #bdc3c7;">
-          Date: ${reportData.report_date}
-        </div>
-      </div>
-      <div class="signature-box">
-        <div class="signature-field">${reportData.noted_by || ''}</div>
-        <div class="signature-label">Noted By (Security)</div>
-        <div class="signature-label" style="margin-top: 15px; font-size: 9pt; color: #bdc3c7;">
-          Time: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-        </div>
-      </div>
-      <div class="signature-box">
-        <div class="signature-field">${reportData.acknowledged_by || ''}</div>
-        <div class="signature-label">Acknowledged By (Receiver)</div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="document-footer">
-      <div>SF Express Warehouse • Upper Tingub, Mandaue, Cebu</div>
-      <div class="footer-note">This document is computer-generated and does not require a signature stamp</div>
-    </div>
-  </div>
-</body>
-</html>
+      </body>
+      </html>
     `
 
     printWindow.document.write(htmlContent)
