@@ -100,44 +100,98 @@ export default function DamageReportForm() {
   }
 
   const lookupBarcode = async (barcode: string) => {
-    try {
-      const { data, error } = await supabase
+  try {
+    // Clean the barcode - remove any extra characters
+    const cleanBarcode = barcode.trim();
+    
+    // First, try exact match in database
+    const { data: exactData, error: exactError } = await supabase
+      .from('barcode_material_mapping')
+      .select('*')
+      .eq('barcode', cleanBarcode)
+      .single()
+
+    if (exactData) return exactData;
+
+    // Try to extract material code from barcode
+    let materialCode = cleanBarcode;
+    
+    // Common patterns for Haier barcodes
+    // Try to extract the first part before any non-alphanumeric characters or extra digits
+    const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/);
+    if (materialCodeMatch) {
+      materialCode = materialCodeMatch[1];
+      
+      // Try database lookup with extracted code
+      const { data: partialData, error: partialError } = await supabase
         .from('barcode_material_mapping')
         .select('*')
-        .eq('barcode', barcode)
+        .eq('barcode', materialCode)
         .single()
 
-      if (data) return data
-
-      const materialCode = barcode
-      const materialInfo = getMaterialInfoFromMatcode(materialCode)
-      
-      if (materialInfo.model !== materialCode) {
-        // Found in our mapping
-        return {
-          barcode: materialCode,
-          material_code: materialCode,
-          material_description: materialInfo.model,
-          category: materialInfo.category,
-        }
-      }
-
-      return null
-    } catch (error) {
-      console.error('Error looking up barcode:', error)
-      
-      const materialInfo = getMaterialInfoFromMatcode(barcode)
-      if (materialInfo.model !== barcode) {
-        return {
-          barcode: barcode,
-          material_code: barcode,
-          material_description: materialInfo.model,
-          category: materialInfo.category,
-        }
-      }
-      return null
+      if (partialData) return partialData;
     }
+
+    // Use our material mapping
+    const materialInfo = getMaterialInfoFromMatcode(materialCode);
+    
+    // Check if we found a match in our mapping
+    if (materialInfo.model !== materialCode) {
+      // Found in our mapping
+      return {
+        barcode: cleanBarcode,
+        material_code: materialCode,
+        material_description: materialInfo.model,
+        category: materialInfo.category,
+      }
+    }
+
+    // Try with the original barcode in case it's a different format
+    const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode);
+    if (originalMaterialInfo.model !== cleanBarcode) {
+      return {
+        barcode: cleanBarcode,
+        material_code: cleanBarcode,
+        material_description: originalMaterialInfo.model,
+        category: originalMaterialInfo.category,
+      }
+    }
+
+    // Not found anywhere
+    return null;
+  } catch (error) {
+    console.error('Error looking up barcode:', error);
+    
+    // Try to extract material code on error
+    const cleanBarcode = barcode.trim();
+    const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/);
+    const materialCode = materialCodeMatch ? materialCodeMatch[1] : cleanBarcode;
+    
+    // Fallback to material mapping
+    const materialInfo = getMaterialInfoFromMatcode(materialCode);
+    if (materialInfo.model !== materialCode) {
+      return {
+        barcode: cleanBarcode,
+        material_code: materialCode,
+        material_description: materialInfo.model,
+        category: materialInfo.category,
+      }
+    }
+    
+    // Try original barcode
+    const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode);
+    if (originalMaterialInfo.model !== cleanBarcode) {
+      return {
+        barcode: cleanBarcode,
+        material_code: cleanBarcode,
+        material_description: originalMaterialInfo.model,
+        category: originalMaterialInfo.category,
+      }
+    }
+    
+    return null;
   }
+}
 
   const checkSerialNumber = async (serialNumber: string) => {
     if (!serialNumber.trim()) return null
@@ -349,7 +403,7 @@ export default function DamageReportForm() {
   }
 
   const canProceedToStep4 = () => {
-    return report.items.every(item => item.serial_number && item.damage_type)
+    return report.items.every(item => item.damage_type)
   }
 
   const generatePDF = (reportData: DamageReport) => {
@@ -973,7 +1027,7 @@ export default function DamageReportForm() {
                           </div>
 
                           <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                            <div>
+                            {/* <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                                 Serial Number <span className="text-red-500">*</span>
                               </label>
@@ -1019,7 +1073,7 @@ export default function DamageReportForm() {
                                   </p>
                                 </div>
                               )}
-                            </div>
+                            </div> */}
 
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
