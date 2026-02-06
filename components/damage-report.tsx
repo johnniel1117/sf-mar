@@ -686,12 +686,7 @@ export default function DamageReportForm() {
               ${reportData.narrative_findings || 'N/A'}
             </div>
             
-            <div class="info-row" style="grid-template-columns: 1fr;">
-              <div><strong>Actions Required:</strong></div>
-            </div>
-            <div style="padding: 8px; border: 1px solid #000; min-height: 40px;">
-              ${reportData.actions_required || 'N/A'}
-            </div>
+            
           </div>
 
           <!-- Signature Section -->
@@ -1195,7 +1190,7 @@ export default function DamageReportForm() {
                         />
                       </div>
 
-                      <div>
+                      {/* <div>
                         <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Actions Required
                         </label>
@@ -1206,7 +1201,7 @@ export default function DamageReportForm() {
                           placeholder="Specify what actions need to be taken..."
                           rows={2}
                         />
-                      </div>
+                      </div> */}
 
                       {/* Summary */}
                       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 sm:p-4 mt-4 sm:mt-6">
