@@ -3,7 +3,7 @@
 import React from "react"
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Search, RefreshCw } from 'lucide-react'
+import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users } from 'lucide-react'
 import { MATCODE_CATEGORY_MAP, getMaterialInfoFromMatcode } from '@/lib/category-mapping'
 import Navbar from '@/components/Navbar'
 
@@ -35,17 +35,6 @@ interface DamageReport {
   actions_required: string
   status: string
   items: DamageItem[]
-}
-
-interface SerialMapping {
-  id: string
-  serial_number: string
-  material_code: string
-  material_description: string
-  category: string
-  usage_count: number
-  last_used_at: string
-  created_at: string
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -88,20 +77,13 @@ export default function DamageReportForm() {
   const [barcodeInput, setBarcodeInput] = useState('')
   const [materialLookup, setMaterialLookup] = useState<Record<string, any>>({})
   const [uploadingItemIndex, setUploadingItemIndex] = useState<number | null>(null)
-  const [activeTab, setActiveTab] = useState<'create' | 'saved' | 'mappings'>('create')
+  const [activeTab, setActiveTab] = useState<'create' | 'saved'>('create')
   const [serialWarnings, setSerialWarnings] = useState<Record<number, boolean>>({})
   const barcodeInputRef = useRef<HTMLInputElement>(null)
-  const [serialMappings, setSerialMappings] = useState<SerialMapping[]>([])
-  const [mappingsLoading, setMappingsLoading] = useState(true)
-  const [searchMappings, setSearchMappings] = useState('')
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   useEffect(() => {
     loadReports()
-    if (activeTab === 'mappings') {
-      loadSerialMappings()
-    }
-  }, [activeTab])
+  }, [])
 
   const loadReports = async () => {
     try {
@@ -117,231 +99,99 @@ export default function DamageReportForm() {
     }
   }
 
-  const loadSerialMappings = async () => {
-    try {
-      setMappingsLoading(true)
-      const { data, error } = await supabase
-        .from('serial_material_mapping')
-        .select('*')
-        .order('last_used_at', { ascending: false })
-
-      if (error) throw error
-      setSerialMappings(data || [])
-    } catch (error) {
-      console.error('Error loading serial mappings:', error)
-    } finally {
-      setMappingsLoading(false)
-    }
-  }
-
-  const saveSerialMaterialMapping = async (
-    serialNumber: string, 
-    materialDescription: string, 
-    materialCode: string
-  ) => {
-    try {
-      const cleanSerial = serialNumber.trim();
-      const cleanDescription = materialDescription.trim();
-      
-      // Check if mapping already exists
-      const { data: existingMapping, error: checkError } = await supabase
-        .from('serial_material_mapping')
-        .select('*')
-        .eq('serial_number', cleanSerial)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking serial mapping:', checkError);
-      }
-
-      if (existingMapping) {
-        // Update existing mapping
-        const { error: updateError } = await supabase
-          .from('serial_material_mapping')
-          .update({
-            material_description: cleanDescription,
-            material_code: materialCode || existingMapping.material_code,
-            usage_count: existingMapping.usage_count + 1,
-            last_used_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('serial_number', cleanSerial);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create new mapping
-        const { error: insertError } = await supabase
-          .from('serial_material_mapping')
-          .insert([
-            {
-              serial_number: cleanSerial,
-              material_code: materialCode || cleanSerial,
-              material_description: cleanDescription,
-              category: 'Manual Entry',
-              usage_count: 1,
-              last_used_at: new Date().toISOString(),
-            },
-          ]);
-
-        if (insertError) throw insertError;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error saving serial material mapping:', error);
-      return false;
-    }
-  };
-
-  const updateMaterialFromSerialMapping = async (serialNumber: string) => {
-    if (!serialNumber.trim()) return null;
-    
-    try {
-      const { data, error } = await supabase
-        .from('serial_material_mapping')
-        .select('*')
-        .eq('serial_number', serialNumber.trim())
-        .single();
-
-      if (error) {
-        return null;
-      }
-
-      if (data) {
-        // Update usage count
-        await supabase
-          .from('serial_material_mapping')
-          .update({
-            usage_count: data.usage_count + 1,
-            last_used_at: new Date().toISOString(),
-          })
-          .eq('serial_number', serialNumber.trim());
-
-        return {
-          material_code: data.material_code || serialNumber,
-          material_description: data.material_description,
-          category: data.category || 'Manual Entry',
-        };
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Error fetching serial mapping:', error);
-      return null;
-    }
-  };
-
-  const deleteSerialMapping = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('serial_material_mapping')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      await loadSerialMappings();
-      setDeleteConfirm(null);
-    } catch (error) {
-      console.error('Error deleting mapping:', error);
-      alert('Failed to delete mapping');
-    }
-  };
-
   const lookupBarcode = async (barcode: string) => {
-    try {
-      const cleanBarcode = barcode.trim();
+  try {
+    // Clean the barcode - remove any extra characters
+    const cleanBarcode = barcode.trim();
+    
+    // First, try exact match in database
+    const { data: exactData, error: exactError } = await supabase
+      .from('barcode_material_mapping')
+      .select('*')
+      .eq('barcode', cleanBarcode)
+      .single()
+
+    if (exactData) return exactData;
+
+    // Try to extract material code from barcode
+    let materialCode = cleanBarcode;
+    
+    // Common patterns for Haier barcodes
+    // Try to extract the first part before any non-alphanumeric characters or extra digits
+    const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/);
+    if (materialCodeMatch) {
+      materialCode = materialCodeMatch[1];
       
-      // FIRST: Check if this is a serial number with saved material mapping
-      const { data: serialMapping, error: serialError } = await supabase
-        .from('serial_material_mapping')
-        .select('*')
-        .eq('serial_number', cleanBarcode)
-        .single();
-
-      if (serialMapping && !serialError) {
-        console.log('Found saved serial mapping:', serialMapping);
-        return {
-          barcode: cleanBarcode,
-          material_code: serialMapping.material_code || cleanBarcode,
-          material_description: serialMapping.material_description,
-          category: serialMapping.category || 'Manual Entry',
-          fromSerialMapping: true,
-        };
-      }
-
-      // If not found in serial mapping, proceed with original lookup logic
-      const { data: exactData, error: exactError } = await supabase
+      // Try database lookup with extracted code
+      const { data: partialData, error: partialError } = await supabase
         .from('barcode_material_mapping')
         .select('*')
-        .eq('barcode', cleanBarcode)
+        .eq('barcode', materialCode)
         .single()
 
-      if (exactData) return exactData;
-
-      let materialCode = cleanBarcode;
-      const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/);
-      if (materialCodeMatch) {
-        materialCode = materialCodeMatch[1];
-        
-        const { data: partialData, error: partialError } = await supabase
-          .from('barcode_material_mapping')
-          .select('*')
-          .eq('barcode', materialCode)
-          .single()
-
-        if (partialData) return partialData;
-      }
-
-      const materialInfo = getMaterialInfoFromMatcode(materialCode);
-      if (materialInfo.model !== materialCode) {
-        return {
-          barcode: cleanBarcode,
-          material_code: materialCode,
-          material_description: materialInfo.model,
-          category: materialInfo.category,
-        }
-      }
-
-      const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode);
-      if (originalMaterialInfo.model !== cleanBarcode) {
-        return {
-          barcode: cleanBarcode,
-          material_code: cleanBarcode,
-          material_description: originalMaterialInfo.model,
-          category: originalMaterialInfo.category,
-        }
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Error looking up barcode:', error);
-      const cleanBarcode = barcode.trim();
-      const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/);
-      const materialCode = materialCodeMatch ? materialCodeMatch[1] : cleanBarcode;
-      
-      const materialInfo = getMaterialInfoFromMatcode(materialCode);
-      if (materialInfo.model !== materialCode) {
-        return {
-          barcode: cleanBarcode,
-          material_code: materialCode,
-          material_description: materialInfo.model,
-          category: materialInfo.category,
-        }
-      }
-      
-      const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode);
-      if (originalMaterialInfo.model !== cleanBarcode) {
-        return {
-          barcode: cleanBarcode,
-          material_code: cleanBarcode,
-          material_description: originalMaterialInfo.model,
-          category: originalMaterialInfo.category,
-        }
-      }
-      
-      return null;
+      if (partialData) return partialData;
     }
+
+    // Use our material mapping
+    const materialInfo = getMaterialInfoFromMatcode(materialCode);
+    
+    // Check if we found a match in our mapping
+    if (materialInfo.model !== materialCode) {
+      // Found in our mapping
+      return {
+        barcode: cleanBarcode,
+        material_code: materialCode,
+        material_description: materialInfo.model,
+        category: materialInfo.category,
+      }
+    }
+
+    // Try with the original barcode in case it's a different format
+    const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode);
+    if (originalMaterialInfo.model !== cleanBarcode) {
+      return {
+        barcode: cleanBarcode,
+        material_code: cleanBarcode,
+        material_description: originalMaterialInfo.model,
+        category: originalMaterialInfo.category,
+      }
+    }
+
+    // Not found anywhere
+    return null;
+  } catch (error) {
+    console.error('Error looking up barcode:', error);
+    
+    // Try to extract material code on error
+    const cleanBarcode = barcode.trim();
+    const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/);
+    const materialCode = materialCodeMatch ? materialCodeMatch[1] : cleanBarcode;
+    
+    // Fallback to material mapping
+    const materialInfo = getMaterialInfoFromMatcode(materialCode);
+    if (materialInfo.model !== materialCode) {
+      return {
+        barcode: cleanBarcode,
+        material_code: materialCode,
+        material_description: materialInfo.model,
+        category: materialInfo.category,
+      }
+    }
+    
+    // Try original barcode
+    const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode);
+    if (originalMaterialInfo.model !== cleanBarcode) {
+      return {
+        barcode: cleanBarcode,
+        material_code: cleanBarcode,
+        material_description: originalMaterialInfo.model,
+        category: originalMaterialInfo.category,
+      }
+    }
+    
+    return null;
   }
+}
 
   const checkSerialNumber = async (serialNumber: string) => {
     if (!serialNumber.trim()) return null
@@ -383,16 +233,14 @@ export default function DamageReportForm() {
         addItem(material)
         setBarcodeInput('')
       } else {
+        // If barcode not found, prompt user to enter material description manually
         const description = prompt('Material not found in database. Please enter material description:')
         if (description) {
-          await saveSerialMaterialMapping(barcode, description, barcode)
-          
           const manualMaterial = {
             barcode: barcode,
             material_code: barcode,
             material_description: description,
             category: 'Manual Entry',
-            fromSerialMapping: true,
           }
           setMaterialLookup(manualMaterial)
           addItem(manualMaterial)
@@ -403,12 +251,10 @@ export default function DamageReportForm() {
   }
 
   const addItem = (material?: any) => {
-    const serialNumber = material?.barcode ? extractSerialNumber(material.barcode) : '';
-    
     const newItem: DamageItem = {
       item_number: report.items.length + 1,
       barcode: material?.barcode || '',
-      serial_number: serialNumber,
+      serial_number: '',
       material_code: material?.material_code || '',
       material_description: material?.material_description || '',
       damage_type: '',
@@ -420,31 +266,12 @@ export default function DamageReportForm() {
     })
   }
 
-  const updateItem = async (index: number, field: string, value: any) => {
+  const updateItem = (index: number, field: string, value: any) => {
     const updatedItems = [...report.items]
-    
-    if (field === 'serial_number' && value.trim()) {
-      const mapping = await updateMaterialFromSerialMapping(value);
-      if (mapping) {
-        updatedItems[index] = {
-          ...updatedItems[index],
-          [field]: value,
-          material_description: mapping.material_description,
-          material_code: mapping.material_code,
-        };
-      } else {
-        updatedItems[index] = {
-          ...updatedItems[index],
-          [field]: value,
-        };
-      }
-    } else {
-      updatedItems[index] = {
-        ...updatedItems[index],
-        [field]: value,
-      };
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: value,
     }
-    
     setReport({
       ...report,
       items: updatedItems,
@@ -460,14 +287,6 @@ export default function DamageReportForm() {
       ...report,
       items: updatedItems,
     })
-  }
-
-  const extractSerialNumber = (barcode: string): string => {
-    const cleanBarcode = barcode.trim();
-    if (cleanBarcode.length >= 10 && /[A-Za-z]/.test(cleanBarcode) && /\d/.test(cleanBarcode)) {
-      return cleanBarcode;
-    }
-    return cleanBarcode;
   }
 
   const handlePhotoUpload = async (index: number, file: File) => {
@@ -591,6 +410,7 @@ export default function DamageReportForm() {
     const printWindow = window.open('', '', 'width=1200,height=800')
     if (!printWindow) return
 
+    // Normalize items - handle both 'items' and 'damage_items' properties
     const items = reportData.items || ((reportData as any).damage_items || [])
 
     const itemsHtml = items
@@ -904,133 +724,35 @@ export default function DamageReportForm() {
     { number: 4, title: 'Review', icon: Users, description: 'Finalize & save' },
   ]
 
-  const [mounted, setMounted] = useState(false)
+   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  const filteredMappings = serialMappings.filter(mapping =>
-    mapping.serial_number.toLowerCase().includes(searchMappings.toLowerCase()) ||
-    mapping.material_description.toLowerCase().includes(searchMappings.toLowerCase()) ||
-    mapping.material_code.toLowerCase().includes(searchMappings.toLowerCase())
-  )
-
-  const SerialMappingManager = () => (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h3 className="text-xl font-bold text-gray-900">Serial Number Mappings</h3>
-          <p className="text-gray-600">Manually entered material descriptions saved for future scans</p>
-        </div>
-        <button
-          onClick={loadSerialMappings}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
-        </button>
-      </div>
-
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            value={searchMappings}
-            onChange={(e) => setSearchMappings(e.target.value)}
-            placeholder="Search by serial number or material description..."
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-
-      {mappingsLoading ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading mappings...</p>
-        </div>
-      ) : filteredMappings.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium">No serial number mappings found</p>
-          <p className="text-gray-500 text-sm mt-1">
-            {searchMappings ? 'Try a different search term' : 'Manual entries will appear here after saving'}
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b-2 border-gray-200">
-                <th className="text-left p-3 font-semibold text-gray-700">Serial Number</th>
-                <th className="text-left p-3 font-semibold text-gray-700">Material Description</th>
-                <th className="text-left p-3 font-semibold text-gray-700">Material Code</th>
-                <th className="text-left p-3 font-semibold text-gray-700">Usage Count</th>
-                <th className="text-left p-3 font-semibold text-gray-700">Last Used</th>
-                <th className="text-left p-3 font-semibold text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMappings.map((mapping) => (
-                <tr key={mapping.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="p-3 font-mono text-sm font-bold">{mapping.serial_number}</td>
-                  <td className="p-3 font-medium">{mapping.material_description}</td>
-                  <td className="p-3 font-mono text-sm">{mapping.material_code}</td>
-                  <td className="p-3 text-center">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-                      {mapping.usage_count}
-                    </span>
-                  </td>
-                  <td className="p-3 text-sm text-gray-600">
-                    {new Date(mapping.last_used_at).toLocaleDateString()}
-                  </td>
-                  <td className="p-3">
-                    {deleteConfirm === mapping.id ? (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => deleteSerialMapping(mapping.id)}
-                          className="px-3 py-1 bg-red-600 text-white rounded text-sm font-semibold hover:bg-red-700"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(null)}
-                          className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm font-semibold hover:bg-gray-400"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setDeleteConfirm(mapping.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        title="Delete mapping"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6 sm:py-8 px-3 sm:px-4">
-      <Navbar 
+       <Navbar 
         showBackButton 
         backHref="/" 
         animate={mounted}
         fixed={true}
       />
       <div className="w-full max-w-6xl mx-auto pt-16">
+        {/* Header
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-lg">SF</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">SF EXPRESS</h1>
+          </div>
+          <p className="text-sm sm:text-base text-gray-600">Damage & Deviation Report System</p>
+        </div> */}
+
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-white p-1 rounded-lg justify-center w-full">
+        <div className="flex gap-2 mb-6 bg-white p-1  justify-center w-full">
           <button
             onClick={() => setActiveTab('create')}
             className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
@@ -1054,18 +776,6 @@ export default function DamageReportForm() {
             <Download className="w-4 h-4 inline mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Saved Reports</span>
             <span className="sm:hidden">Saved</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('mappings')}
-            className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
-              activeTab === 'mappings'
-                ? 'bg-blue-600 text-white shadow'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <ClipboardList className="w-4 h-4 inline mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Serial Mappings</span>
-            <span className="sm:hidden">Mappings</span>
           </button>
         </div>
 
@@ -1229,7 +939,6 @@ export default function DamageReportForm() {
                           <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                           <p className="font-medium text-sm break-words">
                             Found: {materialLookup.material_description} ({materialLookup.category})
-                            {materialLookup.fromSerialMapping && ' (From saved mapping)'}
                           </p>
                         </div>
                       )}
@@ -1311,14 +1020,14 @@ export default function DamageReportForm() {
                           <div className="grid grid-cols-1 gap-3 sm:gap-4">
                             {/* <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
-                                Serial Number
+                                Serial Number <span className="text-red-500">*</span>
                               </label>
                               <input
                                 type="text"
                                 value={item.serial_number}
                                 onChange={async (e) => {
                                   const newSerialNumber = e.target.value
-                                  await updateItem(idx, 'serial_number', newSerialNumber)
+                                  updateItem(idx, 'serial_number', newSerialNumber)
                                   
                                   if (newSerialNumber.trim()) {
                                     const result = await checkSerialNumber(newSerialNumber)
@@ -1356,19 +1065,30 @@ export default function DamageReportForm() {
                                 </div>
                               )}
                             </div> */}
+                            
+                              {/* Display Serial Number from scanned barcode */}
+                              <div className="bg-gray-100 p-3 rounded-lg border border-gray-300">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-xs font-semibold text-gray-700 mb-1">Scanned Serial Number</p>
+                                    <p className="text-sm font-bold text-gray-900 break-all">
+                                      {item.barcode || 'No barcode scanned'}
+                                    </p>
+                                  </div>
+                                  <Barcode className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                                </div>
+                                
+                                {/* Optional: Show extracted serial number if you want to parse it */}
+                                {item.serial_number && (
+                                  <div className="mt-2 pt-2 border-t border-gray-300">
+                                    <p className="text-xs font-semibold text-gray-700 mb-1">Extracted Serial</p>
+                                    <p className="text-sm font-bold text-blue-600 break-all">
+                                      {item.serial_number}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
 
-                            <div>
-                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
-                                Material Description
-                              </label>
-                              <input
-                                type="text"
-                                value={item.material_description}
-                                onChange={(e) => updateItem(idx, 'material_description', e.target.value)}
-                                placeholder="Enter material description..."
-                                className="w-full px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                              />
-                            </div>
 
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
@@ -1433,43 +1153,6 @@ export default function DamageReportForm() {
                                 <p className="text-xs text-orange-600 mt-2 font-medium">Uploading...</p>
                               )}
                             </div>
-
-                            {/* Save Mapping Button */}
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  if (item.serial_number && item.material_description) {
-                                    const confirmSave = window.confirm(
-                                      `Save this material description for serial number ${item.serial_number}?\n\n` +
-                                      `Material: ${item.material_description}\n` +
-                                      `Serial: ${item.serial_number}\n\n` +
-                                      `This will be used for future scans of this serial number.`
-                                    );
-                                    
-                                    if (confirmSave) {
-                                      const saved = await saveSerialMaterialMapping(
-                                        item.serial_number,
-                                        item.material_description,
-                                        item.material_code
-                                      );
-                                      
-                                      if (saved) {
-                                        alert('Material description saved for future use!');
-                                      } else {
-                                        alert('Failed to save mapping. Please try again.');
-                                      }
-                                    }
-                                  } else {
-                                    alert('Please enter both serial number and material description.');
-                                  }
-                                }}
-                                className="w-full px-3 py-2 bg-blue-50 text-blue-700 border border-blue-300 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
-                              >
-                                <Save className="w-3 h-3" />
-                                Save this material description for future scans
-                              </button>
-                            </div>
                           </div>
                         </div>
                       ))}
@@ -1504,7 +1187,7 @@ export default function DamageReportForm() {
                         />
                       </div>
 
-                      <div>
+                      {/* <div>
                         <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Actions Required
                         </label>
@@ -1515,7 +1198,7 @@ export default function DamageReportForm() {
                           placeholder="Specify what actions need to be taken..."
                           rows={2}
                         />
-                      </div>
+                      </div> */}
 
                       {/* Summary */}
                       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 sm:p-4 mt-4 sm:mt-6">
@@ -1567,7 +1250,7 @@ export default function DamageReportForm() {
                         return
                       }
                       if (currentStep === 3 && !canProceedToStep4()) {
-                        alert('Please fill in Damage Type for all items')
+                        alert('Please fill in Serial Number and Damage Type for all items')
                         return
                       }
                       setCurrentStep((currentStep + 1) as Step)
@@ -1690,11 +1373,6 @@ export default function DamageReportForm() {
               </div>
             )}
           </div>
-        )}
-
-        {/* Serial Mappings Tab */}
-        {activeTab === 'mappings' && (
-          <SerialMappingManager />
         )}
       </div>
     </div>
