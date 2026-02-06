@@ -132,6 +132,7 @@ export const MATCODE_MATERIAL_MAP: Record<string, MaterialInfo> = {
   "BL04Z5EAE": { model: "HRF-IV300T(SSPH)", category: "Refrigerator" },
   "BL04Z7E81": { model: "HRF-IV330T(BGPH)", category: "Refrigerator" },
   "BL04Z4EAE": { model: "HRF-IV330T(SSPH)", category: "Refrigerator" },
+  "BL06DU0AA": { model: "HRF-IVF270FB", category: "Refrigerator" },
   "BC1064M02": { model: "HRF-IV378H", category: "Refrigerator" },
   "BC1065M02": { model: "HRF-IV478H", category: "Refrigerator" },
   "TD0044921": { model: "HRF-IVT500G", category: "Refrigerator" },
