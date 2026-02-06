@@ -1865,7 +1865,7 @@ export default function ExcelUploader() {
                   { id: "consolidated", label: "Consolidated Materials", icon: Layers },
                   { id: "serialList", label: "Serial List", icon: FileText },
                   { id: "individualDN", label: "Individual DN", icon: Download },
-                  { id: "damageReport", label: "Damage Report", icon: AlertTriangle },
+                  
                 ].map((tab, index) => (
                   <button
                     key={tab.id}
