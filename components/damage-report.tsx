@@ -542,7 +542,6 @@ export default function DamageReportForm() {
           
           .info-value {
             font-size: 10px;
-            border-bottom: 1px solid #000;
             padding: 2px 4px;
             min-height: 18px;
           }
