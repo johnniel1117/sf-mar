@@ -624,7 +624,7 @@ export default function DamageReportForm() {
             <div class="title-section">
               <div class="dealer-copy">${reportData.report_number}</div>
               <div class="info-label">Report Date</div>
-              <div class="info-value">${reportData.report_date}</div>
+              <div>${reportData.report_date}</div>
             </div>
           </div>
 
