@@ -529,7 +529,7 @@ export default function DamageReportForm() {
           
           .info-row {
             display: grid;
-            grid-template-columns: 100px 1fr 100px 1fr;
+            grid-template-columns: 80px 1fr 80px 1fr;
             gap: 10px;
             margin-bottom: 8px;
             align-items: start;
