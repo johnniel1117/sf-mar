@@ -522,13 +522,13 @@ export default function DamageReportForm() {
                         <h3 className="text-base sm:text-lg font-bold text-gray-900">
                           Scanned Items ({report.items.length})
                         </h3>
-                        <button
+                        {/* <button
                           onClick={() => addItem()}
                           className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                         >
                           <icons.Plus className="w-4 h-4" />
                           Add Manually
-                        </button>
+                        </button> */}
                       </div>
 
                       {report.items.length === 0 ? (
