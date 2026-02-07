@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useState, useRef, useEffect } from 'react'
-import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock } from 'lucide-react'
+import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock, Info } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import { useDamageReport } from '@/hooks/useDamageReport'
 import { PDFGenerator } from '@/lib/utils/pdfGenerator'
@@ -30,6 +30,7 @@ const icons = {
   Search: Search,
   Star: Star,
   Clock: Clock,
+  Info: Info,
 } as const
 
 export default function DamageReportForm() {
@@ -63,6 +64,13 @@ export default function DamageReportForm() {
   const [editingMaterial, setEditingMaterial] = useState<any>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+
+  // New material modal states
+  const [showMaterialModal, setShowMaterialModal] = useState(false)
+  const [pendingBarcode, setPendingBarcode] = useState('')
+  const [newMaterialDescription, setNewMaterialDescription] = useState('')
+  const [newMaterialCategory, setNewMaterialCategory] = useState('Manual Entry')
+  const [isSavingMaterial, setIsSavingMaterial] = useState(false)
 
   const {
     isLoading,
@@ -109,30 +117,71 @@ export default function DamageReportForm() {
         addItem(material)
         setBarcodeInput('')
       } else {
-        // Show custom modal for entering material description
-        const description = prompt('Material not found in database. Please enter material description:')
-        if (description) {
-          try {
-            // Save the new mapping to database
-            const savedMaterial = await saveMaterialMapping(barcode, description)
-            
-            const manualMaterial = {
-              barcode: barcode,
-              material_code: barcode,
-              material_description: description,
-              category: 'Manual Entry',
-              mapping_id: savedMaterial?.id,
-            }
-            setMaterialLookup(manualMaterial)
-            addItem(manualMaterial)
-            setBarcodeInput('')
-          } catch (error) {
-            console.error('Error saving material mapping:', error)
-            alert('Failed to save material. Please try again.')
-          }
-        }
+        // Set up modal state and show modal instead of prompt
+        setPendingBarcode(barcode)
+        setNewMaterialDescription('')
+        setNewMaterialCategory('Manual Entry')
+        setShowMaterialModal(true)
+        
+        // Keep focus on barcode input
+        setTimeout(() => {
+          barcodeInputRef.current?.focus()
+        }, 100)
       }
     }
+  }
+
+  const handleSaveNewMaterial = async () => {
+    if (!newMaterialDescription.trim()) {
+      alert('Please enter a material description')
+      return
+    }
+
+    setIsSavingMaterial(true)
+    try {
+      // Save the new mapping to database
+      const savedMaterial = await saveMaterialMapping(
+        pendingBarcode,
+        newMaterialDescription,
+        newMaterialCategory
+      )
+      
+      const manualMaterial = {
+        barcode: pendingBarcode,
+        material_code: pendingBarcode,
+        material_description: newMaterialDescription,
+        category: newMaterialCategory,
+        mapping_id: savedMaterial?.id,
+      }
+      
+      setMaterialLookup(manualMaterial)
+      addItem(manualMaterial)
+      setBarcodeInput('')
+      setShowMaterialModal(false)
+      setPendingBarcode('')
+      setNewMaterialDescription('')
+      setNewMaterialCategory('Manual Entry')
+      
+      console.log('Material saved successfully!')
+      
+    } catch (error) {
+      console.error('Error saving material mapping:', error)
+      alert('Failed to save material. Please try again.')
+    } finally {
+      setIsSavingMaterial(false)
+    }
+  }
+
+  const handleCancelMaterial = () => {
+    setShowMaterialModal(false)
+    setPendingBarcode('')
+    setNewMaterialDescription('')
+    setNewMaterialCategory('Manual Entry')
+    
+    // Return focus to barcode input
+    setTimeout(() => {
+      barcodeInputRef.current?.focus()
+    }, 100)
   }
 
   const addItem = (material?: any) => {
@@ -522,20 +571,13 @@ export default function DamageReportForm() {
                         <h3 className="text-base sm:text-lg font-bold text-gray-900">
                           Scanned Items ({report.items.length})
                         </h3>
-                        {/* <button
-                          onClick={() => addItem()}
-                          className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                        >
-                          <icons.Plus className="w-4 h-4" />
-                          Add Manually
-                        </button> */}
                       </div>
 
                       {report.items.length === 0 ? (
                         <div className="py-8 sm:py-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                           <icons.AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3" />
                           <p className="text-gray-600 font-medium text-sm sm:text-base">No items scanned yet</p>
-                          <p className="text-gray-500 text-xs sm:text-sm mt-1">Scan a barcode or click "Add Manually"</p>
+                          <p className="text-gray-500 text-xs sm:text-sm mt-1">Scan a barcode to add items</p>
                         </div>
                       ) : (
                         <div className="space-y-2 sm:space-y-3">
@@ -1039,6 +1081,117 @@ export default function DamageReportForm() {
           </div>
         )}
       </div>
+
+      {/* Material Input Modal */}
+      {showMaterialModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-fadeIn">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <icons.AlertCircle className="w-5 h-5 text-orange-600" />
+                  Material Not Found
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Please enter material description for the scanned barcode
+                </p>
+              </div>
+              <button
+                onClick={handleCancelMaterial}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <icons.X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Barcode Display */}
+              <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700 mb-1">Scanned Barcode</p>
+                    <p className="text-sm font-bold text-gray-900 break-all font-mono">
+                      {pendingBarcode}
+                    </p>
+                  </div>
+                  <icons.Barcode className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                </div>
+              </div>
+              
+              {/* Material Description Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Material Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={newMaterialDescription}
+                  onChange={(e) => setNewMaterialDescription(e.target.value)}
+                  placeholder="Enter material description..."
+                  rows={3}
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                  autoFocus
+                />
+              </div>
+              
+              {/* Category Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category
+                </label>
+                <input
+                  type="text"
+                  value={newMaterialCategory}
+                  onChange={(e) => setNewMaterialCategory(e.target.value)}
+                  placeholder="e.g., Electronics, Furniture, etc."
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                />
+              </div>
+              
+              {/* Tips */}
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <p className="text-xs text-blue-800 flex items-start gap-2">
+                  <icons.Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>
+                    This material will be saved to your database and automatically retrieved 
+                    next time you scan this barcode.
+                  </span>
+                </p>
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+              <button
+                onClick={handleCancelMaterial}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                disabled={isSavingMaterial}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveNewMaterial}
+                disabled={!newMaterialDescription.trim() || isSavingMaterial}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSavingMaterial ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <icons.Save className="w-4 h-4" />
+                    Save & Continue
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
