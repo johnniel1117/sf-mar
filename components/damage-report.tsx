@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useState, useRef, useEffect } from 'react'
-import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock, Tag } from 'lucide-react'
+import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import { useDamageReport } from '@/hooks/useDamageReport'
 import { PDFGenerator } from '@/lib/utils/pdfGenerator'
@@ -30,24 +30,7 @@ const icons = {
   Search: Search,
   Star: Star,
   Clock: Clock,
-  Tag: Tag,
 } as const
-
-// Add common categories
-const COMMON_CATEGORIES = [
-  'Electronics',
-  'Furniture',
-  'Machinery',
-  'Automotive',
-  'Construction',
-  'Packaging',
-  'Raw Materials',
-  'Finished Goods',
-  'Tools & Equipment',
-  'Office Supplies',
-  'Manual Entry',
-  'Unknown'
-]
 
 export default function DamageReportForm() {
   const [currentStep, setCurrentStep] = useState<Step>(1)
@@ -129,18 +112,15 @@ export default function DamageReportForm() {
         // Show custom modal for entering material description
         const description = prompt('Material not found in database. Please enter material description:')
         if (description) {
-          // Also ask for category
-          const category = prompt('Please enter category (optional, press Enter to skip):', 'Manual Entry') || 'Manual Entry'
-          
           try {
             // Save the new mapping to database
-            const savedMaterial = await saveMaterialMapping(barcode, description, category)
+            const savedMaterial = await saveMaterialMapping(barcode, description)
             
             const manualMaterial = {
               barcode: barcode,
               material_code: barcode,
               material_description: description,
-              category: category,
+              category: 'Manual Entry',
               mapping_id: savedMaterial?.id,
             }
             setMaterialLookup(manualMaterial)
@@ -161,7 +141,6 @@ export default function DamageReportForm() {
       barcode: material?.barcode || '',
       material_code: material?.material_code || '',
       material_description: material?.material_description || '',
-      category: material?.category || '', // Add category
       damage_type: '',
       damage_description: '',
       mapping_id: material?.mapping_id || null,
@@ -316,13 +295,6 @@ export default function DamageReportForm() {
       loadMaterialMappings()
     }, 300)
   }
-
-  // Calculate category summary
-  const categoriesSummary = report.items.reduce((acc, item) => {
-    const category = item.category || 'Uncategorized'
-    acc[category] = (acc[category] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6 sm:py-8 px-3 sm:px-4">
@@ -550,13 +522,13 @@ export default function DamageReportForm() {
                         <h3 className="text-base sm:text-lg font-bold text-gray-900">
                           Scanned Items ({report.items.length})
                         </h3>
-                        <button
+                        {/* <button
                           onClick={() => addItem()}
                           className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                         >
                           <icons.Plus className="w-4 h-4" />
                           Add Manually
-                        </button>
+                        </button> */}
                       </div>
 
                       {report.items.length === 0 ? (
@@ -575,14 +547,7 @@ export default function DamageReportForm() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-semibold text-gray-900 text-sm truncate">{item.material_description || 'Unknown Item'}</p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <p className="text-xs text-gray-500 truncate">Code: {item.material_code || 'N/A'}</p>
-                                    {item.category && (
-                                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-medium">
-                                        {item.category}
-                                      </span>
-                                    )}
-                                  </div>
+                                  <p className="text-xs text-gray-500 truncate">Code: {item.material_code || 'N/A'}</p>
                                 </div>
                               </div>
                               <button
@@ -599,7 +564,7 @@ export default function DamageReportForm() {
                   </div>
                 )}
 
-                {/* Step 3: Item Details with Category */}
+                {/* Step 3: Item Details */}
                 {currentStep === 3 && (
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
@@ -619,19 +584,9 @@ export default function DamageReportForm() {
                             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
                               {item.item_number}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                                {item.material_description || 'Item Details'}
-                              </h4>
-                              {item.category && (
-                                <div className="flex items-center gap-1 mt-1">
-                                  <icons.Tag className="w-3 h-3 text-gray-500" />
-                                  <span className="text-xs text-gray-600 font-medium bg-gray-200 px-2 py-0.5 rounded">
-                                    {item.category}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                            <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                              {item.material_description || 'Item Details'}
+                            </h4>
                           </div>
 
                           <div className="grid grid-cols-1 gap-3 sm:gap-4">
@@ -648,37 +603,6 @@ export default function DamageReportForm() {
                               </div>
                             </div>
 
-                            {/* Category Field */}
-                            <div>
-                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2 flex items-center gap-1">
-                                <icons.Tag className="w-3 h-3 sm:w-4 sm:h-4" />
-                                Category
-                              </label>
-                              <div className="flex gap-2">
-                                <select
-                                  value={item.category || ''}
-                                  onChange={(e) => updateItem(idx, 'category', e.target.value)}
-                                  className="flex-1 px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                >
-                                  <option value="">Select category</option>
-                                  {COMMON_CATEGORIES.map((cat) => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                  ))}
-                                  <option value="other">Other...</option>
-                                </select>
-                                {item.category === 'other' && (
-                                  <input
-                                    type="text"
-                                    placeholder="Enter custom category"
-                                    value={item.category}
-                                    onChange={(e) => updateItem(idx, 'category', e.target.value)}
-                                    className="flex-1 px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                  />
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Damage Type */}
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                                 Damage Type <span className="text-red-500">*</span>
@@ -697,7 +621,6 @@ export default function DamageReportForm() {
                               </select>
                             </div>
 
-                            {/* Damage Description */}
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                                 Damage Description
@@ -711,7 +634,6 @@ export default function DamageReportForm() {
                               />
                             </div>
 
-                            {/* Photo Evidence */}
                             <div>
                               <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
                                 <icons.Camera className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -778,19 +700,6 @@ export default function DamageReportForm() {
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                          Actions Required
-                        </label>
-                        <textarea
-                          value={report.actions_required}
-                          onChange={(e) => setReport({ ...report, actions_required: e.target.value })}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                          placeholder="Describe required actions..."
-                          rows={2}
-                        />
-                      </div>
-
                       {/* Summary */}
                       <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 sm:p-4 mt-4 sm:mt-6">
                         <h3 className="font-bold text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Report Summary</h3>
@@ -806,20 +715,6 @@ export default function DamageReportForm() {
                           <div className="flex justify-between sm:flex-col sm:gap-1">
                             <span className="text-gray-600 font-medium">Total Items:</span>
                             <span className="font-semibold text-gray-900">{report.items.length}</span>
-                          </div>
-                          <div className="sm:col-span-2">
-                            <span className="text-gray-600 font-medium">Categories:</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {Object.entries(categoriesSummary).map(([category, count]) => (
-                                <span 
-                                  key={category} 
-                                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium"
-                                >
-                                  <icons.Tag className="w-2.5 h-2.5" />
-                                  {category}: {count}
-                                </span>
-                              ))}
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -905,70 +800,52 @@ export default function DamageReportForm() {
               </div>
             ) : (
               <div className="grid gap-3 sm:gap-4">
-                {savedReports.map((savedReport) => {
-                  const items = savedReport.items || ((savedReport as any).damage_items || [])
-                  const categories = items.reduce((acc: Record<string, number>, item: any) => {
-                    const category = item.category || 'Uncategorized'
-                    acc[category] = (acc[category] || 0) + 1
-                    return acc
-                  }, {})
-                  
-                  return (
-                    <div
-                      key={savedReport.id}
-                      className="p-3 sm:p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
-                            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <icons.FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
-                                {savedReport.report_number || savedReport.id}
-                              </h4>
-                            </div>
+                {savedReports.map((savedReport) => (
+                  <div
+                    key={savedReport.id}
+                    className="p-3 sm:p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <icons.FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                           </div>
-                          <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <span className="font-semibold">{items.length}</span> items
-                            </span>
-                            <span className="hidden sm:inline">•</span>
-                            <span>{new Date(savedReport.report_date).toLocaleDateString()}</span>
-                            {Object.keys(categories).length > 0 && (
-                              <>
-                                <span className="hidden sm:inline">•</span>
-                                <span className="flex items-center gap-1">
-                                  <icons.Tag className="w-3 h-3" />
-                                  {Object.keys(categories).length} categories
-                                </span>
-                              </>
-                            )}
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
+                              {savedReport.report_number || savedReport.id}
+                            </h4>
                           </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                          <button
-                            onClick={() => PDFGenerator.generatePDF(savedReport)}
-                            className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-md"
-                          >
-                            <icons.Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline">PDF</span>
-                            <span className="sm:hidden">Download</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteReport(savedReport.id!)}
-                            className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md"
-                          >
-                            <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline">Delete</span>
-                            <span className="sm:hidden">Remove</span>
-                          </button>
+                        <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                          <span className="flex items-center gap-1">
+                            <span className="font-semibold">{((savedReport as any).damage_items || []).length}</span> items
+                          </span>
+                          <span className="hidden sm:inline">•</span>
+                          <span>{new Date(savedReport.report_date).toLocaleDateString()}</span>
                         </div>
                       </div>
+                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <button
+                          onClick={() => PDFGenerator.generatePDF(savedReport)}
+                          className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-md"
+                        >
+                          <icons.Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">PDF</span>
+                          <span className="sm:hidden">Download</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteReport(savedReport.id!)}
+                          className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md"
+                        >
+                          <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">Delete</span>
+                          <span className="sm:hidden">Remove</span>
+                        </button>
+                      </div>
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1058,19 +935,16 @@ export default function DamageReportForm() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Category
                       </label>
-                      <select
+                      <input
+                        type="text"
                         value={editingMaterial?.category || ''}
                         onChange={(e) => setEditingMaterial({
                           ...editingMaterial,
                           category: e.target.value
                         })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                      >
-                        <option value="">Select category</option>
-                        {COMMON_CATEGORIES.map((cat) => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
+                        placeholder="e.g., Electronics, Furniture, etc."
+                      />
                     </div>
                   </div>
                   
@@ -1125,7 +999,6 @@ export default function DamageReportForm() {
                         <div className="flex flex-wrap gap-2 text-xs text-gray-600">
                           {material.category && (
                             <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
-                              <icons.Tag className="w-2.5 h-2.5 inline mr-1" />
                               {material.category}
                             </span>
                           )}

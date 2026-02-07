@@ -7,13 +7,6 @@ export class PDFGenerator {
 
     const items = reportData.items || ((reportData as any).damage_items || [])
 
-    // Count categories for summary
-    const categories = items.reduce((acc: Record<string, number>, item: any) => {
-      const category = item.category || 'Uncategorized'
-      acc[category] = (acc[category] || 0) + 1
-      return acc
-    }, {})
-
     const itemsHtml = items
       .map(
         (item, idx) => `
@@ -21,21 +14,11 @@ export class PDFGenerator {
         <td style="text-align: center; padding: 8px;">${item.item_number}</td>
         <td style="text-align: center; padding: 8px;">${item.material_description || 'Unknown'}</td>
         <td style="text-align: center; padding: 8px; font-weight: bold;">${item.barcode}</td>
-        <td style="text-align: center; padding: 8px;">${item.category || 'N/A'}</td>
         <td style="text-align: center; padding: 8px;">${item.damage_type || ''}</td>
         <td style="text-align: center; padding: 8px;">${item.damage_description || ''}</td>
       </tr>
     `
       )
-      .join('')
-
-    // Create categories summary HTML
-    const categoriesHtml = Object.entries(categories)
-      .map(([category, count]) => `
-        <div style="display: inline-block; margin: 2px 5px 2px 0; padding: 2px 8px; background: #e3f2fd; border-radius: 12px; font-size: 9px; border: 1px solid #bbdefb;">
-          <strong>${category}:</strong> ${count}
-        </div>
-      `)
       .join('')
 
     const htmlContent = `
@@ -182,38 +165,6 @@ export class PDFGenerator {
             font-size: 9px;
           }
           
-          .summary-section {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-          }
-          
-          .summary-title {
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 10px;
-            color: #495057;
-          }
-          
-          .categories-summary {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 8px;
-          }
-          
-          .category-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            background: #e3f2fd;
-            border-radius: 12px;
-            font-size: 9px;
-            border: 1px solid #bbdefb;
-            margin: 1px;
-          }
-          
           .footer-info {
             margin-top: 15px;
             padding: 10px;
@@ -246,9 +197,6 @@ export class PDFGenerator {
             }
             .page-container {
               max-width: 100%;
-            }
-            .category-badge {
-              break-inside: avoid;
             }
           }
         </style>
@@ -296,38 +244,15 @@ export class PDFGenerator {
             </div>
           </div>
 
-          <!-- Summary Section -->
-          <div class="summary-section">
-            <div class="summary-title">Report Summary</div>
-            <div>
-              <strong>Total Items:</strong> ${items.length}
-              ${Object.keys(categories).length > 0 ? `
-                <div style="margin-top: 5px;">
-                  <strong>Categories:</strong>
-                  <div class="categories-summary" style="margin-top: 3px;">
-                    ${Object.entries(categories)
-                      .map(([category, count]) => `
-                        <div class="category-badge">
-                          <strong>${category}:</strong> ${count}
-                        </div>
-                      `)
-                      .join('')}
-                  </div>
-                </div>
-              ` : ''}
-            </div>
-          </div>
-
           <!-- Data Table -->
           <table class="data-table">
             <thead>
               <tr>
                 <th style="width: 40px;">NO.</th>
-                <th style="width: 220px;">MATERIAL DESCRIPTION</th>
-                <th style="width: 120px;">SERIAL NO.</th>
-                <th style="width: 100px;">CATEGORY</th>
-                <th style="width: 100px;">DAMAGE TYPE</th>
-                <th style="width: 180px;">DAMAGE DESCRIPTION</th>
+                <th style="width: 250px;">MATERIAL DESCRIPTION</th>
+                <th style="width: 150px;">SERIAL NO.</th>
+                <th style="width: 120px;">DAMAGE TYPE</th>
+                <th style="width: 200px;">DAMAGE DESCRIPTION</th>
               </tr>
             </thead>
             <tbody>
@@ -338,11 +263,6 @@ export class PDFGenerator {
           <!-- Footer Info -->
           <div class="footer-info">
             <div>TOTAL ITEMS: ${items.length}</div>
-            ${Object.keys(categories).length > 0 ? `
-              <div style="font-size: 10px; margin-top: 3px; color: #666;">
-                CATEGORIES: ${Object.keys(categories).join(', ')}
-              </div>
-            ` : ''}
           </div>
 
           <!-- Narrative & Actions -->
@@ -354,18 +274,6 @@ export class PDFGenerator {
               ${reportData.narrative_findings || 'N/A'}
             </div>
           </div>
-
-          <!-- Actions Required -->
-          ${reportData.actions_required ? `
-            <div class="info-section" style="margin-top: 15px;">
-              <div class="info-row" style="grid-template-columns: 1fr;">
-                <div><strong>Actions Required:</strong></div>
-              </div>
-              <div style="padding: 8px; border: 1px solid #000; min-height: 30px; margin-bottom: 10px;">
-                ${reportData.actions_required}
-              </div>
-            </div>
-          ` : ''}
 
           <!-- Signature Section -->
           <div class="signature-section">
