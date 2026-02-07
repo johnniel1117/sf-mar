@@ -52,91 +52,99 @@ export class DamageReportService {
     }
   }
 
-  // Lookup barcode with fallback to serial_material_mapping
-  static async lookupBarcode(barcode: string): Promise<any> {
-    try {
-      const cleanBarcode = barcode.trim()
-      
-      // 1. Check serial_material_mapping first (user-defined mappings)
-      const { data: serialMappingData } = await supabase
+static async lookupBarcode(barcode: string): Promise<any> {
+  try {
+    const cleanBarcode = barcode.trim()
+    
+    // 1. Check serial_material_mapping first (user-defined mappings)
+    const { data: serialMappingData, error: serialError } = await supabase
+      .from('serial_material_mapping')
+      .select('*')
+      .eq('serial_number', cleanBarcode)
+      .maybeSingle() // Use maybeSingle() instead of single() for nullable results
+
+    if (serialMappingData && !serialError) {
+      // Update usage count
+      await supabase
         .from('serial_material_mapping')
-        .select('*')
-        .eq('serial_number', cleanBarcode)
-        .single()
+        .update({
+          usage_count: (serialMappingData.usage_count || 0) + 1,
+          last_used_at: new Date().toISOString(),
+        })
+        .eq('id', serialMappingData.id)
 
-      if (serialMappingData) {
-        // Update usage count
-        await supabase
-          .from('serial_material_mapping')
-          .update({
-            usage_count: (serialMappingData.usage_count || 0) + 1,
-            last_used_at: new Date().toISOString(),
-          })
-          .eq('id', serialMappingData.id)
-
-        return {
-          barcode: cleanBarcode,
-          material_code: serialMappingData.material_code || cleanBarcode,
-          material_description: serialMappingData.material_description,
-          category: serialMappingData.category || 'Manual Entry',
-          mapping_id: serialMappingData.id,
-          source: 'serial_mapping',
-        }
+      return {
+        barcode: cleanBarcode,
+        material_code: serialMappingData.material_code || cleanBarcode,
+        material_description: serialMappingData.material_description,
+        category: serialMappingData.category || 'Manual Entry',
+        mapping_id: serialMappingData.id,
+        source: 'serial_mapping',
       }
-      
-      // 2. Check barcode_material_mapping (system mappings)
-      const { data: barcodeData } = await supabase
+    }
+    
+    // 2. Check barcode_material_mapping (system mappings)
+    // Use a safer approach without .single()
+    const { data: barcodeData, error: barcodeError } = await supabase
+      .from('barcode_material_mapping')
+      .select('*')
+      .eq('barcode', cleanBarcode)
+      .limit(1)
+
+    if (barcodeError) {
+      console.error('Error querying barcode_material_mapping:', barcodeError)
+      // Continue to next step instead of throwing
+    } else if (barcodeData && barcodeData.length > 0) {
+      return barcodeData[0]
+    }
+
+    // 3. Extract material code and try partial match
+    let materialCode = cleanBarcode
+    const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/)
+    
+    if (materialCodeMatch) {
+      materialCode = materialCodeMatch[1]
+      const { data: partialData } = await supabase
         .from('barcode_material_mapping')
         .select('*')
-        .eq('barcode', cleanBarcode)
-        .single()
+        .eq('barcode', materialCode)
+        .limit(1)
 
-      if (barcodeData) return barcodeData
-
-      // 3. Extract material code and try partial match
-      let materialCode = cleanBarcode
-      const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/)
-      
-      if (materialCodeMatch) {
-        materialCode = materialCodeMatch[1]
-        const { data: partialData } = await supabase
-          .from('barcode_material_mapping')
-          .select('*')
-          .eq('barcode', materialCode)
-          .single()
-
-        if (partialData) return partialData
+      if (partialData && partialData.length > 0) {
+        return partialData[0]
       }
+    }
 
-      // 4. Use material mapping from category-mapping
-      const materialInfo = getMaterialInfoFromMatcode(materialCode)
-      if (materialInfo.model !== materialCode) {
-        return {
-          barcode: cleanBarcode,
-          material_code: materialCode,
-          material_description: materialInfo.model,
-          category: materialInfo.category,
-          source: 'category_mapping',
-        }
+    // 4. Use material mapping from category-mapping
+    const materialInfo = getMaterialInfoFromMatcode(materialCode)
+    if (materialInfo.model !== materialCode) {
+      return {
+        barcode: cleanBarcode,
+        material_code: materialCode,
+        material_description: materialInfo.model,
+        category: materialInfo.category,
+        source: 'category_mapping',
       }
+    }
 
-      // 5. Try original barcode with category-mapping
-      const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode)
-      if (originalMaterialInfo.model !== cleanBarcode) {
-        return {
-          barcode: cleanBarcode,
-          material_code: cleanBarcode,
-          material_description: originalMaterialInfo.model,
-          category: originalMaterialInfo.category,
-          source: 'category_mapping',
-        }
+    // 5. Try original barcode with category-mapping
+    const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode)
+    if (originalMaterialInfo.model !== cleanBarcode) {
+      return {
+        barcode: cleanBarcode,
+        material_code: cleanBarcode,
+        material_description: originalMaterialInfo.model,
+        category: originalMaterialInfo.category,
+        source: 'category_mapping',
       }
+    }
 
-      return null
-    } catch (error) {
-      console.error('Error looking up barcode:', error)
-      
-      // Fallback: try category-mapping
+    return null
+  } catch (error) {
+    console.error('Error looking up barcode:', error)
+    
+    // Fallback: try category-mapping
+    try {
       const cleanBarcode = barcode.trim()
       const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/)
       const materialCode = materialCodeMatch ? materialCodeMatch[1] : cleanBarcode
@@ -151,10 +159,13 @@ export class DamageReportService {
           source: 'fallback',
         }
       }
-      
-      return null
+    } catch (fallbackError) {
+      console.error('Fallback also failed:', fallbackError)
     }
+    
+    return null
   }
+}
 
   // Save new material mapping to serial_material_mapping
   static async saveMaterialMapping(
