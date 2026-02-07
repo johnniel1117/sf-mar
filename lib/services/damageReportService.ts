@@ -9,12 +9,12 @@ export interface DamageItem {
   id?: string
   item_number: number
   barcode: string
-//   serial_number: string
   material_code: string
   material_description: string
   damage_type: string
   damage_description: string
   photo_url?: string
+  mapping_id?: string
 }
 
 export interface DamageReport {
@@ -52,21 +52,48 @@ export class DamageReportService {
     }
   }
 
-  // Lookup barcode
+  // Lookup barcode with fallback to serial_material_mapping
   static async lookupBarcode(barcode: string): Promise<any> {
     try {
       const cleanBarcode = barcode.trim()
       
-      // Exact match
-      const { data: exactData } = await supabase
+      // 1. Check serial_material_mapping first (user-defined mappings)
+      const { data: serialMappingData } = await supabase
+        .from('serial_material_mapping')
+        .select('*')
+        .eq('serial_number', cleanBarcode)
+        .single()
+
+      if (serialMappingData) {
+        // Update usage count
+        await supabase
+          .from('serial_material_mapping')
+          .update({
+            usage_count: (serialMappingData.usage_count || 0) + 1,
+            last_used_at: new Date().toISOString(),
+          })
+          .eq('id', serialMappingData.id)
+
+        return {
+          barcode: cleanBarcode,
+          material_code: serialMappingData.material_code || cleanBarcode,
+          material_description: serialMappingData.material_description,
+          category: serialMappingData.category || 'Manual Entry',
+          mapping_id: serialMappingData.id,
+          source: 'serial_mapping',
+        }
+      }
+      
+      // 2. Check barcode_material_mapping (system mappings)
+      const { data: barcodeData } = await supabase
         .from('barcode_material_mapping')
         .select('*')
         .eq('barcode', cleanBarcode)
         .single()
 
-      if (exactData) return exactData
+      if (barcodeData) return barcodeData
 
-      // Extract material code
+      // 3. Extract material code and try partial match
       let materialCode = cleanBarcode
       const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/)
       
@@ -81,7 +108,7 @@ export class DamageReportService {
         if (partialData) return partialData
       }
 
-      // Use material mapping
+      // 4. Use material mapping from category-mapping
       const materialInfo = getMaterialInfoFromMatcode(materialCode)
       if (materialInfo.model !== materialCode) {
         return {
@@ -89,10 +116,11 @@ export class DamageReportService {
           material_code: materialCode,
           material_description: materialInfo.model,
           category: materialInfo.category,
+          source: 'category_mapping',
         }
       }
 
-      // Try original barcode
+      // 5. Try original barcode with category-mapping
       const originalMaterialInfo = getMaterialInfoFromMatcode(cleanBarcode)
       if (originalMaterialInfo.model !== cleanBarcode) {
         return {
@@ -100,6 +128,7 @@ export class DamageReportService {
           material_code: cleanBarcode,
           material_description: originalMaterialInfo.model,
           category: originalMaterialInfo.category,
+          source: 'category_mapping',
         }
       }
 
@@ -107,7 +136,7 @@ export class DamageReportService {
     } catch (error) {
       console.error('Error looking up barcode:', error)
       
-      // Fallback
+      // Fallback: try category-mapping
       const cleanBarcode = barcode.trim()
       const materialCodeMatch = cleanBarcode.match(/^([A-Z0-9]{8,12})/)
       const materialCode = materialCodeMatch ? materialCodeMatch[1] : cleanBarcode
@@ -119,10 +148,101 @@ export class DamageReportService {
           material_code: materialCode,
           material_description: materialInfo.model,
           category: materialInfo.category,
+          source: 'fallback',
         }
       }
       
       return null
+    }
+  }
+
+  // Save new material mapping to serial_material_mapping
+  static async saveMaterialMapping(
+    serialNumber: string, 
+    materialDescription: string, 
+    category: string = 'Manual Entry'
+  ) {
+    try {
+      const { data, error } = await supabase
+        .from('serial_material_mapping')
+        .upsert({
+          serial_number: serialNumber.trim(),
+          material_code: serialNumber.trim(),
+          material_description: materialDescription.trim(),
+          category: category.trim(),
+          usage_count: 1,
+          last_used_at: new Date().toISOString()
+        }, {
+          onConflict: 'serial_number',
+          ignoreDuplicates: false
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error saving material mapping:', error)
+      throw error
+    }
+  }
+
+  // Update material mapping
+  static async updateMaterialMapping(id: string, updates: Partial<any>) {
+    try {
+      const { data, error } = await supabase
+        .from('serial_material_mapping')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error updating material mapping:', error)
+      throw error
+    }
+  }
+
+  // Delete material mapping
+  static async deleteMaterialMapping(id: string) {
+    try {
+      const { error } = await supabase
+        .from('serial_material_mapping')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      return true
+    } catch (error) {
+      console.error('Error deleting material mapping:', error)
+      throw error
+    }
+  }
+
+  // Get material mappings with search
+  static async getMaterialMappings(searchTerm?: string) {
+    try {
+      let query = supabase
+        .from('serial_material_mapping')
+        .select('*')
+        .order('last_used_at', { ascending: false })
+
+      if (searchTerm && searchTerm.trim()) {
+        query = query.or(`serial_number.ilike.%${searchTerm.trim()}%,material_description.ilike.%${searchTerm.trim()}%`)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching material mappings:', error)
+      throw error
     }
   }
 
@@ -134,7 +254,7 @@ export class DamageReportService {
       const { data, error } = await supabase
         .from('damage_items')
         .select('*')
-        .eq('serial_number', serialNumber.trim())
+        .eq('barcode', serialNumber.trim())
         .not('damage_report_id', 'is', null)
 
       if (error) throw error
@@ -189,11 +309,11 @@ export class DamageReportService {
           damage_report_id: reportId,
           item_number: item.item_number,
           barcode: item.barcode,
-        //   serial_number: item.serial_number,
           material_code: item.material_code,
           material_description: item.material_description,
           damage_type: item.damage_type,
           damage_description: item.damage_description,
+          mapping_id: item.mapping_id || null,
         }))
 
         const { error: itemsError } = await supabase

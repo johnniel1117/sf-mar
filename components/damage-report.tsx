@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useState, useRef, useEffect } from 'react'
-import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users } from 'lucide-react'
+import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import { useDamageReport } from '@/hooks/useDamageReport'
 import { PDFGenerator } from '@/lib/utils/pdfGenerator'
@@ -26,6 +26,10 @@ const icons = {
   Trash2: Trash2,
   ChevronRight: ChevronRight,
   ChevronLeft: ChevronLeft,
+  Edit: Edit,
+  Search: Search,
+  Star: Star,
+  Clock: Clock,
 } as const
 
 export default function DamageReportForm() {
@@ -50,9 +54,15 @@ export default function DamageReportForm() {
   const [barcodeInput, setBarcodeInput] = useState('')
   const [materialLookup, setMaterialLookup] = useState<Record<string, any>>({})
   const [uploadingItemIndex, setUploadingItemIndex] = useState<number | null>(null)
-  const [activeTab, setActiveTab] = useState<'create' | 'saved'>('create')
+  const [activeTab, setActiveTab] = useState<'create' | 'saved' | 'materials'>('create')
   const [serialWarnings, setSerialWarnings] = useState<Record<number, boolean>>({})
   const barcodeInputRef = useRef<HTMLInputElement>(null)
+
+  // Material management states
+  const [materialMappings, setMaterialMappings] = useState<any[]>([])
+  const [editingMaterial, setEditingMaterial] = useState<any>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const {
     isLoading,
@@ -62,12 +72,31 @@ export default function DamageReportForm() {
     deleteReport,
     uploadPhoto,
     lookupBarcode,
+    saveMaterialMapping,
+    updateMaterialMapping,
+    deleteMaterialMapping,
+    getMaterialMappings,
     checkSerialNumber: checkSerialNumberService,
   } = useDamageReport()
 
+  const [mounted, setMounted] = useState(false)
+
   useEffect(() => {
+    setMounted(true)
     loadReports()
-  }, [loadReports])
+    if (activeTab === 'materials') {
+      loadMaterialMappings()
+    }
+  }, [loadReports, activeTab])
+
+  const loadMaterialMappings = async () => {
+    try {
+      const mappings = await getMaterialMappings(searchTerm)
+      setMaterialMappings(mappings || [])
+    } catch (error) {
+      console.error('Error loading material mappings:', error)
+    }
+  }
 
   const handleBarcodeInput = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -80,30 +109,41 @@ export default function DamageReportForm() {
         addItem(material)
         setBarcodeInput('')
       } else {
+        // Show custom modal for entering material description
         const description = prompt('Material not found in database. Please enter material description:')
         if (description) {
-          const manualMaterial = {
-            barcode: barcode,
-            material_code: barcode,
-            material_description: description,
-            category: 'Manual Entry',
+          try {
+            // Save the new mapping to database
+            const savedMaterial = await saveMaterialMapping(barcode, description)
+            
+            const manualMaterial = {
+              barcode: barcode,
+              material_code: barcode,
+              material_description: description,
+              category: 'Manual Entry',
+              mapping_id: savedMaterial?.id,
+            }
+            setMaterialLookup(manualMaterial)
+            addItem(manualMaterial)
+            setBarcodeInput('')
+          } catch (error) {
+            console.error('Error saving material mapping:', error)
+            alert('Failed to save material. Please try again.')
           }
-          setMaterialLookup(manualMaterial)
-          addItem(manualMaterial)
-          setBarcodeInput('')
         }
       }
     }
   }
 
   const addItem = (material?: any) => {
-    const newItem: DamageItem = {
+    const newItem: DamageItem & { mapping_id?: string } = {
       item_number: report.items.length + 1,
       barcode: material?.barcode || '',
       material_code: material?.material_code || '',
       material_description: material?.material_description || '',
       damage_type: '',
       damage_description: '',
+      mapping_id: material?.mapping_id || null,
     }
     setReport({
       ...report,
@@ -204,11 +244,57 @@ export default function DamageReportForm() {
     }
   }
 
-  const [mounted, setMounted] = useState(false)
+  const handleEditMaterial = async (material: any) => {
+    setEditingMaterial(material)
+    setIsEditing(true)
+  }
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const handleSaveMaterial = async () => {
+    if (!editingMaterial) return
+
+    try {
+      if (editingMaterial.id) {
+        await updateMaterialMapping(editingMaterial.id, {
+          material_description: editingMaterial.material_description,
+          category: editingMaterial.category,
+        })
+      } else {
+        await saveMaterialMapping(
+          editingMaterial.serial_number,
+          editingMaterial.material_description,
+          editingMaterial.category
+        )
+      }
+      
+      setIsEditing(false)
+      setEditingMaterial(null)
+      loadMaterialMappings()
+      alert('Material saved successfully!')
+    } catch (error) {
+      console.error('Error saving material:', error)
+      alert('Failed to save material. Please try again.')
+    }
+  }
+
+  const handleDeleteMaterial = async (id: string) => {
+    if (confirm('Are you sure you want to delete this material mapping?')) {
+      try {
+        await deleteMaterialMapping(id)
+        loadMaterialMappings()
+        alert('Material deleted successfully!')
+      } catch (error) {
+        console.error('Error deleting material:', error)
+        alert('Failed to delete material. Please try again.')
+      }
+    }
+  }
+
+  const handleMaterialSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+    setTimeout(() => {
+      loadMaterialMappings()
+    }, 300)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6 sm:py-8 px-3 sm:px-4">
@@ -244,6 +330,21 @@ export default function DamageReportForm() {
             <icons.Download className="w-4 h-4 inline mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Saved Reports</span>
             <span className="sm:hidden">Saved</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('materials')
+              loadMaterialMappings()
+            }}
+            className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
+              activeTab === 'materials'
+                ? 'bg-orange-600 text-white shadow'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <icons.Star className="w-4 h-4 inline mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Material Mappings</span>
+            <span className="sm:hidden">Materials</span>
           </button>
         </div>
 
@@ -500,15 +601,6 @@ export default function DamageReportForm() {
                                 </div>
                                 <icons.Barcode className="w-5 h-5 text-gray-600 flex-shrink-0" />
                               </div>
-                              
-                              {/* {item.serial_number && (
-                                <div className="mt-2 pt-2 border-t border-gray-300">
-                                  <p className="text-xs font-semibold text-gray-700 mb-1">Extracted Serial</p>
-                                  <p className="text-sm font-bold text-blue-600 break-all">
-                                    {item.serial_number}
-                                  </p>
-                                </div>
-                              )} */}
                             </div>
 
                             <div>
@@ -749,6 +841,194 @@ export default function DamageReportForm() {
                           <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="hidden sm:inline">Delete</span>
                           <span className="sm:hidden">Remove</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Material Mappings Tab */}
+        {activeTab === 'materials' && (
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                  <icons.Star className="w-5 h-5" />
+                  Material Mappings
+                </h3>
+                <p className="text-sm text-gray-600">Manage saved material descriptions for barcodes</p>
+              </div>
+              
+              <div className="w-full sm:w-auto flex gap-2">
+                <div className="relative flex-1 sm:w-64">
+                  <icons.Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by serial or description..."
+                    value={searchTerm}
+                    onChange={handleMaterialSearch}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingMaterial({
+                      serial_number: '',
+                      material_description: '',
+                      category: 'Manual Entry'
+                    })
+                    setIsEditing(true)
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center gap-2 whitespace-nowrap"
+                >
+                  <icons.Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add New</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Edit Material Modal */}
+            {isEditing && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">
+                    {editingMaterial?.id ? 'Edit Material' : 'Add New Material'}
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Serial Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editingMaterial?.serial_number || ''}
+                        onChange={(e) => setEditingMaterial({
+                          ...editingMaterial,
+                          serial_number: e.target.value
+                        })}
+                        disabled={!!editingMaterial?.id}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Material Description <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        value={editingMaterial?.material_description || ''}
+                        onChange={(e) => setEditingMaterial({
+                          ...editingMaterial,
+                          material_description: e.target.value
+                        })}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Category
+                      </label>
+                      <input
+                        type="text"
+                        value={editingMaterial?.category || ''}
+                        onChange={(e) => setEditingMaterial({
+                          ...editingMaterial,
+                          category: e.target.value
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                        placeholder="e.g., Electronics, Furniture, etc."
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+                    <button
+                      onClick={() => {
+                        setIsEditing(false)
+                        setEditingMaterial(null)
+                      }}
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveMaterial}
+                      disabled={!editingMaterial?.serial_number || !editingMaterial?.material_description}
+                      className="px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Save Material
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Material Mappings List */}
+            {materialMappings.length === 0 ? (
+              <div className="py-12 text-center">
+                <icons.Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 font-medium">No material mappings found</p>
+                <p className="text-gray-500 text-sm mt-2">
+                  {searchTerm ? 'Try a different search term' : 'Scan barcodes or add materials manually to see them here'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                {materialMappings.map((material) => (
+                  <div key={material.id} className="border border-gray-200 rounded-lg p-4 hover:border-orange-300 hover:shadow-md transition-all bg-white">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <icons.Barcode className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                          <p className="font-mono text-sm font-bold text-gray-900 truncate">
+                            {material.serial_number}
+                          </p>
+                        </div>
+                        
+                        <p className="text-base font-semibold text-gray-800 mb-2">
+                          {material.material_description}
+                        </p>
+                        
+                        <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+                          {material.category && (
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
+                              {material.category}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <icons.Clock className="w-3 h-3" />
+                            Last used: {new Date(material.last_used_at).toLocaleDateString()}
+                          </span>
+                          {material.usage_count && (
+                            <span className="flex items-center gap-1">
+                              <icons.Star className="w-3 h-3" />
+                              Used {material.usage_count} times
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleEditMaterial(material)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <icons.Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMaterial(material.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <icons.Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

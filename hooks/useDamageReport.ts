@@ -63,6 +63,50 @@ export const useDamageReport = () => {
     }
   }, [])
 
+  const saveMaterialMapping = useCallback(async (
+    serialNumber: string, 
+    materialDescription: string, 
+    category: string = 'Manual Entry'
+  ) => {
+    try {
+      return await DamageReportService.saveMaterialMapping(
+        serialNumber, 
+        materialDescription, 
+        category
+      )
+    } catch (error) {
+      console.error('Error saving material mapping:', error)
+      throw error
+    }
+  }, [])
+
+  const updateMaterialMapping = useCallback(async (id: string, updates: Partial<any>) => {
+    try {
+      return await DamageReportService.updateMaterialMapping(id, updates)
+    } catch (error) {
+      console.error('Error updating material mapping:', error)
+      throw error
+    }
+  }, [])
+
+  const deleteMaterialMapping = useCallback(async (id: string) => {
+    try {
+      return await DamageReportService.deleteMaterialMapping(id)
+    } catch (error) {
+      console.error('Error deleting material mapping:', error)
+      throw error
+    }
+  }, [])
+
+  const getMaterialMappings = useCallback(async (searchTerm?: string) => {
+    try {
+      return await DamageReportService.getMaterialMappings(searchTerm)
+    } catch (error) {
+      console.error('Error fetching material mappings:', error)
+      throw error
+    }
+  }, [])
+
   return {
     isLoading,
     savedReports,
@@ -72,5 +116,9 @@ export const useDamageReport = () => {
     uploadPhoto,
     lookupBarcode,
     checkSerialNumber,
+    saveMaterialMapping,
+    updateMaterialMapping,
+    deleteMaterialMapping,
+    getMaterialMappings,
   }
 }
