@@ -11,6 +11,7 @@ export interface DamageItem {
   barcode: string
   material_code: string
   material_description: string
+  category?: string
   damage_type: string
   damage_description: string
   photo_url?: string
@@ -52,7 +53,7 @@ export class DamageReportService {
     }
   }
 
-  // Lookup barcode with fallback to serial_material_mapping
+  // Lookup barcode with category support
   static async lookupBarcode(barcode: string): Promise<any> {
     try {
       const cleanBarcode = barcode.trim()
@@ -115,7 +116,7 @@ export class DamageReportService {
           barcode: cleanBarcode,
           material_code: materialCode,
           material_description: materialInfo.model,
-          category: materialInfo.category,
+          category: materialInfo.category || 'Unknown',
           source: 'category_mapping',
         }
       }
@@ -127,7 +128,7 @@ export class DamageReportService {
           barcode: cleanBarcode,
           material_code: cleanBarcode,
           material_description: originalMaterialInfo.model,
-          category: originalMaterialInfo.category,
+          category: originalMaterialInfo.category || 'Unknown',
           source: 'category_mapping',
         }
       }
@@ -147,7 +148,7 @@ export class DamageReportService {
           barcode: cleanBarcode,
           material_code: materialCode,
           material_description: materialInfo.model,
-          category: materialInfo.category,
+          category: materialInfo.category || 'Unknown',
           source: 'fallback',
         }
       }
@@ -156,7 +157,7 @@ export class DamageReportService {
     }
   }
 
-  // Save new material mapping to serial_material_mapping
+  // Save new material mapping
   static async saveMaterialMapping(
     serialNumber: string, 
     materialDescription: string, 
@@ -224,7 +225,7 @@ export class DamageReportService {
     }
   }
 
-  // Get material mappings with search
+  // Get material mappings
   static async getMaterialMappings(searchTerm?: string) {
     try {
       let query = supabase
@@ -276,7 +277,7 @@ export class DamageReportService {
     }
   }
 
-  // Save report
+  // Save report with category support
   static async saveReport(report: DamageReport): Promise<void> {
     try {
       const { data: reportData, error: reportError } = await supabase
@@ -311,6 +312,7 @@ export class DamageReportService {
           barcode: item.barcode,
           material_code: item.material_code,
           material_description: item.material_description,
+          category: item.category || null,
           damage_type: item.damage_type,
           damage_description: item.damage_description,
           mapping_id: item.mapping_id || null,
