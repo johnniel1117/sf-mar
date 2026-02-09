@@ -37,7 +37,7 @@ export default function DamageReportForm() {
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [report, setReport] = useState<DamageReport>({
     report_number: '',
-    rcv_control_no: '',
+    // rcv_control_no: '',
     report_date: new Date().toISOString().split('T')[0],
     seal_no: '',
     driver_name: '',
@@ -250,7 +250,7 @@ export default function DamageReportForm() {
   const resetForm = () => {
     setReport({
       report_number: '',
-      rcv_control_no: '',
+      // rcv_control_no: '',
       report_date: new Date().toISOString().split('T')[0],
       seal_no: '',
       driver_name: '',

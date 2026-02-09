@@ -20,7 +20,7 @@ export interface DamageItem {
 export interface DamageReport {
   id?: string
   report_number: string
-  rcv_control_no: string
+  // rcv_control_no: string
   report_date: string
   seal_no: string
   driver_name: string
@@ -295,7 +295,7 @@ static async lookupBarcode(barcode: string): Promise<any> {
         .insert([
           {
             report_number: report.report_number || `DMG-${Date.now()}`,
-            rcv_control_no: report.rcv_control_no,
+            // rcv_control_no: report.rcv_control_no,
             report_date: report.report_date,
             seal_no: report.seal_no,
             driver_name: report.driver_name,
