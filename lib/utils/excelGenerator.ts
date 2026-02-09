@@ -1,205 +1,127 @@
-// lib/utils/excelGenerator.ts
 import { DamageReport } from '@/lib/services/damageReportService'
 import * as XLSX from 'xlsx'
 
 export class ExcelGenerator {
   static generateExcel(reportData: DamageReport): void {
-    // Create workbook
-    const wb = XLSX.utils.book_new()
-    wb.Props = {
-      Title: `Damage Report ${reportData.report_number}`,
-      Subject: "Damage and Deviation Report",
-      Author: "SF Express Warehouse",
-      CreatedDate: new Date()
-    }
-
-    // Create main report sheet
-    const mainData = [
-      ["SF EXPRESS WAREHOUSE", "", "", "", "", ""],
-      ["DAMAGE AND DEVIATION REPORT", "", "", "", "", ""],
-      ["", "", "", "", "", ""],
-      ["Report Number:", reportData.report_number, "", "Report Date:", reportData.report_date, ""],
-      ["Driver Name:", reportData.driver_name, "", "Plate No:", reportData.plate_no, ""],
-      ["Seal No:", reportData.seal_no, "", "Container No:", reportData.container_no, ""],
-      ["", "", "", "", "", ""],
-      ["Prepared By:", reportData.prepared_by, "", "Position:", "Admin Staff", ""],
-      ["Noted By:", reportData.noted_by, "", "Position:", "Security Guard", ""],
-      ["Acknowledged By:", reportData.acknowledged_by, "", "Position:", "Supervisor", ""],
-      ["", "", "", "", "", ""],
-      ["Narrative Findings:", "", "", "", "", ""],
-      [reportData.narrative_findings || 'N/A', "", "", "", "", ""],
-      ["", "", "", "", "", ""],
-    ]
-
-    const ws_main = XLSX.utils.aoa_to_sheet(mainData)
-    
-    // Set column widths for main sheet
-    const colWidths = [
-      { wch: 15 }, // A
-      { wch: 25 }, // B
-      { wch: 10 }, // C
-      { wch: 15 }, // D
-      { wch: 25 }, // E
-      { wch: 10 }, // F
-    ]
-    ws_main['!cols'] = colWidths
-
-    // Merge cells for headers
-    ws_main['!merges'] = [
-      // SF EXPRESS WAREHOUSE header
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-      // DAMAGE AND DEVIATION REPORT header
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
-      // Narrative Findings header
-      { s: { r: 11, c: 0 }, e: { r: 11, c: 5 } },
-      // Narrative Findings content
-      { s: { r: 12, c: 0 }, e: { r: 12, c: 5 } }
-    ]
-
-    XLSX.utils.book_append_sheet(wb, ws_main, "Report Summary")
-
-    // Create items sheet if there are items
     const items = reportData.items || ((reportData as any).damage_items || [])
-    if (items.length > 0) {
-      const itemsData = [
-        ["DAMAGED ITEMS LIST"],
-        ["", "", "", "", ""],
-        ["No.", "Material Description", "Serial No.", "Damage Type", "Damage Description"],
-        ...items.map(item => [
-          item.item_number,
-          item.material_description || 'Unknown',
-          item.barcode,
-          item.damage_type || '',
-          item.damage_description || ''
-        ]),
-        ["", "", "", "", ""],
-        ["Total Items:", items.length, "", "", ""]
-      ]
+    
+    // Create the exact layout from the image
+    const data = [
+      // Line 1: Company name (centered)
+      ["SF EXPRESS WAREHOUSE"],
+      // Line 2: Address (centered)
+      ["LIPPER TINGUB, MANDAUE, CEBU"],
+      // Empty line
+      [""],
+      // Line 4: Report number (centered)
+      [reportData.report_number],
+      // Empty line
+      [""],
+      // Line 6: Title (centered)
+      ["DAMAGE AND DEVIATION REPORT"],
+      // Empty line
+      [""],
+      // Line 8: Report details - formatted as two columns
+      ["Report Date", reportData.report_date, "", "Driver Name", reportData.driver_name],
+      // Line 9: More details
+      ["Plate No.", reportData.plate_no, "", "Seal No.", reportData.seal_no || ""],
+      // Line 10: Container No.
+      ["Container No.", reportData.container_no || "", "", "", ""],
+      // Empty line
+      [""],
+      // Table header
+      ["NO.", "MATERIAL DESCRIPTION", "SERIAL NO.", "DAMAGE TYPE", "DAMAGE DESCRIPTION"],
+      // Table data
+      ...items.map(item => [
+        item.item_number,
+        item.material_description || 'Unknown',
+        item.barcode,
+        item.damage_type || '',
+        item.damage_description || ''
+      ]),
+      // Empty line after table
+      [""],
+      // Total items
+      [`TOTAL ITEMS: ${items.length}`],
+      // Empty line
+      [""],
+      // Narrative Findings
+      ["Narrative Findings:"],
+      [reportData.narrative_findings || 'N/A'],
+      // Empty line
+      [""],
+      // Signature labels
+      ["Prepared By:", "Noted By:", "Acknowledged By:"],
+      // Names in uppercase
+      [
+        (reportData.prepared_by || '').toUpperCase(),
+        (reportData.noted_by || '').toUpperCase(),
+        (reportData.acknowledged_by || '').toUpperCase()
+      ],
+      // Positions
+      ["Admin Staff", "Security Guard", "Supervisor"]
+    ]
 
-      const ws_items = XLSX.utils.aoa_to_sheet(itemsData)
-      
-      // Set column widths for items sheet
-      ws_items['!cols'] = [
-        { wch: 5 },   // A: No.
-        { wch: 40 },  // B: Material Description
-        { wch: 20 },  // C: Serial No.
-        { wch: 15 },  // D: Damage Type
-        { wch: 50 },  // E: Damage Description
-      ]
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.aoa_to_sheet(data)
 
-      // Merge header cell
-      ws_items['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }
-      ]
+    // Set column widths to match the image layout
+    const colWidths = [
+      { wch: 12 },  // A: NO. / Labels (Report Date, Plate No., etc.)
+      { wch: 25 },  // B: MATERIAL DESCRIPTION / Values
+      { wch: 15 },  // C: SERIAL NO. / Empty spacer
+      { wch: 15 },  // D: DAMAGE TYPE / Driver Name, Seal No.
+      { wch: 25 }   // E: DAMAGE DESCRIPTION / Values
+    ]
+    ws['!cols'] = colWidths
 
-      XLSX.utils.book_append_sheet(wb, ws_items, "Damaged Items")
+    // Merge cells for centered headers and content
+    const merges = []
+    
+    // Merge cells for centered content (rows 0-6)
+    for (let i = 0; i <= 6; i++) {
+      merges.push({ s: { r: i, c: 0 }, e: { r: i, c: 4 } })
     }
+    
+    // Merge Container No. row (span all 5 columns)
+    merges.push({ s: { r: 10, c: 0 }, e: { r: 10, c: 4 } })
+    
+    // Calculate Total Items row position
+    const totalItemsRow = 13 + items.length  // 13 = rows before table data
+    merges.push({ s: { r: totalItemsRow, c: 0 }, e: { r: totalItemsRow, c: 4 } })
+    
+    // Calculate Narrative Findings rows position
+    const narrativeLabelRow = totalItemsRow + 2
+    const narrativeContentRow = narrativeLabelRow + 1
+    merges.push({ s: { r: narrativeLabelRow, c: 0 }, e: { r: narrativeLabelRow, c: 4 } })
+    merges.push({ s: { r: narrativeContentRow, c: 0 }, e: { r: narrativeContentRow, c: 4 } })
 
+    ws['!merges'] = merges
+
+    XLSX.utils.book_append_sheet(wb, ws, "Damage Report")
+    
     // Generate filename
-    const filename = `Damage_Report_${reportData.report_number || reportData.id || 'unknown'}_${new Date().toISOString().split('T')[0]}.xlsx`
-
+    const filename = `Damage_Report_${reportData.report_number || reportData.id || 'unknown'}.xlsx`
+    
     // Write and download
     XLSX.writeFile(wb, filename)
   }
 
-  // Alternative method that returns Blob for downloading
-  static generateExcelAsBlob(reportData: DamageReport): Blob {
-    const wb = XLSX.utils.book_new()
-    wb.Props = {
-      Title: `Damage Report ${reportData.report_number}`,
-      Subject: "Damage and Deviation Report",
-      Author: "SF Express Warehouse",
-      CreatedDate: new Date()
-    }
-
-    // Create main report sheet
-    const mainData = [
-      ["SF EXPRESS WAREHOUSE", "", "", "", "", ""],
-      ["DAMAGE AND DEVIATION REPORT", "", "", "", "", ""],
-      ["", "", "", "", "", ""],
-      ["Report Number:", reportData.report_number, "", "Report Date:", reportData.report_date, ""],
-      ["Driver Name:", reportData.driver_name, "", "Plate No:", reportData.plate_no, ""],
-      ["Seal No:", reportData.seal_no, "", "Container No:", reportData.container_no, ""],
-      ["", "", "", "", "", ""],
-      ["Prepared By:", reportData.prepared_by.toUpperCase(), "", "Position:", "Admin Staff", ""],
-      ["Noted By:", reportData.noted_by.toUpperCase(), "", "Position:", "Security Guard", ""],
-      ["Acknowledged By:", reportData.acknowledged_by.toUpperCase(), "", "Position:", "Supervisor", ""],
-      ["", "", "", "", "", ""],
-      ["Narrative Findings:", "", "", "", "", ""],
-      [reportData.narrative_findings || 'N/A', "", "", "", "", ""],
-      ["", "", "", "", "", ""],
-    ]
-
-    const ws_main = XLSX.utils.aoa_to_sheet(mainData)
-    
-    // Set column widths
-    ws_main['!cols'] = [
-      { wch: 15 }, { wch: 25 }, { wch: 10 },
-      { wch: 15 }, { wch: 25 }, { wch: 10 }
-    ]
-
-    // Merge cells
-    ws_main['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
-      { s: { r: 11, c: 0 }, e: { r: 11, c: 5 } },
-      { s: { r: 12, c: 0 }, e: { r: 12, c: 5 } }
-    ]
-
-    XLSX.utils.book_append_sheet(wb, ws_main, "Report Summary")
-
-    // Create items sheet
-    const items = reportData.items || ((reportData as any).damage_items || [])
-    if (items.length > 0) {
-      const itemsData = [
-        ["DAMAGED ITEMS LIST"],
-        ["", "", "", "", ""],
-        ["No.", "Material Description", "Serial No.", "Damage Type", "Damage Description"],
-        ...items.map(item => [
-          item.item_number,
-          item.material_description || 'Unknown',
-          item.barcode,
-          item.damage_type || '',
-          item.damage_description || ''
-        ]),
-        ["", "", "", "", ""],
-        ["Total Items:", items.length, "", "", ""]
-      ]
-
-      const ws_items = XLSX.utils.aoa_to_sheet(itemsData)
-      
-      ws_items['!cols'] = [
-        { wch: 5 }, { wch: 40 }, { wch: 20 },
-        { wch: 15 }, { wch: 50 }
-      ]
-
-      ws_items['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }
-      ]
-
-      XLSX.utils.book_append_sheet(wb, ws_items, "Damaged Items")
-    }
-
-    // Convert to blob
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
-    return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-  }
-
-  // Method for batch export of multiple reports
+  // Batch export method
   static generateBatchExcel(reports: DamageReport[]): void {
-    const wb = XLSX.utils.book_new()
-    wb.Props = {
-      Title: "Damage Reports Export",
-      Subject: "Multiple Damage Reports",
-      Author: "SF Express Warehouse",
-      CreatedDate: new Date()
+    if (reports.length === 0) {
+      alert('No reports to export')
+      return
     }
 
-    // Create summary sheet with all reports
+    const wb = XLSX.utils.book_new()
+    
+    // Create a summary sheet
     const summaryData = [
-      ["DAMAGE REPORTS SUMMARY"],
-      ["", "", "", "", "", "", "", ""],
-      ["Report No.", "Report Date", "Driver Name", "Plate No.", "Total Items", "Prepared By", "Noted By", "Acknowledged By"],
+      ["DAMAGE REPORTS SUMMARY - SF EXPRESS WAREHOUSE"],
+      ["Export Date:", new Date().toISOString().split('T')[0]],
+      [""],
+      ["Report No.", "Report Date", "Driver Name", "Plate No.", "Total Items", "Prepared By"],
       ...reports.map(report => {
         const items = report.items || ((report as any).damage_items || [])
         return [
@@ -208,35 +130,39 @@ export class ExcelGenerator {
           report.driver_name,
           report.plate_no,
           items.length,
-          report.prepared_by,
-          report.noted_by,
-          report.acknowledged_by
+          report.prepared_by
         ]
       })
     ]
 
-    const ws_summary = XLSX.utils.aoa_to_sheet(summaryData)
-    ws_summary['!cols'] = [
-      { wch: 15 }, { wch: 12 }, { wch: 20 },
-      { wch: 10 }, { wch: 10 }, { wch: 20 },
-      { wch: 20 }, { wch: 20 }
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData)
+    wsSummary['!cols'] = [
+      { wch: 20 }, { wch: 12 }, { wch: 20 },
+      { wch: 10 }, { wch: 10 }, { wch: 20 }
+    ]
+    wsSummary['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }
     ]
     
-    ws_summary['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }
-    ]
-
-    XLSX.utils.book_append_sheet(wb, ws_summary, "Summary")
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Summary")
 
     // Create individual sheets for each report
     reports.forEach((report, index) => {
       const items = report.items || ((report as any).damage_items || [])
-      const reportData = [
+      
+      const data = [
+        ["SF EXPRESS WAREHOUSE"],
+        ["LIPPER TINGUB, MANDAUE, CEBU"],
+        [""],
+        [report.report_number || report.id],
+        [""],
         ["DAMAGE AND DEVIATION REPORT"],
-        [`Report Number: ${report.report_number || report.id}`],
-        [`Report Date: ${report.report_date}`],
-        ["", "", "", "", ""],
-        ["No.", "Material Description", "Serial No.", "Damage Type", "Damage Description"],
+        [""],
+        ["Report Date", report.report_date, "", "Driver Name", report.driver_name],
+        ["Plate No.", report.plate_no, "", "Seal No.", report.seal_no || ""],
+        ["Container No.", report.container_no || ""],
+        [""],
+        ["NO.", "MATERIAL DESCRIPTION", "SERIAL NO.", "DAMAGE TYPE", "DAMAGE DESCRIPTION"],
         ...items.map(item => [
           item.item_number,
           item.material_description || 'Unknown',
@@ -244,35 +170,127 @@ export class ExcelGenerator {
           item.damage_type || '',
           item.damage_description || ''
         ]),
-        ["", "", "", "", ""],
-        ["Total Items:", items.length, "", "", ""],
-        ["", "", "", "", ""],
-        ["Narrative Findings:", "", "", "", ""],
-        [report.narrative_findings || 'N/A', "", "", "", ""]
+        [""],
+        [`TOTAL ITEMS: ${items.length}`],
+        [""],
+        ["Narrative Findings:"],
+        [report.narrative_findings || 'N/A'],
+        [""],
+        ["Prepared By:", "Noted By:", "Acknowledged By:"],
+        [
+          (report.prepared_by || '').toUpperCase(),
+          (report.noted_by || '').toUpperCase(),
+          (report.acknowledged_by || '').toUpperCase()
+        ],
+        ["Admin Staff", "Security Guard", "Supervisor"]
       ]
 
-      const ws = XLSX.utils.aoa_to_sheet(reportData)
-      ws['!cols'] = [
-        { wch: 5 }, { wch: 40 }, { wch: 20 },
-        { wch: 15 }, { wch: 50 }
-      ]
+      const ws = XLSX.utils.aoa_to_sheet(data)
       
-      ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } },
-        { s: { r: 9, c: 0 }, e: { r: 9, c: 4 } },
-        { s: { r: 10, c: 0 }, e: { r: 10, c: 4 } }
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 12 }, { wch: 25 }, { wch: 15 },
+        { wch: 15 }, { wch: 25 }
       ]
 
-      const sheetName = `Report_${index + 1}_${report.report_number?.substring(0, 10) || report.id?.substring(0, 8) || 'unknown'}`
-      XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31)) // Excel sheet names max 31 chars
+      // Merge cells
+      const merges = []
+      // Merge header rows (0-6)
+      for (let i = 0; i <= 6; i++) {
+        merges.push({ s: { r: i, c: 0 }, e: { r: i, c: 4 } })
+      }
+      // Merge Container No.
+      merges.push({ s: { r: 9, c: 0 }, e: { r: 9, c: 4 } })
+      // Calculate positions
+      const totalItemsRow = 13 + items.length
+      const narrativeLabelRow = totalItemsRow + 2
+      const narrativeContentRow = narrativeLabelRow + 1
+      
+      merges.push({ s: { r: totalItemsRow, c: 0 }, e: { r: totalItemsRow, c: 4 } })
+      merges.push({ s: { r: narrativeLabelRow, c: 0 }, e: { r: narrativeLabelRow, c: 4 } })
+      merges.push({ s: { r: narrativeContentRow, c: 0 }, e: { r: narrativeContentRow, c: 4 } })
+
+      ws['!merges'] = merges
+
+      // Create sheet name (Excel limits to 31 characters)
+      const sheetName = `Report_${index + 1}`
+      XLSX.utils.book_append_sheet(wb, ws, sheetName)
     })
 
-    // Generate filename
     const filename = `Damage_Reports_Export_${new Date().toISOString().split('T')[0]}.xlsx`
-
-    // Write and download
     XLSX.writeFile(wb, filename)
+  }
+
+  // Helper method to generate Excel from blob (for web workers or service workers)
+  static generateExcelAsBlob(reportData: DamageReport): Blob {
+    const wb = XLSX.utils.book_new()
+    const items = reportData.items || ((reportData as any).damage_items || [])
+    
+    const data = [
+      ["SF EXPRESS WAREHOUSE"],
+      ["LIPPER TINGUB, MANDAUE, CEBU"],
+      [""],
+      [reportData.report_number],
+      [""],
+      ["DAMAGE AND DEVIATION REPORT"],
+      [""],
+      ["Report Date", reportData.report_date, "", "Driver Name", reportData.driver_name],
+      ["Plate No.", reportData.plate_no, "", "Seal No.", reportData.seal_no || ""],
+      ["Container No.", reportData.container_no || ""],
+      [""],
+      ["NO.", "MATERIAL DESCRIPTION", "SERIAL NO.", "DAMAGE TYPE", "DAMAGE DESCRIPTION"],
+      ...items.map(item => [
+        item.item_number,
+        item.material_description || 'Unknown',
+        item.barcode,
+        item.damage_type || '',
+        item.damage_description || ''
+      ]),
+      [""],
+      [`TOTAL ITEMS: ${items.length}`],
+      [""],
+      ["Narrative Findings:"],
+      [reportData.narrative_findings || 'N/A'],
+      [""],
+      ["Prepared By:", "Noted By:", "Acknowledged By:"],
+      [
+        (reportData.prepared_by || '').toUpperCase(),
+        (reportData.noted_by || '').toUpperCase(),
+        (reportData.acknowledged_by || '').toUpperCase()
+      ],
+      ["Admin Staff", "Security Guard", "Supervisor"]
+    ]
+
+    const ws = XLSX.utils.aoa_to_sheet(data)
+    
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 25 }, { wch: 15 },
+      { wch: 15 }, { wch: 25 }
+    ]
+
+    // Merge cells
+    const merges = []
+    for (let i = 0; i <= 6; i++) {
+      merges.push({ s: { r: i, c: 0 }, e: { r: i, c: 4 } })
+    }
+    
+    merges.push({ s: { r: 9, c: 0 }, e: { r: 9, c: 4 } })
+    
+    const totalItemsRow = 13 + items.length
+    const narrativeLabelRow = totalItemsRow + 2
+    const narrativeContentRow = narrativeLabelRow + 1
+    
+    merges.push({ s: { r: totalItemsRow, c: 0 }, e: { r: totalItemsRow, c: 4 } })
+    merges.push({ s: { r: narrativeLabelRow, c: 0 }, e: { r: narrativeLabelRow, c: 4 } })
+    merges.push({ s: { r: narrativeContentRow, c: 0 }, e: { r: narrativeContentRow, c: 4 } })
+
+    ws['!merges'] = merges
+
+    XLSX.utils.book_append_sheet(wb, ws, "Damage Report")
+    
+    // Convert to blob
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   }
 }
