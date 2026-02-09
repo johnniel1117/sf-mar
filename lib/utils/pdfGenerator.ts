@@ -195,20 +195,21 @@ export class PDFGenerator {
           .signature-line-container {
             position: relative;
             margin-top: 20px;
-            height: 50px;
+            height: 40px;
           }
           
           .signature-line {
             border-top: 1px solid #000;
             position: absolute;
-            top: 25px;
+            top: 20px;
             left: 0;
             right: 0;
+            width: 100%;
           }
           
           .signature-name {
             position: absolute;
-            top: 5px;
+            top: 0;
             left: 0;
             right: 0;
             font-weight: bold;
@@ -220,7 +221,7 @@ export class PDFGenerator {
           
           .signature-position {
             position: absolute;
-            top: 30px;
+            top: 25px;
             left: 0;
             right: 0;
             font-size: 9px;
