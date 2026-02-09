@@ -2,39 +2,14 @@
 
 import React from "react"
 import { useState, useRef, useEffect } from 'react'
-import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock, Info } from 'lucide-react'
+import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock, Info, FileSpreadsheet } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import { useDamageReport } from '@/hooks/useDamageReport'
 import { PDFGenerator } from '@/lib/utils/pdfGenerator'
 import { ExcelGenerator } from '@/lib/utils/excelGenerator'
+import * as XLSX from 'xlsx'
 import { DAMAGE_TYPES, STEPS, Step } from '@/lib/constants/damageReportConstants'
 import type { DamageItem, DamageReport } from '@/lib/services/damageReportService'
-
-// Add a new hook for fetching personnel
-const usePersonnel = () => {
-  const [personnel, setPersonnel] = useState<{admins: any[], guards: any[], supervisors: any[]}>({
-    admins: [],
-    guards: [],
-    supervisors: []
-  });
-  const [loading, setLoading] = useState(false);
-
-  const fetchPersonnel = async () => {
-    setLoading(true);
-    try {
-      // Fetch from your Supabase API endpoint
-      const response = await fetch('/api/personnel');
-      const data = await response.json();
-      setPersonnel(data);
-    } catch (error) {
-      console.error('Error fetching personnel:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { personnel, loading, fetchPersonnel };
-};
 
 // Import icons from lucide-react
 const icons = {
@@ -58,10 +33,10 @@ const icons = {
   Star: Star,
   Clock: Clock,
   Info: Info,
+  FileSpreadsheet: FileSpreadsheet,
 } as const
 
 export default function DamageReportForm() {
-  const [downloadMenuOpen, setDownloadMenuOpen] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [report, setReport] = useState<DamageReport>({
     report_number: '',
@@ -78,40 +53,6 @@ export default function DamageReportForm() {
     status: 'draft',
     items: [],
   })
-
-  const handleDownloadExcel = (savedReport: DamageReport) => {
-  try {
-    ExcelGenerator.generateExcel(savedReport)
-    setDownloadMenuOpen(null)
-  } catch (error) {
-    console.error('Error generating Excel:', error)
-    alert('Error generating Excel file')
-  }
-}
-
-const handleDownloadPDF = (savedReport: DamageReport) => {
-  try {
-    PDFGenerator.generatePDF(savedReport)
-    setDownloadMenuOpen(null)
-  } catch (error) {
-    console.error('Error generating PDF:', error)
-    alert('Error generating PDF file')
-  }
-}
-
-const handleDownloadBatchExcel = () => {
-  if (savedReports.length === 0) {
-    alert('No reports to export')
-    return
-  }
-  
-  try {
-    ExcelGenerator.generateBatchExcel(savedReports)
-  } catch (error) {
-    console.error('Error generating batch Excel:', error)
-    alert('Error generating Excel file')
-  }
-}
 
   // New state for personnel dropdowns
   const [personnelData, setPersonnelData] = useState({
@@ -144,6 +85,11 @@ const handleDownloadBatchExcel = () => {
   const [newMaterialDescription, setNewMaterialDescription] = useState('')
   const [newMaterialCategory, setNewMaterialCategory] = useState('Manual Entry')
   const [isSavingMaterial, setIsSavingMaterial] = useState(false)
+
+  // Download modal states
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
+  const [downloadType, setDownloadType] = useState<'pdf' | 'excel'>('pdf')
+  const [selectedDownloadReport, setSelectedDownloadReport] = useState<DamageReport | null>(null)
 
   const {
     isLoading,
@@ -402,6 +348,28 @@ const handleDownloadBatchExcel = () => {
         alert('Error deleting report')
       }
     }
+  }
+
+  // Download handlers
+  const handleDownloadReport = (report: DamageReport, type: 'pdf' | 'excel') => {
+    if (type === 'pdf') {
+      PDFGenerator.generatePDF(report)
+    } else {
+      ExcelGenerator.generateExcel(report)
+    }
+  }
+
+  const handleOpenDownloadModal = (report: DamageReport) => {
+    setSelectedDownloadReport(report)
+    setShowDownloadModal(true)
+  }
+
+  const handleDownloadConfirm = () => {
+    if (selectedDownloadReport) {
+      handleDownloadReport(selectedDownloadReport, downloadType)
+    }
+    setShowDownloadModal(false)
+    setSelectedDownloadReport(null)
   }
 
   const handleEditMaterial = async (material: any) => {
@@ -1026,7 +994,6 @@ const handleDownloadBatchExcel = () => {
         )}
 
         {/* Saved Reports Tab */}
-        {/* Saved Reports Tab */}
 {activeTab === 'saved' && (
   <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -1035,16 +1002,109 @@ const handleDownloadBatchExcel = () => {
           <icons.Download className="w-5 h-5" />
           Saved Reports
         </h3>
-        <p className="text-sm text-gray-600">Manage and export saved damage reports</p>
+        <p className="text-sm text-gray-600">View and download your saved damage reports</p>
       </div>
       
       {savedReports.length > 0 && (
         <button
-          onClick={handleDownloadBatchExcel}
-          className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+          onClick={() => {
+            try {
+              // Create a batch export of all reports
+              const workbook = XLSX.utils.book_new()
+              
+              savedReports.forEach((report, index) => {
+                const items = report.items || ((report as any).damage_items || [])
+                const reportId = report.report_number || report.id || `Report_${index + 1}`
+                
+                const data = [
+                  ["SF EXPRESS WAREHOUSE"],
+                  ["LIPPER TINGUB, MANDAUE, CEBU"],
+                  [""],
+                  [reportId],
+                  [""],
+                  ["DAMAGE AND DEVIATION REPORT"],
+                  [""],
+                  ["Report Date", report.report_date || "", "", "Driver Name", report.driver_name || ""],
+                  ["Plate No.", report.plate_no || "", "", "Seal No.", report.seal_no || ""],
+                  ["Container No.", report.container_no || ""],
+                  [""],
+                  ["NO.", "MATERIAL DESCRIPTION", "SERIAL NO.", "DAMAGE TYPE", "DAMAGE DESCRIPTION"],
+                  ...items.map(item => [
+                    item.item_number || index + 1,
+                    item.material_description || 'Unknown',
+                    item.barcode || '',
+                    item.damage_type || '',
+                    item.damage_description || ''
+                  ]),
+                  [""],
+                  [`TOTAL ITEMS: ${items.length}`],
+                  [""],
+                  ["Narrative Findings:"],
+                  [report.narrative_findings || 'N/A'],
+                  [""],
+                  ["Prepared By:", "Noted By:", "Acknowledged By:"],
+                  [
+                    (report.prepared_by || '').toUpperCase(),
+                    (report.noted_by || '').toUpperCase(),
+                    (report.acknowledged_by || '').toUpperCase()
+                  ],
+                  ["Admin Staff", "Security Guard", "Supervisor"]
+                ]
+
+                const ws = XLSX.utils.aoa_to_sheet(data)
+                
+                // Set column widths
+                ws['!cols'] = [
+                  { wch: 12 },  // Column A
+                  { wch: 25 },  // Column B
+                  { wch: 15 },  // Column C
+                  { wch: 15 },  // Column D
+                  { wch: 25 }   // Column E
+                ]
+
+                // Merge cells for headers
+                const merges = []
+                // Merge header rows (0-6)
+                for (let i = 0; i <= 6; i++) {
+                  merges.push({ s: { r: i, c: 0 }, e: { r: i, c: 4 } })
+                }
+                // Merge Container No.
+                merges.push({ s: { r: 9, c: 0 }, e: { r: 9, c: 4 } })
+                // Calculate positions
+                const totalItemsRow = 13 + items.length
+                const narrativeLabelRow = totalItemsRow + 2
+                const narrativeContentRow = narrativeLabelRow + 1
+                
+                merges.push({ s: { r: totalItemsRow, c: 0 }, e: { r: totalItemsRow, c: 4 } })
+                merges.push({ s: { r: narrativeLabelRow, c: 0 }, e: { r: narrativeLabelRow, c: 4 } })
+                merges.push({ s: { r: narrativeContentRow, c: 0 }, e: { r: narrativeContentRow, c: 4 } })
+
+                ws['!merges'] = merges
+                
+                // Create a safe sheet name (Excel limits to 31 characters)
+                let sheetName = `Report_${index + 1}`
+                if (reportId) {
+                  // Remove invalid Excel sheet name characters
+                  const cleanId = reportId.toString()
+                    .replace(/[\\/*?:[\]]/g, '')
+                    .substring(0, 20)
+                  sheetName = `Report_${index + 1}_${cleanId}`
+                }
+                
+                XLSX.utils.book_append_sheet(workbook, ws, sheetName.substring(0, 31))
+              })
+
+              XLSX.writeFile(workbook, `Damage_Reports_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
+            } catch (error) {
+              console.error('Error exporting all reports:', error)
+              alert('Error exporting reports. Please try again.')
+            }
+          }}
+          className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
         >
           <icons.Download className="w-4 h-4" />
-          Export All as Excel
+          <span className="hidden sm:inline">Export All as Excel</span>
+          <span className="sm:hidden">Export All</span>
         </button>
       )}
     </div>
@@ -1057,104 +1117,80 @@ const handleDownloadBatchExcel = () => {
       </div>
     ) : (
       <div className="grid gap-3 sm:gap-4">
-        {savedReports.map((savedReport) => (
-          <div
-            key={savedReport.id}
-            className="p-3 sm:p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <icons.FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
-                      {savedReport.report_number || savedReport.id}
-                    </h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        {new Date(savedReport.report_date).toLocaleDateString()}
-                      </span>
-                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                        {((savedReport as any).damage_items || []).length} items
-                      </span>
+        {savedReports.map((savedReport) => {
+          const reportItems = savedReport.items || ((savedReport as any).damage_items || [])
+          const totalItems = reportItems.length
+          const reportDate = savedReport.report_date ? new Date(savedReport.report_date).toLocaleDateString() : 'No date'
+          const reportId = savedReport.report_number || savedReport.id || 'Unknown Report'
+          
+          return (
+            <div
+              key={savedReport.id}
+              className="p-3 sm:p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <icons.FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
+                        {reportId}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          {reportDate}
+                        </span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                          {totalItems} item{totalItems !== 1 ? 's' : ''}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
-                  {savedReport.driver_name && (
-                    <span className="flex items-center gap-1">
-                      <span className="font-semibold">Driver:</span> {savedReport.driver_name}
-                    </span>
-                  )}
-                  {savedReport.plate_no && (
-                    <span className="hidden sm:flex items-center gap-1">
-                      <span className="font-semibold">Plate:</span> {savedReport.plate_no}
-                    </span>
-                  )}
-                  {savedReport.prepared_by && (
-                    <span className="hidden sm:flex items-center gap-1">
-                      <span className="font-semibold">By:</span> {savedReport.prepared_by}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto relative">
-                <div className="relative">
-                  <button
-                    onClick={() => setDownloadMenuOpen(
-                      downloadMenuOpen === savedReport.id ? null : savedReport.id || ''
+                  <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                    {savedReport.driver_name && (
+                      <span className="flex items-center gap-1">
+                        <span className="font-semibold">Driver:</span> {savedReport.driver_name}
+                      </span>
                     )}
-                    className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-md"
+                    {savedReport.plate_no && (
+                      <span className="hidden sm:flex items-center gap-1">
+                        <span className="font-semibold">Plate:</span> {savedReport.plate_no}
+                      </span>
+                    )}
+                    {savedReport.prepared_by && (
+                      <span className="hidden sm:flex items-center gap-1">
+                        <span className="font-semibold">By:</span> {savedReport.prepared_by}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => handleOpenDownloadModal(savedReport)}
+                    className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold text-sm hover:from-green-700 hover:to-green-800 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                   >
                     <icons.Download className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span>Download</span>
                   </button>
-                  
-                  {downloadMenuOpen === savedReport.id && (
-                    <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-10 overflow-hidden">
-                      <button
-                        onClick={() => handleDownloadPDF(savedReport)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700"
-                      >
-                        <FileText className="w-4 h-4 text-red-600" />
-                        <div>
-                          <div className="font-medium">Download as PDF</div>
-                          <div className="text-xs text-gray-500">Print-ready format</div>
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => handleDownloadExcel(savedReport)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700 border-t border-gray-200"
-                      >
-                        <FileText className="w-4 h-4 text-green-600" />
-                        <div>
-                          <div className="font-medium">Download as Excel</div>
-                          <div className="text-xs text-gray-500">Data analysis format</div>
-                        </div>
-                      </button>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => handleDeleteReport(savedReport.id!)}
+                    className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold text-sm hover:from-red-700 hover:to-red-800 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                  >
+                    <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span>Delete</span>
+                  </button>
                 </div>
-                
-                <button
-                  onClick={() => handleDeleteReport(savedReport.id!)}
-                  className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md"
-                >
-                  <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>Delete</span>
-                </button>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     )}
   </div>
 )}
-
         {/* Material Mappings Tab */}
         {activeTab === 'materials' && (
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
@@ -1449,6 +1485,108 @@ const handleDownloadBatchExcel = () => {
                     Save & Continue
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Download Modal */}
+      {showDownloadModal && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50 p-4">
+          <div 
+            className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Choose Download Format</h3>
+              <button
+                onClick={() => setShowDownloadModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="space-y-3 mb-8">
+              {/* PDF Option */}
+              <button
+                onClick={() => setDownloadType('pdf')}
+                className={`w-full flex items-center gap-4 p-4 sm:p-5 border-2 rounded-xl transition-all duration-300 hover:shadow-md ${
+                  downloadType === 'pdf'
+                    ? "border-green-500 bg-gradient-to-r from-green-50 to-green-100"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                  downloadType === 'pdf' ? "border-green-600" : "border-gray-300"
+                }`}>
+                  {downloadType === 'pdf' && (
+                    <div className="w-3.5 h-3.5 rounded-full bg-green-600" />
+                  )}
+                </div>
+                <FileText className={`w-6 h-6 ${downloadType === 'pdf' ? 'text-green-600' : 'text-gray-400'}`} />
+                <div className="text-left flex-1">
+                  <p className="font-bold text-gray-800">PDF Document</p>
+                  <p className="text-sm text-gray-500 mt-0.5">Print-ready format for signatures</p>
+                </div>
+              </button>
+              
+              {/* Excel Option */}
+              <button
+                onClick={() => setDownloadType('excel')}
+                className={`w-full flex items-center gap-4 p-4 sm:p-5 border-2 rounded-xl transition-all duration-300 hover:shadow-md ${
+                  downloadType === 'excel'
+                    ? "border-blue-500 bg-gradient-to-r from-blue-50 to-blue-100"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                  downloadType === 'excel' ? "border-blue-600" : "border-gray-300"
+                }`}>
+                  {downloadType === 'excel' && (
+                    <div className="w-3.5 h-3.5 rounded-full bg-blue-600" />
+                  )}
+                </div>
+                <FileSpreadsheet className={`w-6 h-6 ${downloadType === 'excel' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <div className="text-left flex-1">
+                  <p className="font-bold text-gray-800">Excel Spreadsheet</p>
+                  <p className="text-sm text-gray-500 mt-0.5">Editable spreadsheet format</p>
+                </div>
+              </button>
+            </div>
+            
+            {/* Report Info Preview */}
+            {selectedDownloadReport && (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-sm font-medium text-gray-700 mb-1">Selected Report</p>
+                <p className="text-xs text-gray-600">
+                  Report #: {selectedDownloadReport.report_number || selectedDownloadReport.id}
+                </p>
+                <p className="text-xs text-gray-600">
+                  Date: {new Date(selectedDownloadReport.report_date).toLocaleDateString()}
+                </p>
+                <p className="text-xs text-gray-600">
+                  Items: {((selectedDownloadReport as any).damage_items || []).length} damaged items
+                </p>
+              </div>
+            )}
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDownloadModal(false)
+                  setSelectedDownloadReport(null)
+                }}
+                className="flex-1 px-4 sm:px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-semibold text-sm sm:text-base"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDownloadConfirm}
+                className="flex-1 px-4 sm:px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl text-sm sm:text-base"
+              >
+                Download Now
               </button>
             </div>
           </div>
