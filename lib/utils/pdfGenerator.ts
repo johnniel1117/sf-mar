@@ -190,7 +190,6 @@ export class PDFGenerator {
             font-size: 10px;
             text-align: left;
             margin-bottom: 5px;
-            color: #666;
           }
           
           .signature-line-container {
@@ -225,7 +224,6 @@ export class PDFGenerator {
             left: 0;
             right: 0;
             font-size: 9px;
-            color: #666;
             text-align: center;
           }
           
