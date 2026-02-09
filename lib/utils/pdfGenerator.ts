@@ -185,21 +185,31 @@ export class PDFGenerator {
             font-size: 10px;
           }
           
+          .signature-label {
+            font-weight: bold;
+            font-size: 10px;
+            text-align: left;
+            margin-bottom: 5px;
+            color: #666;
+          }
+          
           .signature-line {
             border-top: 1px solid #000;
-            margin-top: 40px;
+            margin-top: 35px;
             position: relative;
+            padding-top: 10px;
           }
           
           .signature-name {
             position: absolute;
-            top: -25px;
+            top: -30px;
             left: 0;
             right: 0;
             font-weight: bold;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            text-align: center;
           }
           
           .signature-position {
@@ -207,7 +217,9 @@ export class PDFGenerator {
             bottom: -25px;
             left: 0;
             right: 0;
-            font-size: 10px;
+            font-size: 9px;
+            color: #666;
+            text-align: center;
           }
           
           @media print {
@@ -297,24 +309,24 @@ export class PDFGenerator {
           <!-- Signature Section -->
           <div class="signature-section">
             <div class="signature-box">
-              <div style="min-height: 30px;"></div>
+              <div class="signature-label">Prepared By:</div>
               <div class="signature-line">
                 <div class="signature-name">${reportData.prepared_by || ''}</div>
-                <div class="signature-position">Prepared By</div>
+                <div class="signature-position">Admin Staff</div>
               </div>
             </div>
             <div class="signature-box">
-              <div style="min-height: 30px;"></div>
+              <div class="signature-label">Noted By:</div>
               <div class="signature-line">
                 <div class="signature-name">${reportData.noted_by || ''}</div>
-                <div class="signature-position">Noted By (Guard)</div>
+                <div class="signature-position">Security Guard</div>
               </div>
             </div>
             <div class="signature-box">
-              <div style="min-height: 30px;"></div>
+              <div class="signature-label">Acknowledged By:</div>
               <div class="signature-line">
                 <div class="signature-name">${reportData.acknowledged_by || ''}</div>
-                <div class="signature-position">Acknowledged By</div>
+                <div class="signature-position">Supervisor</div>
               </div>
             </div>
           </div>
