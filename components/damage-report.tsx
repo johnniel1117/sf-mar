@@ -9,6 +9,32 @@ import { PDFGenerator } from '@/lib/utils/pdfGenerator'
 import { DAMAGE_TYPES, STEPS, Step } from '@/lib/constants/damageReportConstants'
 import type { DamageItem, DamageReport } from '@/lib/services/damageReportService'
 
+// Add a new hook for fetching personnel
+const usePersonnel = () => {
+  const [personnel, setPersonnel] = useState<{admins: any[], guards: any[], supervisors: any[]}>({
+    admins: [],
+    guards: [],
+    supervisors: []
+  });
+  const [loading, setLoading] = useState(false);
+
+  const fetchPersonnel = async () => {
+    setLoading(true);
+    try {
+      // Fetch from your Supabase API endpoint
+      const response = await fetch('/api/personnel');
+      const data = await response.json();
+      setPersonnel(data);
+    } catch (error) {
+      console.error('Error fetching personnel:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { personnel, loading, fetchPersonnel };
+};
+
 // Import icons from lucide-react
 const icons = {
   Truck: Truck,
@@ -37,7 +63,6 @@ export default function DamageReportForm() {
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [report, setReport] = useState<DamageReport>({
     report_number: '',
-    // rcv_control_no: '',
     report_date: new Date().toISOString().split('T')[0],
     seal_no: '',
     driver_name: '',
@@ -51,6 +76,18 @@ export default function DamageReportForm() {
     status: 'draft',
     items: [],
   })
+
+  // New state for personnel dropdowns
+  const [personnelData, setPersonnelData] = useState({
+    admins: [] as any[],
+    guards: [] as any[],
+    supervisors: [] as any[]
+  });
+  const [selectedPersonnel, setSelectedPersonnel] = useState({
+    admin: '',
+    guard: '',
+    supervisor: ''
+  });
 
   const [barcodeInput, setBarcodeInput] = useState('')
   const [materialLookup, setMaterialLookup] = useState<Record<string, any>>({})
@@ -89,13 +126,30 @@ export default function DamageReportForm() {
 
   const [mounted, setMounted] = useState(false)
 
+  // Fetch personnel data on component mount
   useEffect(() => {
     setMounted(true)
     loadReports()
+    fetchPersonnelData()
     if (activeTab === 'materials') {
       loadMaterialMappings()
     }
   }, [loadReports, activeTab])
+
+  // Function to fetch personnel data from Supabase
+  const fetchPersonnelData = async () => {
+    try {
+      // Replace with your actual Supabase API call
+      // This is an example - adjust based on your actual API setup
+      const response = await fetch('/api/personnel');
+      if (response.ok) {
+        const data = await response.json();
+        setPersonnelData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching personnel data:', error);
+    }
+  };
 
   const loadMaterialMappings = async () => {
     try {
@@ -105,6 +159,21 @@ export default function DamageReportForm() {
       console.error('Error loading material mappings:', error)
     }
   }
+
+  // Update report fields when personnel selections change
+  useEffect(() => {
+    // Find selected names from personnel data
+    const selectedAdmin = personnelData.admins.find(a => a.id === selectedPersonnel.admin);
+    const selectedGuard = personnelData.guards.find(g => g.id === selectedPersonnel.guard);
+    const selectedSupervisor = personnelData.supervisors.find(s => s.id === selectedPersonnel.supervisor);
+
+    setReport(prev => ({
+      ...prev,
+      prepared_by: selectedAdmin?.name || '',
+      noted_by: selectedGuard?.name || '',
+      acknowledged_by: selectedSupervisor?.name || ''
+    }));
+  }, [selectedPersonnel, personnelData]);
 
   const handleBarcodeInput = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -117,13 +186,11 @@ export default function DamageReportForm() {
         addItem(material)
         setBarcodeInput('')
       } else {
-        // Set up modal state and show modal instead of prompt
         setPendingBarcode(barcode)
         setNewMaterialDescription('')
         setNewMaterialCategory('Manual Entry')
         setShowMaterialModal(true)
         
-        // Keep focus on barcode input
         setTimeout(() => {
           barcodeInputRef.current?.focus()
         }, 100)
@@ -139,7 +206,6 @@ export default function DamageReportForm() {
 
     setIsSavingMaterial(true)
     try {
-      // Save the new mapping to database
       const savedMaterial = await saveMaterialMapping(
         pendingBarcode,
         newMaterialDescription,
@@ -178,7 +244,6 @@ export default function DamageReportForm() {
     setNewMaterialDescription('')
     setNewMaterialCategory('Manual Entry')
     
-    // Return focus to barcode input
     setTimeout(() => {
       barcodeInputRef.current?.focus()
     }, 100)
@@ -237,7 +302,15 @@ export default function DamageReportForm() {
 
   const saveReport = async () => {
     try {
-      await saveReportService(report)
+      // Include personnel IDs in the report
+      const reportWithPersonnel = {
+        ...report,
+        admin_id: selectedPersonnel.admin,
+        guard_id: selectedPersonnel.guard,
+        supervisor_id: selectedPersonnel.supervisor
+      };
+      
+      await saveReportService(reportWithPersonnel)
       alert('Report saved successfully!')
       resetForm()
       loadReports()
@@ -250,7 +323,6 @@ export default function DamageReportForm() {
   const resetForm = () => {
     setReport({
       report_number: '',
-      // rcv_control_no: '',
       report_date: new Date().toISOString().split('T')[0],
       seal_no: '',
       driver_name: '',
@@ -263,6 +335,11 @@ export default function DamageReportForm() {
       actions_required: '',
       status: 'draft',
       items: [],
+    })
+    setSelectedPersonnel({
+      admin: '',
+      guard: '',
+      supervisor: ''
     })
     setBarcodeInput('')
     setMaterialLookup({})
@@ -344,6 +421,14 @@ export default function DamageReportForm() {
       loadMaterialMappings()
     }, 300)
   }
+
+  // Add this function to handle personnel dropdown changes
+  const handlePersonnelChange = (role: 'admin' | 'guard' | 'supervisor', value: string) => {
+    setSelectedPersonnel(prev => ({
+      ...prev,
+      [role]: value
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6 sm:py-8 px-3 sm:px-4">
@@ -632,7 +717,6 @@ export default function DamageReportForm() {
                           </div>
 
                           <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                            {/* Display Serial Number from scanned barcode */}
                             <div className="bg-gray-100 p-3 rounded-lg border border-gray-300">
                               <div className="flex items-center justify-between">
                                 <div>
@@ -729,6 +813,81 @@ export default function DamageReportForm() {
                     </div>
 
                     <div className="space-y-3 sm:space-y-4">
+                      {/* Personnel Dropdowns */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                        {/* Admin Dropdown */}
+                        <div>
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                            Prepared By (Admin) <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={selectedPersonnel.admin}
+                            onChange={(e) => handlePersonnelChange('admin', e.target.value)}
+                            className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                          >
+                            <option value="">Select Admin</option>
+                            {personnelData.admins.map((admin) => (
+                              <option key={admin.id} value={admin.id}>
+                                {admin.name}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedPersonnel.admin && (
+                            <p className="text-xs text-green-600 mt-1 font-medium">
+                              Selected: {personnelData.admins.find(a => a.id === selectedPersonnel.admin)?.name}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Guard Dropdown */}
+                        <div>
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                            Noted By (Guard) <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={selectedPersonnel.guard}
+                            onChange={(e) => handlePersonnelChange('guard', e.target.value)}
+                            className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                          >
+                            <option value="">Select Guard</option>
+                            {personnelData.guards.map((guard) => (
+                              <option key={guard.id} value={guard.id}>
+                                {guard.name}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedPersonnel.guard && (
+                            <p className="text-xs text-green-600 mt-1 font-medium">
+                              Selected: {personnelData.guards.find(g => g.id === selectedPersonnel.guard)?.name}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Supervisor Dropdown */}
+                        <div>
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                            Acknowledged By (Supervisor) <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={selectedPersonnel.supervisor}
+                            onChange={(e) => handlePersonnelChange('supervisor', e.target.value)}
+                            className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                          >
+                            <option value="">Select Supervisor</option>
+                            {personnelData.supervisors.map((supervisor) => (
+                              <option key={supervisor.id} value={supervisor.id}>
+                                {supervisor.name}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedPersonnel.supervisor && (
+                            <p className="text-xs text-green-600 mt-1 font-medium">
+                              Selected: {personnelData.supervisors.find(s => s.id === selectedPersonnel.supervisor)?.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
                       <div>
                         <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                           Narrative Findings
@@ -753,6 +912,12 @@ export default function DamageReportForm() {
                           <div className="flex justify-between sm:flex-col sm:gap-1">
                             <span className="text-gray-600 font-medium">Plate No:</span>
                             <span className="font-semibold text-gray-900">{report.plate_no || 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between sm:flex-col sm:gap-1">
+                            <span className="text-gray-600 font-medium">Prepared By:</span>
+                            <span className="font-semibold text-gray-900">
+                              {report.prepared_by || 'Not selected'}
+                            </span>
                           </div>
                           <div className="flex justify-between sm:flex-col sm:gap-1">
                             <span className="text-gray-600 font-medium">Total Items:</span>
@@ -813,8 +978,8 @@ export default function DamageReportForm() {
                     </button>
                     <button
                       onClick={saveReport}
-                      disabled={isLoading}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all shadow-lg disabled:bg-gray-400"
+                      disabled={isLoading || !selectedPersonnel.admin || !selectedPersonnel.guard || !selectedPersonnel.supervisor}
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                       <icons.Save className="w-4 h-4 sm:w-5 sm:h-5" />
                       {isLoading ? 'Saving...' : 'Save Report'}
@@ -865,6 +1030,11 @@ export default function DamageReportForm() {
                           </span>
                           <span className="hidden sm:inline">•</span>
                           <span>{new Date(savedReport.report_date).toLocaleDateString()}</span>
+                          {savedReport.prepared_by && (
+                            <span className="hidden sm:flex items-center gap-1">
+                              <span className="font-semibold">Prepared by:</span> {savedReport.prepared_by}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
