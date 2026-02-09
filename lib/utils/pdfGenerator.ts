@@ -186,9 +186,28 @@ export class PDFGenerator {
           }
           
           .signature-line {
-            margin-top: 30px;
             border-top: 1px solid #000;
-            padding-top: 5px;
+            margin-top: 40px;
+            position: relative;
+          }
+          
+          .signature-name {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            right: 0;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          
+          .signature-position {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            font-size: 10px;
           }
           
           @media print {
@@ -278,19 +297,25 @@ export class PDFGenerator {
           <!-- Signature Section -->
           <div class="signature-section">
             <div class="signature-box">
-              <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line" style="font-weight: bold;">${reportData.prepared_by || ''}</div>
-              <div style="margin-top: 5px;">Prepared By</div>
+              <div style="min-height: 30px;"></div>
+              <div class="signature-line">
+                <div class="signature-name">${reportData.prepared_by || ''}</div>
+                <div class="signature-position">Prepared By</div>
+              </div>
             </div>
             <div class="signature-box">
-              <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line" style="font-weight: bold;">${reportData.noted_by || ''}</div>
-              <div style="margin-top: 5px;">Noted By (Guard)</div>
+              <div style="min-height: 30px;"></div>
+              <div class="signature-line">
+                <div class="signature-name">${reportData.noted_by || ''}</div>
+                <div class="signature-position">Noted By (Guard)</div>
+              </div>
             </div>
             <div class="signature-box">
-              <div style="min-height: 50px; margin-bottom: 10px;"></div>
-              <div class="signature-line" style="font-weight: bold;">${reportData.acknowledged_by || ''}</div>
-              <div style="margin-top: 5px;">Acknowledged By</div>
+              <div style="min-height: 30px;"></div>
+              <div class="signature-line">
+                <div class="signature-name">${reportData.acknowledged_by || ''}</div>
+                <div class="signature-position">Acknowledged By</div>
+              </div>
             </div>
           </div>
         </div>
