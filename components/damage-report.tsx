@@ -6,6 +6,7 @@ import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckC
 import Navbar from '@/components/Navbar'
 import { useDamageReport } from '@/hooks/useDamageReport'
 import { PDFGenerator } from '@/lib/utils/pdfGenerator'
+import { ExcelGenerator } from '@/lib/utils/excelGenerator'
 import { DAMAGE_TYPES, STEPS, Step } from '@/lib/constants/damageReportConstants'
 import type { DamageItem, DamageReport } from '@/lib/services/damageReportService'
 
@@ -60,6 +61,7 @@ const icons = {
 } as const
 
 export default function DamageReportForm() {
+  const [downloadMenuOpen, setDownloadMenuOpen] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [report, setReport] = useState<DamageReport>({
     report_number: '',
@@ -76,6 +78,40 @@ export default function DamageReportForm() {
     status: 'draft',
     items: [],
   })
+
+  const handleDownloadExcel = (savedReport: DamageReport) => {
+  try {
+    ExcelGenerator.generateExcel(savedReport)
+    setDownloadMenuOpen(null)
+  } catch (error) {
+    console.error('Error generating Excel:', error)
+    alert('Error generating Excel file')
+  }
+}
+
+const handleDownloadPDF = (savedReport: DamageReport) => {
+  try {
+    PDFGenerator.generatePDF(savedReport)
+    setDownloadMenuOpen(null)
+  } catch (error) {
+    console.error('Error generating PDF:', error)
+    alert('Error generating PDF file')
+  }
+}
+
+const handleDownloadBatchExcel = () => {
+  if (savedReports.length === 0) {
+    alert('No reports to export')
+    return
+  }
+  
+  try {
+    ExcelGenerator.generateBatchExcel(savedReports)
+  } catch (error) {
+    console.error('Error generating batch Excel:', error)
+    alert('Error generating Excel file')
+  }
+}
 
   // New state for personnel dropdowns
   const [personnelData, setPersonnelData] = useState({
@@ -139,8 +175,6 @@ export default function DamageReportForm() {
   // Function to fetch personnel data from Supabase
   const fetchPersonnelData = async () => {
     try {
-      // Replace with your actual Supabase API call
-      // This is an example - adjust based on your actual API setup
       const response = await fetch('/api/personnel');
       if (response.ok) {
         const data = await response.json();
@@ -992,76 +1026,134 @@ export default function DamageReportForm() {
         )}
 
         {/* Saved Reports Tab */}
-        {activeTab === 'saved' && (
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
-              <icons.Download className="w-5 h-5" />
-              Saved Reports
-            </h3>
+        {/* Saved Reports Tab */}
+{activeTab === 'saved' && (
+  <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div>
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+          <icons.Download className="w-5 h-5" />
+          Saved Reports
+        </h3>
+        <p className="text-sm text-gray-600">Manage and export saved damage reports</p>
+      </div>
+      
+      {savedReports.length > 0 && (
+        <button
+          onClick={handleDownloadBatchExcel}
+          className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <icons.Download className="w-4 h-4" />
+          Export All as Excel
+        </button>
+      )}
+    </div>
 
-            {savedReports.length === 0 ? (
-              <div className="py-8 sm:py-12 text-center">
-                <icons.FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                <p className="text-gray-600 font-medium text-base sm:text-lg">No reports saved yet</p>
-                <p className="text-gray-500 text-xs sm:text-sm mt-2">Create your first damage report to see it here</p>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:gap-4">
-                {savedReports.map((savedReport) => (
-                  <div
-                    key={savedReport.id}
-                    className="p-3 sm:p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
-                          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <icons.FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
-                              {savedReport.report_number || savedReport.id}
-                            </h4>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
-                          <span className="flex items-center gap-1">
-                            <span className="font-semibold">{((savedReport as any).damage_items || []).length}</span> items
-                          </span>
-                          <span className="hidden sm:inline">•</span>
-                          <span>{new Date(savedReport.report_date).toLocaleDateString()}</span>
-                          {savedReport.prepared_by && (
-                            <span className="hidden sm:flex items-center gap-1">
-                              <span className="font-semibold">Prepared by:</span> {savedReport.prepared_by}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        <button
-                          onClick={() => PDFGenerator.generatePDF(savedReport)}
-                          className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-md"
-                        >
-                          <icons.Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span className="hidden sm:inline">PDF</span>
-                          <span className="sm:hidden">Download</span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteReport(savedReport.id!)}
-                          className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md"
-                        >
-                          <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span className="hidden sm:inline">Delete</span>
-                          <span className="sm:hidden">Remove</span>
-                        </button>
-                      </div>
+    {savedReports.length === 0 ? (
+      <div className="py-8 sm:py-12 text-center">
+        <icons.FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+        <p className="text-gray-600 font-medium text-base sm:text-lg">No reports saved yet</p>
+        <p className="text-gray-500 text-xs sm:text-sm mt-2">Create your first damage report to see it here</p>
+      </div>
+    ) : (
+      <div className="grid gap-3 sm:gap-4">
+        {savedReports.map((savedReport) => (
+          <div
+            key={savedReport.id}
+            className="p-3 sm:p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <icons.FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
+                      {savedReport.report_number || savedReport.id}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        {new Date(savedReport.report_date).toLocaleDateString()}
+                      </span>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                        {((savedReport as any).damage_items || []).length} items
+                      </span>
                     </div>
                   </div>
-                ))}
+                </div>
+                <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                  {savedReport.driver_name && (
+                    <span className="flex items-center gap-1">
+                      <span className="font-semibold">Driver:</span> {savedReport.driver_name}
+                    </span>
+                  )}
+                  {savedReport.plate_no && (
+                    <span className="hidden sm:flex items-center gap-1">
+                      <span className="font-semibold">Plate:</span> {savedReport.plate_no}
+                    </span>
+                  )}
+                  {savedReport.prepared_by && (
+                    <span className="hidden sm:flex items-center gap-1">
+                      <span className="font-semibold">By:</span> {savedReport.prepared_by}
+                    </span>
+                  )}
+                </div>
               </div>
-            )}
+              
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto relative">
+                <div className="relative">
+                  <button
+                    onClick={() => setDownloadMenuOpen(
+                      downloadMenuOpen === savedReport.id ? null : savedReport.id || ''
+                    )}
+                    className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-green-600 text-white rounded-lg font-semibold text-sm hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <icons.Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span>Download</span>
+                  </button>
+                  
+                  {downloadMenuOpen === savedReport.id && (
+                    <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-10 overflow-hidden">
+                      <button
+                        onClick={() => handleDownloadPDF(savedReport)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700"
+                      >
+                        <FileText className="w-4 h-4 text-red-600" />
+                        <div>
+                          <div className="font-medium">Download as PDF</div>
+                          <div className="text-xs text-gray-500">Print-ready format</div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleDownloadExcel(savedReport)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700 border-t border-gray-200"
+                      >
+                        <FileText className="w-4 h-4 text-green-600" />
+                        <div>
+                          <div className="font-medium">Download as Excel</div>
+                          <div className="text-xs text-gray-500">Data analysis format</div>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                <button
+                  onClick={() => handleDeleteReport(savedReport.id!)}
+                  className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg font-semibold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-md"
+                >
+                  <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
           </div>
-        )}
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
         {/* Material Mappings Tab */}
         {activeTab === 'materials' && (
