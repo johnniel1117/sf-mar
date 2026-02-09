@@ -202,7 +202,6 @@ export class PDFGenerator {
           
           .signature-name {
             position: absolute;
-            top: -30px;
             left: 0;
             right: 0;
             font-weight: bold;
@@ -214,11 +213,10 @@ export class PDFGenerator {
           
           .signature-position {
             position: absolute;
-            bottom: -25px;
             left: 0;
             right: 0;
             font-size: 9px;
-            color: #666;
+            color: #000000;
             text-align: center;
           }
           
