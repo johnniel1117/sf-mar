@@ -1,17 +1,22 @@
-import { useState, useCallback } from 'react'
-import { DamageReportService, DamageReport } from '@/lib/services/damageReportService'
+'use client';
 
-export const useDamageReport = () => {
+import { useState, useCallback } from 'react'
+import { DamageReportService, type DamageReport } from '@/lib/services/damageReportService'
+
+export function useDamageReport() {
   const [isLoading, setIsLoading] = useState(false)
   const [savedReports, setSavedReports] = useState<DamageReport[]>([])
 
   const loadReports = useCallback(async () => {
+    setIsLoading(true)
     try {
       const reports = await DamageReportService.loadReports()
       setSavedReports(reports)
     } catch (error) {
       console.error('Error loading reports:', error)
-      throw error
+      setSavedReports([])
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
@@ -27,12 +32,27 @@ export const useDamageReport = () => {
     }
   }, [])
 
-  const deleteReport = useCallback(async (reportId: string) => {
+  const updateReport = useCallback(async (reportId: string, report: DamageReport) => {
+    setIsLoading(true)
     try {
-      await DamageReportService.deleteReport(reportId)
+      await DamageReportService.updateReport(reportId, report)
+    } catch (error) {
+      console.error('Error updating report:', error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  const deleteReport = useCallback(async (reportNumber: string) => {
+    setIsLoading(true)
+    try {
+      await DamageReportService.deleteReport(reportNumber)
     } catch (error) {
       console.error('Error deleting report:', error)
       throw error
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
@@ -50,37 +70,20 @@ export const useDamageReport = () => {
       return await DamageReportService.lookupBarcode(barcode)
     } catch (error) {
       console.error('Error looking up barcode:', error)
-      throw error
+      return null
     }
   }, [])
 
-  const checkSerialNumber = useCallback(async (serialNumber: string) => {
+  const saveMaterialMapping = useCallback(async (serialNumber: string, materialDescription: string, category?: string) => {
     try {
-      return await DamageReportService.checkSerialNumber(serialNumber)
-    } catch (error) {
-      console.error('Error checking serial number:', error)
-      throw error
-    }
-  }, [])
-
-  const saveMaterialMapping = useCallback(async (
-    serialNumber: string, 
-    materialDescription: string, 
-    category: string = 'Manual Entry'
-  ) => {
-    try {
-      return await DamageReportService.saveMaterialMapping(
-        serialNumber, 
-        materialDescription, 
-        category
-      )
+      return await DamageReportService.saveMaterialMapping(serialNumber, materialDescription, category)
     } catch (error) {
       console.error('Error saving material mapping:', error)
       throw error
     }
   }, [])
 
-  const updateMaterialMapping = useCallback(async (id: string, updates: Partial<any>) => {
+  const updateMaterialMapping = useCallback(async (id: string, updates: any) => {
     try {
       return await DamageReportService.updateMaterialMapping(id, updates)
     } catch (error) {
@@ -103,7 +106,16 @@ export const useDamageReport = () => {
       return await DamageReportService.getMaterialMappings(searchTerm)
     } catch (error) {
       console.error('Error fetching material mappings:', error)
-      throw error
+      return []
+    }
+  }, [])
+
+  const checkSerialNumber = useCallback(async (serialNumber: string) => {
+    try {
+      return await DamageReportService.checkSerialNumber(serialNumber)
+    } catch (error) {
+      console.error('Error checking serial number:', error)
+      return { exists: false }
     }
   }, [])
 
@@ -112,13 +124,14 @@ export const useDamageReport = () => {
     savedReports,
     loadReports,
     saveReport,
+    updateReport,
     deleteReport,
     uploadPhoto,
     lookupBarcode,
-    checkSerialNumber,
     saveMaterialMapping,
     updateMaterialMapping,
     deleteMaterialMapping,
     getMaterialMappings,
+    checkSerialNumber,
   }
 }

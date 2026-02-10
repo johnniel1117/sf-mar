@@ -7,7 +7,6 @@ import Navbar from '@/components/Navbar'
 import { useDamageReport } from '@/hooks/useDamageReport'
 import { PDFGenerator } from '@/lib/utils/pdfGenerator'
 import { ExcelGenerator } from '@/lib/utils/excelGenerator'
-import * as XLSX from 'xlsx'
 import { DAMAGE_TYPES, STEPS, Step } from '@/lib/constants/damageReportConstants'
 import type { DamageItem, DamageReport } from '@/lib/services/damageReportService'
 
@@ -95,6 +94,10 @@ export default function DamageReportForm() {
   // View report modal states
   const [showViewModal, setShowViewModal] = useState(false)
   const [viewingReport, setViewingReport] = useState<DamageReport | null>(null)
+
+  // Edit report states
+  const [editingReportId, setEditingReportId] = useState<string | null>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   const {
     isLoading,
@@ -285,26 +288,6 @@ export default function DamageReportForm() {
     }
   }
 
-  const saveReport = async () => {
-    try {
-      // Include personnel IDs in the report
-      const reportWithPersonnel = {
-        ...report,
-        admin_id: selectedPersonnel.admin,
-        guard_id: selectedPersonnel.guard,
-        supervisor_id: selectedPersonnel.supervisor
-      };
-      
-      await saveReportService(reportWithPersonnel)
-      alert('Report saved successfully!')
-      resetForm()
-      loadReports()
-      setActiveTab('saved')
-    } catch (error) {
-      alert('Error saving report')
-    }
-  }
-
   const resetForm = () => {
     setReport({
       report_number: '',
@@ -329,6 +312,61 @@ export default function DamageReportForm() {
     setBarcodeInput('')
     setMaterialLookup({})
     setCurrentStep(1)
+    setEditingReportId(null)
+    setIsEditMode(false)
+  }
+
+  const handleEditReport = async (reportToEdit: DamageReport) => {
+    try {
+      setReport(reportToEdit)
+      setEditingReportId(reportToEdit.id || null)
+      setIsEditMode(true)
+      setCurrentStep(1)
+      setActiveTab('create')
+    } catch (error) {
+      console.error('Error loading report for editing:', error)
+      alert('Failed to load report for editing')
+    }
+  }
+
+  const saveReport = async () => {
+    try {
+      // Include personnel IDs in the report
+      const reportWithPersonnel = {
+        ...report,
+        admin_id: selectedPersonnel.admin,
+        guard_id: selectedPersonnel.guard,
+        supervisor_id: selectedPersonnel.supervisor
+      };
+      
+      if (isEditMode && editingReportId) {
+        // Update existing report
+        const response = await fetch(`/api/damage-reports/${editingReportId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(reportWithPersonnel),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to update report')
+        }
+
+        alert('Report updated successfully!')
+      } else {
+        // Save new report
+        await saveReportService(reportWithPersonnel)
+        alert('Report saved successfully!')
+      }
+
+      resetForm()
+      loadReports()
+      setActiveTab('saved')
+    } catch (error) {
+      alert('Error saving report')
+      console.error('Error:', error)
+    }
   }
 
   const canProceedToStep2 = () => {

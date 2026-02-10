@@ -52,6 +52,23 @@ export class DamageReportService {
     }
   }
 
+  // Load single report by ID
+  static async loadReportById(reportId: string): Promise<DamageReport | null> {
+    try {
+      const { data, error } = await supabase
+        .from('damage_reports')
+        .select('*, damage_items(*)')
+        .eq('id', reportId)
+        .single()
+
+      if (error) throw error
+      return (data as any) || null
+    } catch (error) {
+      console.error('Error loading report:', error)
+      throw error
+    }
+  }
+
 static async lookupBarcode(barcode: string): Promise<any> {
   try {
     const cleanBarcode = barcode.trim()
@@ -335,6 +352,64 @@ static async lookupBarcode(barcode: string): Promise<any> {
       }
     } catch (error) {
       console.error('Error saving report:', error)
+      throw error
+    }
+  }
+
+  // Update existing report
+  static async updateReport(reportId: string, report: DamageReport): Promise<void> {
+    try {
+      // Update report details
+      const { error: reportError } = await supabase
+        .from('damage_reports')
+        .update({
+          report_date: report.report_date,
+          seal_no: report.seal_no,
+          driver_name: report.driver_name,
+          plate_no: report.plate_no,
+          container_no: report.container_no,
+          prepared_by: report.prepared_by,
+          noted_by: report.noted_by,
+          acknowledged_by: report.acknowledged_by,
+          narrative_findings: report.narrative_findings,
+          actions_required: report.actions_required,
+          status: report.status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', reportId)
+
+      if (reportError) throw reportError
+
+      // Delete existing items
+      const { error: deleteError } = await supabase
+        .from('damage_items')
+        .delete()
+        .eq('damage_report_id', reportId)
+
+      if (deleteError) throw deleteError
+
+      // Insert updated items
+      if (report.items.length > 0) {
+        const itemsToInsert = report.items.map((item) => ({
+          damage_report_id: reportId,
+          item_number: item.item_number,
+          barcode: item.barcode,
+          material_code: item.material_code,
+          material_description: item.material_description,
+          damage_type: item.damage_type,
+          damage_description: item.damage_description,
+          mapping_id: item.mapping_id || null,
+          photo_url: item.photo_url || null,
+        }))
+
+        const { error: itemsError } = await supabase
+          .from('damage_items')
+          .insert(itemsToInsert)
+
+        if (itemsError) throw itemsError
+      }
+    } catch (error) {
+      console.error('Error updating report:', error)
       throw error
     }
   }
