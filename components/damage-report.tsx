@@ -99,6 +99,24 @@ export default function DamageReportForm() {
   const [editingReportId, setEditingReportId] = useState<string | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
 
+  // Toast notification state
+  const [toast, setToast] = useState<{
+    message: string
+    type: 'success' | 'error' | 'info'
+    show: boolean
+  }>({
+    message: '',
+    type: 'info',
+    show: false,
+  })
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ message, type, show: true })
+    setTimeout(() => {
+      setToast({ message: '', type: 'info', show: false })
+    }, 3000)
+  }
+
   const {
     isLoading,
     savedReports,
@@ -134,9 +152,10 @@ export default function DamageReportForm() {
         const data = await response.json();
         setPersonnelData(data);
       }
-    } catch (error) {
-      console.error('Error fetching personnel data:', error);
-    }
+      } catch (error) {
+        console.error('Delete error:', error)
+        showToast('Error deleting report', 'error')
+      }
   };
 
   const loadMaterialMappings = async () => {
@@ -325,7 +344,7 @@ export default function DamageReportForm() {
       setActiveTab('create')
     } catch (error) {
       console.error('Error loading report for editing:', error)
-      alert('Failed to load report for editing')
+      showToast('Failed to load report for editing', 'error')
     }
   }
 
@@ -353,18 +372,18 @@ export default function DamageReportForm() {
           throw new Error('Failed to update report')
         }
 
-        alert('Report updated successfully!')
+        showToast('Report updated successfully!', 'success')
       } else {
         // Save new report
         await saveReportService(reportWithPersonnel)
-        alert('Report saved successfully!')
+        showToast('Report saved successfully!', 'success')
       }
 
       resetForm()
       loadReports()
       setActiveTab('saved')
     } catch (error) {
-      alert('Error saving report')
+      showToast('Error saving report', 'error')
       console.error('Error:', error)
     }
   }
@@ -383,7 +402,7 @@ export default function DamageReportForm() {
 
   const handleDeleteReport = async (reportNumber: string) => {
     if (!reportNumber) {
-      alert('Invalid report number')
+      showToast('Invalid report number', 'error')
       return
     }
 
@@ -408,7 +427,7 @@ export default function DamageReportForm() {
         const result = await response.json()
         console.log('Delete result:', result)
         
-        alert(result.message || 'Report deleted successfully!')
+        showToast(result.message || 'Report deleted successfully!', 'success')
         
         await loadReports()
         
@@ -1547,6 +1566,16 @@ export default function DamageReportForm() {
         <div className="flex gap-3 pt-4 border-t">
           <button
             onClick={() => {
+              handleEditReport(viewingReport)
+              handleCloseViewModal()
+            }}
+            className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold flex items-center justify-center gap-2"
+          >
+            <icons.Edit className="w-5 h-5" />
+            Edit Report
+          </button>
+          <button
+            onClick={() => {
               handleOpenDownloadModal(viewingReport)
               handleCloseViewModal()
             }}
@@ -1778,6 +1807,20 @@ export default function DamageReportForm() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed bottom-4 right-4 px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 text-white z-50 animate-slide-in ${
+          toast.type === 'success' ? 'bg-green-600' :
+          toast.type === 'error' ? 'bg-red-600' :
+          'bg-blue-600'
+        }`}>
+          {toast.type === 'success' && <icons.CheckCircle2 className="w-5 h-5" />}
+          {toast.type === 'error' && <icons.AlertCircle className="w-5 h-5" />}
+          {toast.type === 'info' && <icons.Info className="w-5 h-5" />}
+          <span className="font-medium">{toast.message}</span>
         </div>
       )}
     </div>
