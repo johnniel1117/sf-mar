@@ -337,19 +337,37 @@ export default function DamageReportForm() {
   const canProceedToStep4 = () => {
     return report.items.every(item => item.damage_type)
   }
-
-  const handleDeleteReport = async (reportId: string) => {
-    if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
-      try {
-        await deleteReport(reportId)
-        alert('Report deleted successfully!')
-        loadReports()
-      } catch (error) {
-        alert('Error deleting report')
-      }
-    }
+const handleDeleteReport = async (reportNumber: string) => {
+  if (!reportNumber) {
+    alert('Invalid report number')
+    return
   }
 
+  if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+    try {
+      const trimmedReportNumber = reportNumber.trim()
+      
+      // Call the API directly with the report number in the URL path
+      const response = await fetch(`/api/damage-reports/${encodeURIComponent(trimmedReportNumber)}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete report')
+      }
+
+      const result = await response.json()
+      alert(result.message || 'Report deleted successfully!')
+      
+      // Reload the reports list
+      await loadReports()
+    } catch (error) {
+      console.error('Error deleting report:', error)
+      alert(error instanceof Error ? error.message : 'Error deleting report. Please try again.')
+    }
+  }
+}
   // Download handlers
   const handleDownloadReport = (report: DamageReport, type: 'pdf' | 'excel') => {
     if (type === 'pdf') {
@@ -1176,7 +1194,7 @@ export default function DamageReportForm() {
                     <span>Download</span>
                   </button>
                   <button
-                    onClick={() => handleDeleteReport(savedReport.id!)}
+                    onClick={() => handleDeleteReport(savedReport.report_number || savedReport.id || '')}
                     className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold text-sm hover:from-red-700 hover:to-red-800 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                   >
                     <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
