@@ -1557,13 +1557,11 @@ export default function DamageReportForm() {
       onClick={(e) => e.stopPropagation()}
     >
       {/* Modal Header */}
-      <div className="sticky top-0 bg-orange-600 text-white p-4 rounded-t-lg flex justify-between items-center">
+      <div className="sticky top-0 bg-orange-600 text-white p-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded">
-            <icons.FileText className="w-5 h-5" />
-          </div>
+          <icons.FileText className="w-5 h-5" />
           <div>
-            <h2 className="text-lg font-bold">Damage Report Details</h2>
+            <h2 className="text-lg font-semibold">Damage Report Details</h2>
             <p className="text-orange-100 text-sm">
               Report #{viewingReport.report_number || viewingReport.id}
             </p>
@@ -1571,7 +1569,7 @@ export default function DamageReportForm() {
         </div>
         <button
           onClick={handleCloseViewModal}
-          className="p-2 hover:bg-orange-700 rounded-lg"
+          className="p-1 hover:bg-orange-700 rounded"
         >
           <X className="w-5 h-5" />
         </button>
@@ -1580,79 +1578,74 @@ export default function DamageReportForm() {
       {/* Modal Content */}
       <div className="p-4 space-y-4">
         {/* Report Information */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="border rounded p-4">
+          <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
             <icons.Truck className="w-5 h-5 text-orange-600" />
-            <h3 className="text-base font-bold text-gray-900">Report Information</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            Report Information
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Report Date</p>
-              <p className="font-semibold">
+              <p className="font-medium">
                 {viewingReport.report_date ? new Date(viewingReport.report_date).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Driver Name</p>
-              <p className="font-semibold">{viewingReport.driver_name || 'N/A'}</p>
+              <p className="font-medium">{viewingReport.driver_name || 'N/A'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Plate Number</p>
-              <p className="font-semibold">{viewingReport.plate_no || 'N/A'}</p>
+              <p className="font-medium">{viewingReport.plate_no || 'N/A'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Seal Number</p>
-              <p className="font-semibold">{viewingReport.seal_no || 'N/A'}</p>
+              <p className="font-medium">{viewingReport.seal_no || 'N/A'}</p>
             </div>
             {viewingReport.container_no && (
-              <div className="sm:col-span-2 md:col-span-3">
+              <div className="sm:col-span-2">
                 <p className="text-sm text-gray-600">Container Number</p>
-                <p className="font-semibold">{viewingReport.container_no}</p>
+                <p className="font-medium">{viewingReport.container_no}</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Damaged Items */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <icons.ClipboardList className="w-5 h-5 text-orange-600" />
-              <h3 className="text-base font-bold text-gray-900">Damaged Items</h3>
-            </div>
-            <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-semibold">
-              {(viewingReport.items || (viewingReport as any).damage_items || []).length} items
-            </span>
-          </div>
+        <div className="border rounded p-4">
+          <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <icons.ClipboardList className="w-5 h-5 text-orange-600" />
+            Damaged Items ({(viewingReport.items || (viewingReport as any).damage_items || []).length})
+          </h3>
           <div className="space-y-3">
             {(viewingReport.items || (viewingReport as any).damage_items || []).map((item: any, idx: number) => (
-              <div key={idx} className="border border-gray-200 rounded p-3 hover:border-gray-300">
+              <div key={idx} className="border rounded p-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-orange-600 text-white rounded flex items-center justify-center font-bold text-sm flex-shrink-0">
+                  <div className="w-8 h-8 bg-orange-600 text-white rounded flex items-center justify-center font-medium text-sm">
                     {item.item_number || idx + 1}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-gray-900 mb-2 truncate">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900 mb-2">
                       {item.material_description || 'Unknown Item'}
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                       <div>
                         <p className="text-gray-600">Material Code</p>
-                        <p className="font-semibold">{item.material_code || 'N/A'}</p>
+                        <p className="font-medium">{item.material_code || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-gray-600">Serial Number</p>
-                        <p className="font-mono font-semibold">{item.barcode || 'N/A'}</p>
+                        <p className="font-mono font-medium">{item.barcode || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-gray-600">Damage Type</p>
-                        <span className="inline-block px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold">
+                        <span className="inline-block px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">
                           {item.damage_type || 'Not specified'}
                         </span>
                       </div>
                       {item.photo_url && (
                         <div>
-                          <p className="text-gray-600">Evidence</p>
+                          <p className="text-gray-600">Photo Evidence</p>
                           <a
                             href={item.photo_url}
                             target="_blank"
@@ -1664,15 +1657,15 @@ export default function DamageReportForm() {
                           </a>
                         </div>
                       )}
+                      {item.damage_description && (
+                        <div className="sm:col-span-2">
+                          <p className="text-gray-600">Damage Description</p>
+                          <p className="text-gray-700 mt-1 p-2 bg-gray-50 rounded">
+                            {item.damage_description}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    {item.damage_description && (
-                      <div className="mt-2">
-                        <p className="text-gray-600 text-sm">Description</p>
-                        <p className="text-gray-700 mt-1 p-2 bg-gray-50 rounded border text-sm">
-                          {item.damage_description}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1682,52 +1675,51 @@ export default function DamageReportForm() {
 
         {/* Narrative Findings */}
         {viewingReport.narrative_findings && (
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="border rounded p-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
               <icons.Info className="w-5 h-5 text-orange-600" />
-              <h3 className="text-base font-bold text-gray-900">Narrative Findings</h3>
-            </div>
-            <p className="text-gray-700 p-3 bg-gray-50 rounded border border-gray-200">
+              Narrative Findings
+            </h3>
+            <p className="text-gray-700 p-3 bg-gray-50 rounded">
               {viewingReport.narrative_findings}
             </p>
           </div>
         )}
 
         {/* Personnel */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="border rounded p-4">
+          <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
             <icons.Users className="w-5 h-5 text-orange-600" />
-            <h3 className="text-base font-bold text-gray-900">Personnel</h3>
-          </div>
+            Personnel
+          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="border border-gray-200 rounded p-3">
+            <div className="border rounded p-3">
               <p className="text-sm text-gray-600">Prepared By</p>
-              <p className="font-bold">{viewingReport.prepared_by || 'N/A'}</p>
+              <p className="font-medium">{viewingReport.prepared_by || 'N/A'}</p>
               <p className="text-xs text-gray-500 mt-1">Admin Staff</p>
             </div>
-            <div className="border border-gray-200 rounded p-3">
+            <div className="border rounded p-3">
               <p className="text-sm text-gray-600">Noted By</p>
-              <p className="font-bold">{viewingReport.noted_by || 'N/A'}</p>
+              <p className="font-medium">{viewingReport.noted_by || 'N/A'}</p>
               <p className="text-xs text-gray-500 mt-1">Security Guard</p>
             </div>
-            <div className="border border-gray-200 rounded p-3">
+            <div className="border rounded p-3">
               <p className="text-sm text-gray-600">Acknowledged By</p>
-              <p className="font-bold">{viewingReport.acknowledged_by || 'N/A'}</p>
+              <p className="font-medium">{viewingReport.acknowledged_by || 'N/A'}</p>
               <p className="text-xs text-gray-500 mt-1">Supervisor</p>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <button
             onClick={() => {
               handleEditReport(viewingReport)
               handleCloseViewModal()
             }}
-            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold flex items-center justify-center gap-2"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
           >
-            <icons.Edit className="w-5 h-5" />
             Edit Report
           </button>
           <button
@@ -1735,16 +1727,14 @@ export default function DamageReportForm() {
               handleOpenDownloadModal(viewingReport)
               handleCloseViewModal()
             }}
-            className="flex-1 px-4 py-3 bg-green-600 text-white rounded hover:bg-green-700 font-semibold flex items-center justify-center gap-2"
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
           >
-            <icons.Download className="w-5 h-5" />
             Download Report
           </button>
           <button
             onClick={handleCloseViewModal}
-            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 font-semibold flex items-center justify-center gap-2"
+            className="px-4 py-2 border text-gray-700 rounded hover:bg-gray-50 font-medium"
           >
-            <X className="w-5 h-5" />
             Close
           </button>
         </div>
