@@ -1551,108 +1551,113 @@ export default function DamageReportForm() {
 
       {/* View Report Modal */}
       {showViewModal && viewingReport && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm transition-all duration-200">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
     <div 
-      className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl"
+      className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Modal Header */}
-      <div className="sticky top-0 bg-gradient-to-r from-gray-900 to-gray-800 text-white p-5 flex justify-between items-center border-b border-gray-700">
+      <div className="sticky top-0 bg-orange-600 text-white p-4 rounded-t-lg flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/10 rounded-lg">
+          <div className="p-2 bg-white/20 rounded">
             <icons.FileText className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">Damage Report</h2>
-            <p className="text-gray-300 text-sm font-mono">
-              #{viewingReport.report_number || viewingReport.id}
+            <h2 className="text-lg font-bold">Damage Report Details</h2>
+            <p className="text-orange-100 text-sm">
+              Report #{viewingReport.report_number || viewingReport.id}
             </p>
           </div>
         </div>
         <button
           onClick={handleCloseViewModal}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-          aria-label="Close modal"
+          className="p-2 hover:bg-orange-700 rounded-lg"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
       {/* Modal Content */}
-      <div className="p-5 space-y-5 overflow-y-auto max-h-[calc(90vh-80px)]">
+      <div className="p-4 space-y-4">
         {/* Report Information */}
-        <section className="bg-gray-50 rounded-lg p-5 border border-gray-200">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-gray-800 rounded">
-              <icons.Truck className="w-4 h-4 text-white" />
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <icons.Truck className="w-5 h-5 text-orange-600" />
+            <h3 className="text-base font-bold text-gray-900">Report Information</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div>
+              <p className="text-sm text-gray-600">Report Date</p>
+              <p className="font-semibold">
+                {viewingReport.report_date ? new Date(viewingReport.report_date).toLocaleDateString() : 'N/A'}
+              </p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">Report Information</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { label: 'Report Date', value: viewingReport.report_date ? new Date(viewingReport.report_date).toLocaleDateString() : 'N/A' },
-              { label: 'Driver Name', value: viewingReport.driver_name || 'N/A' },
-              { label: 'Plate Number', value: viewingReport.plate_no || 'N/A' },
-              { label: 'Seal Number', value: viewingReport.seal_no || 'N/A' },
-              ...(viewingReport.container_no ? [{ label: 'Container Number', value: viewingReport.container_no, span: 'md:col-span-2 lg:col-span-3' }] : [])
-            ].map((field, index) => (
-              <div key={index} className={`${field.span || ''}`}>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
-                  {field.label}
-                </p>
-                <p className="text-gray-900 font-medium">{field.value}</p>
+            <div>
+              <p className="text-sm text-gray-600">Driver Name</p>
+              <p className="font-semibold">{viewingReport.driver_name || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Plate Number</p>
+              <p className="font-semibold">{viewingReport.plate_no || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Seal Number</p>
+              <p className="font-semibold">{viewingReport.seal_no || 'N/A'}</p>
+            </div>
+            {viewingReport.container_no && (
+              <div className="sm:col-span-2 md:col-span-3">
+                <p className="text-sm text-gray-600">Container Number</p>
+                <p className="font-semibold">{viewingReport.container_no}</p>
               </div>
-            ))}
+            )}
           </div>
-        </section>
+        </div>
 
         {/* Damaged Items */}
-        <section className="bg-gray-50 rounded-lg p-5 border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-gray-800 rounded">
-                <icons.ClipboardList className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Damaged Items</h3>
+              <icons.ClipboardList className="w-5 h-5 text-orange-600" />
+              <h3 className="text-base font-bold text-gray-900">Damaged Items</h3>
             </div>
-            <span className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full text-sm font-medium">
+            <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-semibold">
               {(viewingReport.items || (viewingReport as any).damage_items || []).length} items
             </span>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {(viewingReport.items || (viewingReport as any).damage_items || []).map((item: any, idx: number) => (
-              <div key={idx} className="bg-white rounded-lg border border-gray-300 p-4 hover:border-gray-400 transition-colors">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-gray-900 text-white rounded-lg flex items-center justify-center font-semibold text-sm flex-shrink-0">
+              <div key={idx} className="border border-gray-200 rounded p-3 hover:border-gray-300">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-orange-600 text-white rounded flex items-center justify-center font-bold text-sm flex-shrink-0">
                     {item.item_number || idx + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900 mb-3 truncate">
+                    <h4 className="font-bold text-gray-900 mb-2 truncate">
                       {item.material_description || 'Unknown Item'}
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Material Code</p>
-                        <p className="font-medium text-gray-900">{item.material_code || 'N/A'}</p>
+                        <p className="text-gray-600">Material Code</p>
+                        <p className="font-semibold">{item.material_code || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Serial Number</p>
-                        <p className="font-mono font-medium text-gray-900">{item.barcode || 'N/A'}</p>
+                        <p className="text-gray-600">Serial Number</p>
+                        <p className="font-mono font-semibold">{item.barcode || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Damage Type</p>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                        <p className="text-gray-600">Damage Type</p>
+                        <span className="inline-block px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold">
                           {item.damage_type || 'Not specified'}
                         </span>
                       </div>
                       {item.photo_url && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Evidence</p>
+                          <p className="text-gray-600">Evidence</p>
                           <a
                             href={item.photo_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-medium transition-colors border border-blue-200"
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                           >
                             <icons.Camera className="w-4 h-4" />
                             View Photo
@@ -1661,9 +1666,9 @@ export default function DamageReportForm() {
                       )}
                     </div>
                     {item.damage_description && (
-                      <div className="mt-3">
-                        <p className="text-xs text-gray-500 mb-1">Description</p>
-                        <p className="text-gray-700 text-sm bg-gray-50 p-3 rounded-lg border border-gray-200">
+                      <div className="mt-2">
+                        <p className="text-gray-600 text-sm">Description</p>
+                        <p className="text-gray-700 mt-1 p-2 bg-gray-50 rounded border text-sm">
                           {item.damage_description}
                         </p>
                       </div>
@@ -1673,81 +1678,75 @@ export default function DamageReportForm() {
               </div>
             ))}
           </div>
-        </section>
+        </div>
 
         {/* Narrative Findings */}
         {viewingReport.narrative_findings && (
-          <section className="bg-gray-50 rounded-lg p-5 border border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 bg-gray-800 rounded">
-                <icons.Info className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Narrative Findings</h3>
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <icons.Info className="w-5 h-5 text-orange-600" />
+              <h3 className="text-base font-bold text-gray-900">Narrative Findings</h3>
             </div>
-            <p className="text-gray-700 leading-relaxed bg-white p-4 rounded-lg border border-gray-300">
+            <p className="text-gray-700 p-3 bg-gray-50 rounded border border-gray-200">
               {viewingReport.narrative_findings}
             </p>
-          </section>
+          </div>
         )}
 
         {/* Personnel */}
-        <section className="bg-gray-50 rounded-lg p-5 border border-gray-200">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-1.5 bg-gray-800 rounded">
-              <icons.Users className="w-4 h-4 text-white" />
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <icons.Users className="w-5 h-5 text-orange-600" />
+            <h3 className="text-base font-bold text-gray-900">Personnel</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600">Prepared By</p>
+              <p className="font-bold">{viewingReport.prepared_by || 'N/A'}</p>
+              <p className="text-xs text-gray-500 mt-1">Admin Staff</p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">Personnel</h3>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600">Noted By</p>
+              <p className="font-bold">{viewingReport.noted_by || 'N/A'}</p>
+              <p className="text-xs text-gray-500 mt-1">Security Guard</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600">Acknowledged By</p>
+              <p className="font-bold">{viewingReport.acknowledged_by || 'N/A'}</p>
+              <p className="text-xs text-gray-500 mt-1">Supervisor</p>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { role: 'Prepared By', name: viewingReport.prepared_by, position: 'Admin Staff' },
-              { role: 'Noted By', name: viewingReport.noted_by, position: 'Security Guard' },
-              { role: 'Acknowledged By', name: viewingReport.acknowledged_by, position: 'Supervisor' }
-            ].map((person, index) => (
-              <div key={index} className="bg-white p-4 rounded-lg border border-gray-300 hover:border-gray-400 transition-colors">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
-                  {person.role}
-                </p>
-                <p className={`text-lg font-semibold mb-1 ${person.name ? 'text-gray-900' : 'text-gray-400'}`}>
-                  {person.name || 'N/A'}
-                </p>
-                <p className="text-sm text-gray-500">{person.position}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        </div>
 
         {/* Action Buttons */}
-        <div className="sticky bottom-0 bg-white pt-5 border-t border-gray-200 -mx-5 px-5 pb-5">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={() => {
-                handleEditReport(viewingReport);
-                handleCloseViewModal();
-              }}
-              className="flex-1 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <icons.Edit className="w-5 h-5" />
-              Edit Report
-            </button>
-            <button
-              onClick={() => {
-                handleOpenDownloadModal(viewingReport);
-                handleCloseViewModal();
-              }}
-              className="flex-1 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <icons.Download className="w-5 h-5" />
-              Download
-            </button>
-            <button
-              onClick={handleCloseViewModal}
-              className="flex-1 px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-            >
-              <X className="w-5 h-5" />
-              Close
-            </button>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+          <button
+            onClick={() => {
+              handleEditReport(viewingReport)
+              handleCloseViewModal()
+            }}
+            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold flex items-center justify-center gap-2"
+          >
+            <icons.Edit className="w-5 h-5" />
+            Edit Report
+          </button>
+          <button
+            onClick={() => {
+              handleOpenDownloadModal(viewingReport)
+              handleCloseViewModal()
+            }}
+            className="flex-1 px-4 py-3 bg-green-600 text-white rounded hover:bg-green-700 font-semibold flex items-center justify-center gap-2"
+          >
+            <icons.Download className="w-5 h-5" />
+            Download Report
+          </button>
+          <button
+            onClick={handleCloseViewModal}
+            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 font-semibold flex items-center justify-center gap-2"
+          >
+            <X className="w-5 h-5" />
+            Close
+          </button>
         </div>
       </div>
     </div>
