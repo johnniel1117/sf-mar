@@ -368,10 +368,19 @@ export default function DamageReportForm() {
         items: reportToEdit.items || []
       }
       setReport(reportToSet)
+      
+      // Restore personnel selections
+      setSelectedPersonnel({
+        admin: reportToEdit.admin_id || '',
+        guard: reportToEdit.guard_id || '',
+        supervisor: reportToEdit.supervisor_id || ''
+      })
+      
       setEditingReportId(reportToEdit.id || null)
       setIsEditMode(true)
       setCurrentStep(1)
       setActiveTab('create')
+      showToast('Report loaded for editing', 'info')
     } catch (error) {
       console.error('Error loading report for editing:', error)
       showToast('Failed to load report for editing', 'error')
@@ -661,6 +670,19 @@ export default function DamageReportForm() {
                   )
                 })}
               </div>
+
+              {/* Edit Mode Indicator */}
+              {isEditMode && (
+                <div className="mt-6 mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                  <div className="flex items-center gap-2">
+                    <icons.Edit className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-blue-900 text-sm">Edit Mode</p>
+                      <p className="text-xs text-blue-700">You are editing an existing report</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Step Content */}
               <div className="mt-8">
@@ -1113,10 +1135,12 @@ export default function DamageReportForm() {
                     <button
                       onClick={saveReport}
                       disabled={isLoading || !selectedPersonnel.admin || !selectedPersonnel.guard || !selectedPersonnel.supervisor}
-                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-white rounded-lg font-semibold transition-all shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed ${
+                        isEditMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
+                      }`}
                     >
                       <icons.Save className="w-4 h-4 sm:w-5 sm:h-5" />
-                      {isLoading ? 'Saving...' : 'Save Report'}
+                      {isLoading ? 'Saving...' : isEditMode ? 'Update Report' : 'Save Report'}
                     </button>
                   </div>
                 )}

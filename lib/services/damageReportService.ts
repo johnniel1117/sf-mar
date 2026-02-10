@@ -33,6 +33,9 @@ export interface DamageReport {
   actions_required: string
   status: string
   items: DamageItem[]
+  admin_id?: string
+  guard_id?: string
+  supervisor_id?: string
 }
 
 export class DamageReportService {
