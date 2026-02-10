@@ -1527,7 +1527,7 @@ export default function DamageReportForm() {
                       <div className="flex gap-2 flex-shrink-0">
                         <button
                           onClick={() => handleEditMaterial(material)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-2  rounded-lg transition-colors"
                           title="Edit"
                         >
                           <icons.Edit className="w-4 h-4" />
@@ -1718,7 +1718,7 @@ export default function DamageReportForm() {
                     handleEditReport(viewingReport)
                     handleCloseViewModal()
                   }}
-                  className="flex-1 px-4 py-2.5 text-white rounded font-semibold flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold flex items-center justify-center gap-2"
                 >
                   <icons.Edit className="w-5 h-5" />
                   Edit Report
