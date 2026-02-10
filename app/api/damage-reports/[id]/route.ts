@@ -77,12 +77,17 @@ export async function DELETE(
     const params = await context.params
     const identifier = decodeURIComponent(params.id).trim()
 
+    console.log('🔍 DELETE - Searching for report:', identifier)
+
     // Try to find by report_number first
     let { data: report, error: fetchError } = await supabase
       .from('damage_reports')
       .select('id')
       .eq('report_number', identifier)
       .single()
+
+    console.log('📋 Found report:', report)
+    console.log('❌ Fetch error:', fetchError)
 
     // If not found and identifier looks like a UUID, try by id
     if (fetchError && identifier.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
@@ -94,14 +99,18 @@ export async function DELETE(
       
       report = result.data
       fetchError = result.error
+      console.log('🔄 Retry with UUID - Found:', report)
     }
 
     if (fetchError || !report) {
+      console.log('⚠️ Report not found!')
       return NextResponse.json(
         { error: 'Damage report not found' },
         { status: 404 }
       )
     }
+
+    console.log('🗑️ Deleting items for report ID:', report.id)
 
     // Delete associated items first
     const { error: itemsDeleteError } = await supabase
@@ -109,16 +118,21 @@ export async function DELETE(
       .delete()
       .eq('damage_report_id', report.id)
 
+    console.log('📦 Items delete error:', itemsDeleteError)
+
     if (itemsDeleteError) {
       console.error('Error deleting items:', itemsDeleteError)
-      // Continue anyway if cascade is set up in database
     }
+
+    console.log('🗑️ Deleting report ID:', report.id)
 
     // Delete the report
     const { error: deleteError } = await supabase
       .from('damage_reports')
       .delete()
       .eq('id', report.id)
+
+    console.log('📋 Report delete error:', deleteError)
 
     if (deleteError) {
       console.error('Error deleting report:', deleteError)
@@ -128,13 +142,15 @@ export async function DELETE(
       )
     }
 
+    console.log('✅ Report deleted successfully!')
+
     return NextResponse.json({
       success: true,
       message: 'Damage report deleted successfully'
     })
 
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('💥 Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
