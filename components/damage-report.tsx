@@ -117,6 +117,31 @@ export default function DamageReportForm() {
     }, 3000)
   }
 
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean
+    title: string
+    message: string
+    onConfirm: () => void
+    onCancel: () => void
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {},
+  })
+
+  const showConfirmation = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModal({
+      show: true,
+      title,
+      message,
+      onConfirm,
+      onCancel: () => setConfirmModal(prev => ({ ...prev, show: false })),
+    })
+  }
+
   const {
     isLoading,
     savedReports,
@@ -406,36 +431,40 @@ export default function DamageReportForm() {
       return
     }
 
-    if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
-      try {
-        const trimmedReportNumber = reportNumber.trim()
-        
-        console.log('Deleting report:', trimmedReportNumber)
-        
-        const response = await fetch(`/api/damage-reports/${encodeURIComponent(trimmedReportNumber)}`, {
-          method: 'DELETE',
-        })
+    showConfirmation(
+      'Delete Report',
+      'Are you sure you want to delete this report? This action cannot be undone.',
+      async () => {
+        try {
+          const trimmedReportNumber = reportNumber.trim()
+          
+          console.log('Deleting report:', trimmedReportNumber)
+          
+          const response = await fetch(`/api/damage-reports/${encodeURIComponent(trimmedReportNumber)}`, {
+            method: 'DELETE',
+          })
 
-        console.log('Delete response status:', response.status)
+          console.log('Delete response status:', response.status)
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error('Delete error:', errorData)
-          throw new Error(errorData.error || 'Failed to delete report')
+          if (!response.ok) {
+            const errorData = await response.json()
+            console.error('Delete error:', errorData)
+            throw new Error(errorData.error || 'Failed to delete report')
+          }
+
+          const result = await response.json()
+          console.log('Delete result:', result)
+          
+          showToast(result.message || 'Report deleted successfully!', 'success')
+          
+          await loadReports()
+          
+        } catch (error) {
+          console.error('Error deleting report:', error)
+          showToast(error instanceof Error ? error.message : 'Error deleting report. Please try again.', 'error')
         }
-
-        const result = await response.json()
-        console.log('Delete result:', result)
-        
-        showToast(result.message || 'Report deleted successfully!', 'success')
-        
-        await loadReports()
-        
-      } catch (error) {
-        console.error('Error deleting report:', error)
-        alert(error instanceof Error ? error.message : 'Error deleting report. Please try again.')
       }
-    }
+    )
   }
 
   // Download handlers
@@ -1021,7 +1050,7 @@ export default function DamageReportForm() {
                           </div>
                           <div className="flex justify-between sm:flex-col sm:gap-1">
                             <span className="text-gray-600 font-medium">Total Items:</span>
-                            <span className="font-semibold text-gray-900">{report.items.length}</span>
+                            <span className="font-semibold text-gray-900">{report.items?.length || 0}</span>
                           </div>
                         </div>
                       </div>
@@ -1049,15 +1078,15 @@ export default function DamageReportForm() {
                   <button
                     onClick={() => {
                       if (currentStep === 1 && !canProceedToStep2()) {
-                        alert('Please fill in all required fields (Driver Name, Plate No.)')
+                        showToast('Please fill in all required fields (Driver Name, Plate No.)', 'error')
                         return
                       }
                       if (currentStep === 2 && !canProceedToStep3()) {
-                        alert('Please add at least one item')
+                        showToast('Please add at least one item', 'error')
                         return
                       }
                       if (currentStep === 3 && !canProceedToStep4()) {
-                        alert('Please fill in Damage Type for all items')
+                        showToast('Please fill in Damage Type for all items', 'error')
                         return
                       }
                       setCurrentStep((currentStep + 1) as Step)
@@ -1804,6 +1833,33 @@ export default function DamageReportForm() {
                 className="flex-1 px-4 sm:px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl text-sm sm:text-base"
               >
                 Download Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+          <div className="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full mx-4 animate-scale-in">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">{confirmModal.title}</h2>
+            <p className="text-gray-600 mb-6">{confirmModal.message}</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={confirmModal.onCancel}
+                className="px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  confirmModal.onConfirm()
+                  setConfirmModal(prev => ({ ...prev, show: false }))
+                }}
+                className="px-4 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all"
+              >
+                Delete
               </button>
             </div>
           </div>
