@@ -4,7 +4,7 @@ import React from "react"
 import { useState, useRef, useEffect } from 'react'
 import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock, Info, FileSpreadsheet, Eye, Menu, X as XIcon } from 'lucide-react'
 import Navbar from '@/components/Navbar'
-import SidebarTabs from '../components/SideBarTabs'
+import SidebarTabs from '@/components/SideBarTabs'
 import { useDamageReport } from '@/hooks/useDamageReport'
 import { PDFGenerator } from '@/lib/utils/pdfGenerator'
 import { ExcelGenerator } from '@/lib/utils/excelGenerator'
