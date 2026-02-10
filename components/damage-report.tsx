@@ -1050,7 +1050,7 @@ export default function DamageReportForm() {
       {savedReports.length > 0 && (
         <button
           onClick={() => {/* Export all logic */}}
-          className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
+          className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
           <icons.Download className="w-4 h-4" />
           <span className="hidden sm:inline">Export All as Excel</span>
@@ -1066,7 +1066,7 @@ export default function DamageReportForm() {
         <p className="text-gray-500 text-xs sm:text-sm mt-2">Create your first damage report to see it here</p>
       </div>
     ) : (
-      <div className="grid gap-4 sm:gap-5">
+      <div className="space-y-4">
         {savedReports.map((savedReport) => {
           const reportItems = savedReport.items || ((savedReport as any).damage_items || [])
           const totalItems = reportItems.length
@@ -1076,83 +1076,75 @@ export default function DamageReportForm() {
           return (
             <div
               key={savedReport.id}
-              className="group relative bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 hover:border-orange-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
+              className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 hover:border-gray-300 hover:shadow-md transition-all"
             >
-              {/* Subtle gradient background on hover */}
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-50/0 to-orange-100/0 group-hover:from-orange-50/50 group-hover:to-orange-100/30 transition-all duration-300 rounded-2xl" />
-              
-              <div className="relative z-10">
-                {/* Header Section */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <icons.FileText className="w-6 h-6 text-white" />
-                  </div>
+              {/* Header */}
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <icons.FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-gray-900 text-base sm:text-lg mb-1 truncate">
+                    {reportId}
+                  </h4>
                   
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-gray-900 text-base sm:text-xl mb-2 truncate">
-                      {reportId}
-                    </h4>
-                    
-                    {/* Info Tags */}
-                    <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-100">
-                        <icons.Clock className="w-3.5 h-3.5" />
-                        {reportDate}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-medium border border-green-100">
-                        <icons.ClipboardList className="w-3.5 h-3.5" />
-                        {totalItems} item{totalItems !== 1 ? 's' : ''}
-                      </span>
-                    </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                      {reportDate}
+                    </span>
+                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                      {totalItems} {totalItems === 1 ? 'item' : 'items'}
+                    </span>
                   </div>
                 </div>
+              </div>
 
-                {/* Details Section */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 py-3 border-t border-gray-100">
-                  {savedReport.driver_name && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Driver</p>
-                      <p className="text-sm font-semibold text-gray-900 truncate">{savedReport.driver_name}</p>
-                    </div>
-                  )}
-                  {savedReport.plate_no && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Plate No.</p>
-                      <p className="text-sm font-semibold text-gray-900 truncate">{savedReport.plate_no}</p>
-                    </div>
-                  )}
-                  {savedReport.prepared_by && (
-                    <div className="col-span-2 sm:col-span-1">
-                      <p className="text-xs text-gray-500 mb-1">Prepared By</p>
-                      <p className="text-sm font-semibold text-gray-900 truncate">{savedReport.prepared_by}</p>
-                    </div>
-                  )}
-                </div>
+              {/* Details */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 text-sm">
+                {savedReport.driver_name && (
+                  <div>
+                    <span className="text-gray-500">Driver:</span>
+                    <p className="font-medium text-gray-900 truncate">{savedReport.driver_name}</p>
+                  </div>
+                )}
+                {savedReport.plate_no && (
+                  <div>
+                    <span className="text-gray-500">Plate:</span>
+                    <p className="font-medium text-gray-900 truncate">{savedReport.plate_no}</p>
+                  </div>
+                )}
+                {savedReport.prepared_by && (
+                  <div className="col-span-2 sm:col-span-1">
+                    <span className="text-gray-500">Prepared by:</span>
+                    <p className="font-medium text-gray-900 truncate">{savedReport.prepared_by}</p>
+                  </div>
+                )}
+              </div>
 
-                {/* Action Buttons - Minimalist Design */}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => handleViewReport(savedReport)}
-                    className="flex-1 sm:flex-initial px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 border border-blue-200 hover:border-blue-300"
-                  >
-                    <icons.Eye className="w-4 h-4" />
-                    <span>View</span>
-                  </button>
-                  <button
-                    onClick={() => handleOpenDownloadModal(savedReport)}
-                    className="flex-1 sm:flex-initial px-4 py-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 border border-green-200 hover:border-green-300"
-                  >
-                    <icons.Download className="w-4 h-4" />
-                    <span>Download</span>
-                  </button>
-                  <button
-                    onClick={() => handleDeleteReport(savedReport.report_number || savedReport.id || '')}
-                    className="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 border border-red-200 hover:border-red-300"
-                  >
-                    <icons.Trash2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Delete</span>
-                  </button>
-                </div>
+              {/* Buttons */}
+              <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+                <button
+                  onClick={() => handleViewReport(savedReport)}
+                  className="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                >
+                  <icons.Eye className="w-4 h-4" />
+                  View
+                </button>
+                <button
+                  onClick={() => handleOpenDownloadModal(savedReport)}
+                  className="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                >
+                  <icons.Download className="w-4 h-4" />
+                  Download
+                </button>
+                <button
+                  onClick={() => handleDeleteReport(savedReport.report_number || savedReport.id || '')}
+                  className="px-4 py-2 bg-white border border-gray-300 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                >
+                  <icons.Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Delete</span>
+                </button>
               </div>
             </div>
           )
