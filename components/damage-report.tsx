@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useState, useRef, useEffect } from 'react'
-import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock, Info, FileSpreadsheet } from 'lucide-react'
+import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock, Info, FileSpreadsheet, Eye } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import { useDamageReport } from '@/hooks/useDamageReport'
 import { PDFGenerator } from '@/lib/utils/pdfGenerator'
@@ -34,6 +34,7 @@ const icons = {
   Clock: Clock,
   Info: Info,
   FileSpreadsheet: FileSpreadsheet,
+  Eye: Eye,
 } as const
 
 export default function DamageReportForm() {
@@ -90,6 +91,10 @@ export default function DamageReportForm() {
   const [showDownloadModal, setShowDownloadModal] = useState(false)
   const [downloadType, setDownloadType] = useState<'pdf' | 'excel'>('pdf')
   const [selectedDownloadReport, setSelectedDownloadReport] = useState<DamageReport | null>(null)
+
+  // View report modal states
+  const [showViewModal, setShowViewModal] = useState(false)
+  const [viewingReport, setViewingReport] = useState<DamageReport | null>(null)
 
   const {
     isLoading,
@@ -337,45 +342,45 @@ export default function DamageReportForm() {
   const canProceedToStep4 = () => {
     return report.items.every(item => item.damage_type)
   }
-const handleDeleteReport = async (reportNumber: string) => {
-  if (!reportNumber) {
-    alert('Invalid report number')
-    return
-  }
 
-  if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
-    try {
-      const trimmedReportNumber = reportNumber.trim()
-      
-      console.log('Deleting report:', trimmedReportNumber) // Debug log
-      
-      // Call the API directly with the report number in the URL path
-      const response = await fetch(`/api/damage-reports/${encodeURIComponent(trimmedReportNumber)}`, {
-        method: 'DELETE',
-      })
+  const handleDeleteReport = async (reportNumber: string) => {
+    if (!reportNumber) {
+      alert('Invalid report number')
+      return
+    }
 
-      console.log('Delete response status:', response.status) // Debug log
+    if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+      try {
+        const trimmedReportNumber = reportNumber.trim()
+        
+        console.log('Deleting report:', trimmedReportNumber)
+        
+        const response = await fetch(`/api/damage-reports/${encodeURIComponent(trimmedReportNumber)}`, {
+          method: 'DELETE',
+        })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Delete error:', errorData) // Debug log
-        throw new Error(errorData.error || 'Failed to delete report')
+        console.log('Delete response status:', response.status)
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error('Delete error:', errorData)
+          throw new Error(errorData.error || 'Failed to delete report')
+        }
+
+        const result = await response.json()
+        console.log('Delete result:', result)
+        
+        alert(result.message || 'Report deleted successfully!')
+        
+        await loadReports()
+        
+      } catch (error) {
+        console.error('Error deleting report:', error)
+        alert(error instanceof Error ? error.message : 'Error deleting report. Please try again.')
       }
-
-      const result = await response.json()
-      console.log('Delete result:', result) // Debug log
-      
-      alert(result.message || 'Report deleted successfully!')
-      
-      // Reload the reports list - force a fresh fetch
-      await loadReports()
-      
-    } catch (error) {
-      console.error('Error deleting report:', error)
-      alert(error instanceof Error ? error.message : 'Error deleting report. Please try again.')
     }
   }
-}
+
   // Download handlers
   const handleDownloadReport = (report: DamageReport, type: 'pdf' | 'excel') => {
     if (type === 'pdf') {
@@ -396,6 +401,17 @@ const handleDeleteReport = async (reportNumber: string) => {
     }
     setShowDownloadModal(false)
     setSelectedDownloadReport(null)
+  }
+
+  // View report handlers
+  const handleViewReport = (report: DamageReport) => {
+    setViewingReport(report)
+    setShowViewModal(true)
+  }
+
+  const handleCloseViewModal = () => {
+    setShowViewModal(false)
+    setViewingReport(null)
   }
 
   const handleEditMaterial = async (material: any) => {
@@ -450,7 +466,6 @@ const handleDeleteReport = async (reportNumber: string) => {
     }, 300)
   }
 
-  // Add this function to handle personnel dropdown changes
   const handlePersonnelChange = (role: 'admin' | 'guard' | 'supervisor', value: string) => {
     setSelectedPersonnel(prev => ({
       ...prev,
@@ -1020,203 +1035,203 @@ const handleDeleteReport = async (reportNumber: string) => {
         )}
 
         {/* Saved Reports Tab */}
-{activeTab === 'saved' && (
-  <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <div>
-        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-          <icons.Download className="w-5 h-5" />
-          Saved Reports
-        </h3>
-        <p className="text-sm text-gray-600">View and download your saved damage reports</p>
-      </div>
-      
-      {savedReports.length > 0 && (
-        <button
-          onClick={() => {
-            try {
-              // Create a batch export of all reports
-              const workbook = XLSX.utils.book_new()
+        {activeTab === 'saved' && (
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                  <icons.Download className="w-5 h-5" />
+                  Saved Reports
+                </h3>
+                <p className="text-sm text-gray-600">View and download your saved damage reports</p>
+              </div>
               
-              savedReports.forEach((report, index) => {
-                const items = report.items || ((report as any).damage_items || [])
-                const reportId = report.report_number || report.id || `Report_${index + 1}`
-                
-                const data = [
-                  ["SF EXPRESS WAREHOUSE"],
-                  ["LIPPER TINGUB, MANDAUE, CEBU"],
-                  [""],
-                  [reportId],
-                  [""],
-                  ["DAMAGE AND DEVIATION REPORT"],
-                  [""],
-                  ["Report Date", report.report_date || "", "", "Driver Name", report.driver_name || ""],
-                  ["Plate No.", report.plate_no || "", "", "Seal No.", report.seal_no || ""],
-                  ["Container No.", report.container_no || ""],
-                  [""],
-                  ["NO.", "MATERIAL DESCRIPTION", "SERIAL NO.", "DAMAGE TYPE", "DAMAGE DESCRIPTION"],
-                  ...items.map(item => [
-                    item.item_number || index + 1,
-                    item.material_description || 'Unknown',
-                    item.barcode || '',
-                    item.damage_type || '',
-                    item.damage_description || ''
-                  ]),
-                  [""],
-                  [`TOTAL ITEMS: ${items.length}`],
-                  [""],
-                  ["Narrative Findings:"],
-                  [report.narrative_findings || 'N/A'],
-                  [""],
-                  ["Prepared By:", "Noted By:", "Acknowledged By:"],
-                  [
-                    (report.prepared_by || '').toUpperCase(),
-                    (report.noted_by || '').toUpperCase(),
-                    (report.acknowledged_by || '').toUpperCase()
-                  ],
-                  ["Admin Staff", "Security Guard", "Supervisor"]
-                ]
+              {savedReports.length > 0 && (
+                <button
+                  onClick={() => {
+                    try {
+                      const workbook = XLSX.utils.book_new()
+                      
+                      savedReports.forEach((report, index) => {
+                        const items = report.items || ((report as any).damage_items || [])
+                        const reportId = report.report_number || report.id || `Report_${index + 1}`
+                        
+                        const data = [
+                          ["SF EXPRESS WAREHOUSE"],
+                          ["LIPPER TINGUB, MANDAUE, CEBU"],
+                          [""],
+                          [reportId],
+                          [""],
+                          ["DAMAGE AND DEVIATION REPORT"],
+                          [""],
+                          ["Report Date", report.report_date || "", "", "Driver Name", report.driver_name || ""],
+                          ["Plate No.", report.plate_no || "", "", "Seal No.", report.seal_no || ""],
+                          ["Container No.", report.container_no || ""],
+                          [""],
+                          ["NO.", "MATERIAL DESCRIPTION", "SERIAL NO.", "DAMAGE TYPE", "DAMAGE DESCRIPTION"],
+                          ...items.map(item => [
+                            item.item_number || index + 1,
+                            item.material_description || 'Unknown',
+                            item.barcode || '',
+                            item.damage_type || '',
+                            item.damage_description || ''
+                          ]),
+                          [""],
+                          [`TOTAL ITEMS: ${items.length}`],
+                          [""],
+                          ["Narrative Findings:"],
+                          [report.narrative_findings || 'N/A'],
+                          [""],
+                          ["Prepared By:", "Noted By:", "Acknowledged By:"],
+                          [
+                            (report.prepared_by || '').toUpperCase(),
+                            (report.noted_by || '').toUpperCase(),
+                            (report.acknowledged_by || '').toUpperCase()
+                          ],
+                          ["Admin Staff", "Security Guard", "Supervisor"]
+                        ]
 
-                const ws = XLSX.utils.aoa_to_sheet(data)
-                
-                // Set column widths
-                ws['!cols'] = [
-                  { wch: 12 },  // Column A
-                  { wch: 25 },  // Column B
-                  { wch: 15 },  // Column C
-                  { wch: 15 },  // Column D
-                  { wch: 25 }   // Column E
-                ]
+                        const ws = XLSX.utils.aoa_to_sheet(data)
+                        
+                        ws['!cols'] = [
+                          { wch: 12 },
+                          { wch: 25 },
+                          { wch: 15 },
+                          { wch: 15 },
+                          { wch: 25 }
+                        ]
 
-                // Merge cells for headers
-                const merges = []
-                // Merge header rows (0-6)
-                for (let i = 0; i <= 6; i++) {
-                  merges.push({ s: { r: i, c: 0 }, e: { r: i, c: 4 } })
-                }
-                // Merge Container No.
-                merges.push({ s: { r: 9, c: 0 }, e: { r: 9, c: 4 } })
-                // Calculate positions
-                const totalItemsRow = 13 + items.length
-                const narrativeLabelRow = totalItemsRow + 2
-                const narrativeContentRow = narrativeLabelRow + 1
-                
-                merges.push({ s: { r: totalItemsRow, c: 0 }, e: { r: totalItemsRow, c: 4 } })
-                merges.push({ s: { r: narrativeLabelRow, c: 0 }, e: { r: narrativeLabelRow, c: 4 } })
-                merges.push({ s: { r: narrativeContentRow, c: 0 }, e: { r: narrativeContentRow, c: 4 } })
+                        const merges = []
+                        for (let i = 0; i <= 6; i++) {
+                          merges.push({ s: { r: i, c: 0 }, e: { r: i, c: 4 } })
+                        }
+                        merges.push({ s: { r: 9, c: 0 }, e: { r: 9, c: 4 } })
+                        const totalItemsRow = 13 + items.length
+                        const narrativeLabelRow = totalItemsRow + 2
+                        const narrativeContentRow = narrativeLabelRow + 1
+                        
+                        merges.push({ s: { r: totalItemsRow, c: 0 }, e: { r: totalItemsRow, c: 4 } })
+                        merges.push({ s: { r: narrativeLabelRow, c: 0 }, e: { r: narrativeLabelRow, c: 4 } })
+                        merges.push({ s: { r: narrativeContentRow, c: 0 }, e: { r: narrativeContentRow, c: 4 } })
 
-                ws['!merges'] = merges
-                
-                // Create a safe sheet name (Excel limits to 31 characters)
-                let sheetName = `Report_${index + 1}`
-                if (reportId) {
-                  // Remove invalid Excel sheet name characters
-                  const cleanId = reportId.toString()
-                    .replace(/[\\/*?:[\]]/g, '')
-                    .substring(0, 20)
-                  sheetName = `Report_${index + 1}_${cleanId}`
-                }
-                
-                XLSX.utils.book_append_sheet(workbook, ws, sheetName.substring(0, 31))
-              })
+                        ws['!merges'] = merges
+                        
+                        let sheetName = `Report_${index + 1}`
+                        if (reportId) {
+                          const cleanId = reportId.toString()
+                            .replace(/[\\/*?:[\]]/g, '')
+                            .substring(0, 20)
+                          sheetName = `Report_${index + 1}_${cleanId}`
+                        }
+                        
+                        XLSX.utils.book_append_sheet(workbook, ws, sheetName.substring(0, 31))
+                      })
 
-              XLSX.writeFile(workbook, `Damage_Reports_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
-            } catch (error) {
-              console.error('Error exporting all reports:', error)
-              alert('Error exporting reports. Please try again.')
-            }
-          }}
-          className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
-        >
-          <icons.Download className="w-4 h-4" />
-          <span className="hidden sm:inline">Export All as Excel</span>
-          <span className="sm:hidden">Export All</span>
-        </button>
-      )}
-    </div>
+                      XLSX.writeFile(workbook, `Damage_Reports_Export_${new Date().toISOString().split('T')[0]}.xlsx`)
+                    } catch (error) {
+                      console.error('Error exporting all reports:', error)
+                      alert('Error exporting reports. Please try again.')
+                    }
+                  }}
+                  className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
+                >
+                  <icons.Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">Export All as Excel</span>
+                  <span className="sm:hidden">Export All</span>
+                </button>
+              )}
+            </div>
 
-    {savedReports.length === 0 ? (
-      <div className="py-8 sm:py-12 text-center">
-        <icons.FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
-        <p className="text-gray-600 font-medium text-base sm:text-lg">No reports saved yet</p>
-        <p className="text-gray-500 text-xs sm:text-sm mt-2">Create your first damage report to see it here</p>
-      </div>
-    ) : (
-      <div className="grid gap-3 sm:gap-4">
-        {savedReports.map((savedReport) => {
-          const reportItems = savedReport.items || ((savedReport as any).damage_items || [])
-          const totalItems = reportItems.length
-          const reportDate = savedReport.report_date ? new Date(savedReport.report_date).toLocaleDateString() : 'No date'
-          const reportId = savedReport.report_number || savedReport.id || 'Unknown Report'
-          
-          return (
-            <div
-              key={savedReport.id}
-              className="p-3 sm:p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <icons.FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
-                        {reportId}
-                      </h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                          {reportDate}
-                        </span>
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                          {totalItems} item{totalItems !== 1 ? 's' : ''}
-                        </span>
+            {savedReports.length === 0 ? (
+              <div className="py-8 sm:py-12 text-center">
+                <icons.FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                <p className="text-gray-600 font-medium text-base sm:text-lg">No reports saved yet</p>
+                <p className="text-gray-500 text-xs sm:text-sm mt-2">Create your first damage report to see it here</p>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:gap-4">
+                {savedReports.map((savedReport) => {
+                  const reportItems = savedReport.items || ((savedReport as any).damage_items || [])
+                  const totalItems = reportItems.length
+                  const reportDate = savedReport.report_date ? new Date(savedReport.report_date).toLocaleDateString() : 'No date'
+                  const reportId = savedReport.report_number || savedReport.id || 'Unknown Report'
+                  
+                  return (
+                    <div
+                      key={savedReport.id}
+                      className="p-3 sm:p-5 border-2 border-gray-200 rounded-lg hover:border-orange-400 hover:shadow-md transition-all bg-gradient-to-r from-gray-50 to-white"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <icons.FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-bold text-gray-900 text-sm sm:text-lg truncate">
+                                {reportId}
+                              </h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                                  {reportDate}
+                                </span>
+                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                  {totalItems} item{totalItems !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                            {savedReport.driver_name && (
+                              <span className="flex items-center gap-1">
+                                <span className="font-semibold">Driver:</span> {savedReport.driver_name}
+                              </span>
+                            )}
+                            {savedReport.plate_no && (
+                              <span className="hidden sm:flex items-center gap-1">
+                                <span className="font-semibold">Plate:</span> {savedReport.plate_no}
+                              </span>
+                            )}
+                            {savedReport.prepared_by && (
+                              <span className="hidden sm:flex items-center gap-1">
+                                <span className="font-semibold">By:</span> {savedReport.prepared_by}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                          <button
+                            onClick={() => handleViewReport(savedReport)}
+                            className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold text-sm hover:from-blue-700 hover:to-blue-800 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                          >
+                            <icons.Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span>View</span>
+                          </button>
+                          <button
+                            onClick={() => handleOpenDownloadModal(savedReport)}
+                            className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold text-sm hover:from-green-700 hover:to-green-800 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                          >
+                            <icons.Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span>Download</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteReport(savedReport.report_number || savedReport.id || '')}
+                            className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold text-sm hover:from-red-700 hover:to-red-800 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                          >
+                            <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
-                    {savedReport.driver_name && (
-                      <span className="flex items-center gap-1">
-                        <span className="font-semibold">Driver:</span> {savedReport.driver_name}
-                      </span>
-                    )}
-                    {savedReport.plate_no && (
-                      <span className="hidden sm:flex items-center gap-1">
-                        <span className="font-semibold">Plate:</span> {savedReport.plate_no}
-                      </span>
-                    )}
-                    {savedReport.prepared_by && (
-                      <span className="hidden sm:flex items-center gap-1">
-                        <span className="font-semibold">By:</span> {savedReport.prepared_by}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => handleOpenDownloadModal(savedReport)}
-                    className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold text-sm hover:from-green-700 hover:to-green-800 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-                  >
-                    <icons.Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>Download</span>
-                  </button>
-                  <button
-                    onClick={() => handleDeleteReport(savedReport.report_number || savedReport.id || '')}
-                    className="w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-semibold text-sm hover:from-red-700 hover:to-red-800 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-                  >
-                    <icons.Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>Delete</span>
-                  </button>
-                </div>
+                  )
+                })}
               </div>
-            </div>
-          )
-        })}
-      </div>
-    )}
-  </div>
-)}
+            )}
+          </div>
+        )}
+
         {/* Material Mappings Tab */}
         {activeTab === 'materials' && (
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
@@ -1405,6 +1420,195 @@ const handleDeleteReport = async (reportNumber: string) => {
           </div>
         )}
       </div>
+
+      {/* View Report Modal */}
+      {showViewModal && viewingReport && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-orange-700 text-white p-6 rounded-t-2xl z-10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <icons.FileText className="w-6 h-6" />
+                    Damage Report Details
+                  </h2>
+                  <p className="text-orange-100 text-sm mt-1">
+                    Report #{viewingReport.report_number || viewingReport.id}
+                  </p>
+                </div>
+                <button
+                  onClick={handleCloseViewModal}
+                  className="p-2 hover:bg-orange-800 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Report Information Section */}
+              <div className="bg-gray-50 rounded-xl p-5 border-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <icons.Truck className="w-5 h-5 text-orange-600" />
+                  Report Information
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Report Date</p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {viewingReport.report_date ? new Date(viewingReport.report_date).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Driver Name</p>
+                    <p className="text-base font-semibold text-gray-900">{viewingReport.driver_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Plate Number</p>
+                    <p className="text-base font-semibold text-gray-900">{viewingReport.plate_no || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Seal Number</p>
+                    <p className="text-base font-semibold text-gray-900">{viewingReport.seal_no || 'N/A'}</p>
+                  </div>
+                  {viewingReport.container_no && (
+                    <div className="sm:col-span-2">
+                      <p className="text-sm font-medium text-gray-600">Container Number</p>
+                      <p className="text-base font-semibold text-gray-900">{viewingReport.container_no}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Damaged Items Section */}
+              <div className="bg-gray-50 rounded-xl p-5 border-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <icons.ClipboardList className="w-5 h-5 text-orange-600" />
+                  Damaged Items ({(viewingReport.items || (viewingReport as any).damage_items || []).length})
+                </h3>
+                <div className="space-y-3">
+                  {(viewingReport.items || (viewingReport as any).damage_items || []).map((item: any, idx: number) => (
+                    <div key={idx} className="bg-white rounded-lg p-4 border border-gray-300 hover:border-orange-300 transition-all">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+                          {item.item_number || idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-gray-900 text-base mb-2">
+                            {item.material_description || 'Unknown Item'}
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-gray-600 font-medium">Material Code</p>
+                              <p className="text-gray-900 font-semibold">{item.material_code || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 font-medium">Serial Number</p>
+                              <p className="text-gray-900 font-mono font-semibold break-all">{item.barcode || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 font-medium">Damage Type</p>
+                              <span className="inline-block px-3 py-1 bg-red-100 text-red-800 rounded-full font-semibold text-xs">
+                                {item.damage_type || 'Not specified'}
+                              </span>
+                            </div>
+                            {item.damage_description && (
+                              <div className="sm:col-span-2">
+                                <p className="text-gray-600 font-medium mb-1">Damage Description</p>
+                                <p className="text-gray-900 bg-gray-50 p-2 rounded border border-gray-200">
+                                  {item.damage_description}
+                                </p>
+                              </div>
+                            )}
+                            {item.photo_url && (
+                              <div className="sm:col-span-2">
+                                <p className="text-gray-600 font-medium mb-2">Photo Evidence</p>
+                                <a
+                                  href={item.photo_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+                                >
+                                  <icons.Camera className="w-4 h-4" />
+                                  View Photo
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Narrative Findings Section */}
+              {viewingReport.narrative_findings && (
+                <div className="bg-gray-50 rounded-xl p-5 border-2 border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <icons.Info className="w-5 h-5 text-orange-600" />
+                    Narrative Findings
+                  </h3>
+                  <p className="text-gray-700 bg-white p-4 rounded-lg border border-gray-300 whitespace-pre-wrap">
+                    {viewingReport.narrative_findings}
+                  </p>
+                </div>
+              )}
+
+              {/* Personnel Section */}
+              <div className="bg-gray-50 rounded-xl p-5 border-2 border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <icons.Users className="w-5 h-5 text-orange-600" />
+                  Personnel
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-white p-4 rounded-lg border border-gray-300">
+                    <p className="text-sm font-medium text-gray-600 mb-1">Prepared By</p>
+                    <p className="text-base font-bold text-gray-900">{viewingReport.prepared_by || 'N/A'}</p>
+                    <p className="text-xs text-gray-500 mt-1">Admin Staff</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border border-gray-300">
+                    <p className="text-sm font-medium text-gray-600 mb-1">Noted By</p>
+                    <p className="text-base font-bold text-gray-900">{viewingReport.noted_by || 'N/A'}</p>
+                    <p className="text-xs text-gray-500 mt-1">Security Guard</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border border-gray-300">
+                    <p className="text-sm font-medium text-gray-600 mb-1">Acknowledged By</p>
+                    <p className="text-base font-bold text-gray-900">{viewingReport.acknowledged_by || 'N/A'}</p>
+                    <p className="text-xs text-gray-500 mt-1">Supervisor</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t-2 border-gray-200">
+                <button
+                  onClick={() => {
+                    handleOpenDownloadModal(viewingReport)
+                    handleCloseViewModal()
+                  }}
+                  className="flex-1 px-5 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                >
+                  <icons.Download className="w-5 h-5" />
+                  Download Report
+                </button>
+                <button
+                  onClick={handleCloseViewModal}
+                  className="flex-1 px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-semibold flex items-center justify-center gap-2"
+                >
+                  <X className="w-5 h-5" />
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Material Input Modal */}
       {showMaterialModal && (
