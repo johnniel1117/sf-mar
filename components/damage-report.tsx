@@ -1332,7 +1332,7 @@ export default function DamageReportForm() {
                         </button>
                         <button
                           onClick={() => handleEditReport(savedReport)}
-                          className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                          className="flex-1 sm:flex-none px-4 py-2text-white rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                         >
                           <icons.Edit className="w-4 h-4" />
                           Edit
@@ -1527,7 +1527,7 @@ export default function DamageReportForm() {
                       <div className="flex gap-2 flex-shrink-0">
                         <button
                           onClick={() => handleEditMaterial(material)}
-                          className="p-2  rounded-lg transition-colors"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Edit"
                         >
                           <icons.Edit className="w-4 h-4" />
