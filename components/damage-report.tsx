@@ -347,21 +347,29 @@ const handleDeleteReport = async (reportNumber: string) => {
     try {
       const trimmedReportNumber = reportNumber.trim()
       
+      console.log('Deleting report:', trimmedReportNumber) // Debug log
+      
       // Call the API directly with the report number in the URL path
       const response = await fetch(`/api/damage-reports/${encodeURIComponent(trimmedReportNumber)}`, {
         method: 'DELETE',
       })
 
+      console.log('Delete response status:', response.status) // Debug log
+
       if (!response.ok) {
         const errorData = await response.json()
+        console.error('Delete error:', errorData) // Debug log
         throw new Error(errorData.error || 'Failed to delete report')
       }
 
       const result = await response.json()
+      console.log('Delete result:', result) // Debug log
+      
       alert(result.message || 'Report deleted successfully!')
       
-      // Reload the reports list
+      // Reload the reports list - force a fresh fetch
       await loadReports()
+      
     } catch (error) {
       console.error('Error deleting report:', error)
       alert(error instanceof Error ? error.message : 'Error deleting report. Please try again.')

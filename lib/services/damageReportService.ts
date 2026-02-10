@@ -339,27 +339,39 @@ static async lookupBarcode(barcode: string): Promise<any> {
     }
   }
 
-  // Delete report
-  static async deleteReport(reportId: string): Promise<void> {
-    try {
-      const { error: itemsError } = await supabase
-        .from('damage_items')
-        .delete()
-        .eq('damage_report_id', reportId)
-      
-      if (itemsError) throw itemsError
-
-      const { error: reportError } = await supabase
-        .from('damage_reports')
-        .delete()
-        .eq('id', reportId)
-      
-      if (reportError) throw reportError
-    } catch (error) {
-      console.error('Error deleting report:', error)
-      throw error
+static async deleteReport(reportNumber: string): Promise<void> {
+  try {
+    // First, find the report by report_number to get its ID
+    const { data: report, error: findError } = await supabase
+      .from('damage_reports')
+      .select('id')
+      .eq('report_number', reportNumber.trim())
+      .single()
+    
+    if (findError || !report) {
+      throw new Error('Report not found')
     }
+
+    // Delete associated items first
+    const { error: itemsError } = await supabase
+      .from('damage_items')
+      .delete()
+      .eq('damage_report_id', report.id)
+    
+    if (itemsError) throw itemsError
+
+    // Delete the report
+    const { error: reportError } = await supabase
+      .from('damage_reports')
+      .delete()
+      .eq('id', report.id)
+    
+    if (reportError) throw reportError
+  } catch (error) {
+    console.error('Error deleting report:', error)
+    throw error
   }
+}
 
   // Upload photo
   static async uploadPhoto(file: File, reportId: string): Promise<string> {
