@@ -57,21 +57,34 @@ export class DamageReportService {
 
   // Load single report by ID
   static async loadReportById(reportId: string): Promise<DamageReport | null> {
-    try {
-      const { data, error } = await supabase
-        .from('damage_reports')
-        .select('*, damage_items(*)')
-        .eq('id', reportId)
-        .single()
+  try {
+    const { data, error } = await supabase
+      .from('damage_reports')
+      .select(`
+        *,
+        damage_items(*),
+        admin:admin_id(name),
+        guard:guard_id(name),
+        supervisor:supervisor_id(name)
+      `)
+      .eq('id', reportId)
+      .single()
 
-      if (error) throw error
-      return (data as any) || null
-    } catch (error) {
-      console.error('Error loading report:', error)
-      throw error
+    if (error) throw error
+    
+    // Format the data properly
+    const report = data as any
+    return {
+      ...report,
+      admin_name: report.admin?.name,
+      guard_name: report.guard?.name,
+      supervisor_name: report.supervisor?.name
     }
+  } catch (error) {
+    console.error('Error loading report:', error)
+    throw error
   }
-
+}
 static async lookupBarcode(barcode: string): Promise<any> {
   try {
     const cleanBarcode = barcode.trim()

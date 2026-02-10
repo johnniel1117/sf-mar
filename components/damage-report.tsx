@@ -361,31 +361,47 @@ export default function DamageReportForm() {
   }
 
   const handleEditReport = async (reportToEdit: DamageReport) => {
-    try {
-      // Ensure items is always an array
-      const reportToSet = {
-        ...reportToEdit,
-        items: reportToEdit.items || []
-      }
-      setReport(reportToSet)
-      
-      // Restore personnel selections
-      setSelectedPersonnel({
-        admin: reportToEdit.admin_id || '',
-        guard: reportToEdit.guard_id || '',
-        supervisor: reportToEdit.supervisor_id || ''
-      })
-      
-      setEditingReportId(reportToEdit.id || null)
-      setIsEditMode(true)
-      setCurrentStep(1)
-      setActiveTab('create')
-      showToast('Report loaded for editing', 'info')
-    } catch (error) {
-      console.error('Error loading report for editing:', error)
-      showToast('Failed to load report for editing', 'error')
-    }
+  try {
+    // Fetch the full report with personnel IDs
+    const fullReport = await fetch(`/api/damage-reports/${reportToEdit.id}`).then(res => res.json());
+    
+    // Ensure items is always an array
+    const reportToSet = {
+      ...fullReport,
+      items: fullReport.items || fullReport.damage_items || []
+    };
+    
+    setReport(reportToSet);
+    
+    // Restore personnel selections from the fetched report
+    setSelectedPersonnel({
+      admin: fullReport.admin_id || '',
+      guard: fullReport.guard_id || '',
+      supervisor: fullReport.supervisor_id || ''
+    });
+    
+    // Restore barcodes from items
+    const existingBarcodes = (fullReport.items || fullReport.damage_items || [])
+      .map((item: any) => item.barcode)
+      .filter(Boolean);
+    
+    // You might want to store these for reference
+    setReport(prev => ({
+      ...prev,
+      existingBarcodes: existingBarcodes
+    }));
+    
+    setEditingReportId(fullReport.id || null);
+    setIsEditMode(true);
+    setCurrentStep(1);
+    setActiveTab('create');
+    showToast('Report loaded for editing', 'info');
+    
+  } catch (error) {
+    console.error('Error loading report for editing:', error);
+    showToast('Failed to load report for editing', 'error');
   }
+};
 
   const saveReport = async () => {
     try {
