@@ -1332,7 +1332,7 @@ export default function DamageReportForm() {
                         </button>
                         <button
                           onClick={() => handleEditReport(savedReport)}
-                          className="flex-1 sm:flex-none px-4 py-2text-white rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                          className="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                         >
                           <icons.Edit className="w-4 h-4" />
                           Edit
