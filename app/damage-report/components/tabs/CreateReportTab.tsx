@@ -2,11 +2,12 @@
 
 import React from 'react';
 import { useDamageReportForm } from '../../hooks/useDamageReportForm';
+import { STEPS } from '@/lib/constants/damageReportConstants';
 import Step1TruckInfo from '../steps/Step1TruckInfo';
 import Step2ScanItems from '../steps/Step2ScanItems';
 import Step3DamageDetails from '../steps/Step3DamageDetails';
 import Step4ReviewFinalize from '../steps/Step4ReviewFinalize';
-import { STEPS, ICONS } from '../../utils/constants';
+import { ICONS } from '../DamageReportForm';
 
 const CreateReportTab: React.FC = () => {
   const {
@@ -37,7 +38,7 @@ const CreateReportTab: React.FC = () => {
       <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
         <div className="flex items-start justify-between gap-1 sm:gap-2 mb-6 sm:mb-8">
           {STEPS.map((step, index) => {
-            const StepIcon = step.icon;
+            const StepIcon = ICONS[step.icon as keyof typeof ICONS];
             return (
               <React.Fragment key={step.number}>
                 {/* Step Item */}
