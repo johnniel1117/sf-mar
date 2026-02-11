@@ -1551,197 +1551,197 @@ export default function DamageReportForm() {
 
       {/* View Report Modal */}
       {showViewModal && viewingReport && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div 
-      className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Modal Header */}
-      <div className="sticky top-0 bg-orange-600 text-white p-4 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <icons.FileText className="w-5 h-5" />
-          <div>
-            <h2 className="text-lg font-semibold">Damage Report Details</h2>
-            <p className="text-orange-100 text-sm">
-              Report #{viewingReport.report_number || viewingReport.id}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={handleCloseViewModal}
-          className="p-1 hover:bg-orange-700 rounded"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Modal Content */}
-      <div className="p-4 space-y-4">
-        {/* Report Information */}
-        <div className="border rounded p-4">
-          <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <icons.Truck className="w-5 h-5 text-orange-600" />
-            Report Information
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Report Date</p>
-              <p className="font-medium">
-                {viewingReport.report_date ? new Date(viewingReport.report_date).toLocaleDateString() : 'N/A'}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Driver Name</p>
-              <p className="font-medium">{viewingReport.driver_name || 'N/A'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Plate Number</p>
-              <p className="font-medium">{viewingReport.plate_no || 'N/A'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Seal Number</p>
-              <p className="font-medium">{viewingReport.seal_no || 'N/A'}</p>
-            </div>
-            {viewingReport.container_no && (
-              <div className="sm:col-span-2">
-                <p className="text-sm text-gray-600">Container Number</p>
-                <p className="font-medium">{viewingReport.container_no}</p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div 
+            className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 border-b border-gray-200 bg-white p-4 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <icons.FileText className="w-5 h-5 text-gray-400" />
+                <div>
+                  <h2 className="text-base font-medium text-gray-900">Damage Report</h2>
+                  <p className="text-gray-500 text-xs">
+                    Report #{viewingReport.report_number || viewingReport.id}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
+              <button
+                onClick={handleCloseViewModal}
+                className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-        {/* Damaged Items */}
-        <div className="border rounded p-4">
-          <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <icons.ClipboardList className="w-5 h-5 text-orange-600" />
-            Damaged Items ({(viewingReport.items || (viewingReport as any).damage_items || []).length})
-          </h3>
-          <div className="space-y-3">
-            {(viewingReport.items || (viewingReport as any).damage_items || []).map((item: any, idx: number) => (
-              <div key={idx} className="border rounded p-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-orange-600 text-white rounded flex items-center justify-center font-medium text-sm">
-                    {item.item_number || idx + 1}
+            {/* Modal Content */}
+            <div className="p-6 space-y-5">
+              {/* Report Information */}
+              <div className="border border-gray-200 rounded-lg p-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <icons.Truck className="w-4 h-4 text-gray-400" />
+                  Report Information
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Report Date</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {viewingReport.report_date ? new Date(viewingReport.report_date).toLocaleDateString() : 'N/A'}
+                    </p>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 mb-2">
-                      {item.material_description || 'Unknown Item'}
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-gray-600">Material Code</p>
-                        <p className="font-medium">{item.material_code || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">Serial Number</p>
-                        <p className="font-mono font-medium">{item.barcode || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">Damage Type</p>
-                        <span className="inline-block px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">
-                          {item.damage_type || 'Not specified'}
-                        </span>
-                      </div>
-                      {item.photo_url && (
-                        <div>
-                          <p className="text-gray-600">Photo Evidence</p>
-                          <a
-                            href={item.photo_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                          >
-                            <icons.Camera className="w-4 h-4" />
-                            View Photo
-                          </a>
-                        </div>
-                      )}
-                      {item.damage_description && (
-                        <div className="sm:col-span-2">
-                          <p className="text-gray-600">Damage Description</p>
-                          <p className="text-gray-700 mt-1 p-2 bg-gray-50 rounded">
-                            {item.damage_description}
-                          </p>
-                        </div>
-                      )}
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Driver Name</p>
+                    <p className="text-sm font-medium text-gray-900">{viewingReport.driver_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Plate Number</p>
+                    <p className="text-sm font-medium text-gray-900">{viewingReport.plate_no || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Seal Number</p>
+                    <p className="text-sm font-medium text-gray-900">{viewingReport.seal_no || 'N/A'}</p>
+                  </div>
+                  {viewingReport.container_no && (
+                    <div className="sm:col-span-2">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Container Number</p>
+                      <p className="text-sm font-medium text-gray-900">{viewingReport.container_no}</p>
                     </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Damaged Items */}
+              <div className="border border-gray-200 rounded-lg p-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <icons.ClipboardList className="w-4 h-4 text-gray-400" />
+                  Damaged Items ({(viewingReport.items || (viewingReport as any).damage_items || []).length})
+                </h3>
+                <div className="space-y-3">
+                  {(viewingReport.items || (viewingReport as any).damage_items || []).map((item: any, idx: number) => (
+                    <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-gray-300 text-gray-700 rounded flex items-center justify-center font-medium text-xs">
+                          {item.item_number || idx + 1}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 mb-3">
+                            {item.material_description || 'Unknown Item'}
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Material Code</p>
+                              <p className="text-sm font-medium text-gray-900">{item.material_code || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Serial Number</p>
+                              <p className="font-mono text-sm font-medium text-gray-900">{item.barcode || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Damage Type</p>
+                              <span className="inline-block px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium">
+                                {item.damage_type || 'Not specified'}
+                              </span>
+                            </div>
+                            {item.photo_url && (
+                              <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Photo Evidence</p>
+                                <a
+                                  href={item.photo_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 text-sm transition-colors"
+                                >
+                                  <icons.Camera className="w-4 h-4" />
+                                  View Photo
+                                </a>
+                              </div>
+                            )}
+                            {item.damage_description && (
+                              <div className="sm:col-span-2">
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Damage Description</p>
+                                <p className="text-sm text-gray-700 mt-1 p-3 bg-white rounded border border-gray-200">
+                                  {item.damage_description}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Narrative Findings */}
+              {viewingReport.narrative_findings && (
+                <div className="border border-gray-200 rounded-lg p-5">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2 uppercase tracking-wide">
+                    <icons.Info className="w-4 h-4 text-gray-400" />
+                    Narrative Findings
+                  </h3>
+                  <p className="text-sm text-gray-700 p-3 bg-gray-50 rounded border border-gray-200">
+                    {viewingReport.narrative_findings}
+                  </p>
+                </div>
+              )}
+
+              {/* Personnel */}
+              <div className="border border-gray-200 rounded-lg p-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <icons.Users className="w-4 h-4 text-gray-400" />
+                  Personnel
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Prepared By</p>
+                    <p className="font-medium text-gray-900">{viewingReport.prepared_by || 'N/A'}</p>
+                    <p className="text-xs text-gray-500 mt-2">Admin Staff</p>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Noted By</p>
+                    <p className="font-medium text-gray-900">{viewingReport.noted_by || 'N/A'}</p>
+                    <p className="text-xs text-gray-500 mt-2">Security Guard</p>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Acknowledged By</p>
+                    <p className="font-medium text-gray-900">{viewingReport.acknowledged_by || 'N/A'}</p>
+                    <p className="text-xs text-gray-500 mt-2">Supervisor</p>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Narrative Findings */}
-        {viewingReport.narrative_findings && (
-          <div className="border rounded p-4">
-            <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
-              <icons.Info className="w-5 h-5 text-orange-600" />
-              Narrative Findings
-            </h3>
-            <p className="text-gray-700 p-3 bg-gray-50 rounded">
-              {viewingReport.narrative_findings}
-            </p>
-          </div>
-        )}
-
-        {/* Personnel */}
-        <div className="border rounded p-4">
-          <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <icons.Users className="w-5 h-5 text-orange-600" />
-            Personnel
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="border rounded p-3">
-              <p className="text-sm text-gray-600">Prepared By</p>
-              <p className="font-medium">{viewingReport.prepared_by || 'N/A'}</p>
-              <p className="text-xs text-gray-500 mt-1">Admin Staff</p>
-            </div>
-            <div className="border rounded p-3">
-              <p className="text-sm text-gray-600">Noted By</p>
-              <p className="font-medium">{viewingReport.noted_by || 'N/A'}</p>
-              <p className="text-xs text-gray-500 mt-1">Security Guard</p>
-            </div>
-            <div className="border rounded p-3">
-              <p className="text-sm text-gray-600">Acknowledged By</p>
-              <p className="font-medium">{viewingReport.acknowledged_by || 'N/A'}</p>
-              <p className="text-xs text-gray-500 mt-1">Supervisor</p>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    handleEditReport(viewingReport);
+                    handleCloseViewModal();
+                  }}
+                  className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 font-medium text-sm transition-colors"
+                >
+                  Edit Report
+                </button>
+                <button
+                  onClick={() => {
+                    handleOpenDownloadModal(viewingReport);
+                    handleCloseViewModal();
+                  }}
+                  className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 font-medium text-sm transition-colors"
+                >
+                  Download Report
+                </button>
+                <button
+                  onClick={handleCloseViewModal}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 font-medium text-sm transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
-          <button
-            onClick={() => {
-              handleEditReport(viewingReport)
-              handleCloseViewModal()
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-          >
-            Edit Report
-          </button>
-          <button
-            onClick={() => {
-              handleOpenDownloadModal(viewingReport)
-              handleCloseViewModal()
-            }}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
-          >
-            Download Report
-          </button>
-          <button
-            onClick={handleCloseViewModal}
-            className="px-4 py-2 border text-gray-700 rounded hover:bg-gray-50 font-medium"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       {/* Material Input Modal */}
       {showMaterialModal && (
