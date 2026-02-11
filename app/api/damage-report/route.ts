@@ -10,8 +10,6 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') || '100'
     const page = searchParams.get('page') || '1'
     
-    // Rest of the code remains the same...
-    // ... (your existing GET function code)
     
   } catch (error) {
     console.error('Unexpected error:', error)
