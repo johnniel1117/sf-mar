@@ -4,6 +4,12 @@ import React from "react"
 import { useState, useRef, useEffect } from 'react'
 import { Download, Camera, Plus, X, Barcode, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Users, Edit, Search, Star, Clock, Info, FileSpreadsheet, Eye } from 'lucide-react'
 import Navbar from '@/components/Navbar'
+import { ReportTabs } from '@/components/ReportTabs'
+import { StepsIndicator } from '@/components/StepsIndicator'
+import { MaterialModal } from '@/components/modals/MaterialModal'
+import { DownloadModal } from '@/components/modals/DownloadModal'
+import { ViewReportModal } from '@/components/modals/ViewReportModal'
+import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
 import { useDamageReport } from '@/hooks/useDamageReport'
 import { PDFGenerator } from '@/lib/utils/pdfGenerator'
 import { ExcelGenerator } from '@/lib/utils/excelGenerator'
@@ -636,107 +642,18 @@ export default function DamageReportForm() {
         fixed={true}
       />
       <div className="w-full max-w-6xl mx-auto pt-16">
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-white p-1 rounded-lg justify-center w-full">
-          <button
-            onClick={() => setActiveTab('create')}
-            className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
-              activeTab === 'create'
-                ? 'bg-orange-600 text-white shadow'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <icons.FileText className="w-4 h-4 inline mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Create Report</span>
-            <span className="sm:hidden">Create</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('saved')}
-            className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
-              activeTab === 'saved'
-                ? 'bg-orange-600 text-white shadow'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <icons.Download className="w-4 h-4 inline mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Saved Reports</span>
-            <span className="sm:hidden">Saved</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('materials')
-              loadMaterialMappings()
-            }}
-            className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
-              activeTab === 'materials'
-                ? 'bg-orange-600 text-white shadow'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <icons.Star className="w-4 h-4 inline mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Material Mappings</span>
-            <span className="sm:hidden">Materials</span>
-          </button>
-        </div>
+        <ReportTabs 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onMaterialsTab={loadMaterialMappings}
+        />
 
         {/* Create Report Tab */}
         {activeTab === 'create' && (
           <div className="space-y-6">
             {/* Progress Steps */}
             <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
-              <div className="flex items-start justify-between gap-1 sm:gap-2 mb-6 sm:mb-8">
-                {STEPS.map((step, index) => {
-                  const StepIcon = icons[step.icon as keyof typeof icons]
-                  return (
-                    <React.Fragment key={step.number}>
-                      {/* Step Item */}
-                      <div className="flex flex-col items-center flex-1">
-                        <div
-                          className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center font-bold text-sm sm:text-base lg:text-lg transition-all duration-300 flex-shrink-0 ${
-                            currentStep === step.number
-                              ? 'bg-orange-600 text-white shadow-lg scale-110'
-                              : currentStep > step.number
-                              ? 'bg-green-500 text-white'
-                              : 'bg-gray-200 text-gray-500'
-                          }`}
-                        >
-                          {currentStep > step.number ? (
-                            <icons.CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
-                          ) : (
-                            <StepIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
-                          )}
-                        </div>
-                        <p className={`text-[10px] sm:text-xs lg:text-sm font-semibold mt-1 sm:mt-2 text-center line-clamp-2 ${
-                          currentStep === step.number ? 'text-orange-600' : 'text-gray-600'
-                        }`}>
-                          {step.title}
-                        </p>
-                        <p className="text-[9px] sm:text-xs text-gray-400 mt-0.5 hidden lg:block text-center max-w-[70px]">{step.description}</p>
-                      </div>
-
-                      {/* Connector Line */}
-                      {index < STEPS.length - 1 && (
-                        <div className={`h-0.5 sm:h-1 flex-1 transition-all duration-300 self-start mt-5 sm:mt-6 lg:mt-7 ${
-                          currentStep > step.number ? 'bg-green-500' : 'bg-gray-300'
-                        }`} />
-                      )}
-                    </React.Fragment>
-                  )
-                })}
-              </div>
-
-              {/* Edit Mode Indicator */}
-              {isEditMode && (
-                <div className="mt-6 mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
-                  <div className="flex items-center gap-2">
-                    <icons.Edit className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-blue-900 text-sm">Edit Mode</p>
-                      <p className="text-xs text-blue-700">You are editing an existing report</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <StepsIndicator currentStep={currentStep} isEditMode={isEditMode} />
 
               {/* Step Content */}
               <div className="mt-8">
@@ -1549,449 +1466,45 @@ export default function DamageReportForm() {
         )}
       </div>
 
-      {/* View Report Modal */}
-      {showViewModal && viewingReport && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div 
-            className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-8 py-6 flex justify-between items-start">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
-                  <icons.FileText className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-light tracking-tight text-gray-900">Damage Report</h2>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Report #{viewingReport.report_number || viewingReport.id}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleCloseViewModal}
-                className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-all"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+      <ViewReportModal
+        isOpen={showViewModal}
+        report={viewingReport}
+        onClose={handleCloseViewModal}
+        onEdit={handleEditReport}
+        onDownload={handleOpenDownloadModal}
+      />
 
-            {/* Modal Content */}
-            <div className="p-8 space-y-6">
-              {/* Report Information */}
-              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <icons.Truck className="w-4 h-4 text-orange-600" />
-                  </div>
-                  Report Information
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Report Date</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {viewingReport.report_date ? new Date(viewingReport.report_date).toLocaleDateString() : 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Driver Name</p>
-                    <p className="text-sm font-medium text-gray-900">{viewingReport.driver_name || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Plate Number</p>
-                    <p className="text-sm font-medium text-gray-900">{viewingReport.plate_no || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Seal Number</p>
-                    <p className="text-sm font-medium text-gray-900">{viewingReport.seal_no || 'N/A'}</p>
-                  </div>
-                  {viewingReport.container_no && (
-                    <div className="sm:col-span-2">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Container Number</p>
-                      <p className="text-sm font-medium text-gray-900">{viewingReport.container_no}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+      <MaterialModal
+        isOpen={showMaterialModal}
+        pendingBarcode={pendingBarcode}
+        materialDescription={newMaterialDescription}
+        materialCategory={newMaterialCategory}
+        isSaving={isSavingMaterial}
+        onDescriptionChange={setNewMaterialDescription}
+        onCategoryChange={setNewMaterialCategory}
+        onSave={handleSaveNewMaterial}
+        onCancel={handleCancelMaterial}
+      />
 
-              {/* Damaged Items */}
-              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <icons.ClipboardList className="w-4 h-4 text-orange-600" />
-                  </div>
-                  Damaged Items ({(viewingReport.items || (viewingReport as any).damage_items || []).length})
-                </h3>
-                <div className="space-y-4">
-                  {(viewingReport.items || (viewingReport as any).damage_items || []).map((item: any, idx: number) => (
-                    <div key={idx} className="border border-gray-150 rounded-xl p-5 bg-gray-50 hover:bg-white hover:border-gray-300 transition-all">
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-lg flex items-center justify-center font-medium text-sm flex-shrink-0">
-                          {item.item_number || idx + 1}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 mb-3">
-                            {item.material_description || 'Unknown Item'}
-                          </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                            <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Material Code</p>
-                              <p className="text-sm font-medium text-gray-900">{item.material_code || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Serial Number</p>
-                              <p className="font-mono text-sm font-medium text-gray-900">{item.barcode || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Damage Type</p>
-                              <span className="inline-block px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium">
-                                {item.damage_type || 'Not specified'}
-                              </span>
-                            </div>
-                            {item.photo_url && (
-                              <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Photo Evidence</p>
-                                <a
-                                  href={item.photo_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 text-sm transition-colors"
-                                >
-                                  <icons.Camera className="w-4 h-4" />
-                                  View Photo
-                                </a>
-                              </div>
-                            )}
-                            {item.damage_description && (
-                              <div className="sm:col-span-2">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Damage Description</p>
-                                <p className="text-sm text-gray-700 mt-1 p-3 bg-white rounded border border-gray-200">
-                                  {item.damage_description}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+      <DownloadModal
+        isOpen={showDownloadModal}
+        downloadType={downloadType}
+        onDownloadTypeChange={setDownloadType}
+        onConfirm={handleDownloadConfirm}
+        onClose={() => setShowDownloadModal(false)}
+        // selectedReport={selectedDownloadReport}
+      />
 
-              {/* Narrative Findings */}
-              {viewingReport.narrative_findings && (
-                <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <icons.Info className="w-4 h-4 text-orange-600" />
-                    </div>
-                    Narrative Findings
-                  </h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {viewingReport.narrative_findings}
-                  </p>
-                </div>
-              )}
-
-              {/* Personnel */}
-              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <icons.Users className="w-4 h-4 text-orange-600" />
-                  </div>
-                  Personnel
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 hover:bg-white transition-colors">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Prepared By</p>
-                    <p className="font-medium text-gray-900">{viewingReport.prepared_by || 'N/A'}</p>
-                    <p className="text-xs text-gray-500 mt-2">Admin Staff</p>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Noted By</p>
-                    <p className="font-medium text-gray-900">{viewingReport.noted_by || 'N/A'}</p>
-                    <p className="text-xs text-gray-500 mt-2">Security Guard</p>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Acknowledged By</p>
-                    <p className="font-medium text-gray-900">{viewingReport.acknowledged_by || 'N/A'}</p>
-                    <p className="text-xs text-gray-500 mt-2">Supervisor</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
-                <button
-                  onClick={() => {
-                    handleEditReport(viewingReport);
-                    handleCloseViewModal();
-                  }}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-all hover:shadow-md"
-                >
-                  Edit Report
-                </button>
-                <button
-                  onClick={() => {
-                    handleOpenDownloadModal(viewingReport);
-                    handleCloseViewModal();
-                  }}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium text-sm transition-all hover:shadow-md"
-                >
-                  Download Report
-                </button>
-                <button
-                  onClick={handleCloseViewModal}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-all"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Material Input Modal */}
-      {showMaterialModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-fadeIn">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <icons.AlertCircle className="w-5 h-5 text-orange-600" />
-                  Material Not Found
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Please enter material description for the scanned barcode
-                </p>
-              </div>
-              <button
-                onClick={handleCancelMaterial}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <icons.X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              {/* Barcode Display */}
-              <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-gray-700 mb-1">Scanned Barcode</p>
-                    <p className="text-sm font-bold text-gray-900 break-all font-mono">
-                      {pendingBarcode}
-                    </p>
-                  </div>
-                  <icons.Barcode className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                </div>
-              </div>
-              
-              {/* Material Description Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Material Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={newMaterialDescription}
-                  onChange={(e) => setNewMaterialDescription(e.target.value)}
-                  placeholder="Enter material description..."
-                  rows={3}
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                  autoFocus
-                />
-              </div>
-              
-              {/* Category Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  value={newMaterialCategory}
-                  onChange={(e) => setNewMaterialCategory(e.target.value)}
-                  placeholder="e.g., Electronics, Furniture, etc."
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                />
-              </div>
-              
-              {/* Tips */}
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                <p className="text-xs text-blue-800 flex items-start gap-2">
-                  <icons.Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>
-                    This material will be saved to your database and automatically retrieved 
-                    next time you scan this barcode.
-                  </span>
-                </p>
-              </div>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-              <button
-                onClick={handleCancelMaterial}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors"
-                disabled={isSavingMaterial}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveNewMaterial}
-                disabled={!newMaterialDescription.trim() || isSavingMaterial}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isSavingMaterial ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <icons.Save className="w-4 h-4" />
-                    Save & Continue
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Download Modal */}
-      {showDownloadModal && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50 p-4">
-          <div 
-            className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full animate-scale-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Choose Download Format</h3>
-              <button
-                onClick={() => setShowDownloadModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-            
-            <div className="space-y-3 mb-8">
-              {/* PDF Option */}
-              <button
-                onClick={() => setDownloadType('pdf')}
-                className={`w-full flex items-center gap-4 p-4 sm:p-5 border-2 rounded-xl transition-all duration-300 hover:shadow-md ${
-                  downloadType === 'pdf'
-                    ? "border-green-500 bg-gradient-to-r from-green-50 to-green-100"
-                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                  downloadType === 'pdf' ? "border-green-600" : "border-gray-300"
-                }`}>
-                  {downloadType === 'pdf' && (
-                    <div className="w-3.5 h-3.5 rounded-full bg-green-600" />
-                  )}
-                </div>
-                <FileText className={`w-6 h-6 ${downloadType === 'pdf' ? 'text-green-600' : 'text-gray-400'}`} />
-                <div className="text-left flex-1">
-                  <p className="font-bold text-gray-800">PDF Document</p>
-                  <p className="text-sm text-gray-500 mt-0.5">Print-ready format for signatures</p>
-                </div>
-              </button>
-              
-              {/* Excel Option */}
-              <button
-                onClick={() => setDownloadType('excel')}
-                className={`w-full flex items-center gap-4 p-4 sm:p-5 border-2 rounded-xl transition-all duration-300 hover:shadow-md ${
-                  downloadType === 'excel'
-                    ? "border-blue-500 bg-gradient-to-r from-blue-50 to-blue-100"
-                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                  downloadType === 'excel' ? "border-blue-600" : "border-gray-300"
-                }`}>
-                  {downloadType === 'excel' && (
-                    <div className="w-3.5 h-3.5 rounded-full bg-blue-600" />
-                  )}
-                </div>
-                <FileSpreadsheet className={`w-6 h-6 ${downloadType === 'excel' ? 'text-blue-600' : 'text-gray-400'}`} />
-                <div className="text-left flex-1">
-                  <p className="font-bold text-gray-800">Excel Spreadsheet</p>
-                  <p className="text-sm text-gray-500 mt-0.5">Editable spreadsheet format</p>
-                </div>
-              </button>
-            </div>
-            
-            {/* Report Info Preview */}
-            {selectedDownloadReport && (
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-sm font-medium text-gray-700 mb-1">Selected Report</p>
-                <p className="text-xs text-gray-600">
-                  Report #: {selectedDownloadReport.report_number || selectedDownloadReport.id}
-                </p>
-                <p className="text-xs text-gray-600">
-                  Date: {new Date(selectedDownloadReport.report_date).toLocaleDateString()}
-                </p>
-                <p className="text-xs text-gray-600">
-                  Items: {((selectedDownloadReport as any).damage_items || []).length} damaged items
-                </p>
-              </div>
-            )}
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowDownloadModal(false)
-                  setSelectedDownloadReport(null)
-                }}
-                className="flex-1 px-4 sm:px-5 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-semibold text-sm sm:text-base"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDownloadConfirm}
-                className="flex-1 px-4 sm:px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl text-sm sm:text-base"
-              >
-                Download Now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal */}
-      {confirmModal.show && (
-        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-40">
-          <div className="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full mx-4 animate-scale-in">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">{confirmModal.title}</h2>
-            <p className="text-gray-600 mb-6">{confirmModal.message}</p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={confirmModal.onCancel}
-                className="px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  confirmModal.onConfirm()
-                  setConfirmModal(prev => ({ ...prev, show: false }))
-                }}
-                className="px-4 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={confirmModal.show}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={() => {
+          confirmModal.onConfirm()
+          setConfirmModal(prev => ({ ...prev, show: false }))
+        }}
+        onCancel={confirmModal.onCancel}
+      />
 
       {/* Toast Notification */}
       {toast.show && (
