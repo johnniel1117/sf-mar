@@ -1557,12 +1557,12 @@ export default function DamageReportForm() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 border-b border-gray-200 bg-white p-4 flex justify-between items-center">
+            <div className="sticky top-0 border-b-2 border-orange-500 bg-white p-4 flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <icons.FileText className="w-5 h-5 text-gray-400" />
+                <icons.FileText className="w-5 h-5 text-orange-500" />
                 <div>
                   <h2 className="text-base font-medium text-gray-900">Damage Report</h2>
-                  <p className="text-gray-500 text-xs">
+                  <p className="text-orange-600 text-xs font-medium">
                     Report #{viewingReport.report_number || viewingReport.id}
                   </p>
                 </div>
@@ -1578,9 +1578,9 @@ export default function DamageReportForm() {
             {/* Modal Content */}
             <div className="p-6 space-y-5">
               {/* Report Information */}
-              <div className="border border-gray-200 rounded-lg p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
-                  <icons.Truck className="w-4 h-4 text-gray-400" />
+              <div className="border border-orange-200 rounded-lg p-5 bg-orange-50">
+                <h3 className="text-sm font-semibold text-orange-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <icons.Truck className="w-4 h-4 text-orange-500" />
                   Report Information
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1612,16 +1612,16 @@ export default function DamageReportForm() {
               </div>
 
               {/* Damaged Items */}
-              <div className="border border-gray-200 rounded-lg p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
-                  <icons.ClipboardList className="w-4 h-4 text-gray-400" />
+              <div className="border border-orange-200 rounded-lg p-5 bg-orange-50">
+                <h3 className="text-sm font-semibold text-orange-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <icons.ClipboardList className="w-4 h-4 text-orange-500" />
                   Damaged Items ({(viewingReport.items || (viewingReport as any).damage_items || []).length})
                 </h3>
                 <div className="space-y-3">
                   {(viewingReport.items || (viewingReport as any).damage_items || []).map((item: any, idx: number) => (
-                    <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-white">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-gray-300 text-gray-700 rounded flex items-center justify-center font-medium text-xs">
+                        <div className="w-8 h-8 bg-orange-500 text-white rounded flex items-center justify-center font-medium text-xs">
                           {item.item_number || idx + 1}
                         </div>
                         <div className="flex-1">
@@ -1675,25 +1675,25 @@ export default function DamageReportForm() {
 
               {/* Narrative Findings */}
               {viewingReport.narrative_findings && (
-                <div className="border border-gray-200 rounded-lg p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2 uppercase tracking-wide">
-                    <icons.Info className="w-4 h-4 text-gray-400" />
+                <div className="border border-orange-200 rounded-lg p-5 bg-orange-50">
+                  <h3 className="text-sm font-semibold text-orange-900 mb-3 flex items-center gap-2 uppercase tracking-wide">
+                    <icons.Info className="w-4 h-4 text-orange-500" />
                     Narrative Findings
                   </h3>
-                  <p className="text-sm text-gray-700 p-3 bg-gray-50 rounded border border-gray-200">
+                  <p className="text-sm text-gray-700 p-3 bg-white rounded border border-gray-200">
                     {viewingReport.narrative_findings}
                   </p>
                 </div>
               )}
 
               {/* Personnel */}
-              <div className="border border-gray-200 rounded-lg p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
-                  <icons.Users className="w-4 h-4 text-gray-400" />
+              <div className="border border-orange-200 rounded-lg p-5 bg-orange-50">
+                <h3 className="text-sm font-semibold text-orange-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <icons.Users className="w-4 h-4 text-orange-500" />
                   Personnel
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <div className="border border-gray-200 rounded-lg p-3 bg-white">
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Prepared By</p>
                     <p className="font-medium text-gray-900">{viewingReport.prepared_by || 'N/A'}</p>
                     <p className="text-xs text-gray-500 mt-2">Admin Staff</p>
@@ -1718,7 +1718,7 @@ export default function DamageReportForm() {
                     handleEditReport(viewingReport);
                     handleCloseViewModal();
                   }}
-                  className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 font-medium text-sm transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium text-sm transition-colors"
                 >
                   Edit Report
                 </button>
@@ -1727,7 +1727,7 @@ export default function DamageReportForm() {
                     handleOpenDownloadModal(viewingReport);
                     handleCloseViewModal();
                   }}
-                  className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 font-medium text-sm transition-colors"
+                  className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 font-medium text-sm transition-colors"
                 >
                   Download Report
                 </button>
