@@ -26,9 +26,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json()
-    
-    // Rest of the code remains the same...
-    // ... (your existing POST function code)
+  
     
   } catch (error) {
     console.error('Unexpected error:', error)
