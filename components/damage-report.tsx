@@ -1557,30 +1557,34 @@ export default function DamageReportForm() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 border-b-2 border-orange-500 bg-white p-4 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <icons.FileText className="w-5 h-5 text-orange-500" />
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-8 py-6 flex justify-between items-start">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
+                  <icons.FileText className="w-6 h-6 text-white" />
+                </div>
                 <div>
-                  <h2 className="text-base font-medium text-gray-900">Damage Report</h2>
-                  <p className="text-orange-600 text-xs font-medium">
+                  <h2 className="text-2xl font-light tracking-tight text-gray-900">Damage Report</h2>
+                  <p className="text-sm text-gray-500 mt-1">
                     Report #{viewingReport.report_number || viewingReport.id}
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleCloseViewModal}
-                className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-all"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-5">
+            <div className="p-8 space-y-6">
               {/* Report Information */}
-              <div className="border border-orange-200 rounded-lg p-5 bg-orange-50">
-                <h3 className="text-sm font-semibold text-orange-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
-                  <icons.Truck className="w-4 h-4 text-orange-500" />
+              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
+                <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <icons.Truck className="w-4 h-4 text-orange-600" />
+                  </div>
                   Report Information
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1612,16 +1616,18 @@ export default function DamageReportForm() {
               </div>
 
               {/* Damaged Items */}
-              <div className="border border-orange-200 rounded-lg p-5 bg-orange-50">
-                <h3 className="text-sm font-semibold text-orange-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
-                  <icons.ClipboardList className="w-4 h-4 text-orange-500" />
+              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
+                <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <icons.ClipboardList className="w-4 h-4 text-orange-600" />
+                  </div>
                   Damaged Items ({(viewingReport.items || (viewingReport as any).damage_items || []).length})
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {(viewingReport.items || (viewingReport as any).damage_items || []).map((item: any, idx: number) => (
-                    <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-white">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-orange-500 text-white rounded flex items-center justify-center font-medium text-xs">
+                    <div key={idx} className="border border-gray-150 rounded-xl p-5 bg-gray-50 hover:bg-white hover:border-gray-300 transition-all">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-lg flex items-center justify-center font-medium text-sm flex-shrink-0">
                           {item.item_number || idx + 1}
                         </div>
                         <div className="flex-1">
@@ -1675,25 +1681,29 @@ export default function DamageReportForm() {
 
               {/* Narrative Findings */}
               {viewingReport.narrative_findings && (
-                <div className="border border-orange-200 rounded-lg p-5 bg-orange-50">
-                  <h3 className="text-sm font-semibold text-orange-900 mb-3 flex items-center gap-2 uppercase tracking-wide">
-                    <icons.Info className="w-4 h-4 text-orange-500" />
+                <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <icons.Info className="w-4 h-4 text-orange-600" />
+                    </div>
                     Narrative Findings
                   </h3>
-                  <p className="text-sm text-gray-700 p-3 bg-white rounded border border-gray-200">
+                  <p className="text-sm text-gray-700 leading-relaxed">
                     {viewingReport.narrative_findings}
                   </p>
                 </div>
               )}
 
               {/* Personnel */}
-              <div className="border border-orange-200 rounded-lg p-5 bg-orange-50">
-                <h3 className="text-sm font-semibold text-orange-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
-                  <icons.Users className="w-4 h-4 text-orange-500" />
+              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
+                <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <icons.Users className="w-4 h-4 text-orange-600" />
+                  </div>
                   Personnel
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="border border-gray-200 rounded-lg p-3 bg-white">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 hover:bg-white transition-colors">
                     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Prepared By</p>
                     <p className="font-medium text-gray-900">{viewingReport.prepared_by || 'N/A'}</p>
                     <p className="text-xs text-gray-500 mt-2">Admin Staff</p>
@@ -1712,13 +1722,13 @@ export default function DamageReportForm() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => {
                     handleEditReport(viewingReport);
                     handleCloseViewModal();
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium text-sm transition-colors"
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-all hover:shadow-md"
                 >
                   Edit Report
                 </button>
@@ -1727,13 +1737,13 @@ export default function DamageReportForm() {
                     handleOpenDownloadModal(viewingReport);
                     handleCloseViewModal();
                   }}
-                  className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 font-medium text-sm transition-colors"
+                  className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium text-sm transition-all hover:shadow-md"
                 >
                   Download Report
                 </button>
                 <button
                   onClick={handleCloseViewModal}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 font-medium text-sm transition-colors"
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-all"
                 >
                   Close
                 </button>
