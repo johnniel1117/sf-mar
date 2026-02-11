@@ -1,6 +1,5 @@
 import React from 'react';
 import { ICONS } from '../../utils/constants';
-import { BarcodeLookupResult } from '../../utils/types';
 
 interface MaterialModalProps {
   pendingBarcode: string;
@@ -9,7 +8,7 @@ interface MaterialModalProps {
   materialCategory: string;
   onCategoryChange: (value: string) => void;
   isSaving: boolean;
-  materialLookup: BarcodeLookupResult | null;
+  materialLookup: any;
   onClose: () => void;
   onSave: () => void;
   onCancel: () => void;

@@ -24,12 +24,6 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({
     <div className={`fixed bottom-4 right-4 px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 text-white z-50 animate-slide-in ${bgColor}`}>
       <Icon className="w-5 h-5" />
       <span className="font-medium">{message}</span>
-      <button
-        onClick={onClose}
-        className="ml-2 p-1 hover:bg-white/20 rounded"
-      >
-        <ICONS.X className="w-4 h-4" />
-      </button>
     </div>
   );
 };

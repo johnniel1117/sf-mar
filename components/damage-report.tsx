@@ -1,4 +1,4 @@
-import DamageReportForm from '../app/damage-report/components/DamageReportForm';
+import DamageReportForm from '../app/damage-report/page';
 
 export default function DamageReportPage() {
   return <DamageReportForm />;

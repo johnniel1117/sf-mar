@@ -1,4 +1,5 @@
 import React from 'react';
+import { ICONS } from '../../utils/constants';
 
 interface ConfirmationModalProps {
   title: string;
