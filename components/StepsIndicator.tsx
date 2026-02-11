@@ -20,8 +20,8 @@ interface StepsIndicatorProps {
 
 export function StepsIndicator({ currentStep, isEditMode }: StepsIndicatorProps) {
   return (
-    <div className=" p-3 ">
-      <div className="flex items-start justify-between gap-1 sm:gap-2 mb-6 sm:mb-8">
+    <div className=" p-3 sm:p-6">
+      <div className="flex items-start justify-between gap-1 sm:gap-2 mb-6">
         {STEPS.map((step, index) => {
           const StepIcon = icons[step.icon as keyof typeof icons]
           return (
