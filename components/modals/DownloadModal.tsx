@@ -1,5 +1,5 @@
 'use client'
-
+import type React from "react"
 import { X, FileText, FileSpreadsheet } from 'lucide-react'
 
 interface DownloadModalProps {
