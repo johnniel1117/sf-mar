@@ -662,7 +662,7 @@ export default function DamageReportForm() {
                 {currentStep === 1 && (
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12  rounded-lg flex items-center justify-center flex-shrink-0">
                         <icons.Truck className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
                       <div className="min-w-0">
@@ -743,7 +743,7 @@ export default function DamageReportForm() {
                 {currentStep === 2 && (
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12  rounded-lg flex items-center justify-center flex-shrink-0">
                         <icons.Barcode className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
                       <div className="min-w-0">
@@ -865,7 +865,7 @@ export default function DamageReportForm() {
                 {currentStep === 3 && (
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12  rounded-lg flex items-center justify-center flex-shrink-0">
                         <icons.ClipboardList className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
                       <div className="min-w-0">
@@ -973,7 +973,7 @@ export default function DamageReportForm() {
                 {currentStep === 4 && (
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12  rounded-lg flex items-center justify-center flex-shrink-0">
                         <icons.Users className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
                       <div className="min-w-0">
