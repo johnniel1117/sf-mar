@@ -2,7 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { useDamageReportForm } from '../hooks/useDamageReportForm';
+import { useDamageReport } from '@/hooks/useDamageReport';
+import { PDFGenerator } from '@/lib/utils/pdfGenerator';
+import { ExcelGenerator } from '@/lib/utils/excelGenerator';
+import { DAMAGE_TYPES, STEPS, Step } from '@/lib/constants/damageReportConstants';
+import type { DamageItem, DamageReport } from '@/lib/services/damageReportService';
 import CreateReportTab from './tabs/CreateReportTab';
 import SavedReportsTab from './tabs/SavedReportsTab';
 import MaterialsTab from './tabs/MaterialsTab';
@@ -11,57 +15,51 @@ import DownloadModal from './modals/DownloadModal';
 import MaterialModal from './modals/MaterialModal';
 import ConfirmationModal from './modals/ConfirmationModal';
 import ToastNotification from './modals/ToastNotification';
-import { ICONS } from '../utils/constants';
+
+// Import icons from lucide-react
+import {
+  Truck, Barcode, ClipboardList, Users, Download, Camera, Plus, X,
+  AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight,
+  ChevronLeft, Edit, Search, Star, Clock, Info, FileSpreadsheet, Eye
+} from 'lucide-react';
+
+export const ICONS = {
+  Truck, Barcode, ClipboardList, Users, Download, Camera, Plus, X,
+  AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight,
+  ChevronLeft, Edit, Search, Star, Clock, Info, FileSpreadsheet, Eye,
+} as const;
+
+export const INITIAL_REPORT: DamageReport = {
+  report_number: '',
+  report_date: new Date().toISOString().split('T')[0],
+  seal_no: '',
+  driver_name: '',
+  plate_no: '',
+  container_no: '',
+  prepared_by: '',
+  noted_by: '',
+  acknowledged_by: '',
+  narrative_findings: '',
+  actions_required: '',
+  status: 'draft',
+  items: [],
+};
 
 export default function DamageReportForm() {
   const [mounted, setMounted] = useState(false);
-  
-  const {
-    activeTab,
-    setActiveTab,
-    toast,
-    showToast,
-    confirmModal,
-    setConfirmModal,
-    showViewModal,
-    setShowViewModal,
-    viewingReport,
-    handleViewReport,
-    handleCloseViewModal,
-    handleEditReport,
-    handleOpenDownloadModal,
-    showMaterialModal,
-    setShowMaterialModal,
-    pendingBarcode,
-    newMaterialDescription,
-    setNewMaterialDescription,
-    newMaterialCategory,
-    setNewMaterialCategory,
-    isSavingMaterial,
-    handleSaveNewMaterial,
-    handleCancelMaterial,
-    showDownloadModal,
-    setShowDownloadModal,
-    downloadType,
-    setDownloadType,
-    selectedDownloadReport,
-    setSelectedDownloadReport,
-    handleDownloadConfirm,
-    handleDownloadReport,
-    fetchPersonnelData,
-    loadMaterialMappings,
-    loadReports,
-    materialLookup,
-  } = useDamageReportForm();
+  const [activeTab, setActiveTab] = useState<'create' | 'saved' | 'materials'>('create');
+  const [toast, setToast] = useState({
+    message: '',
+    type: 'info' as 'success' | 'error' | 'info',
+    show: false,
+  });
 
-  useEffect(() => {
-    setMounted(true);
-    loadReports();
-    fetchPersonnelData();
-    if (activeTab === 'materials') {
-      loadMaterialMappings();
-    }
-  }, [activeTab]);
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ message, type, show: true });
+    setTimeout(() => {
+      setToast({ message: '', type: 'info', show: false });
+    }, 3000);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6 sm:py-8 px-3 sm:px-4">
@@ -102,10 +100,7 @@ export default function DamageReportForm() {
           </button>
           
           <button
-            onClick={() => {
-              setActiveTab('materials');
-              loadMaterialMappings();
-            }}
+            onClick={() => setActiveTab('materials')}
             className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
               activeTab === 'materials'
                 ? 'bg-orange-600 text-white shadow'
@@ -123,71 +118,6 @@ export default function DamageReportForm() {
         {activeTab === 'saved' && <SavedReportsTab />}
         {activeTab === 'materials' && <MaterialsTab />}
       </div>
-
-      {/* View Report Modal */}
-      {showViewModal && viewingReport && (
-        <ViewReportModal
-          report={viewingReport}
-          onClose={handleCloseViewModal}
-          onEdit={() => {
-            handleEditReport(viewingReport);
-            handleCloseViewModal();
-          }}
-          onDownload={() => {
-            handleOpenDownloadModal(viewingReport);
-            handleCloseViewModal();
-          }}
-        />
-      )}
-
-      {/* Download Modal */}
-      {showDownloadModal && (
-        <DownloadModal
-          report={selectedDownloadReport}
-          downloadType={downloadType}
-          onDownloadTypeChange={setDownloadType}
-          onClose={() => {
-            setShowDownloadModal(false);
-            setSelectedDownloadReport(null);
-          }}
-          onDownload={() => {
-            if (selectedDownloadReport) {
-              handleDownloadReport(selectedDownloadReport, downloadType);
-            }
-            setShowDownloadModal(false);
-            setSelectedDownloadReport(null);
-          }}
-        />
-      )}
-
-      {/* Material Input Modal */}
-      {showMaterialModal && (
-        <MaterialModal
-          pendingBarcode={pendingBarcode}
-          materialDescription={newMaterialDescription}
-          onDescriptionChange={setNewMaterialDescription}
-          materialCategory={newMaterialCategory}
-          onCategoryChange={setNewMaterialCategory}
-          isSaving={isSavingMaterial}
-          materialLookup={materialLookup}
-          onClose={handleCancelMaterial}
-          onSave={handleSaveNewMaterial}
-          onCancel={handleCancelMaterial}
-        />
-      )}
-
-      {/* Confirmation Modal */}
-      {confirmModal.show && (
-        <ConfirmationModal
-          title={confirmModal.title}
-          message={confirmModal.message}
-          onConfirm={() => {
-            confirmModal.onConfirm();
-            setConfirmModal((prev: any) => ({ ...prev, show: false }));
-          }}
-          onCancel={confirmModal.onCancel}
-        />
-      )}
 
       {/* Toast Notification */}
       {toast.show && (
