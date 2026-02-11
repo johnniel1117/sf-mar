@@ -4,24 +4,54 @@ import { useState, useEffect, useCallback } from 'react';
 import { useDamageReport } from '@/hooks/useDamageReport';
 import { PDFGenerator } from '@/lib/utils/pdfGenerator';
 import { ExcelGenerator } from '@/lib/utils/excelGenerator';
-import {
-  DamageReport,
-  DamageItem,
-  SelectedPersonnel,
-  PersonnelData,
-  ToastState,
-  ConfirmModalState,
-  MaterialMapping,
-  BarcodeLookupResult,
-  Step,
-} from '../utils/types';
-import { INITIAL_REPORT, INITIAL_PERSONNEL } from '../utils/constants';
+import { STEPS, Step } from '@/lib/constants/damageReportConstants';
+import type { DamageItem, DamageReport } from '@/lib/services/damageReportService';
+
+export interface PersonnelData {
+  admins: Array<{ id: string; name: string }>;
+  guards: Array<{ id: string; name: string }>;
+  supervisors: Array<{ id: string; name: string }>;
+}
+
+export interface SelectedPersonnel {
+  admin: string;
+  guard: string;
+  supervisor: string;
+}
+
+export interface BarcodeLookupResult {
+  barcode: string;
+  material_code: string;
+  material_description: string;
+  category?: string;
+  mapping_id?: string;
+}
+
+export const INITIAL_REPORT: DamageReport = {
+  report_number: '',
+  report_date: new Date().toISOString().split('T')[0],
+  seal_no: '',
+  driver_name: '',
+  plate_no: '',
+  container_no: '',
+  prepared_by: '',
+  noted_by: '',
+  acknowledged_by: '',
+  narrative_findings: '',
+  actions_required: '',
+  status: 'draft',
+  items: [],
+};
 
 export const useDamageReportForm = () => {
   // State declarations
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [report, setReport] = useState<DamageReport>(INITIAL_REPORT);
-  const [personnelData, setPersonnelData] = useState<PersonnelData>(INITIAL_PERSONNEL);
+  const [personnelData, setPersonnelData] = useState<PersonnelData>({
+    admins: [],
+    guards: [],
+    supervisors: []
+  });
   const [selectedPersonnel, setSelectedPersonnel] = useState<SelectedPersonnel>({
     admin: '',
     guard: '',
@@ -51,8 +81,8 @@ export const useDamageReportForm = () => {
   const [isSavingMaterial, setIsSavingMaterial] = useState(false);
   
   // Material management states
-  const [materialMappings, setMaterialMappings] = useState<MaterialMapping[]>([]);
-  const [editingMaterial, setEditingMaterial] = useState<MaterialMapping | null>(null);
+  const [materialMappings, setMaterialMappings] = useState<any[]>([]);
+  const [editingMaterial, setEditingMaterial] = useState<any>(null);
   const [isEditingMaterial, setIsEditingMaterial] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -61,13 +91,13 @@ export const useDamageReportForm = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   
   // UI states
-  const [toast, setToast] = useState<ToastState>({
+  const [toast, setToast] = useState({
     message: '',
-    type: 'info',
+    type: 'info' as 'success' | 'error' | 'info',
     show: false,
   });
   
-  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({
+  const [confirmModal, setConfirmModal] = useState({
     show: false,
     title: '',
     message: '',
@@ -175,7 +205,7 @@ export const useDamageReportForm = () => {
       material_description: material?.material_description || '',
       damage_type: '',
       damage_description: '',
-      mapping_id: material?.mapping_id || undefined, // Changed from null to undefined
+      mapping_id: material?.mapping_id,
     };
     setReport(prev => ({
       ...prev,
@@ -238,19 +268,14 @@ export const useDamageReportForm = () => {
     setEditingItemBarcode('');
   }, []);
 
-  // Save report - with type conversion
+  // Save report
   const saveReport = useCallback(async () => {
     try {
       const reportWithPersonnel = {
         ...report,
         admin_id: selectedPersonnel.admin,
         guard_id: selectedPersonnel.guard,
-        supervisor_id: selectedPersonnel.supervisor,
-        // Ensure mapping_id is string or undefined, not null
-        items: report.items.map(item => ({
-          ...item,
-          mapping_id: item.mapping_id || undefined
-        }))
+        supervisor_id: selectedPersonnel.supervisor
       };
 
       if (isEditMode && editingReportId) {
@@ -268,7 +293,7 @@ export const useDamageReportForm = () => {
 
         showToast('Report updated successfully!', 'success');
       } else {
-        await saveReportService(reportWithPersonnel as any); // Type assertion to bypass type mismatch
+        await saveReportService(reportWithPersonnel);
         showToast('Report saved successfully!', 'success');
       }
 
@@ -281,15 +306,12 @@ export const useDamageReportForm = () => {
     }
   }, [report, selectedPersonnel, isEditMode, editingReportId, saveReportService, resetForm, loadReports, showToast]);
 
-  // Edit report - with type handling
-  const handleEditReport = useCallback((reportToEdit: any) => {
+  // Edit report
+  const handleEditReport = useCallback((reportToEdit: DamageReport) => {
     try {
       const reportToSet = {
         ...reportToEdit,
-        items: (reportToEdit.items || []).map((item: any) => ({
-          ...item,
-          mapping_id: item.mapping_id || undefined // Convert null to undefined
-        }))
+        items: reportToEdit.items || []
       };
       setReport(reportToSet);
       
@@ -348,9 +370,9 @@ export const useDamageReportForm = () => {
   // Download report
   const handleDownloadReport = useCallback((report: DamageReport, type: 'pdf' | 'excel') => {
     if (type === 'pdf') {
-      PDFGenerator.generatePDF(report as any); // Type assertion
+      PDFGenerator.generatePDF(report);
     } else {
-      ExcelGenerator.generateExcel(report as any); // Type assertion
+      ExcelGenerator.generateExcel(report);
     }
     showToast(`Report downloaded as ${type.toUpperCase()}`, 'success');
   }, [showToast]);
@@ -474,7 +496,7 @@ export const useDamageReportForm = () => {
       updateItem(index, 'barcode', newBarcode);
       updateItem(index, 'material_code', material.material_code || newBarcode);
       updateItem(index, 'material_description', material.material_description || '');
-      updateItem(index, 'mapping_id', material.mapping_id || undefined);
+      updateItem(index, 'mapping_id', material.mapping_id);
       
       showToast('Item barcode updated successfully', 'success');
       setEditingItemIndex(null);
