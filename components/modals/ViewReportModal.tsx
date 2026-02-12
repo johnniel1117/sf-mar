@@ -51,7 +51,7 @@ export function ViewReportModal({
           {/* Report Information */}
           <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
             <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                 <Truck className="w-4 h-4 text-orange-600" />
               </div>
               Report Information
@@ -87,7 +87,7 @@ export function ViewReportModal({
           {/* Damaged Items */}
           <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
             <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8  rounded-lg flex items-center justify-center">
                 <ClipboardList className="w-4 h-4 text-orange-600" />
               </div>
               Damaged Items ({(report.items || (report as any).damage_items || []).length})
@@ -96,7 +96,7 @@ export function ViewReportModal({
               {(report.items || (report as any).damage_items || []).map((item: any, idx: number) => (
                 <div key={idx} className="border border-gray-150 rounded-xl p-5 bg-gray-50 hover:bg-white hover:border-gray-300 transition-all">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-lg flex items-center justify-center font-medium text-sm flex-shrink-0">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-lg flex items-center justify-center font-medium text-sm flex-shrink-0">
                       {item.item_number || idx + 1}
                     </div>
                     <div className="flex-1">
@@ -150,7 +150,7 @@ export function ViewReportModal({
           {report.narrative_findings && (
             <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
               <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-3">
-                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                   <Info className="w-4 h-4 text-orange-600" />
                 </div>
                 Narrative Findings
@@ -162,7 +162,7 @@ export function ViewReportModal({
           {/* Personnel */}
           <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
             <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8  rounded-lg flex items-center justify-center">
                 <Users className="w-4 h-4 text-orange-600" />
               </div>
               Personnel

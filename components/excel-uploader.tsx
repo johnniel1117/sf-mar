@@ -7,7 +7,6 @@ import { MATCODE_CATEGORY_MAP, getCategoryFromBinCode } from '../components/Cate
 import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers, AlertCircle, ArrowUp, Search, AlertTriangle } from "lucide-react"
 import LogoGridBackground from "../components/LogoBackground"
 import Navbar from '@/components/Navbar'
-// import DamageReportForm from "../components/damage-report"
 
 interface MaterialData {
   materialCode: string
@@ -2109,10 +2108,6 @@ export default function ExcelUploader() {
                   </div>
                 </>
               )}
-
-              {/* {activeTab === "damageReport" && (
-                <DamageReportForm />
-              )} */}
             </div>
           </div>
         )}
