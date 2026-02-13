@@ -19,7 +19,7 @@ export default function Navbar({
 }: NavbarProps) {
   return (
     <nav className={cn(
-      "w-full bg-white shadow-sm border-b border-gray-200 z-50",
+      "w-full bg-white  border-b border-gray-200 z-50",
       fixed && "fixed top-0 left-0 right-0",
       animate && "animate-fadeIn"
     )}>
@@ -50,7 +50,7 @@ export default function Navbar({
             <Link
               href={backHref}
               className={cn(
-                "inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium",
+                "inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 font-medium",
                 animate && "animate-slideInRight"
               )}
             >

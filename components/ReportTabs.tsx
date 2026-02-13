@@ -17,7 +17,7 @@ interface ReportTabsProps {
 
 export function ReportTabs({ activeTab, onTabChange, onMaterialsTab }: ReportTabsProps) {
   return (
-    <div className="flex gap-2 mb-6 bg-white p-1 rounded-lg justify-center w-full">
+    <div className="flex gap-2 mb-6 p-1 rounded-lg justify-center w-full">
       <button
         onClick={() => onTabChange('create')}
         className={`flex-1 sm:flex-initial py-2 px-3 sm:px-4 rounded-md font-semibold transition-all text-xs sm:text-sm md:text-base whitespace-nowrap ${
