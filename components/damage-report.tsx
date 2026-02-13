@@ -800,7 +800,7 @@ export default function DamageReportForm() {
             type="text"
             value={newMaterialCategory}
             onChange={(e) => setNewMaterialCategory(e.target.value)}
-            placeholder="e.g.,TV, WASHING MACHINE"
+            placeholder="E.G.,TV, WASHING MACHINE"
             className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
           />
         </div>
