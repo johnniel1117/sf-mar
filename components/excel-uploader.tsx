@@ -7,6 +7,7 @@ import { MATCODE_CATEGORY_MAP, getCategoryFromBinCode } from '../components/Cate
 import { Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2, Layers, AlertCircle, ArrowUp, Search, AlertTriangle } from "lucide-react"
 import LogoGridBackground from "../components/LogoBackground"
 import Navbar from '@/components/Navbar'
+import JsBarcode from "jsbarcode"
 
 interface MaterialData {
   materialCode: string
@@ -116,6 +117,52 @@ export default function ExcelUploader() {
     setNotifications(prev => prev.filter(n => n.id !== id))
   }
 
+  const saveToSupabase = async (files: UploadedFile[]) => {
+    try {
+      for (const file of files) {
+        // Calculate total quantity
+        const totalQuantity = file.data.reduce((sum, item) => sum + (item.qty || 0), 0)
+        
+        // Determine if it's a DN or TRA format
+        const isDN = file.dnNo.startsWith('DN') || file.dnNo.includes('-DN-')
+        const traNo = !isDN ? file.dnNo : undefined
+
+        const payload = {
+          fileName: file.name,
+          dnNo: isDN ? file.dnNo : undefined,
+          traNo: traNo,
+          totalQuantity: totalQuantity,
+          data: file.data,
+          serialData: file.serialData,
+        }
+
+        console.log("Saving file:", file.name)
+
+        const response = await fetch('/api/save-excel-upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          addNotification('error', `Failed to save ${file.name}: ${error.error}`)
+          console.error(" Save failed:", error)
+          continue
+        }
+
+        const result = await response.json()
+        console.log(" Saved successfully:", result)
+        addNotification('success', `Saved ${file.name} to database (Qty: ${totalQuantity})`)
+      }
+    } catch (error) {
+      console.error(" Error saving:", error)
+      addNotification('error', `Error saving to database: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
 
 
 
@@ -135,6 +182,94 @@ export default function ExcelUploader() {
   const formatDateShort = () => {
     const now = new Date()
     return now.toLocaleDateString("en-US", { month: '2-digit', day: '2-digit', year: 'numeric' })
+  }
+
+  const generateBarcodeSVG = (value: string): string => {
+    const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+    JsBarcode(svgElement, value, {
+      format: "CODE128",
+      width: 2,
+      height: 60,
+      displayValue: false,
+    })
+    return svgElement.outerHTML
+  }
+
+  const isTRAFormat = (headers: string[]): boolean => {
+    const traHeaders = ["order no", "order item", "factory code", "gi location", "gr location", "material code", "material desc", "barcode", "create by", "create date"]
+    const headerLowercase = headers.map(h => h.toLowerCase().trim())
+    return traHeaders.every(traHeader => headerLowercase.some(h => h.includes(traHeader)))
+  }
+
+  const parseTRAData = (jsonData: any[][], headers: string[]): { material: MaterialData[], serial: SerialData[], traNo: string } => {
+    const orderNoIdx = headers.findIndex((h) => h.includes("order no") || h.includes("orderno"))
+    const orderItemIdx = headers.findIndex((h) => h.includes("order item") || h.includes("orderitem"))
+    const factoryCodeIdx = headers.findIndex((h) => h.includes("factory code") || h.includes("factorycode"))
+    const giLocationIdx = headers.findIndex((h) => h.includes("gi location") || h.includes("gilocation"))
+    const grLocationIdx = headers.findIndex((h) => h.includes("gr location") || h.includes("grlocation"))
+    const materialCodeIdx = headers.findIndex((h) => h.includes("material code") || h.includes("materialcode"))
+    const materialDescIdx = headers.findIndex((h) => h.includes("material desc") || h.includes("materialdesc"))
+    const barcodeIdx = headers.findIndex((h) => h.includes("barcode") || h.includes("bar code"))
+    const createByIdx = headers.findIndex((h) => h.includes("create by") || h.includes("createby"))
+    const createDateIdx = headers.findIndex((h) => h.includes("create date") || h.includes("createdate"))
+
+    const traNo = jsonData[1] && orderNoIdx >= 0 ? String(jsonData[1][orderNoIdx] || "N/A") : "N/A"
+
+    const materialData: MaterialData[] = []
+    const serialData: SerialData[] = []
+    const seenMaterials = new Set<string>()
+
+    for (let i = 1; i < jsonData.length; i++) {
+      const row = jsonData[i]
+      if (!row || row.length === 0 || !row[materialCodeIdx]) continue
+
+      const materialCode = String(row[materialCodeIdx] || "").trim()
+      const materialDesc = materialDescIdx >= 0 ? String(row[materialDescIdx] || "").trim() : ""
+      const barcode = barcodeIdx >= 0 ? String(row[barcodeIdx] || "").trim() : ""
+
+      if (!materialCode) continue
+
+      const key = `${materialCode}|${materialDesc}`
+      if (!seenMaterials.has(key)) {
+        seenMaterials.add(key)
+        materialData.push({
+          materialCode,
+          materialDescription: materialDesc,
+          category: MATCODE_CATEGORY_MAP[materialCode] || "Others",
+          qty: 0,
+          remarks: traNo,
+          shipName: "",
+        })
+      }
+
+      // Increment quantity for the material
+      const matItem = materialData.find(m => m.materialCode === materialCode && m.materialDescription === materialDesc)
+      if (matItem) {
+        matItem.qty += 1
+      }
+
+      serialData.push({
+        dnNo: traNo,
+        orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "",
+        factoryCode: factoryCodeIdx >= 0 ? String(row[factoryCodeIdx] || "") : "",
+        location: giLocationIdx >= 0 ? String(row[giLocationIdx] || "") : "",
+        binCode: grLocationIdx >= 0 ? String(row[grLocationIdx] || "") : "",
+        materialCode: materialCode,
+        materialDesc: materialDesc,
+        barcode: barcode,
+        materialType: "",
+        productStatus: "",
+        shipTo: "",
+        shipToName: "",
+        shipToAddress: "",
+        soldTo: "",
+        soldToName: "",
+        scanBy: createByIdx >= 0 ? String(row[createByIdx] || "") : "",
+        scanTime: createDateIdx >= 0 ? String(row[createDateIdx] || "") : "",
+      })
+    }
+
+    return { material: materialData, serial: serialData, traNo }
   }
 
   const HaierLogo = () => (
@@ -269,87 +404,99 @@ export default function ExcelUploader() {
             .trim(),
         )
 
-        const dnNoIdx = headers.findIndex((h) => h.includes("dn no") || h.includes("dn_no") || h.includes("dnno"))
-        const materialCodeIdx = headers.findIndex((h) => h.includes("material code") || h.includes("materialcode"))
-        const materialDescIdx = headers.findIndex(
-          (h) => h.includes("material desc") || h.includes("material description"),
-        )
-        const barCodeIdx = headers.findIndex((h) => h.includes("barcode") || h.includes("bar code"))
-        const shipToNameIdx = headers.findIndex(
-          (h) =>
-            h.includes("ship to name") || h.includes("shiptoname") || h.includes("ship name") || h.includes("shipname"),
-        )
+        // Check if this is a TRA format or DN format
+        const isTRA = isTRAFormat(headers)
 
-        const orderItemIdx = headers.findIndex((h) => h.includes("order item") || h.includes("orderitem"))
-        const factoryCodeIdx = headers.findIndex((h) => h.includes("factory code") || h.includes("factorycode"))
-        const locationIdx = headers.findIndex((h) => h.includes("location"))
-        const materialTypeIdx = headers.findIndex((h) => h.includes("material type") || h.includes("materialtype"))
-        const productStatusIdx = headers.findIndex((h) => h.includes("product status") || h.includes("productstatus"))
-        const shipToIdx = headers.findIndex((h) => h === "ship to" || h === "shipto")
-        const shipToAddressIdx = headers.findIndex((h) => h.includes("ship to address") || h.includes("shiptoaddress"))
-        const soldToIdx = headers.findIndex((h) => h === "sold to" || h === "soldto")
-        const soldToNameIdx = headers.findIndex((h) => h.includes("sold to name") || h.includes("soldtoname"))
-        const scanByIdx = headers.findIndex((h) => h.includes("scan by") || h.includes("scanby"))
-        const scanTimeIdx = headers.findIndex((h) => h.includes("scan time") || h.includes("scantime"))
-
+        let fileData: MaterialData[] = []
+        let serialData: SerialData[] = []
         let dnNo = "N/A"
-        if (dnNoIdx >= 0 && jsonData[1]) {
-          dnNo = String(jsonData[1][dnNoIdx] || "N/A")
+
+        if (isTRA) {
+          // Parse as TRA format
+          const traResult = parseTRAData(jsonData, headers)
+          fileData = traResult.material
+          serialData = traResult.serial
+          dnNo = traResult.traNo
+        } else {
+          // Parse as DN format (existing logic)
+          const dnNoIdx = headers.findIndex((h) => h.includes("dn no") || h.includes("dn_no") || h.includes("dnno"))
+          const materialCodeIdx = headers.findIndex((h) => h.includes("material code") || h.includes("materialcode"))
+          const materialDescIdx = headers.findIndex(
+            (h) => h.includes("material desc") || h.includes("material description"),
+          )
+          const barCodeIdx = headers.findIndex((h) => h.includes("barcode") || h.includes("bar code"))
+          const shipToNameIdx = headers.findIndex(
+            (h) =>
+              h.includes("ship to name") || h.includes("shiptoname") || h.includes("ship name") || h.includes("shipname"),
+          )
+
+          const orderItemIdx = headers.findIndex((h) => h.includes("order item") || h.includes("orderitem"))
+          const factoryCodeIdx = headers.findIndex((h) => h.includes("factory code") || h.includes("factorycode"))
+          const locationIdx = headers.findIndex((h) => h.includes("location"))
+          const materialTypeIdx = headers.findIndex((h) => h.includes("material type") || h.includes("materialtype"))
+          const productStatusIdx = headers.findIndex((h) => h.includes("product status") || h.includes("productstatus"))
+          const shipToIdx = headers.findIndex((h) => h === "ship to" || h === "shipto")
+          const shipToAddressIdx = headers.findIndex((h) => h.includes("ship to address") || h.includes("shiptoaddress"))
+          const soldToIdx = headers.findIndex((h) => h === "sold to" || h === "soldto")
+          const soldToNameIdx = headers.findIndex((h) => h.includes("sold to name") || h.includes("soldtoname"))
+          const scanByIdx = headers.findIndex((h) => h.includes("scan by") || h.includes("scanby"))
+          const scanTimeIdx = headers.findIndex((h) => h.includes("scan time") || h.includes("scantime"))
+
+          if (dnNoIdx >= 0 && jsonData[1]) {
+            dnNo = String(jsonData[1][dnNoIdx] || "N/A")
+          }
+
+          for (let i = 1; i < jsonData.length; i++) {
+            const row = jsonData[i]
+
+            if (!row || row.length === 0 || !row[materialCodeIdx]) continue
+
+            const materialCode = String(row[materialCodeIdx] || "").trim()
+            const materialDescription = materialDescIdx >= 0 ? String(row[materialDescIdx] || "").trim() : ""
+            const barCode = barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : ""
+            const shipName = shipToNameIdx >= 0 ? String(row[shipToNameIdx] || "").trim() : ""
+
+            if (!materialCode) continue
+
+            const qtyIdx = headers.findIndex((h) => h.includes("qty") || h.includes("quantity") || h.includes("qnt"))
+            const qty = qtyIdx >= 0 ? Number.parseInt(String(row[qtyIdx] || "1"), 10) || 1 : 1
+
+            const category = MATCODE_CATEGORY_MAP[materialCode] || "Others"
+
+            fileData.push({
+              materialCode,
+              materialDescription,
+              category,
+              qty,
+              remarks: dnNo,
+              shipName,
+            })
+
+            serialData.push({
+              dnNo: dnNoIdx >= 0 ? String(row[dnNoIdx] || dnNo) : dnNo,
+              orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "",
+              factoryCode: factoryCodeIdx >= 0 ? String(row[factoryCodeIdx] || "") : "",
+              location: locationIdx >= 0 ? String(row[locationIdx] || "") : "",
+              binCode: barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : "",
+              materialCode: materialCode,
+              materialDesc: materialDescription,
+              barcode: barCode,
+              materialType: materialTypeIdx >= 0 ? String(row[materialTypeIdx] || "") : "",
+              productStatus: productStatusIdx >= 0 ? String(row[productStatusIdx] || "") : "",
+              shipTo: shipToIdx >= 0 ? String(row[shipToIdx] || "") : "",
+              shipToName: shipName,
+              shipToAddress: shipToAddressIdx >= 0 ? String(row[shipToAddressIdx] || "") : "",
+              soldTo: soldToIdx >= 0 ? String(row[soldToIdx] || "") : "",
+              soldToName: soldToNameIdx >= 0 ? String(row[soldToNameIdx] || "") : "",
+              scanBy: scanByIdx >= 0 ? String(row[scanByIdx] || "") : "",
+              scanTime: scanTimeIdx >= 0 ? String(row[scanTimeIdx] || "") : "",
+            })
+          }
         }
 
         if (existingDNs.has(dnNo)) {
           duplicateDNs.push(dnNo)
           continue
-        }
-
-        const fileData: MaterialData[] = []
-        const serialData: SerialData[] = []
-
-        for (let i = 1; i < jsonData.length; i++) {
-          const row = jsonData[i]
-
-          if (!row || row.length === 0 || !row[materialCodeIdx]) continue
-
-          const materialCode = String(row[materialCodeIdx] || "").trim()
-          const materialDescription = materialDescIdx >= 0 ? String(row[materialDescIdx] || "").trim() : ""
-          const barCode = barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : ""
-          const shipName = shipToNameIdx >= 0 ? String(row[shipToNameIdx] || "").trim() : ""
-
-          if (!materialCode) continue
-
-          const qtyIdx = headers.findIndex((h) => h.includes("qty") || h.includes("quantity") || h.includes("qnt"))
-          const qty = qtyIdx >= 0 ? Number.parseInt(String(row[qtyIdx] || "1"), 10) || 1 : 1
-
-          const category = MATCODE_CATEGORY_MAP[materialCode] || "Others"
-
-          fileData.push({
-            materialCode,
-            materialDescription,
-            category,
-            qty,
-            remarks: dnNo,
-            shipName,
-          })
-
-          serialData.push({
-            dnNo: dnNoIdx >= 0 ? String(row[dnNoIdx] || dnNo) : dnNo,
-            orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "",
-            factoryCode: factoryCodeIdx >= 0 ? String(row[factoryCodeIdx] || "") : "",
-            location: locationIdx >= 0 ? String(row[locationIdx] || "") : "",
-            binCode: barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : "",
-            materialCode: materialCode,
-            materialDesc: materialDescription,
-            barcode: barCode,
-            materialType: materialTypeIdx >= 0 ? String(row[materialTypeIdx] || "") : "",
-            productStatus: productStatusIdx >= 0 ? String(row[productStatusIdx] || "") : "",
-            shipTo: shipToIdx >= 0 ? String(row[shipToIdx] || "") : "",
-            shipToName: shipName,
-            shipToAddress: shipToAddressIdx >= 0 ? String(row[shipToAddressIdx] || "") : "",
-            soldTo: soldToIdx >= 0 ? String(row[soldToIdx] || "") : "",
-            soldToName: soldToNameIdx >= 0 ? String(row[soldToNameIdx] || "") : "",
-            scanBy: scanByIdx >= 0 ? String(row[scanByIdx] || "") : "",
-            scanTime: scanTimeIdx >= 0 ? String(row[scanTimeIdx] || "") : "",
-          })
         }
 
         newFiles.push({
@@ -376,6 +523,8 @@ export default function ExcelUploader() {
           "success",
           `Successfully uploaded ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}`
         )
+        // Save
+        await saveToSupabase(newFiles)
       }
 
       const allFiles = [...uploadedFiles, ...newFiles]
@@ -811,7 +960,7 @@ export default function ExcelUploader() {
 
     const allDNContent = uploadedFiles
       .map((file, index) => {
-        const shipToName = file.serialData[0]?.shipToName || "Unknown"
+        const shipToName = file.serialData[0]?.shipToName || "N/A"
         const shipToAddress = file.serialData[0]?.shipToAddress || ""
         const pageBreakClass = index < uploadedFiles.length - 1 ? "page-break" : ""
         const totalQty = file.serialData.filter((row) => row.materialCode && row.barcode).length
@@ -833,21 +982,32 @@ export default function ExcelUploader() {
           <div class="title-section">
             
             <div class="dealer-copy">DEALER'S COPY</div>
-            <div class="info-value">${formatDateShort()}</div>
+            <div style="margin-top: 8px; text-align: right;">
+              ${generateBarcodeSVG(file.dnNo)}
+            </div>
           </div>
         </div>
 
         <div class="document-header">
           
-          <div class="doc-number">DN: ${file.dnNo}</div>
+          <div class="doc-number">ORDER NO: ${file.dnNo}</div>
         </div>
 
+        
+            
+
         <div >
+
           <div class="info-row">
             <div class="info-label">Client</div>
             <div class="info-value">HAIER PHILIPPINES INC.</div>
             
             
+          </div>
+
+          <div class="info-row">
+            <div class="info-label">Date</div>
+            <div class="info-value">${formatDateShort()}</div>
           </div>
       
         
@@ -1086,7 +1246,7 @@ export default function ExcelUploader() {
     const printWindow = window.open("", "", "width=1200,height=800")
     if (!printWindow) return
 
-    const shipToName = file.serialData[0]?.shipToName || "Unknown"
+    const shipToName = file.serialData[0]?.shipToName || "N/A"
     const shipToAddress = file.serialData[0]?.shipToAddress || ""
     const totalQuantity = file.serialData.filter((row) => row.materialCode && row.barcode).length
 
@@ -1263,6 +1423,9 @@ export default function ExcelUploader() {
           <div class="title-section">
     
             <div class="dealer-copy">DEALER'S COPY</div>
+            <div style="margin-top: 8px; text-align: right;">
+              ${generateBarcodeSVG(file.dnNo)}
+            </div>
             <div class="info-value">${formatDateShort()}</div>
           </div>
         </div>
@@ -1828,7 +1991,7 @@ export default function ExcelUploader() {
                       <div className="flex-1">
                         <p className="font-semibold text-gray-800 mb-1">{file.name}</p>
                         <p className="text-xs text-gray-500 flex items-center gap-2">
-                          <span className="px-2 py-0.5 bg-gray-200 rounded text-gray-700">DN: {file.dnNo}</span>
+                          <span className="px-2 py-0.5 bg-gray-200 rounded text-gray-700">ORDER NO: {file.dnNo}</span>
                           <span className="text-gray-400">•</span>
                           <span>{file.data.length} items</span>
                         </p>
