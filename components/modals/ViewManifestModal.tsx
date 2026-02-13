@@ -118,11 +118,11 @@ export function ViewManifestModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 hover:bg-white transition-colors">
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Documents</p>
-              <p className="text-3xl font-bold text-blue-600">{totalDocs}</p>
+              <p className="text-3xl font-bold ">{totalDocs}</p>
             </div>
             <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 hover:bg-white transition-colors">
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Quantity</p>
-              <p className="text-3xl font-bold text-green-600">{totalQuantity.toLocaleString()}</p>
+              <p className="text-3xl font-bold ">{totalQuantity.toLocaleString()}</p>
             </div>
           </div>
 
@@ -146,7 +146,7 @@ export function ViewManifestModal({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                         <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Document Number</p>
-                          <p className="font-mono text-sm font-medium text-gray-900">{item.document_number}</p>
+                          <p className=" text-sm font-medium text-gray-900">{item.document_number}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Quantity</p>
@@ -193,7 +193,7 @@ export function ViewManifestModal({
               onClick={() => onDownloadPDF(manifest)}
               className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium text-sm transition-all hover:shadow-md"
             >
-              Download PDF
+              Download
             </button>
             <button
               onClick={onClose}

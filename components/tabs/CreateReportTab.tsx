@@ -296,7 +296,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                                   type="text"
                                   value={editingItemBarcode}
                                   onChange={(e) => setEditingItemBarcode(e.target.value)}
-                                  className="w-full px-3 py-2 border-2 border-orange-500 rounded-lg text-sm font-mono"
+                                  className="w-full px-3 py-2 border-2 border-orange-500 rounded-lg text-sm "
                                   placeholder="Enter new barcode..."
                                   autoFocus
                                 />
@@ -320,7 +320,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                             ) : (
                               <div className="mt-2 flex items-center gap-2 flex-wrap">
                                 <span className="text-xs text-gray-600">Barcode:</span>
-                                <span className="font-mono text-xs font-semibold break-all">{item.barcode}</span>
+                                <span className=" text-xs font-semibold break-all">{item.barcode}</span>
                                 <button
                                   onClick={() => handleEditItemBarcode(idx)}
                                   className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"

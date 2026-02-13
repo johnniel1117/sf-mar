@@ -2122,7 +2122,7 @@ export default function ExcelUploader() {
                               } hover:bg-blue-50 transition-all duration-200`}
                               style={{ animationDelay: `${idx * 0.02}s` }}
                             >
-                              <td className="px-4 py-4 font-mono text-xs text-gray-700 font-semibold">{row.materialCode}</td>
+                              <td className="px-4 py-4  text-xs text-gray-700 font-semibold">{row.materialCode}</td>
                               <td className="px-4 py-4 text-gray-700">{row.materialDescription}</td>
                               <td className="px-4 py-4">
                                 <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
@@ -2192,9 +2192,9 @@ export default function ExcelUploader() {
                               <td className="px-4 py-4 text-gray-700 font-medium">{row.dnNo}</td>
                               <td className="px-4 py-4 text-gray-700">{row.location}</td>
                               <td className="px-4 py-4 text-gray-700">{row.binCode}</td>
-                              <td className="px-4 py-4 font-mono text-xs text-gray-700 font-semibold">{row.materialCode}</td>
+                              <td className="px-4 py-4  text-xs text-gray-700 font-semibold">{row.materialCode}</td>
                               <td className="px-4 py-4 text-gray-700">{row.materialDesc}</td>
-                              <td className="px-4 py-4 font-mono font-bold text-xs bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900">
+                              <td className="px-4 py-4  font-bold text-xs bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900">
                                 {row.barcode}
                               </td>
                               <td className="px-4 py-4 text-gray-700">{row.shipToName}</td>

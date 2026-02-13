@@ -103,7 +103,7 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
           <div className="space-y-3">
             <div>
               <p className="text-xs font-medium text-gray-700">Document Number</p>
-              <p className="font-mono text-sm font-semibold text-gray-900">{documentNumber}</p>
+              <p className=" text-sm font-semibold text-gray-900">{documentNumber}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-gray-700">Quantity</p>
@@ -462,7 +462,7 @@ export function CreateManifestTab({
                       type="text"
                       value={manifest.manifest_number}
                       onChange={(e) => !isEditMode && setManifest({ ...manifest, manifest_number: e.target.value.toUpperCase() })}
-                      className={`flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm font-mono ${
+                      className={`flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm  ${
                         isEditMode ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''
                       }`}
                       placeholder="TM-YYYYMMDD-XXX"
@@ -626,7 +626,7 @@ export function CreateManifestTab({
                       >
                         <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5 text-green-600" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-gray-900 font-mono">
+                          <p className="font-medium text-sm text-gray-900 ">
                             {result.documentNumber}
                           </p>
                           <p className="text-sm text-gray-600 mt-1 truncate">
@@ -686,7 +686,7 @@ export function CreateManifestTab({
                             <div className="mt-1 grid grid-cols-2 gap-4 text-sm">
                               <div>
                                 <p className="text-xs text-gray-600">DN/TRA No.</p>
-                                <p className="font-mono font-medium text-gray-900">{item.document_number}</p>
+                                <p className=" font-medium text-gray-900">{item.document_number}</p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-600">Quantity</p>
@@ -725,7 +725,7 @@ export function CreateManifestTab({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-xs font-medium text-gray-600">Manifest No.</p>
-                    <p className="font-mono font-semibold text-gray-900">{manifest.manifest_number}</p>
+                    <p className=" font-semibold text-gray-900">{manifest.manifest_number}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Date</p>
@@ -751,7 +751,7 @@ export function CreateManifestTab({
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Plate No.</p>
-                    <p className="font-mono font-semibold text-gray-900">{manifest.plate_no || '—'}</p>
+                    <p className=" font-semibold text-gray-900">{manifest.plate_no || '—'}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Trucker</p>
@@ -790,7 +790,7 @@ export function CreateManifestTab({
                         <tr key={item.item_number} className="border-b border-gray-200 hover:bg-orange-50/50">
                           <td className="py-3 text-sm font-medium text-gray-900">{item.item_number}</td>
                           <td className="py-3 text-sm text-gray-900">{item.ship_to_name}</td>
-                          <td className="py-3 text-sm font-mono text-gray-900">{item.document_number}</td>
+                          <td className="py-3 text-sm  text-gray-900">{item.document_number}</td>
                           <td className="py-3 text-right font-bold text-orange-600">{item.total_quantity}</td>
                         </tr>
                       ))}

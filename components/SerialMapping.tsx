@@ -127,9 +127,9 @@ export default function SerialMappingManager() {
             <tbody>
               {filteredMappings.map((mapping) => (
                 <tr key={mapping.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="p-3 font-mono text-sm font-bold">{mapping.serial_number}</td>
+                  <td className="p-3  text-sm font-bold">{mapping.serial_number}</td>
                   <td className="p-3 font-medium">{mapping.material_description}</td>
-                  <td className="p-3 font-mono text-sm">{mapping.material_code}</td>
+                  <td className="p-3  text-sm">{mapping.material_code}</td>
                   <td className="p-3 text-center">
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
                       {mapping.usage_count}

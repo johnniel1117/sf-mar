@@ -177,7 +177,7 @@ export const MaterialMappingsTab: React.FC<MaterialMappingsTabProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <icons.Barcode className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                    <p className="font-mono text-sm font-bold text-gray-900 truncate">
+                    <p className=" text-sm font-bold text-gray-900 truncate">
                       {material.serial_number}
                     </p>
                   </div>

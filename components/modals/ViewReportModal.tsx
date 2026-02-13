@@ -108,7 +108,7 @@ export function ViewReportModal({
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Serial Number</p>
-                          <p className="font-mono text-sm font-medium text-gray-900">{item.barcode || 'N/A'}</p>
+                          <p className=" text-sm font-medium text-gray-900">{item.barcode || 'N/A'}</p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Damage Type</p>

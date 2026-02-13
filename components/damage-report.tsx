@@ -768,7 +768,7 @@ export default function DamageReportForm() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-gray-700 mb-1">Scanned Barcode</p>
-              <p className="text-sm font-bold text-gray-900 break-all font-mono">
+              <p className="text-sm font-bold text-gray-900 break-all ">
                 {pendingBarcode}
               </p>
             </div>
