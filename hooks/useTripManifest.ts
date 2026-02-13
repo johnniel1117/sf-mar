@@ -75,22 +75,61 @@ export function useTripManifest() {
 
   const lookupDocument = useCallback(async (documentNumber: string): Promise<DocumentLookupResult | null> => {
     try {
-      // Look up in excel_uploads table by document_number
+      // Use maybeSingle() instead of single() to avoid errors when no record is found
       const { data, error } = await supabase
         .from('excel_uploads')
-        .select('document_number, ship_to_name, total_quantity')
+        .select('*') // Select all columns first to debug
         .eq('document_number', documentNumber.trim())
-        .single()
+        .maybeSingle()
 
       if (error) {
+        console.error('Supabase error:', error)
+        return null
+      }
+
+      if (!data) {
         console.log('Document not found:', documentNumber)
         return null
       }
 
-      return data
+      // Log the data structure to see actual column names
+      console.log('Document found - Column structure:', Object.keys(data))
+      console.log('Document data:', data)
+
+      // Map the actual column names from your database
+      // Adjust these based on the console.log output
+      return {
+        document_number: data.document_number || data.doc_number || data.barcode || documentNumber,
+        ship_to_name: data.ship_to_name || data.ship_to || data.customer_name || data.customer || 'N/A',
+        total_quantity: data.total_quantity || data.quantity || data.qty || 0
+      }
     } catch (error) {
       console.error('Error looking up document:', error)
       return null
+    }
+  }, [])
+
+  // Add this debug function to check your table structure
+  const checkTableStructure = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('excel_uploads')
+        .select('*')
+        .limit(1)
+
+      if (error) {
+        console.error('Error checking table structure:', error)
+        return
+      }
+
+      if (data && data.length > 0) {
+        console.log('Excel uploads table columns:', Object.keys(data[0]))
+        console.log('Sample row:', data[0])
+      } else {
+        console.log('Excel uploads table is empty')
+      }
+    } catch (error) {
+      console.error('Error:', error)
     }
   }, [])
 
@@ -101,5 +140,6 @@ export function useTripManifest() {
     saveManifest,
     deleteManifest,
     lookupDocument,
+    checkTableStructure, // Export this for debugging
   }
 }

@@ -44,8 +44,6 @@ export default function TripManifestForm() {
     plate_no: '',
     trucker: '',
     truck_type: '',
-    // departure_time: '',
-    // arrival_time: '',
     remarks: '',
     status: 'draft',
     items: [],
@@ -135,6 +133,26 @@ export default function TripManifestForm() {
       barcodeInputRef.current.focus()
     }
   }, [currentStep])
+
+  // Document search function for auto-detection
+  const searchDocument = async (documentNumber: string): Promise<{ shipToName: string; quantity: number } | null> => {
+    if (!documentNumber || documentNumber.length < 3) return null
+    
+    try {
+      const document = await lookupDocument(documentNumber)
+      
+      if (document) {
+        return {
+          shipToName: document.ship_to_name || 'N/A',
+          quantity: document.total_quantity || 0
+        }
+      }
+      return null
+    } catch (error) {
+      console.error('Error searching document:', error)
+      return null
+    }
+  }
 
   // Function to add document with manually entered ship-to name
   const addDocumentWithManualShipTo = (shipToName: string) => {
@@ -237,8 +255,6 @@ export default function TripManifestForm() {
       plate_no: '',
       trucker: '',
       truck_type: '',
-    //   departure_time: '',
-    //   arrival_time: '',
       remarks: '',
       status: 'draft',
       items: [],
@@ -381,6 +397,7 @@ export default function TripManifestForm() {
             pendingDocument={pendingDocument}
             setPendingDocument={setPendingDocument}
             addDocumentWithManualShipTo={addDocumentWithManualShipTo}
+            searchDocument={searchDocument}
           />
         )}
 
