@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Eye, Download, Edit, Trash2, Truck, Package, Calendar, FileText, Search, X } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { Eye, Download, Edit, Trash2, Truck, Package, Calendar, FileText, ChevronDown, Search, X } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
 
 const icons = {
@@ -15,7 +15,66 @@ const icons = {
   FileText,
   Search,
   X,
+  ChevronDown,
 } as const
+
+type FilterDropdownProps = {
+  selectedMonth: string
+  onMonthChange: (month: string) => void
+  months: string[]
+}
+
+function FilterDropdown({ selectedMonth, onMonthChange, months }: FilterDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2 whitespace-nowrap"
+      >
+        <icons.Calendar className="w-4 h-4" />
+        {selectedMonth}
+        <icons.ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          {months.map((month) => (
+            <button
+              key={month}
+              onClick={() => {
+                onMonthChange(month)
+                setIsOpen(false)
+              }}
+              className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                selectedMonth === month
+                  ? 'bg-blue-600 text-white font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {month}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface SavedManifestsTabProps {
   savedManifests: TripManifest[]
@@ -156,19 +215,19 @@ export function SavedManifestsTab({
         </button>
       </div>
 
-      {/* Search and Filter Controls */}
-      <div className="mb-6 flex flex-col gap-4">
+      {/* Search Bar and Filter */}
+      <div className="mb-6 flex gap-3">
         <div className="relative flex-1">
-          <icons.Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <icons.Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Search by manifest #, driver, plate, or trucker..."
+            placeholder="Search by manifest #, driver, plate..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value)
               setCurrentPage(1)
             }}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:bg-white transition-colors"
           />
           {searchQuery && (
             <button
@@ -178,36 +237,26 @@ export function SavedManifestsTab({
               }}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              <icons.X className="w-5 h-5" />
+              <icons.X className="w-4 h-4" />
             </button>
           )}
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          {MONTHS.map((month) => (
-            <button
-              key={month}
-              onClick={() => {
-                setSelectedMonth(month)
-                setCurrentPage(1)
-              }}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                selectedMonth === month
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {month}
-            </button>
-          ))}
-        </div>
-
-        {(searchQuery || selectedMonth !== 'All Months') && (
-          <p className="text-sm text-gray-600">
-            {filteredManifests.length} manifest{filteredManifests.length !== 1 ? 's' : ''} found
-          </p>
-        )}
+        <FilterDropdown 
+          selectedMonth={selectedMonth}
+          onMonthChange={(month) => {
+            setSelectedMonth(month)
+            setCurrentPage(1)
+          }}
+          months={MONTHS}
+        />
       </div>
+
+      {/* Results Info */}
+      {(searchQuery || selectedMonth !== 'All Months') && (
+        <p className="text-xs text-gray-500 mb-4">
+          {filteredManifests.length} manifest{filteredManifests.length !== 1 ? 's' : ''} found
+        </p>
+      )}
 
       {savedManifests.length === 0 ? (
         <div className="py-8 sm:py-12 text-center">
