@@ -42,7 +42,7 @@ export default function TripManifestForm() {
     manifest_date: new Date().toISOString().split('T')[0],
     driver_name: '',
     plate_no: '',
-    helper_name: '',
+    trucker: '',
     truck_type: '',
     // departure_time: '',
     // arrival_time: '',
@@ -62,6 +62,13 @@ export default function TripManifestForm() {
   const [viewingManifest, setViewingManifest] = useState<TripManifest | null>(null)
   const [editingManifestId, setEditingManifestId] = useState<string | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
+
+  // Manual entry modal state
+  const [showManualEntryModal, setShowManualEntryModal] = useState(false)
+  const [pendingDocument, setPendingDocument] = useState<{
+    documentNumber: string
+    quantity: number
+  } | null>(null)
 
   // Toast notification state
   const [toast, setToast] = useState<{
@@ -129,6 +136,26 @@ export default function TripManifestForm() {
     }
   }, [currentStep])
 
+  // Function to add document with manually entered ship-to name
+  const addDocumentWithManualShipTo = (shipToName: string) => {
+    if (!pendingDocument) return
+
+    const newItem: ManifestItem = {
+      item_number: manifest.items.length + 1,
+      document_number: pendingDocument.documentNumber,
+      ship_to_name: shipToName,
+      total_quantity: pendingDocument.quantity,
+    }
+
+    setManifest({
+      ...manifest,
+      items: [...manifest.items, newItem],
+    })
+
+    showToast(`Document ${pendingDocument.documentNumber} added with custom ship-to name`, 'success')
+    setPendingDocument(null)
+  }
+
   const handleBarcodeInput = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       const barcode = barcodeInput.trim()
@@ -144,30 +171,46 @@ export default function TripManifestForm() {
           
           if (exists) {
             showToast(`Document ${document.document_number} already added`, 'error')
+            setBarcodeInput('')
           } else {
-            // Add the document to items
-            const newItem: ManifestItem = {
-              item_number: manifest.items.length + 1,
-              document_number: document.document_number,
-              ship_to_name: document.ship_to_name || 'N/A',
-              total_quantity: document.total_quantity || 0,
+            const normalizedShipTo = (document.ship_to_name || '').trim().toLowerCase()
+            
+            // Check if ship-to name is N/A or empty
+            if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
+              // Set pending document and show modal
+              setPendingDocument({
+                documentNumber: document.document_number,
+                quantity: document.total_quantity || 0,
+              })
+              setShowManualEntryModal(true)
+              setBarcodeInput('')
+            } else {
+              // Ship-to name is valid, add item directly
+              const newItem: ManifestItem = {
+                item_number: manifest.items.length + 1,
+                document_number: document.document_number,
+                ship_to_name: document.ship_to_name || 'N/A',
+                total_quantity: document.total_quantity || 0,
+              }
+              
+              setManifest({
+                ...manifest,
+                items: [...manifest.items, newItem],
+              })
+              
+              showToast(`Document ${document.document_number} added successfully`, 'success')
+              setBarcodeInput('')
             }
-            
-            setManifest({
-              ...manifest,
-              items: [...manifest.items, newItem],
-            })
-            
-            showToast(`Document ${document.document_number} added successfully`, 'success')
           }
         } else {
           showToast(`No data found for barcode: ${barcode}`, 'error')
+          setBarcodeInput('')
         }
       } catch (error) {
         console.error('Error looking up document:', error)
         showToast('Error scanning document', 'error')
-      } finally {
         setBarcodeInput('')
+      } finally {
         setScanningDocument(false)
         setTimeout(() => barcodeInputRef.current?.focus(), 100)
       }
@@ -192,7 +235,7 @@ export default function TripManifestForm() {
       manifest_date: new Date().toISOString().split('T')[0],
       driver_name: '',
       plate_no: '',
-      helper_name: '',
+      trucker: '',
       truck_type: '',
     //   departure_time: '',
     //   arrival_time: '',
@@ -333,6 +376,11 @@ export default function TripManifestForm() {
             canProceedToStep3={canProceedToStep3}
             resetForm={resetForm}
             saveManifest={saveManifest}
+            showManualEntryModal={showManualEntryModal}
+            setShowManualEntryModal={setShowManualEntryModal}
+            pendingDocument={pendingDocument}
+            setPendingDocument={setPendingDocument}
+            addDocumentWithManualShipTo={addDocumentWithManualShipTo}
           />
         )}
 

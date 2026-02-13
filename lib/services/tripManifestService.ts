@@ -11,7 +11,7 @@ export interface TripManifest {
   manifest_date: string
   driver_name: string
   plate_no: string
-  helper_name?: string
+  trucker?: string
   truck_type?: string
   // departure_time?: string
   // arrival_time?: string

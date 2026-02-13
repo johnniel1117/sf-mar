@@ -1,6 +1,6 @@
-import { Truck, Barcode, Save, ChevronRight, ChevronLeft, Trash2, X, Info, Package, CheckCircle2, AlertCircle, Edit } from 'lucide-react'
+import { Truck, Barcode, Save, ChevronRight, ChevronLeft, Trash2, X, Info, Package, CheckCircle2, AlertCircle } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 interface CreateManifestTabProps {
   currentStep: 1 | 2 | 3
@@ -19,6 +19,120 @@ interface CreateManifestTabProps {
   canProceedToStep3: () => boolean
   resetForm: () => void
   saveManifest: () => void
+  showManualEntryModal: boolean
+  setShowManualEntryModal: (show: boolean) => void
+  pendingDocument: { documentNumber: string; quantity: number } | null
+  setPendingDocument: (doc: { documentNumber: string; quantity: number } | null) => void
+  addDocumentWithManualShipTo: (shipToName: string) => void
+}
+
+interface ManualEntryModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSave: (shipToName: string) => void
+  documentNumber: string
+  quantity: number
+}
+
+function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }: ManualEntryModalProps) {
+  const [shipToName, setShipToName] = useState('')
+
+  useEffect(() => {
+    if (isOpen) {
+      setShipToName('')
+    }
+  }, [isOpen])
+
+  const handleSave = () => {
+    if (shipToName.trim()) {
+      onSave(shipToName.trim())
+      onClose()
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSave()
+    } else if (e.key === 'Escape') {
+      onClose()
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-slideUp">
+        {/* Header */}
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-6 h-6 text-amber-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-gray-900">Ship-To Name Required</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              The system couldn't find a ship-to name for this document
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Document Info */}
+        <div className="bg-gray-50 rounded-lg p-3 mb-4 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Document Number:</span>
+            <span className="font-mono font-semibold text-gray-900">{documentNumber}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Quantity:</span>
+            <span className="font-semibold text-blue-600">{quantity}</span>
+          </div>
+        </div>
+
+        {/* Input Field */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Ship-To Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={shipToName}
+            onChange={(e) => setShipToName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Enter ship-to name..."
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            autoFocus
+          />
+          <p className="text-xs text-gray-500 mt-2">
+            Please enter the customer or delivery location name
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!shipToName.trim()}
+            className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Save & Add
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function CreateManifestTab({
@@ -38,6 +152,11 @@ export function CreateManifestTab({
   canProceedToStep3,
   resetForm,
   saveManifest,
+  showManualEntryModal,
+  setShowManualEntryModal,
+  pendingDocument,
+  setPendingDocument,
+  addDocumentWithManualShipTo,
 }: CreateManifestTabProps) {
   // Calculate totals
   const totalDocuments = manifest.items.length
@@ -67,7 +186,7 @@ export function CreateManifestTab({
     }
   }
 
-  // Step configuration matching damage report style
+  // Step configuration
   const steps = [
     { number: 1, title: 'Truck Info', icon: Truck },
     { number: 2, title: 'Scan Documents', icon: Barcode },
@@ -76,6 +195,18 @@ export function CreateManifestTab({
 
   return (
     <div className="space-y-6">
+      {/* Manual Entry Modal */}
+      <ManualEntryModal
+        isOpen={showManualEntryModal}
+        onClose={() => {
+          setShowManualEntryModal(false)
+          setPendingDocument(null)
+        }}
+        onSave={addDocumentWithManualShipTo}
+        documentNumber={pendingDocument?.documentNumber || ''}
+        quantity={pendingDocument?.quantity || 0}
+      />
+
       {/* Progress Steps - Matching Damage Report Style */}
       <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
         <div className="flex items-center justify-between mb-2">
@@ -130,8 +261,8 @@ export function CreateManifestTab({
           {currentStep === 1 && (
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900">Vehicle & Trip Information</h2>
@@ -197,6 +328,20 @@ export function CreateManifestTab({
                   />
                 </div>
 
+                {/* Trucker */}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                    Trucker
+                  </label>
+                  <input
+                    type="text"
+                    value={manifest.trucker}
+                    onChange={(e) => setManifest({ ...manifest, trucker: e.target.value })}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                    placeholder="ACCLI, SF EXPRESS, SUYLI"
+                  />
+                </div>
+
                 {/* Driver Name */}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
@@ -227,24 +372,10 @@ export function CreateManifestTab({
                   />
                 </div>
 
-                {/* Helper Name */}
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                    Helper Name
-                  </label>
-                  <input
-                    type="text"
-                    value={manifest.helper_name}
-                    onChange={(e) => setManifest({ ...manifest, helper_name: e.target.value })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-                    placeholder="Helper's name (optional)"
-                  />
-                </div>
-
-                {/* Truck_type */}
+                {/* Truck Type */}
                 <div className="sm:col-span-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                    Truck type
+                    Truck Type
                   </label>
                   <input
                     type="text"
@@ -262,8 +393,8 @@ export function CreateManifestTab({
           {currentStep === 2 && (
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Barcode className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Barcode className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900">Scan Documents</h2>
@@ -362,8 +493,8 @@ export function CreateManifestTab({
           {currentStep === 3 && (
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Save className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Save className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900">Review & Finalize</h2>
@@ -395,11 +526,11 @@ export function CreateManifestTab({
                     <span className="font-semibold text-gray-900">{manifest.plate_no || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between sm:flex-col sm:gap-1">
-                    <span className="text-gray-600 font-medium">Helper:</span>
-                    <span className="font-semibold text-gray-900">{manifest.helper_name || 'N/A'}</span>
+                    <span className="text-gray-600 font-medium">Trucker:</span>
+                    <span className="font-semibold text-gray-900">{manifest.trucker || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between sm:flex-col sm:gap-1">
-                    <span className="text-gray-600 font-medium">Truck_type:</span>
+                    <span className="text-gray-600 font-medium">Truck Type:</span>
                     <span className="font-semibold text-gray-900">{manifest.truck_type || 'N/A'}</span>
                   </div>
                 </div>
@@ -520,6 +651,36 @@ export function CreateManifestTab({
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+      `}</style>
     </div>
   )
 }

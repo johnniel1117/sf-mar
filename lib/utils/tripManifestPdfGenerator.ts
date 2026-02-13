@@ -1,5 +1,4 @@
 import { TripManifest } from '@/lib/services/tripManifestService'
-// import JsBarcode from "jsbarcode"
 
 export class TripManifestPDFGenerator {
   static generatePDF(manifestData: TripManifest): void {
@@ -17,17 +16,6 @@ export class TripManifestPDFGenerator {
         year: 'numeric' 
       })
     }
-
-    // const generateBarcodeSVG = (value: string): string => {
-    //   const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-    //   JsBarcode(svgElement, value, {
-    //     format: "CODE128",
-    //     width: 2,
-    //     height: 40,
-    //     displayValue: false,
-    //   })
-    //   return svgElement.outerHTML
-    // }
 
     const itemsHtml = items
       .map(
@@ -61,7 +49,7 @@ export class TripManifestPDFGenerator {
           }
           
           body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Arial, sans-serif;
             padding: 20px;
             font-size: 11px;
             line-height: 1.4;
@@ -111,21 +99,11 @@ export class TripManifestPDFGenerator {
           .dealer-copy {
             font-size: 14px;
             font-weight: bold;
-            color: #d32f2f;
-            border: 2px solid #d32f2f;
+            align-items: center;
+            color: #000;
+            border: 2px solid #000;
             padding: 4px 8px;
             display: inline-block;
-            margin-bottom: 5px;
-          }
-          
-          .report-number-box {
-            border: 2px solid #d32f2f;
-            padding: 8px 12px;
-            margin-top: 5px;
-            text-align: center;
-            font-size: 11px;
-            font-weight: bold;
-            color: #000;
           }
           
           /* Document Header - Matching Damage Report */
@@ -139,12 +117,6 @@ export class TripManifestPDFGenerator {
             font-size: 16px;
             font-weight: bold;
             margin-bottom: 5px;
-            text-transform: uppercase;
-          }
-          
-          .doc-number {
-            font-size: 13px;
-            font-weight: bold;
           }
           
           /* Info Section - Matching Damage Report */
@@ -190,18 +162,12 @@ export class TripManifestPDFGenerator {
             text-align: center;
             font-weight: bold;
             font-size: 10px;
-            text-transform: uppercase;
-            background-color: #f0f0f0;
           }
           
           .data-table td {
             border: 1px solid #000;
             padding: 6px;
             font-size: 9px;
-          }
-          
-          .data-table tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
           }
           
           /* Footer Info - Matching Damage Report */
@@ -211,16 +177,14 @@ export class TripManifestPDFGenerator {
             text-align: right;
             font-size: 11px;
             font-weight: bold;
-            border-top: 1px solid #ccc;
           }
           
-          /* Signature Section - Matching Damage Report Layout */
+          /* Signature Section - 2x2 Grid Layout */
           .signature-section {
             margin-top: 25px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
-            page-break-inside: avoid;
           }
           
           .signature-box {
@@ -233,7 +197,6 @@ export class TripManifestPDFGenerator {
             font-size: 10px;
             text-align: left;
             margin-bottom: 5px;
-            text-transform: uppercase;
           }
           
           .signature-line-container {
@@ -272,50 +235,12 @@ export class TripManifestPDFGenerator {
             text-align: center;
           }
           
-          .remarks-section {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #000;
-            background: #ffffff;
-          }
-          
-          .remarks-label {
-            font-weight: bold;
-            font-size: 10px;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-          }
-          
-          .remarks-content {
-            font-size: 10px;
-            min-height: 50px;
-          }
-          
-          .separator {
-            text-align: center;
-            margin: 15px 0;
-            font-size: 10px;
-            color: #666;
-            letter-spacing: 2px;
-          }
-          
           @media print {
             body {
               padding: 0;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
             }
             .page-container {
               max-width: 100%;
-            }
-            .data-table thead {
-              background-color: #f0f0f0 !important;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            .dealer-copy {
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
             }
           }
         </style>
@@ -333,16 +258,12 @@ export class TripManifestPDFGenerator {
             </div>
             <div class="title-section">
               <div class="dealer-copy">${manifestData.manifest_number}</div>
-              <div style="margin-top: 8px; text-align: right;">
-        
-              </div>
             </div>
           </div>
 
           <!-- Document Header -->
           <div class="document-header">
             <div class="doc-title">TRIP MANIFEST</div>
-            
           </div>
 
           <!-- Info Section - 4-Column Layout Matching Damage Report -->
@@ -355,10 +276,11 @@ export class TripManifestPDFGenerator {
             </div>
             
             <div class="info-row">
+            <div class="info-label">Trucker</div>
+              <div class="info-value">${manifestData.trucker || 'N/A'}</div>
               <div class="info-label">Driver</div>
               <div class="info-value">${manifestData.driver_name}</div>
-              <div class="info-label">Helper</div>
-              <div class="info-value">${manifestData.helper_name || 'N/A'}</div>
+              
             </div>
             
             <div class="info-row">
@@ -390,18 +312,13 @@ export class TripManifestPDFGenerator {
             <div>TOTAL DOCUMENTS: ${items.length} | TOTAL QUANTITY: ${totalQty}</div>
           </div>
 
-          
-
-          <!-- Separator -->
-        
-
-          <!-- Signature Section - 2x2 Grid with Personnel Format -->
+          <!-- Signature Section - 2x2 Grid -->
           <div class="signature-section">
             <!-- Checked by -->
             <div class="signature-box">
               <div class="signature-label">Checked by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
-                <div class="signature-name">Jaymie Tagalog Jr./Iric Ranili</div>
+                <div class="signature-name">JAYMIE TAGALOG JR./IRIC RANILI</div>
                 <div class="signature-line"></div>
                 <div class="signature-position">Warehouse Checker</div>
               </div>
@@ -411,7 +328,7 @@ export class TripManifestPDFGenerator {
             <div class="signature-box">
               <div class="signature-label">Approved by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
-                <div class="signature-name">Kenneth Irvin Belicario / Anthonylou Chan</div>
+                <div class="signature-name">KENNETH IRVIN BELICARIO/ANTHONYLOU CHAN</div>
                 <div class="signature-line"></div>
                 <div class="signature-position">Warehouse Supervisor</div>
               </div>
@@ -421,7 +338,7 @@ export class TripManifestPDFGenerator {
             <div class="signature-box">
               <div class="signature-label">Received by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
-              
+                <div class="signature-name"></div>
                 <div class="signature-line"></div>
                 <div class="signature-position">Customer/Trucker Representative</div>
               </div>
@@ -431,7 +348,7 @@ export class TripManifestPDFGenerator {
             <div class="signature-box">
               <div class="signature-label">Witnessed by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
-                
+                <div class="signature-name"></div>
                 <div class="signature-line"></div>
                 <div class="signature-position">Security Guard</div>
               </div>

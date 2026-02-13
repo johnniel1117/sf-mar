@@ -68,23 +68,23 @@ export function ViewManifestModal({
                 <p className="font-semibold text-gray-900">{manifest.plate_no}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1">Helper</p>
-                <p className="font-semibold text-gray-900">{manifest.helper_name || 'N/A'}</p>
+                <p className="text-xs text-gray-600 mb-1">Trucker</p>
+                <p className="font-semibold text-gray-900">{manifest.trucker || 'N/A'}</p>
               </div>
-              <div>
+              {/* <div>
                 <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   Route
                 </p>
                 <p className="font-semibold text-gray-900">{manifest.route || 'N/A'}</p>
-              </div>
-              <div>
+              </div> */}
+              {/* <div>
                 <p className="text-xs text-gray-600 mb-1 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   Departure
                 </p>
                 <p className="font-semibold text-gray-900">{manifest.departure_time || 'N/A'}</p>
-              </div>
+              </div> */}
             </div>
           </div>
 
