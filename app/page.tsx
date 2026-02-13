@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { FileSpreadsheet, AlertTriangle } from 'lucide-react'
+import { FileSpreadsheet, AlertTriangle, Truck } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -18,80 +18,88 @@ export default function LandingPage() {
         </div>
         <p className="text-gray-600 text-lg">Choose a service to get started</p>
       </div>
+   
+          {/* Main Content */}
+          <div className=" grid   items-center justify-center max-w-4xl w-full ">
+            <div className="w-full max-w-6xl">
+            
+              
+              {/* Cards Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Serial Number Management */}
+                <Link href="/excel-uploader">
+                  <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors cursor-pointer group h-full">
+                    <div className="mb-6">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+                        <FileSpreadsheet className="w-5 h-5 text-white" strokeWidth={2} />
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3">
+                      Serial List
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                      Upload and process product barcode data
+                    </p>
+                    <div className="flex gap-2 text-xs text-gray-500">
+                      <span className="px-2 py-1 bg-gray-100 rounded">.xlsx</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded">.xls</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded">.csv</span>
+                    </div>
+                  </div>
+                </Link>
 
-      {/* Cards Container */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full">
-        {/* Excel Uploader Card */}
-        <Link href="/excel-uploader">
-          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200 hover:border-blue-500">
-            <div className="p-8 text-center">
-              <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-6  transition-transform duration-300">
-                <FileSpreadsheet className="w-12 h-12 text-white" />
+                {/* Trip Manifest */}
+                <Link href="/trip-manifest">
+                  <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors cursor-pointer group h-full">
+                    <div className="mb-6">
+                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center">
+                        <Truck className="w-5 h-5 text-white" strokeWidth={2} />
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3">
+                      Trip Manifest
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                      Document and manage shipment details and delivery logistics
+                    </p>
+                    <div className="flex gap-2 text-xs text-gray-500">
+                      <span className="px-2 py-1 bg-gray-100 rounded">Documentation</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded">Details</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded">Tracking</span>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Damage Report */}
+                <Link href="/damage-report">
+                  <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors cursor-pointer group h-full">
+                    <div className="mb-6">
+                      <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
+                        <AlertTriangle className="w-5 h-5 text-white" strokeWidth={2} />
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3">
+                      Damage Report
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                      Document and track damaged products and shipment incidents
+                    </p>
+                    <div className="flex gap-2 text-xs text-gray-500">
+                      <span className="px-2 py-1 bg-gray-100 rounded">Documentation</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded">Details</span>
+                      <span className="px-2 py-1 bg-gray-100 rounded">Tracking</span>
+                    </div>
+                  </div>
+                </Link>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                Serial List
-              </h2>
-              <p className="text-gray-600 mb-4">
-                Upload and process barcode Excel files of Haier products
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                  .xlsx
-                </span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                  .xls
-                </span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                  .csv
-                </span>
-              </div>
-            </div>
-            <div className="bg-blue-50 px-8 py-4 group-hover:bg-blue-100 transition-colors">
-              <p className="text-blue-700 font-semibold text-center">
-                Click to upload files →
-              </p>
             </div>
           </div>
-        </Link>
 
-        {/* Damage Report Card */}
-        <Link href="/damage-report">
-          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200 hover:border-orange-500">
-            <div className="p-8 text-center">
-              <div className="w-24 h-24 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-6  transition-transform duration-300">
-                <AlertTriangle className="w-12 h-12 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                Damage Report
-              </h2>
-              <p className="text-gray-600 mb-4">
-                Report and track damaged products and shipments
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                  Photos
-                </span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                  Details
-                </span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                  Tracking
-                </span>
-              </div>
-            </div>
-            <div className="bg-orange-50 px-8 py-4 group-hover:bg-orange-100 transition-colors">
-              <p className="text-orange-700 font-semibold text-center">
-                Click to create report →
-              </p>
-            </div>
-          </div>
-        </Link>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-16 text-center text-gray-500 text-sm">
-        Developed by <span className="font-semibold">MAR</span> · All Rights Reserved © 2026
-      </div>
+        {/* Footer */}
+        <div className="mt-16 text-center text-gray-500 text-sm">
+          Developed by <span className="font-semibold">MAR</span> · All Rights Reserved © 2026
+        </div>
+      
     </div>
   )
 }
