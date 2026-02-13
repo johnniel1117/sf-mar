@@ -2,7 +2,7 @@
 
 import { 
   X, Download, Edit, Truck, Calendar, Clock, Package, 
-  FileSpreadsheet 
+  FileSpreadsheet, Info
 } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
 
@@ -11,8 +11,7 @@ interface ViewManifestModalProps {
   manifest: TripManifest | null
   onClose: () => void
   onEdit: (manifest: TripManifest) => void
-  onDownloadPDF: (manifest: TripManifest) => void     // renamed
-  onDownloadExcel: (manifest: TripManifest) => void   // new prop
+  onDownloadPDF: (manifest: TripManifest) => void
 }
 
 export function ViewManifestModal({
@@ -21,186 +20,186 @@ export function ViewManifestModal({
   onClose,
   onEdit,
   onDownloadPDF,
-  onDownloadExcel,
 }: ViewManifestModalProps) {
   if (!isOpen || !manifest) return null
 
   const totalQuantity = manifest.items?.reduce((sum, item) => sum + (item.total_quantity || 0), 0) || 0
   const totalDocs = manifest.items?.length || 0
 
+  const getDuration = () => {
+    if (!manifest.time_start || !manifest.time_end) return null
+
+    const [h1, m1] = manifest.time_start.split(':').map(Number)
+    const [h2, m2] = manifest.time_end.split(':').map(Number)
+
+    let minutes = (h2 * 60 + m2) - (h1 * 60 + m1)
+    if (minutes < 0) minutes += 24 * 60
+
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+
+    return `${hours}h ${mins.toString().padStart(2, '0')}m`
+  }
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[92vh] overflow-hidden flex flex-col animate-fadeIn">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-700 to-indigo-700 px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-xl">
-              <Truck className="w-7 h-7 text-white" />
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div
+        className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-8 py-6 flex justify-between items-start">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
+              <Truck className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Trip Manifest</h2>
-              <p className="text-sm text-blue-100 mt-0.5">
+              <h2 className="text-2xl font-light tracking-tight text-gray-900">Trip Manifest</h2>
+              <p className="text-sm text-gray-500 mt-1">
                 {manifest.manifest_number || 'Draft'} • {manifest.manifest_date || '—'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2.5 hover:bg-white/20 rounded-xl transition-colors text-white"
-            aria-label="Close"
+            className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-all"
           >
-            <X className="w-7 h-7" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-7 space-y-6">
+        {/* Modal Content */}
+        <div className="p-8 space-y-6">
           {/* Trip Information */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200">
-            <h3 className="font-bold text-gray-900 mb-5 text-lg flex items-center gap-2.5">
-              <Truck className="w-5 h-5 text-blue-700" />
+          <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
+            <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                <Truck className="w-4 h-4 text-orange-600" />
+              </div>
               Trip Information
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-gray-600 mb-1.5 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Manifest Date
-                </p>
-                <p className="font-semibold text-gray-900">{manifest.manifest_date || '—'}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Manifest Date</p>
+                <p className="text-sm font-medium text-gray-900">{manifest.manifest_date || '—'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1.5">Driver Name</p>
-                <p className="font-semibold text-gray-900">{manifest.driver_name || '—'}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Driver Name</p>
+                <p className="text-sm font-medium text-gray-900">{manifest.driver_name || '—'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1.5">Plate No.</p>
-                <p className="font-semibold text-gray-900">{manifest.plate_no || '—'}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Plate Number</p>
+                <p className="text-sm font-medium text-gray-900">{manifest.plate_no || '—'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1.5">Trucker</p>
-                <p className="font-semibold text-gray-900">{manifest.trucker || 'N/A'}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Trucker</p>
+                <p className="text-sm font-medium text-gray-900">{manifest.trucker || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1.5">Truck Type</p>
-                <p className="font-semibold text-gray-900">{manifest.truck_type || '—'}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Truck Type</p>
+                <p className="text-sm font-medium text-gray-900">{manifest.truck_type || '—'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 mb-1.5 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  Time Window
-                </p>
-                <p className="font-semibold text-gray-900">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Time Window</p>
+                <p className="text-sm font-medium text-gray-900">
                   {manifest.time_start || '—'} – {manifest.time_end || '—'}
                 </p>
               </div>
+              {getDuration() && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Duration</p>
+                  <p className="text-sm font-medium text-emerald-600">{getDuration()}</p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 gap-5">
-            <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 text-center">
-              <p className="text-sm text-blue-700 mb-1 font-medium">Total Documents</p>
-              <p className="text-4xl font-bold text-blue-800">{totalDocs}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 hover:bg-white transition-colors">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Documents</p>
+              <p className="text-3xl font-bold text-blue-600">{totalDocs}</p>
             </div>
-            <div className="bg-green-50 p-5 rounded-2xl border border-green-100 text-center">
-              <p className="text-sm text-green-700 mb-1 font-medium">Total Quantity</p>
-              <p className="text-4xl font-bold text-green-800">{totalQuantity.toLocaleString()}</p>
+            <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 hover:bg-white transition-colors">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Quantity</p>
+              <p className="text-3xl font-bold text-green-600">{totalQuantity.toLocaleString()}</p>
             </div>
           </div>
 
-          {/* Documents Table */}
-          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="bg-gray-50 px-5 py-4 border-b border-gray-200">
-              <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2.5">
-                <Package className="w-5 h-5 text-gray-700" />
-                Loaded Documents
-              </h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px]">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">No.</th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ship To</th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Document / DN No.</th>
-                    <th className="px-5 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Qty</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {manifest.items?.map((item) => (
-                    <tr key={item.item_number} className="hover:bg-blue-50/30 transition-colors">
-                      <td className="px-5 py-4 text-sm text-gray-900 font-medium">{item.item_number}</td>
-                      <td className="px-5 py-4 text-sm text-gray-900">{item.ship_to_name || '—'}</td>
-                      <td className="px-5 py-4 text-sm font-mono text-gray-800">{item.document_number}</td>
-                      <td className="px-5 py-4 text-sm text-right font-semibold text-blue-700">
-                        {item.total_quantity?.toLocaleString() || '—'}
-                      </td>
-                    </tr>
-                  ))}
-                  {(!manifest.items || manifest.items.length === 0) && (
-                    <tr>
-                      <td colSpan={4} className="px-5 py-8 text-center text-gray-500 italic">
-                        No documents added yet
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          {/* Documents List */}
+          <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
+            <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                <Package className="w-4 h-4 text-orange-600" />
+              </div>
+              Loaded Documents ({totalDocs})
+            </h3>
+            <div className="space-y-4">
+              {manifest.items?.map((item) => (
+                <div key={item.item_number} className="border border-gray-150 rounded-xl p-5 bg-gray-50 hover:bg-white hover:border-gray-300 transition-all">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-lg flex items-center justify-center font-medium text-sm flex-shrink-0">
+                      {item.item_number}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 mb-3">{item.ship_to_name || 'Unknown'}</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Document Number</p>
+                          <p className="font-mono text-sm font-medium text-gray-900">{item.document_number}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Quantity</p>
+                          <p className="text-sm font-bold text-orange-600">{item.total_quantity?.toLocaleString() || '—'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(!manifest.items || manifest.items.length === 0) && (
+                <div className="text-center py-8 text-gray-500 italic">
+                  No documents added yet
+                </div>
+              )}
             </div>
           </div>
 
           {/* Remarks */}
           {manifest.remarks && (
-            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-200">
-              <h4 className="font-semibold text-gray-900 mb-2.5 flex items-center gap-2">
-                <Clock className="w-4.5 h-4.5 text-amber-700" />
-                Remarks / Special Instructions
-              </h4>
-              <p className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">
-                {manifest.remarks}
-              </p>
+            <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                  <Info className="w-4 h-4 text-orange-600" />
+                </div>
+                Remarks
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">{manifest.remarks}</p>
             </div>
           )}
-        </div>
 
-        {/* Footer Actions */}
-        <div className="bg-gray-50 px-6 py-5 border-t border-gray-200 flex flex-col sm:flex-row gap-3 sm:justify-end">
-          <button
-            onClick={onClose}
-            className="px-5 py-2.5 text-gray-700 hover:bg-gray-200 rounded-lg font-medium transition-colors order-1 sm:order-none"
-          >
-            Close
-          </button>
-
-          <button
-            onClick={() => {
-              onEdit(manifest)
-              onClose()
-            }}
-            className="px-5 py-2.5 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 order-2 sm:order-none"
-          >
-            <Edit className="w-4 h-4" />
-            Edit Manifest
-          </button>
-
-          <div className="flex flex-col sm:flex-row gap-3 order-3 sm:order-none">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
+            <button
+              onClick={() => {
+                onEdit(manifest)
+                onClose()
+              }}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-all hover:shadow-md"
+            >
+              Edit Manifest
+            </button>
             <button
               onClick={() => onDownloadPDF(manifest)}
-              className="px-5 py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 active:bg-red-800 transition-colors flex items-center justify-center gap-2 shadow-sm"
-              title="Download as PDF"
+              className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium text-sm transition-all hover:shadow-md"
             >
-              <Download className="w-4.5 h-4.5" />
               Download PDF
             </button>
-
             <button
-              onClick={() => onDownloadExcel(manifest)}
-              className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 active:bg-emerald-800 transition-colors flex items-center justify-center gap-2 shadow-sm"
-              title="Download as Excel (.xlsx)"
+              onClick={onClose}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-all"
             >
-              <FileSpreadsheet className="w-4.5 h-4.5" />
-              Download Excel
+              Close
             </button>
           </div>
         </div>

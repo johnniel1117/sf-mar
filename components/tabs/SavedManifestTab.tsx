@@ -27,6 +27,26 @@ export function SavedManifestsTab({
   handleDownloadManifest,
   handleDeleteManifest,
 }: SavedManifestsTabProps) {
+  // Sort manifests by creation date (newest first)
+  const sortedManifests = [...savedManifests].sort((a, b) => {
+    // First try to sort by created_at if available
+    if (a.created_at && b.created_at) {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    }
+    
+    // Fallback to manifest_date
+    if (a.manifest_date && b.manifest_date) {
+      return new Date(b.manifest_date).getTime() - new Date(a.manifest_date).getTime()
+    }
+    
+    // Fallback to id (assuming higher id = newer)
+    if (a.id && b.id) {
+      return b.id.localeCompare(a.id)
+    }
+    
+    return 0
+  })
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -47,7 +67,7 @@ export function SavedManifestsTab({
         </div>
       ) : (
         <div className="space-y-4">
-          {savedManifests.map((manifest) => {
+          {sortedManifests.map((manifest) => {
             const totalQuantity = manifest.items?.reduce((sum, item) => sum + item.total_quantity, 0) || 0
             const totalDocs = manifest.items?.length || 0
             const manifestDate = manifest.manifest_date ? new Date(manifest.manifest_date).toLocaleDateString() : 'No date'

@@ -1,5 +1,3 @@
-// CreateManifestTab.tsx
-
 import { 
   Truck, 
   Barcode, 
@@ -15,8 +13,8 @@ import {
   Search,
   Clock
 } from 'lucide-react'
-import type { TripManifest } from '@/lib/services/tripManifestService'
-import { useEffect, useState } from 'react'
+import type { TripManifest, ManifestItem } from '@/lib/services/tripManifestService'
+import { useEffect, useState, useRef } from 'react'
 import React from 'react'
 
 interface CreateManifestTabProps {
@@ -27,7 +25,7 @@ interface CreateManifestTabProps {
   barcodeInput: string
   setBarcodeInput: (value: string) => void
   scanningDocument: boolean
-  barcodeInputRef: React.RefObject<HTMLInputElement>
+  barcodeInputRef: React.RefObject<HTMLInputElement | null>
   isLoading: boolean
   isEditMode: boolean
   handleBarcodeInput: (e: React.KeyboardEvent<HTMLInputElement>) => void
@@ -41,7 +39,8 @@ interface CreateManifestTabProps {
   pendingDocument: { documentNumber: string; quantity: number } | null
   setPendingDocument: (doc: { documentNumber: string; quantity: number } | null) => void
   addDocumentWithManualShipTo: (shipToName: string) => void
-  searchDocument: (documentNumber: string) => Promise<{ shipToName: string; quantity: number } | null>
+  searchDocument: (documentNumber: string) => Promise<Array<{ documentNumber: string; shipToName: string; quantity: number }> | null>
+  showToast?: (message: string, type: 'success' | 'error' | 'info') => void
 }
 
 interface ManualEntryModalProps {
@@ -171,13 +170,22 @@ export function CreateManifestTab({
   setPendingDocument,
   addDocumentWithManualShipTo,
   searchDocument,
+  showToast,
 }: CreateManifestTabProps) {
-  const [searchResults, setSearchResults] = useState<{ shipToName: string; quantity: number } | null>(null)
+  const [searchResults, setSearchResults] = useState<Array<{ documentNumber: string; shipToName: string; quantity: number }> | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
+  const isMountedRef = useRef(true)
 
   const totalDocuments = manifest.items.length
   const totalQuantity = manifest.items.reduce((sum, item) => sum + item.total_quantity, 0)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!isEditMode && !manifest.manifest_number) {
@@ -186,31 +194,57 @@ export function CreateManifestTab({
   }, [isEditMode, manifest.manifest_number])
 
   useEffect(() => {
-    if (barcodeInput.trim().length >= 3 && searchDocument) {
+    if (barcodeInput.trim().length >= 1 && searchDocument) {
       if (searchTimeout) clearTimeout(searchTimeout)
 
       const timeout = setTimeout(async () => {
         setIsSearching(true)
         try {
           const result = await searchDocument(barcodeInput.trim())
-          setSearchResults(result)
+          if (isMountedRef.current) {
+            // Result already has documentNumber from the API
+            setSearchResults(result)
+          }
         } catch (error) {
           console.error('Error searching document:', error)
-          setSearchResults(null)
+          if (isMountedRef.current) {
+            setSearchResults(null)
+          }
         } finally {
-          setIsSearching(false)
+          if (isMountedRef.current) {
+            setIsSearching(false)
+            // Maintain focus after search completes
+            setTimeout(() => {
+              if (barcodeInputRef.current && document.activeElement !== barcodeInputRef.current) {
+                barcodeInputRef.current.focus()
+              }
+            }, 0)
+          }
         }
-      }, 500)
+      }, 300)
 
       setSearchTimeout(timeout)
     } else {
       setSearchResults(null)
+      setIsSearching(false)
     }
 
     return () => {
       if (searchTimeout) clearTimeout(searchTimeout)
     }
-  }, [barcodeInput, searchDocument])
+  }, [barcodeInput])
+
+  // Maintain focus on step 2
+  useEffect(() => {
+    if (currentStep === 2 && barcodeInputRef.current) {
+      const timer = setTimeout(() => {
+        barcodeInputRef.current?.focus()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [currentStep, searchResults, isSearching])
+
+
 
   const generateManifestNumber = () => {
     const now = new Date()
@@ -228,9 +262,88 @@ export function CreateManifestTab({
   const handleSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
+      
+      // If there's exactly one search result, use it automatically
+      if (searchResults && searchResults.length === 1) {
+        selectDocument(searchResults[0])
+        return
+      }
+      
       handleBarcodeInput(e)
       setSearchResults(null)
+      setBarcodeInput('')
+      
+      // Maintain focus on input using requestAnimationFrame
+      requestAnimationFrame(() => {
+        if (barcodeInputRef.current) {
+          barcodeInputRef.current.focus()
+        }
+      })
+    } else if (e.key === 'Escape') {
+      setSearchResults(null)
+      setBarcodeInput('')
+      if (barcodeInputRef.current) {
+        barcodeInputRef.current.focus()
+      }
     }
+  }
+
+  const selectDocument = async (doc: { documentNumber: string; shipToName: string; quantity: number }) => {
+    // Check if document already exists
+    const exists = manifest.items.some(item => item.document_number === doc.documentNumber)
+    
+    if (exists) {
+      if (showToast) showToast(`Document ${doc.documentNumber} already added`, 'error')
+      setSearchResults(null)
+      setBarcodeInput('')
+      return
+    }
+
+    // Check if ship-to name is N/A or empty
+    const normalizedShipTo = (doc.shipToName || '').trim().toLowerCase()
+    
+    if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
+      // Show manual entry modal for N/A ship-to names
+      setPendingDocument({
+        documentNumber: doc.documentNumber,
+        quantity: doc.quantity,
+      })
+      setShowManualEntryModal(true)
+      setSearchResults(null)
+      setBarcodeInput('')
+      
+      // Maintain focus after modal closes
+      requestAnimationFrame(() => {
+        if (barcodeInputRef.current) {
+          barcodeInputRef.current.focus()
+        }
+      })
+      return
+    }
+
+    // Add the document directly
+    const newItem: ManifestItem = {
+      item_number: manifest.items.length + 1,
+      document_number: doc.documentNumber,
+      ship_to_name: doc.shipToName,
+      total_quantity: doc.quantity,
+    }
+    
+    setManifest({
+      ...manifest,
+      items: [...manifest.items, newItem],
+    })
+    
+    if (showToast) showToast(`Document ${doc.documentNumber} added successfully`, 'success')
+    setSearchResults(null)
+    setBarcodeInput('')
+    
+    // Maintain focus using requestAnimationFrame
+    requestAnimationFrame(() => {
+      if (barcodeInputRef.current) {
+        barcodeInputRef.current.focus()
+      }
+    })
   }
 
   const getDuration = () => {
@@ -317,11 +430,13 @@ export function CreateManifestTab({
                 </div>
 
                 {index < 2 && (
-                  <div
-                    className={`h-1 flex-1 mt-5 sm:mt-6 transition-all duration-300 ${
-                      isCompleted ? 'bg-green-500' : 'bg-gray-300'
-                    }`}
-                  />
+                  <div className="flex items-center" style={{ marginTop: '-28px', flex: '0 0 auto', width: '60px' }}>
+                    <div
+                      className={`h-1 w-full transition-all duration-300 ${
+                        isCompleted ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    />
+                  </div>
                 )}
               </React.Fragment>
             )
@@ -384,14 +499,14 @@ export function CreateManifestTab({
                     Time Start <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     <input
                       type="time"
                       value={manifest.time_start || ''}
                       onChange={(e) => setManifest({ ...manifest, time_start: e.target.value })}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                       required
                     />
-                    {/* <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" /> */}
                   </div>
                 </div>
 
@@ -400,24 +515,27 @@ export function CreateManifestTab({
                     Time End
                   </label>
                   <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     <input
                       type="time"
                       value={manifest.time_end || ''}
                       onChange={(e) => setManifest({ ...manifest, time_end: e.target.value })}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                     />
-                    {/* <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" /> */}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Trucker</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Trucker <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={manifest.trucker}
                     onChange={(e) => setManifest({ ...manifest, trucker: e.target.value.toUpperCase() })}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                     placeholder="ACCLI, SF EXPRESS, SUYLI"
+                    required
                   />
                 </div>
 
@@ -459,17 +577,6 @@ export function CreateManifestTab({
                     placeholder="E.G., 10W - 6W"
                   />
                 </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Remarks (Optional)</label>
-                  <textarea
-                    value={manifest.remarks || ''}
-                    onChange={(e) => setManifest({ ...manifest, remarks: e.target.value.toUpperCase() })}
-                    rows={3}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    placeholder="Add any additional notes or remarks..."
-                  />
-                </div>
               </div>
             </div>
           )}
@@ -495,39 +602,52 @@ export function CreateManifestTab({
                   onKeyDown={handleSearchInputKeyDown}
                   placeholder="Enter DN / TRA number and press Enter..."
                   className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-orange-300 transition-all"
-                  disabled={scanningDocument || isSearching}
+                  disabled={scanningDocument}
+                  inputMode="search"
                   autoFocus
+                  autoComplete="off"
                 />
 
-                {isSearching && (
+                {isSearching && barcodeInput.trim().length >= 1 && (
                   <div className="mt-3 p-3 bg-white bg-opacity-20 rounded-lg flex items-center gap-2 text-sm">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
                     Searching...
                   </div>
                 )}
 
-                {barcodeInput.length >= 3 && !isSearching && (
-                  searchResults ? (
-                    <div className="mt-3 p-3 bg-green-500 bg-opacity-30 border border-green-300 rounded-lg flex items-start gap-2">
-                      <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-sm">Document Found</p>
-                        <p className="text-sm mt-1">
-                          Ship-To: {searchResults.shipToName} • Qty: {searchResults.quantity}
-                        </p>
-                      </div>
+                {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length > 0 && (
+                  <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                    {searchResults.map((result, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => selectDocument(result)}
+                        type="button"
+                        className="w-full p-3 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-lg flex items-start gap-2 text-left transition-all shadow-sm hover:shadow-md"
+                      >
+                        <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5 text-green-600" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm text-gray-900 font-mono">
+                            {result.documentNumber}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1 truncate">
+                            {result.shipToName} • Qty: {result.quantity}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length === 0 && (
+                  <div className="mt-3 p-3 bg-red-500 bg-opacity-20 border border-red-300 rounded-lg flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm">Not Found</p>
+                      <p className="text-sm mt-1">
+                        Press Enter to add "{barcodeInput}" manually
+                      </p>
                     </div>
-                  ) : (
-                    <div className="mt-3 p-3 bg-red-500 bg-opacity-20 border border-red-300 rounded-lg flex items-start gap-2">
-                      <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-sm">Not Found</p>
-                        <p className="text-sm mt-1">
-                          No match for "{barcodeInput}" – press Enter to add manually
-                        </p>
-                      </div>
-                    </div>
-                  )
+                  </div>
                 )}
               </div>
 
@@ -677,20 +797,6 @@ export function CreateManifestTab({
                     </tbody>
                   </table>
                 </div>
-              </div>
-
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-5">
-                <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Info className="w-5 h-5 text-orange-600" />
-                  Remarks (Optional)
-                </h3>
-                <textarea
-                  value={manifest.remarks || ''}
-                  onChange={(e) => setManifest({ ...manifest, remarks: e.target.value.toUpperCase() })}
-                  rows={3}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                  placeholder="Add any additional notes or remarks..."
-                />
               </div>
             </div>
           )}

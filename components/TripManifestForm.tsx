@@ -171,23 +171,28 @@ export default function TripManifestForm() {
     }
   }, [currentStep])
 
-  // Document search function for auto-detection
-  const searchDocument = async (documentNumber: string): Promise<{ shipToName: string; quantity: number } | null> => {
-    if (!documentNumber || documentNumber.length < 3) return null
+  // Document search function - returns array of matching documents for dropdown
+  const searchDocument = async (documentNumber: string): Promise<Array<{ documentNumber: string; shipToName: string; quantity: number }> | null> => {
+    if (!documentNumber || documentNumber.length < 1) return null
     
     try {
-      const document = await lookupDocument(documentNumber)
+      // Call the search API endpoint
+      const response = await fetch(`/api/documents/search?query=${encodeURIComponent(documentNumber)}`)
       
-      if (document) {
-        return {
-          shipToName: document.ship_to_name || 'N/A',
-          quantity: document.total_quantity || 0
-        }
+      if (!response.ok) {
+        throw new Error('Search request failed')
       }
-      return null
+      
+      const { results } = await response.json()
+      
+      if (!results || results.length === 0) {
+        return [] // Return empty array when no results found
+      }
+      
+      return results
     } catch (error) {
       console.error('Error searching document:', error)
-      return null
+      return [] // Return empty array on error
     }
   }
 
@@ -357,6 +362,7 @@ export default function TripManifestForm() {
     return !!(
       manifest.driver_name &&
       manifest.plate_no &&
+      manifest.trucker &&
       manifest.time_start
     )
   }
@@ -440,6 +446,7 @@ export default function TripManifestForm() {
             setPendingDocument={setPendingDocument}
             addDocumentWithManualShipTo={addDocumentWithManualShipTo}
             searchDocument={searchDocument}
+            showToast={showToast}
           />
         )}
 
@@ -459,7 +466,7 @@ export default function TripManifestForm() {
         manifest={viewingManifest}
         onClose={handleCloseViewModal}
         onEdit={handleEditManifest}
-        onDownload={handleDownloadRequest}   // ← updated to open modal (rename prop if needed)
+        onDownloadPDF={handleDownloadRequest}
       />
 
       <ConfirmationModal
