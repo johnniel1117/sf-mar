@@ -196,7 +196,7 @@ export function SavedManifestsTab({
   }
 
   return (
-    <div className="bg-white over rounded-xl border p-4 sm:p-6 overflow-hidden">
+    <div className="bg-white over rounded-xl border p-4 sm:p-6 h-full overflow-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 ">
         <div>
           <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
