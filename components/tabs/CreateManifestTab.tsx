@@ -390,7 +390,7 @@ export function CreateManifestTab({
         quantity={pendingDocument?.quantity || 0}
       />
 
-      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 border border-gray-200">
+      <div className="bg-white rounded-xl  p-3 sm:p-6 border border-gray-200">
 
         <div className="flex items-center justify-between gap-2 mb-8">
           {[

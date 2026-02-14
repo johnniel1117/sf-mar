@@ -409,7 +409,8 @@ export default function TripManifestForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-6 sm:py-8 px-3 sm:px-4">
+    <div className="bg-white rounded-xl p-4 sm:p-6 overflow-y-hidden">
+
       <Navbar 
         showBackButton 
         backHref="/" 
@@ -455,7 +456,7 @@ export default function TripManifestForm() {
             savedManifests={savedManifests}
             handleViewManifest={handleViewManifest}
             handleEditManifest={handleEditManifest}
-            handleDownloadManifest={handleDownloadRequest}        // ← updated to open modal
+            handleDownloadManifest={handleDownloadRequest}        
             handleDeleteManifest={handleDeleteManifest}
           />
         )}
