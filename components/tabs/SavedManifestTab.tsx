@@ -60,7 +60,7 @@ export function SavedManifestsTab({
               >
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
                     <icons.FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   
@@ -76,13 +76,13 @@ export function SavedManifestsTab({
                       <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">
                         {totalDocs} {totalDocs === 1 ? 'document' : 'documents'}
                       </span>
-                      <span className={`px-2 py-1 rounded ${
+                      {/* <span className={`px-2 py-1 rounded ${
                         manifest.status === 'completed' 
                           ? 'bg-green-100 text-green-700' 
                           : 'bg-yellow-100 text-yellow-700'
                       }`}>
                         {manifest.status === 'completed' ? 'Completed' : 'Draft'}
-                      </span>
+                      </span> */}
                     </div>
                   </div>
                 </div>
@@ -109,7 +109,7 @@ export function SavedManifestsTab({
                   )}
                   <div>
                     <span className="text-gray-500">Total Qty:</span>
-                    <p className="font-medium text-blue-600 truncate">{totalQuantity}</p>
+                    <p className="font-medium  truncate">{totalQuantity}</p>
                   </div>
                   {manifest.truck_type && (
                     <div className="col-span-2 sm:col-span-1">
@@ -137,7 +137,7 @@ export function SavedManifestsTab({
                   </button>
                   <button
                     onClick={() => handleDownloadManifest(manifest)}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-orange-600 border border-gray-300 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 border border-gray-300 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                   >
                     <icons.Download className="w-4 h-4" />
                     Download

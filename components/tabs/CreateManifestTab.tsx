@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
 import { useEffect, useState } from 'react'
+import React from 'react'
 
 interface CreateManifestTabProps {
   currentStep: 1 | 2 | 3
@@ -52,9 +53,7 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
   const [shipToName, setShipToName] = useState('')
 
   useEffect(() => {
-    if (isOpen) {
-      setShipToName('')
-    }
+    if (isOpen) setShipToName('')
   }, [isOpen])
 
   const handleSave = () => {
@@ -76,55 +75,54 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fadeIn">
-      <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 animate-slideUp">
-        <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-            <AlertCircle className="w-6 h-6 text-amber-600" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-light text-gray-900">Ship-To Name Required</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              The system couldn't find a ship-to name for this document
-            </p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-6 h-6 text-orange-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Ship-To Name Required</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                The system couldn't find a ship-to name for this document
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-all"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
 
-        <div className="border border-gray-200 rounded-xl p-4 mb-4 bg-gray-50 hover:bg-white transition-colors">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
           <div className="space-y-3">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Document Number</p>
-              <p className="font-mono text-sm font-medium text-gray-900">{documentNumber}</p>
+              <p className="text-xs font-medium text-gray-700">Document Number</p>
+              <p className="font-mono text-sm font-semibold text-gray-900">{documentNumber}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Quantity</p>
-              <p className="text-sm font-medium text-blue-600">{quantity}</p>
+              <p className="text-xs font-medium text-gray-700">Quantity</p>
+              <p className="text-sm font-semibold text-orange-600">{quantity}</p>
             </div>
           </div>
         </div>
 
         <div className="mb-6">
-          <label className="text-xs text-gray-500 uppercase tracking-wide mb-2 block">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Ship-To Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={shipToName}
-            onChange={(e) => setShipToName(e.target.value)}
+            onChange={(e) => setShipToName(e.target.value.toUpperCase())}
             onKeyDown={handleKeyDown}
-            placeholder="Enter ship-to name..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            placeholder="Enter customer or delivery location name..."
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
             autoFocus
           />
-          <p className="text-xs text-gray-500 mt-2">
-            Please enter the customer or delivery location name
-          </p>
         </div>
 
         <div className="flex gap-3">
@@ -137,7 +135,7 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
           <button
             onClick={handleSave}
             disabled={!shipToName.trim()}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
             Save & Add
           </button>
@@ -182,7 +180,7 @@ export function CreateManifestTab({
     if (!isEditMode && !manifest.manifest_number) {
       generateManifestNumber()
     }
-  }, [])
+  }, [isEditMode, manifest.manifest_number])
 
   useEffect(() => {
     if (barcodeInput.trim().length >= 3 && searchDocument) {
@@ -217,15 +215,11 @@ export function CreateManifestTab({
     const month = String(now.getMonth() + 1).padStart(2, '0')
     const day = String(now.getDate()).padStart(2, '0')
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    const manifestNumber = `TM-${year}${month}${day}-${random}`
-    
-    setManifest({ ...manifest, manifest_number: manifestNumber })
+    setManifest({ ...manifest, manifest_number: `TM-${year}${month}${day}-${random}` })
   }
 
   const regenerateManifestNumber = () => {
-    if (!isEditMode) {
-      generateManifestNumber()
-    }
+    if (!isEditMode) generateManifestNumber()
   }
 
   const handleSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -236,23 +230,19 @@ export function CreateManifestTab({
     }
   }
 
-  // Reusable step header (consistent with CreateReportTab style)
+  // Header component matching Create Report style
   const StepHeader = ({ icon: Icon, title, description }: {
     icon: typeof Truck
     title: string
     description: string
   }) => (
-    <div className="flex items-start gap-4 mb-6">
-      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-        <Icon className="w-6 h-6 text-white" />
+    <div className="flex items-start gap-3 mb-6">
+      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0 ">
+        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
       </div>
       <div className="min-w-0">
-        <h2 className="text-2xl font-light tracking-tight text-gray-900">
-          {title}
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          {description}
-        </p>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h2>
+        <p className="text-xs sm:text-sm text-gray-500">{description}</p>
       </div>
     </div>
   )
@@ -271,59 +261,59 @@ export function CreateManifestTab({
       />
 
       <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 border border-gray-200">
-        {/* Progress Steps (kept your original style) */}
-        <div className="flex items-center justify-between mb-6">
+
+        {/* Progress Steps – inspired by StepsIndicator */}
+        <div className="flex items-center justify-between gap-2 mb-8">
           {[
             { number: 1, title: 'Vehicle & Trip Info', icon: Truck },
             { number: 2, title: 'Scan Documents', icon: Barcode },
             { number: 3, title: 'Review & Finalize', icon: Save },
           ].map((step, index) => {
-            const Icon = step.icon
             const isActive = currentStep === step.number
             const isCompleted = currentStep > step.number
-            
+            const Icon = step.icon
+
             return (
-              <div key={step.number} className="flex items-center flex-1">
-                <div className="flex items-center gap-3">
+              <React.Fragment key={step.number}>
+                <div className="flex flex-col items-center flex-1">
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center font-medium text-sm transition-all ${
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${
                       isActive
-                        ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-md'
+                        ? 'bg-orange-600 text-white scale-110'
                         : isCompleted
                         ? 'bg-green-500 text-white'
-                        : 'bg-gray-100 text-gray-400'
+                        : 'bg-gray-200 text-gray-500'
                     }`}
                   >
                     {isCompleted ? (
-                      <CheckCircle2 className="w-5 h-5" />
+                      <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
                     ) : (
-                      <Icon className="w-5 h-5" />
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     )}
                   </div>
-                  <div className="hidden sm:block">
-                    <p className={`text-xs uppercase tracking-wide ${isActive || isCompleted ? 'text-gray-900' : 'text-gray-400'}`}>
-                      Step {step.number}
-                    </p>
-                    <p className={`text-sm font-medium ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'}`}>
-                      {step.title}
-                    </p>
-                  </div>
+                  <p
+                    className={`text-xs sm:text-sm font-semibold mt-2 text-center ${
+                      isActive ? 'text-orange-600' : isCompleted ? 'text-green-600' : 'text-gray-600'
+                    }`}
+                  >
+                    {step.title}
+                  </p>
                 </div>
+
                 {index < 2 && (
-                  <div className={`flex-1 h-px mx-4 transition-all ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}`} />
+                  <div
+                    className={`h-1 flex-1 mt-5 sm:mt-6 transition-all duration-300 ${
+                      isCompleted ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
+                  />
                 )}
-              </div>
+              </React.Fragment>
             )
           })}
         </div>
 
-        <div className="sm:hidden text-center mb-6">
-          <p className="text-sm font-medium text-blue-600">
-            {['Vehicle & Trip Info', 'Scan Documents', 'Review & Finalize'][currentStep - 1]}
-          </p>
-        </div>
-
-        <div className="space-y-6">
+        {/* Step Content */}
+        <div className="mt-8 space-y-8">
           {/* Step 1 */}
           {currentStep === 1 && (
             <div className="space-y-6">
@@ -333,110 +323,96 @@ export function CreateManifestTab({
                 description="Enter the truck and trip details"
               />
 
-              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="sm:col-span-2">
-                    <label className="text-xs text-gray-500 uppercase tracking-wide mb-2 block">
-                      Manifest Number <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <input
-                          type="text"
-                          value={manifest.manifest_number}
-                          onChange={(e) => !isEditMode && setManifest({ ...manifest, manifest_number: e.target.value })}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm font-mono ${
-                            !isEditMode ? 'border-gray-300 bg-white' : 'border-gray-200 bg-gray-50'
-                          }`}
-                          placeholder="TM-YYYYMMDD-XXX"
-                          readOnly={isEditMode}
-                          required
-                        />
-                      </div>
-                      {!isEditMode && (
-                        <button
-                          onClick={regenerateManifestNumber}
-                          className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium"
-                          title="Generate new manifest number"
-                        >
-                          ↻
-                        </button>
-                      )}
-                    </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Manifest Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={manifest.manifest_number}
+                      onChange={(e) => !isEditMode && setManifest({ ...manifest, manifest_number: e.target.value.toUpperCase() })}
+                      className={`flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm font-mono ${
+                        isEditMode ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''
+                      }`}
+                      placeholder="TM-YYYYMMDD-XXX"
+                      readOnly={isEditMode}
+                      required
+                    />
                     {!isEditMode && (
-                      <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                        <Info className="w-3 h-3" />
-                        Auto-generated format: TM-YYYYMMDD-XXX
-                      </p>
+                      <button
+                        onClick={regenerateManifestNumber}
+                        className="px-4 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        title="Regenerate"
+                      >
+                        ↻
+                      </button>
                     )}
                   </div>
+                </div>
 
-                  <div>
-                    <label className="text-xs text-gray-500 uppercase tracking-wide mb-2 block">
-                      Manifest Date <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      value={manifest.manifest_date}
-                      onChange={(e) => setManifest({ ...manifest, manifest_date: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-                      required
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Manifest Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={manifest.manifest_date}
+                    onChange={(e) => setManifest({ ...manifest, manifest_date: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                    required
+                  />
+                </div>
 
-                  <div>
-                    <label className="text-xs text-gray-500 uppercase tracking-wide mb-2 block">
-                      Trucker
-                    </label>
-                    <input
-                      type="text"
-                      value={manifest.trucker}
-                      onChange={(e) => setManifest({ ...manifest, trucker: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-                      placeholder="ACCLI, SF EXPRESS, SUYLI"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Trucker</label>
+                  <input
+                    type="text"
+                    value={manifest.trucker}
+                    onChange={(e) => setManifest({ ...manifest, trucker: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                    placeholder="ACCLI, SF EXPRESS, SUYLI"
+                  />
+                </div>
 
-                  <div>
-                    <label className="text-xs text-gray-500 uppercase tracking-wide mb-2 block">
-                      Driver Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={manifest.driver_name}
-                      onChange={(e) => setManifest({ ...manifest, driver_name: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-                      placeholder="Driver's name"
-                      required
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Driver Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={manifest.driver_name}
+                    onChange={(e) => setManifest({ ...manifest, driver_name: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                    placeholder="Driver's name"
+                    required
+                  />
+                </div>
 
-                  <div>
-                    <label className="text-xs text-gray-500 uppercase tracking-wide mb-2 block">
-                      Plate No. <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={manifest.plate_no}
-                      onChange={(e) => setManifest({ ...manifest, plate_no: e.target.value.toUpperCase() })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm uppercase"
-                      placeholder="e.g., ABC-1234"
-                      required
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Plate No. <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={manifest.plate_no}
+                    onChange={(e) => setManifest({ ...manifest, plate_no: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm uppercase "
+                    placeholder="e.g., ABC-1234"
+                    required
+                  />
+                </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="text-xs text-gray-500 uppercase tracking-wide mb-2 block">
-                      Truck Type
-                    </label>
-                    <input
-                      type="text"
-                      value={manifest.truck_type}
-                      onChange={(e) => setManifest({ ...manifest, truck_type: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-                      placeholder="E.G., 10W - 6W"
-                    />
-                  </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Truck Type</label>
+                  <input
+                    type="text"
+                    value={manifest.truck_type}
+                    onChange={(e) => setManifest({ ...manifest, truck_type: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                    placeholder="E.G., 10W - 6W"
+                  />
                 </div>
               </div>
             </div>
@@ -448,154 +424,106 @@ export function CreateManifestTab({
               <StepHeader
                 icon={Barcode}
                 title="Scan Documents"
-                description="Scan or type DN/TRA numbers to add documents"
+                description="Scan or manually enter DN/TRA numbers"
               />
 
-              {/* Rest of step 2 remains mostly the same – only changed focus ring to blue */}
-              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                    <Search className="w-4 h-4 text-blue-600" />
-                  </div>
+              <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-4 sm:p-6 text-white">
+                <label className="block text-base font-semibold mb-3 flex items-center gap-2">
+                  <Search className="w-5 h-5" />
                   Document Search
-                </h3>
-                
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    ref={barcodeInputRef}
-                    type="text"
-                    value={barcodeInput}
-                    onChange={(e) => setBarcodeInput(e.target.value)}
-                    onKeyDown={handleSearchInputKeyDown}
-                    placeholder="Search DN/TRA number..."
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all text-sm bg-gray-50 hover:bg-white focus:bg-white"
-                    disabled={scanningDocument || isSearching}
-                    autoFocus
-                  />
-                  
-                  {isSearching && (
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
-                    </div>
-                  )}
-                  
-                  {!isSearching && barcodeInput.length >= 3 && searchResults && (
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    </div>
-                  )}
-                  
-                  {!isSearching && barcodeInput.length >= 3 && !searchResults && !scanningDocument && (
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <AlertCircle className="h-5 w-5 text-amber-500" />
-                    </div>
-                  )}
-                </div>
+                </label>
+                <input
+                  ref={barcodeInputRef}
+                  type="text"
+                  value={barcodeInput}
+                  onChange={(e) => setBarcodeInput(e.target.value.toUpperCase())}
+                  onKeyDown={handleSearchInputKeyDown}
+                  placeholder="Enter DN / TRA number and press Enter..."
+                  className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-orange-300 transition-all"
+                  disabled={scanningDocument || isSearching}
+                  autoFocus
+                />
 
-                {barcodeInput.length >= 3 && barcodeInput.length > 0 && (
-                  <div className="mt-3">
-                    {isSearching ? (
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                        <p className="text-sm text-blue-900">Searching for document...</p>
-                      </div>
-                    ) : searchResults ? (
-                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium text-green-900">Document Found</p>
-                            <p className="text-xs text-green-700 mt-1">
-                              Ship-To: {searchResults.shipToName} • Quantity: {searchResults.quantity}
-                            </p>
-                            <p className="text-xs text-green-600 mt-1">
-                              Press Enter to add this document
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium text-amber-900">Document Not Found</p>
-                            <p className="text-xs text-amber-700 mt-1">
-                              No document matches "{barcodeInput}"
-                            </p>
-                            <p className="text-xs text-amber-600 mt-1">
-                              Press Enter to manually add this document
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                {isSearching && (
+                  <div className="mt-3 p-3 bg-white bg-opacity-20 rounded-lg flex items-center gap-2 text-sm">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                    Searching...
                   </div>
                 )}
 
-                {scanningDocument && (
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                    <p className="text-sm text-blue-900">Processing document...</p>
-                  </div>
+                {barcodeInput.length >= 3 && !isSearching && (
+                  searchResults ? (
+                    <div className="mt-3 p-3 bg-green-500 bg-opacity-30 border border-green-300 rounded-lg flex items-start gap-2">
+                      <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm">Document Found</p>
+                        <p className="text-sm mt-1">
+                          Ship-To: {searchResults.shipToName} • Qty: {searchResults.quantity}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-3 p-3 bg-red-500 bg-opacity-20 border border-red-300 rounded-lg flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm">Not Found</p>
+                        <p className="text-sm mt-1">
+                          No match for "{barcodeInput}" – press Enter to add manually
+                        </p>
+                      </div>
+                    </div>
+                  )
                 )}
-
-                <p className="text-xs text-gray-500 mt-4 flex items-start gap-2">
-                  <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>Type the DN/TRA number to search. The system will auto-detect the document and display its details. Press Enter to add it to the manifest.</span>
-                </p>
               </div>
 
-              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                      <Package className="w-4 h-4 text-blue-600" />
-                    </div>
-                    Scanned Documents ({manifest.items.length})
-                  </h3>
-                  {manifest.items.length > 0 && (
-                    <div className="text-sm text-gray-600">
-                      Total Qty: <span className="font-semibold text-blue-600">{totalQuantity}</span>
-                    </div>
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Package className="w-5 h-5 text-orange-600" />
+                    Scanned Documents ({totalDocuments})
+                  </span>
+                  {totalQuantity > 0 && (
+                    <span className="text-sm text-gray-600">
+                      Total Qty: <span className="font-bold text-orange-600">{totalQuantity}</span>
+                    </span>
                   )}
-                </div>
+                </h3>
 
                 {manifest.items.length === 0 ? (
-                  <div className="py-12 text-center border border-dashed border-gray-300 rounded-xl bg-gray-50">
+                  <div className="py-10 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                     <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 font-medium text-sm">No documents scanned yet</p>
-                    <p className="text-gray-500 text-xs mt-1">Search for a document to add it to the manifest</p>
+                    <p className="text-gray-600 font-medium">No documents added yet</p>
+                    <p className="text-sm text-gray-500 mt-1">Start scanning above</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {manifest.items.map((item, idx) => (
-                      <div key={idx} className="border border-gray-200 rounded-xl p-4 bg-gray-50 hover:bg-white hover:border-gray-300 transition-all">
+                      <div
+                        key={idx}
+                        className="p-4 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all"
+                      >
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-lg flex items-center justify-center font-medium text-sm flex-shrink-0">
+                          <div className="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
                             {item.item_number}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-gray-900 mb-2">{item.ship_to_name}</h4>
-                            <div className="grid grid-cols-2 gap-3 text-sm">
+                            <h4 className="font-semibold text-gray-900 truncate">{item.ship_to_name}</h4>
+                            <div className="mt-1 grid grid-cols-2 gap-4 text-sm">
                               <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">DN/TRA No.</p>
-                                <p className="font-mono text-sm font-medium text-gray-900">{item.document_number}</p>
+                                <p className="text-xs text-gray-600">DN/TRA No.</p>
+                                <p className="font-mono font-medium text-gray-900">{item.document_number}</p>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Quantity</p>
-                                <p className="text-sm font-semibold text-blue-600">{item.total_quantity}</p>
+                                <p className="text-xs text-gray-600">Quantity</p>
+                                <p className="font-bold text-orange-600">{item.total_quantity}</p>
                               </div>
                             </div>
                           </div>
                           <button
                             onClick={() => removeItem(idx)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                            className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-5 h-5" />
                           </button>
                         </div>
                       </div>
@@ -606,80 +534,76 @@ export function CreateManifestTab({
             </div>
           )}
 
-          {/* Step 3 */}
+          {/* Step 3 – Review & Finalize */}
           {currentStep === 3 && (
             <div className="space-y-6">
               <StepHeader
                 icon={Save}
                 title="Review & Finalize"
-                description="Review the manifest details before saving"
+                description="Check all details before saving"
               />
 
-              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                <h3 className="text-sm font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                    <Truck className="w-4 h-4 text-blue-600" />
-                  </div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-5">
+                <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-orange-600" />
                   Trip Information
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Manifest No.</p>
-                    <p className="font-mono text-sm font-medium text-gray-900">{manifest.manifest_number}</p>
+                    <p className="text-xs font-medium text-gray-600">Manifest No.</p>
+                    <p className="font-mono font-semibold text-gray-900">{manifest.manifest_number}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Date</p>
-                    <p className="text-sm font-medium text-gray-900">{manifest.manifest_date}</p>
+                    <p className="text-xs font-medium text-gray-600">Date</p>
+                    <p className="font-semibold text-gray-900">{manifest.manifest_date}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Driver</p>
-                    <p className="text-sm font-medium text-gray-900">{manifest.driver_name || 'N/A'}</p>
+                    <p className="text-xs font-medium text-gray-600">Driver</p>
+                    <p className="font-semibold text-gray-900">{manifest.driver_name || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Plate No.</p>
-                    <p className="text-sm font-medium text-gray-900">{manifest.plate_no || 'N/A'}</p>
+                    <p className="text-xs font-medium text-gray-600">Plate No.</p>
+                    <p className="font-mono font-semibold text-gray-900">{manifest.plate_no || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Trucker</p>
-                    <p className="text-sm font-medium text-gray-900">{manifest.trucker || 'N/A'}</p>
+                    <p className="text-xs font-medium text-gray-600">Trucker</p>
+                    <p className="font-semibold text-gray-900">{manifest.trucker || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Truck Type</p>
-                    <p className="text-sm font-medium text-gray-900">{manifest.truck_type || 'N/A'}</p>
+                    <p className="text-xs font-medium text-gray-600">Truck Type</p>
+                    <p className="font-semibold text-gray-900">{manifest.truck_type || '—'}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                      <Package className="w-4 h-4 text-blue-600" />
-                    </div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                    <Package className="w-5 h-5 text-orange-600" />
                     Documents Summary ({totalDocuments})
                   </h3>
-                  <div className="text-sm text-gray-600">
-                    Total Qty: <span className="font-semibold text-blue-600">{totalQuantity}</span>
-                  </div>
+                  <span className="text-sm text-gray-600">
+                    Total Qty: <span className="font-bold text-orange-600">{totalQuantity}</span>
+                  </span>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wide">No.</th>
-                        <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wide">Ship To Name</th>
-                        <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wide">DN/TRA No.</th>
-                        <th className="px-4 py-3 text-right text-xs text-gray-500 uppercase tracking-wide">Qty</th>
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b-2 border-gray-300">
+                        <th className="py-3 text-left text-sm font-medium text-gray-700">No.</th>
+                        <th className="py-3 text-left text-sm font-medium text-gray-700">Ship To</th>
+                        <th className="py-3 text-left text-sm font-medium text-gray-700">DN/TRA No.</th>
+                        <th className="py-3 text-right text-sm font-medium text-gray-700">Qty</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
+                    <tbody>
                       {manifest.items.map((item) => (
-                        <tr key={item.item_number} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-3 text-sm text-gray-900 font-medium">{item.item_number}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.ship_to_name}</td>
-                          <td className="px-4 py-3 text-sm font-mono text-gray-900">{item.document_number}</td>
-                          <td className="px-4 py-3 text-sm text-right font-semibold text-blue-600">{item.total_quantity}</td>
+                        <tr key={item.item_number} className="border-b border-gray-200 hover:bg-orange-50/50">
+                          <td className="py-3 text-sm font-medium text-gray-900">{item.item_number}</td>
+                          <td className="py-3 text-sm text-gray-900">{item.ship_to_name}</td>
+                          <td className="py-3 text-sm font-mono text-gray-900">{item.document_number}</td>
+                          <td className="py-3 text-right font-bold text-orange-600">{item.total_quantity}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -687,18 +611,16 @@ export function CreateManifestTab({
                 </div>
               </div>
 
-              <div className="border border-gray-200 rounded-xl p-6 bg-white hover:border-gray-300 transition-colors">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                    <Info className="w-4 h-4 text-blue-600" />
-                  </div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-5">
+                <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Info className="w-5 h-5 text-orange-600" />
                   Remarks (Optional)
                 </h3>
                 <textarea
-                  value={manifest.remarks}
-                  onChange={(e) => setManifest({ ...manifest, remarks: e.target.value })}
+                  value={manifest.remarks || ''}
+                  onChange={(e) => setManifest({ ...manifest, remarks: e.target.value.toUpperCase() })}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                   placeholder="Add any additional notes or remarks..."
                 />
               </div>
@@ -706,18 +628,18 @@ export function CreateManifestTab({
           )}
         </div>
 
-        {/* Navigation Buttons – updated colors to blue theme */}
-        <div className="flex justify-between gap-3 mt-8 pt-6 border-t border-gray-200">
+        {/* Navigation Buttons – matching Create Report style */}
+        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-10 pt-6 border-t-2 border-gray-200">
           <button
-            onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
+            onClick={() => currentStep > 1 && setCurrentStep(currentStep - 1 as any)}
             disabled={currentStep === 1}
-            className={`px-6 py-3 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
               currentStep === 1
-                ? 'border border-gray-200 text-gray-400 cursor-not-allowed'
-                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-5 h-5" />
             Previous
           </button>
 
@@ -726,49 +648,37 @@ export function CreateManifestTab({
               onClick={() => {
                 if (currentStep === 1 && !canProceedToStep2()) return
                 if (currentStep === 2 && !canProceedToStep3()) return
-                setCurrentStep((currentStep + 1) as 1 | 2 | 3)
+                setCurrentStep(currentStep + 1 as any)
               }}
               disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-all shadow-lg"
             >
               Next
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           ) : (
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button
                 onClick={resetForm}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-all"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all"
               >
+                <X className="w-5 h-5" />
                 Clear
               </button>
               <button
                 onClick={saveManifest}
                 disabled={isLoading}
-                className={`px-6 py-3 text-white rounded-lg font-medium text-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-white rounded-lg font-semibold transition-all shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed ${
                   isEditMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
                 }`}
               >
-                <Save className="w-4 h-4" />
+                <Save className="w-5 h-5" />
                 {isLoading ? 'Saving...' : isEditMode ? 'Update Manifest' : 'Save Manifest'}
               </button>
             </div>
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
-        .animate-slideUp { animation: slideUp 0.3s ease-out; }
-      `}</style>
     </div>
   )
 }
