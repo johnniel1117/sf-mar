@@ -9,13 +9,14 @@ import {
 import Navbar from '@/components/Navbar'
 import { useTripManifest } from '@/hooks/useTripManifest'
 import { TripManifestPDFGenerator } from '@/lib/utils/tripManifestPdfGenerator'
-import { TripManifestExcelGenerator } from '@/lib/utils/tripManifestExcelGenerator' // ← NEW IMPORT
+import { TripManifestExcelGenerator } from '@/lib/utils/tripManifestExcelGenerator'
 import type { TripManifest, ManifestItem } from '@/lib/services/tripManifestService'
 import { ManifestTabs } from '@/components/ManifestTabs'
 import { CreateManifestTab } from '@/components/tabs/CreateManifestTab'
 import { SavedManifestsTab } from '@/components/tabs/SavedManifestTab'
 import { ViewManifestModal } from '@/components/modals/ViewManifestModal'
 import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
+import { DownloadModal } from '@/components/modals/DownloadManifestModal'  // ← NEW import
 
 // Import icons from lucide-react
 const icons = {
@@ -35,7 +36,7 @@ const icons = {
   Eye,
   Info,
   Clock,
-  FileSpreadsheet,   // ← added for Excel icon
+  FileSpreadsheet,
 } as const
 
 type Step = 1 | 2 | 3
@@ -59,7 +60,7 @@ export default function TripManifestForm() {
   // Barcode scanning state
   const [barcodeInput, setBarcodeInput] = useState('')
   const [scanningDocument, setScanningDocument] = useState(false)
-  const barcodeInputRef = useRef<HTMLInputElement>(null)   // ← FIXED: removed | null
+  const barcodeInputRef = useRef<HTMLInputElement>(null)
 
   // UI states
   const [activeTab, setActiveTab] = useState<'create' | 'saved'>('create')
@@ -128,6 +129,35 @@ export default function TripManifestForm() {
   } = useTripManifest()
 
   const [mounted, setMounted] = useState(false)
+
+  // ────────────────────────────────────────────────
+  // NEW: Download modal states
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
+  const [selectedDownloadType, setSelectedDownloadType] = useState<'pdf' | 'excel' | 'both' | null>(null)
+  const [pendingManifestForDownload, setPendingManifestForDownload] = useState<TripManifest | null>(null)
+
+  const openDownloadModal = (manifestToDownload: TripManifest) => {
+    setPendingManifestForDownload(manifestToDownload)
+    setSelectedDownloadType('both') // default to both
+    setShowDownloadModal(true)
+  }
+
+  const handleConfirmDownload = () => {
+    if (!pendingManifestForDownload || !selectedDownloadType) return
+
+    if (selectedDownloadType === 'pdf' || selectedDownloadType === 'both') {
+      TripManifestPDFGenerator.generatePDF(pendingManifestForDownload)
+    }
+    if (selectedDownloadType === 'excel' || selectedDownloadType === 'both') {
+      TripManifestExcelGenerator.generateExcel(pendingManifestForDownload)
+    }
+
+    setShowDownloadModal(false)
+    setPendingManifestForDownload(null)
+    setSelectedDownloadType(null)
+    showToast('Download started successfully!', 'success')
+  }
+  // ────────────────────────────────────────────────
 
   useEffect(() => {
     setMounted(true)
@@ -311,12 +341,8 @@ export default function TripManifestForm() {
         showToast('Manifest saved successfully!', 'success')
       }
 
-      // Offer Excel + PDF download after save
-      const wantsDownload = confirm("Manifest saved! Would you like to download it?\nOK = Excel + PDF, Cancel = skip")
-      if (wantsDownload) {
-        TripManifestPDFGenerator.generatePDF(manifest)
-        TripManifestExcelGenerator.generateExcel(manifest)
-      }
+      // Show nice download modal instead of confirm
+      openDownloadModal(manifest)
 
       resetForm()
       loadManifests()
@@ -361,12 +387,9 @@ export default function TripManifestForm() {
     )
   }
 
-  const handleDownloadManifestPDF = (manifest: TripManifest) => {
-    TripManifestPDFGenerator.generatePDF(manifest)
-  }
-
-  const handleDownloadManifestExcel = (manifest: TripManifest) => {
-    TripManifestExcelGenerator.generateExcel(manifest)
+  // Updated handlers – now open modal instead of direct download
+  const handleDownloadRequest = (manifest: TripManifest) => {
+    openDownloadModal(manifest)
   }
 
   const handleViewManifest = (manifest: TripManifest) => {
@@ -425,8 +448,7 @@ export default function TripManifestForm() {
             savedManifests={savedManifests}
             handleViewManifest={handleViewManifest}
             handleEditManifest={handleEditManifest}
-            handleDownloadManifestPDF={handleDownloadManifestPDF}
-            handleDownloadManifestExcel={handleDownloadManifestExcel}
+            handleDownloadManifest={handleDownloadRequest}        // ← updated to open modal
             handleDeleteManifest={handleDeleteManifest}
           />
         )}
@@ -437,8 +459,7 @@ export default function TripManifestForm() {
         manifest={viewingManifest}
         onClose={handleCloseViewModal}
         onEdit={handleEditManifest}
-        onDownloadPDF={handleDownloadManifestPDF}      // renamed
-        onDownloadExcel={handleDownloadManifestExcel}  // ← NEW prop (you'll need to update ViewManifestModal.tsx)
+        onDownload={handleDownloadRequest}   // ← updated to open modal (rename prop if needed)
       />
 
       <ConfirmationModal
@@ -450,6 +471,19 @@ export default function TripManifestForm() {
           setConfirmModal(prev => ({ ...prev, show: false }))
         }}
         onCancel={confirmModal.onCancel}
+      />
+
+      {/* NEW Download Modal */}
+      <DownloadModal
+        isOpen={showDownloadModal}
+        downloadType={selectedDownloadType || 'both'}
+        onDownloadTypeChange={(type) => setSelectedDownloadType(type)}
+        onConfirm={handleConfirmDownload}
+        onClose={() => {
+          setShowDownloadModal(false)
+          setPendingManifestForDownload(null)
+          setSelectedDownloadType(null)
+        }}
       />
 
       {toast.show && (
