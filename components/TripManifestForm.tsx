@@ -1,11 +1,15 @@
 'use client'
 
-import React from "react"
-import { useState, useRef, useEffect } from 'react'
-import { Download, Barcode, Plus, X, AlertCircle, Save, FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, ClipboardList, Eye, Info, Clock } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
+import { 
+  Download, Barcode, Plus, X, AlertCircle, Save, FileText, 
+  CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck, 
+  ClipboardList, Eye, Info, Clock, FileSpreadsheet 
+} from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import { useTripManifest } from '@/hooks/useTripManifest'
 import { TripManifestPDFGenerator } from '@/lib/utils/tripManifestPdfGenerator'
+import { TripManifestExcelGenerator } from '@/lib/utils/tripManifestExcelGenerator' // ← NEW IMPORT
 import type { TripManifest, ManifestItem } from '@/lib/services/tripManifestService'
 import { ManifestTabs } from '@/components/ManifestTabs'
 import { CreateManifestTab } from '@/components/tabs/CreateManifestTab'
@@ -15,22 +19,23 @@ import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
 
 // Import icons from lucide-react
 const icons = {
-  Truck: Truck,
-  Barcode: Barcode,
-  ClipboardList: ClipboardList,
-  Download: Download,
-  Plus: Plus,
-  X: X,
-  AlertCircle: AlertCircle,
-  Save: Save,
-  FileText: FileText,
-  CheckCircle2: CheckCircle2,
-  Trash2: Trash2,
-  ChevronRight: ChevronRight,
-  ChevronLeft: ChevronLeft,
-  Eye: Eye,
-  Info: Info,
-  Clock: Clock,
+  Truck,
+  Barcode,
+  ClipboardList,
+  Download,
+  Plus,
+  X,
+  AlertCircle,
+  Save,
+  FileText,
+  CheckCircle2,
+  Trash2,
+  ChevronRight,
+  ChevronLeft,
+  Eye,
+  Info,
+  Clock,
+  FileSpreadsheet,   // ← added for Excel icon
 } as const
 
 type Step = 1 | 2 | 3
@@ -44,6 +49,8 @@ export default function TripManifestForm() {
     plate_no: '',
     trucker: '',
     truck_type: '',
+    time_start: '',
+    time_end: '',
     remarks: '',
     status: 'draft',
     items: [],
@@ -52,7 +59,7 @@ export default function TripManifestForm() {
   // Barcode scanning state
   const [barcodeInput, setBarcodeInput] = useState('')
   const [scanningDocument, setScanningDocument] = useState(false)
-  const barcodeInputRef = useRef<HTMLInputElement>(null)
+  const barcodeInputRef = useRef<HTMLInputElement>(null)   // ← FIXED: removed | null
 
   // UI states
   const [activeTab, setActiveTab] = useState<'create' | 'saved'>('create')
@@ -184,7 +191,6 @@ export default function TripManifestForm() {
         const document = await lookupDocument(barcode)
         
         if (document) {
-          // Check if document already exists in items
           const exists = manifest.items.some(item => item.document_number === document.document_number)
           
           if (exists) {
@@ -193,9 +199,7 @@ export default function TripManifestForm() {
           } else {
             const normalizedShipTo = (document.ship_to_name || '').trim().toLowerCase()
             
-            // Check if ship-to name is N/A or empty
             if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
-              // Set pending document and show modal
               setPendingDocument({
                 documentNumber: document.document_number,
                 quantity: document.total_quantity || 0,
@@ -203,7 +207,6 @@ export default function TripManifestForm() {
               setShowManualEntryModal(true)
               setBarcodeInput('')
             } else {
-              // Ship-to name is valid, add item directly
               const newItem: ManifestItem = {
                 item_number: manifest.items.length + 1,
                 document_number: document.document_number,
@@ -237,7 +240,6 @@ export default function TripManifestForm() {
 
   const removeItem = (index: number) => {
     const updatedItems = manifest.items.filter((_, i) => i !== index)
-    // Renumber items
     updatedItems.forEach((item, i) => {
       item.item_number = i + 1
     })
@@ -255,6 +257,8 @@ export default function TripManifestForm() {
       plate_no: '',
       trucker: '',
       truck_type: '',
+      time_start: '',
+      time_end: '',
       remarks: '',
       status: 'draft',
       items: [],
@@ -269,7 +273,9 @@ export default function TripManifestForm() {
     try {
       const manifestToSet = {
         ...manifestToEdit,
-        items: manifestToEdit.items || []
+        items: manifestToEdit.items || [],
+        time_start: manifestToEdit.time_start || '',
+        time_end: manifestToEdit.time_end || '',
       }
       setManifest(manifestToSet)
       
@@ -305,6 +311,13 @@ export default function TripManifestForm() {
         showToast('Manifest saved successfully!', 'success')
       }
 
+      // Offer Excel + PDF download after save
+      const wantsDownload = confirm("Manifest saved! Would you like to download it?\nOK = Excel + PDF, Cancel = skip")
+      if (wantsDownload) {
+        TripManifestPDFGenerator.generatePDF(manifest)
+        TripManifestExcelGenerator.generateExcel(manifest)
+      }
+
       resetForm()
       loadManifests()
       setActiveTab('saved')
@@ -315,7 +328,11 @@ export default function TripManifestForm() {
   }
 
   const canProceedToStep2 = () => {
-    return !!(manifest.driver_name && manifest.plate_no)
+    return !!(
+      manifest.driver_name &&
+      manifest.plate_no &&
+      manifest.time_start
+    )
   }
 
   const canProceedToStep3 = () => {
@@ -344,8 +361,12 @@ export default function TripManifestForm() {
     )
   }
 
-  const handleDownloadManifest = (manifest: TripManifest) => {
+  const handleDownloadManifestPDF = (manifest: TripManifest) => {
     TripManifestPDFGenerator.generatePDF(manifest)
+  }
+
+  const handleDownloadManifestExcel = (manifest: TripManifest) => {
+    TripManifestExcelGenerator.generateExcel(manifest)
   }
 
   const handleViewManifest = (manifest: TripManifest) => {
@@ -367,13 +388,11 @@ export default function TripManifestForm() {
         fixed={true}
       />
       <div className="w-full max-w-6xl mx-auto pt-16">
-        {/* Tabs */}
         <ManifestTabs 
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
 
-        {/* Create Manifest Tab */}
         {activeTab === 'create' && (
           <CreateManifestTab
             currentStep={currentStep}
@@ -401,28 +420,27 @@ export default function TripManifestForm() {
           />
         )}
 
-        {/* Saved Manifests Tab */}
         {activeTab === 'saved' && (
           <SavedManifestsTab
             savedManifests={savedManifests}
             handleViewManifest={handleViewManifest}
             handleEditManifest={handleEditManifest}
-            handleDownloadManifest={handleDownloadManifest}
+            handleDownloadManifestPDF={handleDownloadManifestPDF}
+            handleDownloadManifestExcel={handleDownloadManifestExcel}
             handleDeleteManifest={handleDeleteManifest}
           />
         )}
       </div>
 
-      {/* View Manifest Modal */}
       <ViewManifestModal
         isOpen={showViewModal}
         manifest={viewingManifest}
         onClose={handleCloseViewModal}
         onEdit={handleEditManifest}
-        onDownload={handleDownloadManifest}
+        onDownloadPDF={handleDownloadManifestPDF}      // renamed
+        onDownloadExcel={handleDownloadManifestExcel}  // ← NEW prop (you'll need to update ViewManifestModal.tsx)
       />
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={confirmModal.show}
         title={confirmModal.title}
@@ -434,7 +452,6 @@ export default function TripManifestForm() {
         onCancel={confirmModal.onCancel}
       />
 
-      {/* Toast Notification */}
       {toast.show && (
         <div className={`fixed bottom-4 right-4 px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 text-white z-50 animate-slide-in ${
           toast.type === 'success' ? 'bg-green-600' :

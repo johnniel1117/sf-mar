@@ -1,3 +1,5 @@
+// CreateManifestTab.tsx
+
 import { 
   Truck, 
   Barcode, 
@@ -10,7 +12,8 @@ import {
   Package, 
   CheckCircle2, 
   AlertCircle, 
-  Search 
+  Search,
+  Clock
 } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
 import { useEffect, useState } from 'react'
@@ -230,7 +233,21 @@ export function CreateManifestTab({
     }
   }
 
-  // Header component matching Create Report style
+  const getDuration = () => {
+    if (!manifest.time_start || !manifest.time_end) return null
+
+    const [h1, m1] = manifest.time_start.split(':').map(Number)
+    const [h2, m2] = manifest.time_end.split(':').map(Number)
+
+    let minutes = (h2 * 60 + m2) - (h1 * 60 + m1)
+    if (minutes < 0) minutes += 24 * 60
+
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+
+    return `${hours}h ${mins.toString().padStart(2, '0')}m`
+  }
+
   const StepHeader = ({ icon: Icon, title, description }: {
     icon: typeof Truck
     title: string
@@ -262,7 +279,6 @@ export function CreateManifestTab({
 
       <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6 border border-gray-200">
 
-        {/* Progress Steps – inspired by StepsIndicator */}
         <div className="flex items-center justify-between gap-2 mb-8">
           {[
             { number: 1, title: 'Vehicle & Trip Info', icon: Truck },
@@ -312,15 +328,13 @@ export function CreateManifestTab({
           })}
         </div>
 
-        {/* Step Content */}
         <div className="mt-8 space-y-8">
-          {/* Step 1 */}
           {currentStep === 1 && (
             <div className="space-y-6">
               <StepHeader
                 icon={Truck}
                 title="Vehicle & Trip Information"
-                description="Enter the truck and trip details"
+                description="Enter the truck, driver, and trip timing details"
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -359,10 +373,41 @@ export function CreateManifestTab({
                   <input
                     type="date"
                     value={manifest.manifest_date}
-                    onChange={(e) => setManifest({ ...manifest, manifest_date: e.target.value.toUpperCase() })}
+                    onChange={(e) => setManifest({ ...manifest, manifest_date: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
                     required
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Time Start <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={manifest.time_start || ''}
+                      onChange={(e) => setManifest({ ...manifest, time_start: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                      required
+                    />
+                    {/* <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" /> */}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Time End
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="time"
+                      value={manifest.time_end || ''}
+                      onChange={(e) => setManifest({ ...manifest, time_end: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                    />
+                    {/* <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" /> */}
+                  </div>
                 </div>
 
                 <div>
@@ -398,7 +443,7 @@ export function CreateManifestTab({
                     type="text"
                     value={manifest.plate_no}
                     onChange={(e) => setManifest({ ...manifest, plate_no: e.target.value.toUpperCase() })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm uppercase "
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm uppercase"
                     placeholder="e.g., ABC-1234"
                     required
                   />
@@ -414,11 +459,21 @@ export function CreateManifestTab({
                     placeholder="E.G., 10W - 6W"
                   />
                 </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Remarks (Optional)</label>
+                  <textarea
+                    value={manifest.remarks || ''}
+                    onChange={(e) => setManifest({ ...manifest, remarks: e.target.value.toUpperCase() })}
+                    rows={3}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+                    placeholder="Add any additional notes or remarks..."
+                  />
+                </div>
               </div>
             </div>
           )}
 
-          {/* Step 2 */}
           {currentStep === 2 && (
             <div className="space-y-6">
               <StepHeader
@@ -534,7 +589,6 @@ export function CreateManifestTab({
             </div>
           )}
 
-          {/* Step 3 – Review & Finalize */}
           {currentStep === 3 && (
             <div className="space-y-6">
               <StepHeader
@@ -557,6 +611,20 @@ export function CreateManifestTab({
                     <p className="text-xs font-medium text-gray-600">Date</p>
                     <p className="font-semibold text-gray-900">{manifest.manifest_date}</p>
                   </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-600">Time Start</p>
+                    <p className="font-semibold text-gray-900">{manifest.time_start || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-600">Time End</p>
+                    <p className="font-semibold text-gray-900">{manifest.time_end || '—'}</p>
+                  </div>
+                  {manifest.time_start && manifest.time_end && (
+                    <div className="sm:col-span-2">
+                      <p className="text-xs font-medium text-gray-600">Duration</p>
+                      <p className="font-semibold text-emerald-600">{getDuration()}</p>
+                    </div>
+                  )}
                   <div>
                     <p className="text-xs font-medium text-gray-600">Driver</p>
                     <p className="font-semibold text-gray-900">{manifest.driver_name || '—'}</p>
@@ -628,7 +696,6 @@ export function CreateManifestTab({
           )}
         </div>
 
-        {/* Navigation Buttons – matching Create Report style */}
         <div className="flex flex-col sm:flex-row justify-between gap-3 mt-10 pt-6 border-t-2 border-gray-200">
           <button
             onClick={() => currentStep > 1 && setCurrentStep(currentStep - 1 as any)}

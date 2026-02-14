@@ -7,14 +7,31 @@ export class TripManifestPDFGenerator {
 
     const items = manifestData.items || []
     const totalQty = items.reduce((sum, item) => sum + item.total_quantity, 0)
-    
-    const formatDateShort = () => {
-      const now = new Date()
-      return now.toLocaleDateString("en-US", { 
-        month: '2-digit', 
-        day: '2-digit', 
-        year: 'numeric' 
+
+    const formatDateShort = (dateStr?: string) => {
+      if (!dateStr) return '—'
+      const date = new Date(dateStr)
+      return date.toLocaleDateString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
       })
+    }
+
+    // Simple duration formatter (assumes same-day trips)
+    const formatDuration = () => {
+      if (!manifestData.time_start || !manifestData.time_end) return '—'
+      try {
+        const [h1, m1] = manifestData.time_start.split(':').map(Number)
+        const [h2, m2] = manifestData.time_end.split(':').map(Number)
+        let minutes = h2 * 60 + m2 - (h1 * 60 + m1)
+        if (minutes < 0) minutes += 1440 // next day case
+        const hours = Math.floor(minutes / 60)
+        const mins = minutes % 60
+        return `${hours}h ${mins.toString().padStart(2, '0')}m`
+      } catch {
+        return '—'
+      }
     }
 
     const itemsHtml = items
@@ -22,7 +39,7 @@ export class TripManifestPDFGenerator {
         (item, idx) => `
       <tr>
         <td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px;">${idx + 1}</td>
-        <td style="text-align: left; padding: 8px; border: 1px solid #000; font-size: 10px;">${item.ship_to_name}</td>
+        <td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px;">${item.ship_to_name}</td>
         <td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px; font-weight: bold;">${item.document_number}</td>
         <td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px;">${item.total_quantity}</td>
         <td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px;"></td>
@@ -62,7 +79,6 @@ export class TripManifestPDFGenerator {
             margin: 0 auto;
           }
           
-          /* Header Section - Matching Damage Report */
           .header-section {
             display: flex;
             justify-content: space-between;
@@ -96,17 +112,19 @@ export class TripManifestPDFGenerator {
             text-align: right;
           }
           
-          .dealer-copy {
-            font-size: 14px;
-            font-weight: bold;
-            align-items: center;
-            color: #000;
-            border: 2px solid #000;
-            padding: 4px 8px;
-            display: inline-block;
-          }
+          .manifest-number {
+  font-size: 15px;
+  font-weight: bold;
+  color: #000;
+  background-color: #ffc400;     /* very light warm yellow */
+  border: 2px solid #000;
+  padding: 6px 14px;
+  display: inline-block;
+  border-radius: 3px; 
+  min-width: 140px;
+  text-align: center;
+}
           
-          /* Document Header - Matching Damage Report */
           .document-header {
             text-align: center;
             margin: 15px 0;
@@ -114,51 +132,49 @@ export class TripManifestPDFGenerator {
           }
           
           .doc-title {
-            font-size: 16px;
+            font-size: 20px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
           }
           
-          /* Info Section - Matching Damage Report */
           .info-section {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
           }
           
           .info-row {
             display: grid;
-            grid-template-columns: 100px 1fr 100px 1fr;
-            gap: 10px;
-            margin-bottom: 8px;
+            grid-template-columns: 110px 1fr 110px 1fr;
+            gap: 12px 20px;
             align-items: start;
           }
           
           .info-label {
             font-weight: bold;
             font-size: 10px;
+            padding-top: 2px;
           }
           
           .info-value {
             font-size: 10px;
-            padding: 2px 4px;
-            min-height: 18px;
+            padding: 3px 6px;
+            min-height: 22px;
           }
           
-          /* Data Table - Matching Damage Report */
           .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 15px 0;
+            margin: 20px 0;
             border: 1px solid #000;
           }
           
           .data-table thead {
-            background-color: #f0f0f0;
+            background-color: #e8e8e8;
             border: 1px solid #000;
           }
           
           .data-table th {
             border: 1px solid #000;
-            padding: 8px;
+            padding: 8px 6px;
             text-align: center;
             font-weight: bold;
             font-size: 10px;
@@ -166,25 +182,24 @@ export class TripManifestPDFGenerator {
           
           .data-table td {
             border: 1px solid #000;
-            padding: 6px;
-            font-size: 9px;
+            padding: 7px 6px;
+            font-size: 9.5px;
+            vertical-align: middle;
           }
           
-          /* Footer Info - Matching Damage Report */
-          .footer-info {
-            margin-top: 15px;
-            padding: 10px;
-            text-align: right;
+          .footer-summary {
+            margin-top: 18px;
             font-size: 11px;
             font-weight: bold;
+            text-align: right;
+            padding: 8px 12px;
           }
           
-          /* Signature Section - 2x2 Grid Layout */
           .signature-section {
-            margin-top: 25px;
+            margin-top: 40px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            gap: 40px 30px;
           }
           
           .signature-box {
@@ -196,102 +211,111 @@ export class TripManifestPDFGenerator {
             font-weight: bold;
             font-size: 10px;
             text-align: left;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
           }
           
           .signature-line-container {
             position: relative;
-            margin-top: 20px;
-            height: 40px;
+            margin-top: 28px;
+            height: 50px;
           }
           
           .signature-line {
             border-top: 1px solid #000;
             position: absolute;
-            top: 20px;
+            top: 28px;
             left: 0;
             right: 0;
-            width: 100%;
           }
           
           .signature-name {
             position: absolute;
-            top: 0;
+            top: 4px;
             left: 0;
             right: 0;
             font-weight: bold;
             font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-align: center;
+            letter-spacing: 0.4px;
           }
           
           .signature-position {
             position: absolute;
-            top: 25px;
+            top: 34px;
             left: 0;
             right: 0;
             font-size: 9px;
-            text-align: center;
           }
-          
+
           @media print {
-            body {
-              padding: 0;
-            }
-            .page-container {
-              max-width: 100%;
-            }
+            body { padding: 0; }
+            .page-container { max-width: 100%; }
           }
         </style>
       </head>
       <body>
         <div class="page-container">
-          <!-- Header Section - Matching Damage Report -->
+
+          <!-- Header -->
           <div class="header-section">
             <div class="logo-section">
               <img src="https://brandlogos.net/wp-content/uploads/2025/06/sf_express-logo_brandlogos.net_shwfy-512x512.png" alt="SF Express Logo" />
               <div class="warehouse-info">
                 <strong>SF EXPRESS WAREHOUSE</strong><br/>
-                UPPER TINGUB, MANDAUE, CEBU<br/>
+                UPPER TINGUB, MANDAUE, CEBU
               </div>
             </div>
             <div class="title-section">
-              <div class="dealer-copy">${manifestData.manifest_number}</div>
+              <div class="manifest-number">${manifestData.manifest_number}</div>
             </div>
           </div>
 
-          <!-- Document Header -->
+          <!-- Title -->
           <div class="document-header">
             <div class="doc-title">TRIP MANIFEST</div>
           </div>
 
-          <!-- Info Section - 4-Column Layout Matching Damage Report -->
+          <!-- Trip Information -->
           <div class="info-section">
             <div class="info-row">
               <div class="info-label">Client</div>
               <div class="info-value">HAIER PHILIPPINES INC.</div>
-              <div class="info-label">Date</div>
-              <div class="info-value">${formatDateShort()}</div>
+              <div class="info-label">Dispatch Date</div>
+              <div class="info-value">${formatDateShort(manifestData.manifest_date)}</div>
             </div>
-            
+
             <div class="info-row">
-            <div class="info-label">Trucker</div>
+              <div class="info-label">Trucker</div>
               <div class="info-value">${manifestData.trucker || 'N/A'}</div>
               <div class="info-label">Driver</div>
-              <div class="info-value">${manifestData.driver_name}</div>
-              
+              <div class="info-value">${manifestData.driver_name || '—'}</div>
             </div>
-            
+
             <div class="info-row">
               <div class="info-label">Plate No.</div>
-              <div class="info-value">${manifestData.plate_no}</div>
+              <div class="info-value">${manifestData.plate_no || '—'}</div>
               <div class="info-label">Truck Type</div>
               <div class="info-value">${manifestData.truck_type || 'N/A'}</div>
             </div>
+
+            <div class="info-row">
+              <div class="info-label">Time Start </div>
+              <div class="info-value">${manifestData.time_start || '—'}</div>
+              <div class="info-label">Time End</div>
+              <div class="info-value">${manifestData.time_end || '—'}</div>
+            </div>
+
+        
+
+            ${manifestData.remarks ? `
+            <div class="info-row">
+              <div class="info-label">Remarks</div>
+              <div class="info-value" style="grid-column: span 3;">${manifestData.remarks}</div>
+            </div>
+            ` : ''}
           </div>
 
-          <!-- Data Table - Matching Damage Report Style -->
+          <!-- Items Table -->
           <table class="data-table">
             <thead>
               <tr>
@@ -304,47 +328,48 @@ export class TripManifestPDFGenerator {
             </thead>
             <tbody>
               ${itemsHtml}
+              <tr style="font-weight: bold; background: #f8f8f8;">
+                <td colspan="3" style="text-align: right; padding: 8px;">TOTAL</td>
+                <td style="text-align: center; padding: 8px;">${totalQty}</td>
+                <td></td>
+              </tr>
             </tbody>
           </table>
 
-          <!-- Footer Info - Matching Damage Report -->
-          <div class="footer-info">
-            <div>TOTAL DOCUMENTS: ${items.length} | TOTAL QUANTITY: ${totalQty}</div>
+          <!-- Summary line -->
+          <div class="footer-summary">
+            TOTAL DOCUMENTS: ${items.length}  |  TOTAL QUANTITY: ${totalQty}
           </div>
 
-          <!-- Signature Section - 2x2 Grid -->
+          <!-- Signatures -->
           <div class="signature-section">
-            <!-- Checked by -->
             <div class="signature-box">
               <div class="signature-label">Checked by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
-                <div class="signature-name">JAYMIE TAGALOG JR./IRIC RANILI</div>
+                <div class="signature-name">JAYMIE TAGALOG JR. / IRIC RANILI</div>
                 <div class="signature-line"></div>
                 <div class="signature-position">Warehouse Checker</div>
               </div>
             </div>
-            
-            <!-- Approved by -->
+
             <div class="signature-box">
               <div class="signature-label">Approved by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
-                <div class="signature-name">KENNETH IRVIN BELICARIO/ANTHONYLOU CHAN</div>
+                <div class="signature-name">KENNETH IRVIN BELICARIO / ANTHONYLOU CHAN</div>
                 <div class="signature-line"></div>
                 <div class="signature-position">Warehouse Supervisor</div>
               </div>
             </div>
-            
-            <!-- Received by -->
+
             <div class="signature-box">
               <div class="signature-label">Received by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
                 <div class="signature-name"></div>
                 <div class="signature-line"></div>
-                <div class="signature-position">Customer/Trucker Representative</div>
+                <div class="signature-position">Customer / Trucker Representative</div>
               </div>
             </div>
-            
-            <!-- Witnessed by -->
+
             <div class="signature-box">
               <div class="signature-label">Witnessed by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
@@ -354,6 +379,7 @@ export class TripManifestPDFGenerator {
               </div>
             </div>
           </div>
+
         </div>
       </body>
       </html>
@@ -364,6 +390,6 @@ export class TripManifestPDFGenerator {
 
     setTimeout(() => {
       printWindow.print()
-    }, 250)
+    }, 400)
   }
 }

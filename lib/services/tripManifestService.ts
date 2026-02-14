@@ -13,6 +13,8 @@ export interface TripManifest {
   plate_no: string
   trucker?: string
   truck_type?: string
+  time_start?: string       // HH:mm format
+  time_end?: string         // HH:mm format
   // departure_time?: string
   // arrival_time?: string
   remarks?: string
