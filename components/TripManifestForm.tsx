@@ -409,7 +409,7 @@ export default function TripManifestForm() {
   }
 
   return (
-    <div className="bg-white rounded-xl p-4 sm:p-6 overflow-y-hidden">
+    <div className="bg-white rounded-xl h-full p-4 sm:p-6 overflow-y-hidden">
 
       <Navbar 
         showBackButton 
