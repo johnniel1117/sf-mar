@@ -53,7 +53,7 @@ function FilterDropdown({ selectedMonth, onMonthChange, months }: FilterDropdown
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
           {months.map((month) => (
             <button
               key={month}
