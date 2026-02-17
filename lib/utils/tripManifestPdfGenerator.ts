@@ -83,7 +83,6 @@ export class TripManifestPDFGenerator {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 15px;
             border-bottom: 2px solid #000;
             padding-bottom: 10px;
           }

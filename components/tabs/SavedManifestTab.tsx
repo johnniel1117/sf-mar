@@ -272,7 +272,7 @@ export function SavedManifestsTab({
         </div>
       ) : (
         <>
-          <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+          <div className="space-y-4 h-[calc(85vh-380px)] overflow-y-auto pr-2">
             {paginatedManifests.map((manifest) => {
             const totalQuantity = manifest.items?.reduce((sum, item) => sum + item.total_quantity, 0) || 0
             const totalDocs = manifest.items?.length || 0
