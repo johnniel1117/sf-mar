@@ -18,14 +18,23 @@ export class TripManifestPDFGenerator {
       })
     }
 
-    // Simple duration formatter (assumes same-day trips)
+    // ✅ 12hr time formatter
+    const formatTime12hr = (time?: string) => {
+      if (!time) return '—'
+      const [hourStr, minuteStr] = time.split(':')
+      const hour = parseInt(hourStr, 10)
+      const ampm = hour >= 12 ? 'PM' : 'AM'
+      const hour12 = hour % 12 === 0 ? 12 : hour % 12
+      return `${hour12}:${minuteStr} ${ampm}`
+    }
+
     const formatDuration = () => {
       if (!manifestData.time_start || !manifestData.time_end) return '—'
       try {
         const [h1, m1] = manifestData.time_start.split(':').map(Number)
         const [h2, m2] = manifestData.time_end.split(':').map(Number)
         let minutes = h2 * 60 + m2 - (h1 * 60 + m1)
-        if (minutes < 0) minutes += 1440 // next day case
+        if (minutes < 0) minutes += 1440
         const hours = Math.floor(minutes / 60)
         const mins = minutes % 60
         return `${hours}h ${mins.toString().padStart(2, '0')}m`
@@ -112,17 +121,17 @@ export class TripManifestPDFGenerator {
           }
           
           .manifest-number {
-  font-size: 15px;
-  font-weight: bold;
-  color: #000;
-  background-color: #ffc400;     /* very light warm yellow */
-  border: 2px solid #000;
-  padding: 6px 14px;
-  display: inline-block;
-  border-radius: 3px; 
-  min-width: 140px;
-  text-align: center;
-}
+            font-size: 15px;
+            font-weight: bold;
+            color: #000;
+            background-color: #ffc400;
+            border: 2px solid #000;
+            padding: 6px 14px;
+            display: inline-block;
+            border-radius: 3px; 
+            min-width: 140px;
+            text-align: center;
+          }
           
           .document-header {
             text-align: center;
@@ -298,13 +307,11 @@ export class TripManifestPDFGenerator {
             </div>
 
             <div class="info-row">
-              <div class="info-label">Time Start </div>
-              <div class="info-value">${manifestData.time_start || '—'}</div>
+              <div class="info-label">Time Start</div>
+              <div class="info-value">${formatTime12hr(manifestData.time_start)}</div>
               <div class="info-label">Time End</div>
-              <div class="info-value">${manifestData.time_end || '—'}</div>
+              <div class="info-value">${formatTime12hr(manifestData.time_end)}</div>
             </div>
-
-        
 
             ${manifestData.remarks ? `
             <div class="info-row">
@@ -337,7 +344,7 @@ export class TripManifestPDFGenerator {
 
           <!-- Summary line -->
           <div class="footer-summary">
-            TOTAL DOCUMENTS: ${items.length}  |  TOTAL QUANTITY: ${totalQty}
+            TOTAL DOCUMENTS: ${items.length}  |  TOTAL QUANTITY: ${totalQty}
           </div>
 
           <!-- Signatures -->

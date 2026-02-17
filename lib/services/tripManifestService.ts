@@ -1,3 +1,10 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
 export interface ManifestItem {
   item_number: number
   document_number: string
@@ -28,4 +35,16 @@ export interface DocumentLookupResult {
   document_number: string
   ship_to_name: string
   total_quantity: number
+}
+
+export async function updateTripManifest(id: string, data: Partial<TripManifest>) {
+  const { data: updated, error } = await supabase
+    .from('trip_manifests')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return updated
 }

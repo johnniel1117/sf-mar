@@ -328,7 +328,7 @@ export default function TripManifestForm() {
   const saveManifest = async () => {
     try {
       if (isEditMode && editingManifestId) {
-        const response = await fetch(`/api/trip-manifests/${editingManifestId}`, {
+        const response = await fetch(`/api/trip-manifest/${editingManifestId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

@@ -6,7 +6,6 @@ import {
   ChevronLeft, 
   Trash2, 
   X, 
-  Info, 
   Package, 
   CheckCircle2, 
   AlertCircle, 
@@ -103,7 +102,7 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
           <div className="space-y-3">
             <div>
               <p className="text-xs font-medium text-gray-700">Document Number</p>
-              <p className=" text-sm font-semibold text-gray-900">{documentNumber}</p>
+              <p className="text-sm font-semibold text-gray-900">{documentNumber}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-gray-700">Quantity</p>
@@ -145,6 +144,17 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
       </div>
     </div>
   )
+}
+
+// ✅ Defined outside both components — no conflicts
+const formatTime12hr = (time: string | undefined): string => {
+  if (!time) return '—'
+  const [hourStr, minuteStr] = time.split(':')
+  const hour = parseInt(hourStr, 10)
+  const minute = minuteStr
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12
+  return `${hour12}:${minute} ${ampm}`
 }
 
 export function CreateManifestTab({
@@ -202,7 +212,6 @@ export function CreateManifestTab({
         try {
           const result = await searchDocument(barcodeInput.trim())
           if (isMountedRef.current) {
-            // Result already has documentNumber from the API
             setSearchResults(result)
           }
         } catch (error) {
@@ -213,7 +222,6 @@ export function CreateManifestTab({
         } finally {
           if (isMountedRef.current) {
             setIsSearching(false)
-            // Maintain focus after search completes
             setTimeout(() => {
               if (barcodeInputRef.current && document.activeElement !== barcodeInputRef.current) {
                 barcodeInputRef.current.focus()
@@ -234,7 +242,6 @@ export function CreateManifestTab({
     }
   }, [barcodeInput])
 
-  // Maintain focus on step 2
   useEffect(() => {
     if (currentStep === 2 && barcodeInputRef.current) {
       const timer = setTimeout(() => {
@@ -243,8 +250,6 @@ export function CreateManifestTab({
       return () => clearTimeout(timer)
     }
   }, [currentStep, searchResults, isSearching])
-
-
 
   const generateManifestNumber = () => {
     const now = new Date()
@@ -262,18 +267,16 @@ export function CreateManifestTab({
   const handleSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      
-      // If there's exactly one search result, use it automatically
+
       if (searchResults && searchResults.length === 1) {
         selectDocument(searchResults[0])
         return
       }
-      
+
       handleBarcodeInput(e)
       setSearchResults(null)
       setBarcodeInput('')
-      
-      // Maintain focus on input using requestAnimationFrame
+
       requestAnimationFrame(() => {
         if (barcodeInputRef.current) {
           barcodeInputRef.current.focus()
@@ -289,9 +292,8 @@ export function CreateManifestTab({
   }
 
   const selectDocument = async (doc: { documentNumber: string; shipToName: string; quantity: number }) => {
-    // Check if document already exists
     const exists = manifest.items.some(item => item.document_number === doc.documentNumber)
-    
+
     if (exists) {
       if (showToast) showToast(`Document ${doc.documentNumber} already added`, 'error')
       setSearchResults(null)
@@ -299,11 +301,9 @@ export function CreateManifestTab({
       return
     }
 
-    // Check if ship-to name is N/A or empty
     const normalizedShipTo = (doc.shipToName || '').trim().toLowerCase()
-    
+
     if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
-      // Show manual entry modal for N/A ship-to names
       setPendingDocument({
         documentNumber: doc.documentNumber,
         quantity: doc.quantity,
@@ -311,8 +311,7 @@ export function CreateManifestTab({
       setShowManualEntryModal(true)
       setSearchResults(null)
       setBarcodeInput('')
-      
-      // Maintain focus after modal closes
+
       requestAnimationFrame(() => {
         if (barcodeInputRef.current) {
           barcodeInputRef.current.focus()
@@ -321,24 +320,22 @@ export function CreateManifestTab({
       return
     }
 
-    // Add the document directly
     const newItem: ManifestItem = {
       item_number: manifest.items.length + 1,
       document_number: doc.documentNumber,
       ship_to_name: doc.shipToName,
       total_quantity: doc.quantity,
     }
-    
+
     setManifest({
       ...manifest,
       items: [...manifest.items, newItem],
     })
-    
+
     if (showToast) showToast(`Document ${doc.documentNumber} added successfully`, 'success')
     setSearchResults(null)
     setBarcodeInput('')
-    
-    // Maintain focus using requestAnimationFrame
+
     requestAnimationFrame(() => {
       if (barcodeInputRef.current) {
         barcodeInputRef.current.focus()
@@ -367,7 +364,7 @@ export function CreateManifestTab({
     description: string
   }) => (
     <div className="flex items-start gap-3 mb-6">
-      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0 ">
+      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0">
         <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
       </div>
       <div className="min-w-0">
@@ -390,7 +387,7 @@ export function CreateManifestTab({
         quantity={pendingDocument?.quantity || 0}
       />
 
-      <div className="bg-white rounded-xl  p-3 sm:p-6 border border-gray-200">
+      <div className="bg-white rounded-xl p-3 sm:p-6 border border-gray-200">
 
         <div className="flex items-center justify-between gap-2 mb-8">
           {[
@@ -462,7 +459,7 @@ export function CreateManifestTab({
                       type="text"
                       value={manifest.manifest_number}
                       onChange={(e) => !isEditMode && setManifest({ ...manifest, manifest_number: e.target.value.toUpperCase() })}
-                      className={`flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm  ${
+                      className={`flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm ${
                         isEditMode ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''
                       }`}
                       placeholder="TM-YYYYMMDD-XXX"
@@ -626,7 +623,7 @@ export function CreateManifestTab({
                       >
                         <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5 text-green-600" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-gray-900 ">
+                          <p className="font-medium text-sm text-gray-900">
                             {result.documentNumber}
                           </p>
                           <p className="text-sm text-gray-600 mt-1 truncate">
@@ -686,7 +683,7 @@ export function CreateManifestTab({
                             <div className="mt-1 grid grid-cols-2 gap-4 text-sm">
                               <div>
                                 <p className="text-xs text-gray-600">DN/TRA No.</p>
-                                <p className=" font-medium text-gray-900">{item.document_number}</p>
+                                <p className="font-medium text-gray-900">{item.document_number}</p>
                               </div>
                               <div>
                                 <p className="text-xs text-gray-600">Quantity</p>
@@ -725,7 +722,7 @@ export function CreateManifestTab({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-xs font-medium text-gray-600">Manifest No.</p>
-                    <p className=" font-semibold text-gray-900">{manifest.manifest_number}</p>
+                    <p className="font-semibold text-gray-900">{manifest.manifest_number}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Date</p>
@@ -733,11 +730,13 @@ export function CreateManifestTab({
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Time Start</p>
-                    <p className="font-semibold text-gray-900">{manifest.time_start || '—'}</p>
+                    {/* ✅ 12hr format */}
+                    <p className="font-semibold text-gray-900">{formatTime12hr(manifest.time_start)}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Time End</p>
-                    <p className="font-semibold text-gray-900">{manifest.time_end || '—'}</p>
+                    {/* ✅ 12hr format */}
+                    <p className="font-semibold text-gray-900">{formatTime12hr(manifest.time_end)}</p>
                   </div>
                   {manifest.time_start && manifest.time_end && (
                     <div className="sm:col-span-2">
@@ -751,7 +750,7 @@ export function CreateManifestTab({
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Plate No.</p>
-                    <p className=" font-semibold text-gray-900">{manifest.plate_no || '—'}</p>
+                    <p className="font-semibold text-gray-900">{manifest.plate_no || '—'}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Trucker</p>
@@ -790,7 +789,7 @@ export function CreateManifestTab({
                         <tr key={item.item_number} className="border-b border-gray-200 hover:bg-orange-50/50">
                           <td className="py-3 text-sm font-medium text-gray-900">{item.item_number}</td>
                           <td className="py-3 text-sm text-gray-900">{item.ship_to_name}</td>
-                          <td className="py-3 text-sm  text-gray-900">{item.document_number}</td>
+                          <td className="py-3 text-sm text-gray-900">{item.document_number}</td>
                           <td className="py-3 text-right font-bold text-orange-600">{item.total_quantity}</td>
                         </tr>
                       ))}
@@ -804,7 +803,7 @@ export function CreateManifestTab({
 
         <div className="flex flex-col sm:flex-row justify-between gap-3 mt-10 pt-6 border-t-2 border-gray-200">
           <button
-            onClick={() => currentStep > 1 && setCurrentStep(currentStep - 1 as any)}
+            onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
             disabled={currentStep === 1}
             className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
               currentStep === 1
@@ -821,7 +820,7 @@ export function CreateManifestTab({
               onClick={() => {
                 if (currentStep === 1 && !canProceedToStep2()) return
                 if (currentStep === 2 && !canProceedToStep3()) return
-                setCurrentStep(currentStep + 1 as any)
+                setCurrentStep((currentStep + 1) as 1 | 2 | 3)
               }}
               disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-all shadow-lg"
