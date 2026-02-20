@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Eye, Download, Edit, Trash2, Truck, Package, Calendar, FileText, ChevronDown, Search, X } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
+import * as XLSX from 'xlsx-js-style'
 
 const icons = {
   Eye,
@@ -163,37 +164,142 @@ export function SavedManifestsTab({
   )
 
   const handleExportAll = () => {
-    const csvContent = [
-      ['Manifest #', 'Date', 'Driver', 'Plate No', 'Trucker', 'Truck Type', 'Total Qty', 'Documents'],
-      ...filteredManifests.map((m) => {
-        const totalQuantity = m.items?.reduce((sum, item) => sum + item.total_quantity, 0) || 0
-        const totalDocs = m.items?.length || 0
-        const manifestDate = m.manifest_date
-          ? new Date(m.manifest_date).toLocaleDateString()
-          : 'No date'
-        return [
-          m.manifest_number || m.id || '',
-          manifestDate,
-          m.driver_name || '',
-          m.plate_no || '',
-          m.trucker || '',
-          m.truck_type || '',
-          totalQuantity,
-          totalDocs,
-        ]
-      }),
-    ]
-      .map((row) => row.map((cell) => `"${cell}"`).join(','))
-      .join('\n')
+  const wb = XLSX.utils.book_new()
 
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `manifests-export-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
+  filteredManifests.forEach((manifest, manifestIndex) => {
+    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet([])
+    let row = 0
+
+    const setCell = (
+      r: number,
+      c: number,
+      value: any,
+      style: Partial<XLSX.CellObject['s']> = {},
+      type: XLSX.CellObject['t'] = 's'
+    ) => {
+      const cell: XLSX.CellObject = { v: value, t: type, s: style }
+      ws[XLSX.utils.encode_cell({ r, c })] = cell
+    }
+
+    if (!ws['!merges']) ws['!merges'] = []
+
+    const borderThin = {
+      top: { style: 'thin' }, bottom: { style: 'thin' },
+      left: { style: 'thin' }, right: { style: 'thin' },
+    }
+
+    const manifestDate = manifest.manifest_date
+      ? new Date(manifest.manifest_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+      : '—'
+
+    // ── Header ──────────────────────────────────────────────────
+    setCell(row, 0, 'SF EXPRESS WAREHOUSE', { font: { bold: true, sz: 14 } })
+    setCell(row, 1, 'UPPER TINGUB, MANDAUE, CEBU')
+    row += 2
+
+    setCell(row, 4, manifest.manifest_number || '—', {
+      font: { bold: true, sz: 16 },
+      fill: { fgColor: { rgb: 'FFFFC400' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } },
+    })
+    row += 3
+
+    setCell(row, 0, 'TRIP MANIFEST', {
+      font: { bold: true, sz: 20 },
+      alignment: { horizontal: 'center', vertical: 'center' },
+    })
+    ws['!merges'].push({ s: { r: row, c: 0 }, e: { r: row, c: 4 } })
+    row += 3
+
+    // ── Trip Info ────────────────────────────────────────────────
+    const infoRows = [
+      ['Client', 'HAIER PHILIPPINES INC.', 'Dispatch Date', manifestDate],
+      ['Trucker', manifest.trucker || 'N/A', 'Driver', manifest.driver_name || '—'],
+      ['Plate No.', manifest.plate_no || '—', 'Truck Type', manifest.truck_type || 'N/A'],
+      ['Time Start', manifest.time_start || '—', 'Time End', manifest.time_end || '—'],
+    ]
+    infoRows.forEach(([l1, v1, l2, v2]) => {
+      setCell(row, 0, l1, { font: { bold: true } })
+      setCell(row, 1, v1)
+      setCell(row, 2, l2, { font: { bold: true } })
+      setCell(row, 3, v2)
+      row++
+    })
+    row++
+
+    // ── Table Header ─────────────────────────────────────────────
+    const tableStartRow = row
+    const headerStyle = {
+      font: { bold: true, sz: 11 },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      fill: { fgColor: { rgb: 'E8E8E8' } },
+      border: borderThin,
+    }
+    ;['NO.', 'SHIP TO NAME', 'DN/TRA NO.', 'QTY', 'REMARKS'].forEach((h, c) =>
+      setCell(row, c, h, headerStyle)
+    )
+    row++
+
+    // ── Table Items ───────────────────────────────────────────────
+    const items = manifest.items || []
+    if (items.length === 0) {
+      setCell(row, 0, '—', { border: borderThin, alignment: { horizontal: 'center' } })
+      setCell(row, 1, 'No documents added', { border: borderThin })
+      setCell(row, 2, '—', { border: borderThin, alignment: { horizontal: 'center' } })
+      setCell(row, 3, 0, { border: borderThin, alignment: { horizontal: 'center' } }, 'n')
+      setCell(row, 4, '—', { border: borderThin, alignment: { horizontal: 'center' } })
+      row++
+    } else {
+      items.forEach((item, idx) => {
+        const cellStyle = { border: borderThin, alignment: { horizontal: 'center', vertical: 'center' } }
+        setCell(row, 0, idx + 1, cellStyle, 'n')
+        setCell(row, 1, item.ship_to_name || '—', { ...cellStyle, alignment: { horizontal: 'left', vertical: 'center', wrapText: true } })
+        setCell(row, 2, item.document_number || '—', { ...cellStyle, font: { bold: true } })
+        setCell(row, 3, item.total_quantity || 0, cellStyle, 'n')
+        setCell(row, 4, '', cellStyle)
+        row++
+      })
+    }
+
+    // ── Total Row ────────────────────────────────────────────────
+    const totalQty = items.reduce((sum, item) => sum + (item.total_quantity || 0), 0)
+    setCell(row, 0, 'TOTAL', { font: { bold: true }, alignment: { horizontal: 'right' }, border: borderThin })
+    setCell(row, 1, '', { border: borderThin })
+    setCell(row, 2, '', { border: borderThin })
+    setCell(row, 3, totalQty, { font: { bold: true }, alignment: { horizontal: 'center' }, border: borderThin }, 'n')
+    setCell(row, 4, '', { border: borderThin })
+
+    // Re-apply borders to entire table
+    for (let r = tableStartRow; r <= row; r++) {
+      for (let c = 0; c <= 4; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c })
+        if (!ws[addr]) continue
+        ws[addr].s = { ...(ws[addr].s || {}), border: borderThin }
+      }
+    }
+    row += 2
+
+    setCell(row, 2, `TOTAL DOCUMENTS: ${items.length}  |  TOTAL QUANTITY: ${totalQty}`, {
+      font: { bold: true },
+      alignment: { horizontal: 'right' },
+    })
+    row += 3
+
+    ws['!ref'] = `A1:E${row + 10}`
+    ws['!cols'] = [{ wch: 6 }, { wch: 45 }, { wch: 20 }, { wch: 12 }, { wch: 25 }]
+
+    // Use manifest number or index as sheet name (Excel limits to 31 chars)
+    const sheetName = (manifest.manifest_number || `Manifest-${manifestIndex + 1}`)
+      .replace(/[\\/*?[\]:]/g, '-')
+      .slice(0, 31)
+
+    XLSX.utils.book_append_sheet(wb, ws, sheetName)
+  })
+
+  const filename = `Manifests-Export-${new Date().toISOString().slice(0, 10)}.xlsx`
+  XLSX.writeFile(wb, filename)
+}
 
   return (
     <div className="bg-white over rounded-xl border p-4 sm:p-6 h-full overflow-hidden">
