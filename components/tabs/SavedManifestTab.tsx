@@ -97,7 +97,7 @@ function ManifestRow({
         />
 
         {/* Status dot */}
-        <span className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />
+        <span className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />
 
         {/* Manifest number */}
         <span className="font-semibold text-gray-900 text-sm truncate flex-1 min-w-0">
@@ -196,7 +196,7 @@ function ManifestRow({
             </button>
             <button
               onClick={onDownload}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors shadow-sm"
             >
               <Download className="w-3.5 h-3.5" /> Download
             </button>
@@ -426,7 +426,7 @@ export function SavedManifestsTab({
             <button
               onClick={handleExportAll}
               disabled={filteredManifests.length === 0}
-              className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors text-xs font-semibold shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors text-xs font-semibold shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
               Export All
@@ -540,7 +540,7 @@ export function SavedManifestsTab({
                   onClick={() => setCurrentPage(page)}
                   className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${
                     currentPage === page
-                      ? 'bg-orange-600 text-white shadow-sm'
+                      ? 'bg-blue-600 text-white shadow-sm'
                       : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
                 >
