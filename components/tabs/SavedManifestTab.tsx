@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Eye, Download, Edit, Trash2, Truck, Package, Calendar, FileText, ChevronDown, Search, X } from 'lucide-react'
+import { Eye, Download, Edit, Trash2, Truck, Package, Calendar, FileText, ChevronDown, Search, X, BarChart2 } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
 import * as XLSX from 'xlsx-js-style'
 
@@ -17,6 +17,7 @@ const icons = {
   Search,
   X,
   ChevronDown,
+  BarChart2,
 } as const
 
 type FilterDropdownProps = {
@@ -163,10 +164,13 @@ export function SavedManifestsTab({
     currentPage * itemsPerPage
   )
 
-  const handleExportAll = () => {
-  const wb = XLSX.utils.book_new()
-
-  filteredManifests.forEach((manifest, manifestIndex) => {
+  // ── Download Monitoring ────────────────────────────────────────────────────
+  // Exports ALL filtered manifests into a single consolidated monitoring sheet.
+  // Columns: Manifest No. | Date | Trucker | Driver | Plate | Truck Type |
+  //          Time Start | Time End | DN/TRA No. | Ship To Name | Qty
+  // Trip-level cells are merged vertically across all of a manifest's item rows.
+  const handleDownloadMonitoring = () => {
+    const wb = XLSX.utils.book_new()
     const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet([])
     let row = 0
 
@@ -187,119 +191,297 @@ export function SavedManifestsTab({
       top: { style: 'thin' }, bottom: { style: 'thin' },
       left: { style: 'thin' }, right: { style: 'thin' },
     }
+    const borderMedium = {
+      top: { style: 'medium' }, bottom: { style: 'medium' },
+      left: { style: 'medium' }, right: { style: 'medium' },
+    }
 
-    const manifestDate = manifest.manifest_date
-      ? new Date(manifest.manifest_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
-      : '—'
-
-    // ── Header ──────────────────────────────────────────────────
-    setCell(row, 0, 'SF EXPRESS WAREHOUSE', { font: { bold: true, sz: 14 } })
-    setCell(row, 1, 'UPPER TINGUB, MANDAUE, CEBU')
-    row += 2
-
-    setCell(row, 4, manifest.manifest_number || '—', {
-      font: { bold: true, sz: 16 },
-      fill: { fgColor: { rgb: 'FFFFC400' } },
+    // Title row
+    const titleStyle = {
+      font: { bold: true, sz: 16, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: 'CC6600' } },
       alignment: { horizontal: 'center', vertical: 'center' },
-      border: { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } },
-    })
-    row += 3
-
-    setCell(row, 0, 'TRIP MANIFEST', {
-      font: { bold: true, sz: 20 },
-      alignment: { horizontal: 'center', vertical: 'center' },
-    })
-    ws['!merges'].push({ s: { r: row, c: 0 }, e: { r: row, c: 4 } })
-    row += 3
-
-    // ── Trip Info ────────────────────────────────────────────────
-    const infoRows = [
-      ['Client', 'HAIER PHILIPPINES INC.', 'Dispatch Date', manifestDate],
-      ['Trucker', manifest.trucker || 'N/A', 'Driver', manifest.driver_name || '—'],
-      ['Plate No.', manifest.plate_no || '—', 'Truck Type', manifest.truck_type || 'N/A'],
-      ['Time Start', manifest.time_start || '—', 'Time End', manifest.time_end || '—'],
-    ]
-    infoRows.forEach(([l1, v1, l2, v2]) => {
-      setCell(row, 0, l1, { font: { bold: true } })
-      setCell(row, 1, v1)
-      setCell(row, 2, l2, { font: { bold: true } })
-      setCell(row, 3, v2)
-      row++
-    })
+      border: borderMedium,
+    }
+    setCell(row, 0, 'SF EXPRESS WAREHOUSE — TRIP MANIFEST MONITORING', titleStyle)
+    ws['!merges'].push({ s: { r: row, c: 0 }, e: { r: row, c: 10 } })
     row++
 
-    // ── Table Header ─────────────────────────────────────────────
-    const tableStartRow = row
-    const headerStyle = {
-      font: { bold: true, sz: 11 },
-      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      fill: { fgColor: { rgb: 'E8E8E8' } },
+    const exportDate = new Date().toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric',
+    })
+    const subStyle = {
+      font: { sz: 10, italic: true },
+      fill: { fgColor: { rgb: 'FFF3E0' } },
+      alignment: { horizontal: 'center' },
       border: borderThin,
     }
-    ;['NO.', 'SHIP TO NAME', 'DN/TRA NO.', 'QTY', 'REMARKS'].forEach((h, c) =>
-      setCell(row, c, h, headerStyle)
-    )
-    row++
-
-    // ── Table Items ───────────────────────────────────────────────
-    const items = manifest.items || []
-    if (items.length === 0) {
-      setCell(row, 0, '—', { border: borderThin, alignment: { horizontal: 'center' } })
-      setCell(row, 1, 'No documents added', { border: borderThin })
-      setCell(row, 2, '—', { border: borderThin, alignment: { horizontal: 'center' } })
-      setCell(row, 3, 0, { border: borderThin, alignment: { horizontal: 'center' } }, 'n')
-      setCell(row, 4, '—', { border: borderThin, alignment: { horizontal: 'center' } })
-      row++
-    } else {
-      items.forEach((item, idx) => {
-        const cellStyle = { border: borderThin, alignment: { horizontal: 'center', vertical: 'center' } }
-        setCell(row, 0, idx + 1, cellStyle, 'n')
-        setCell(row, 1, item.ship_to_name || '—', { ...cellStyle, alignment: { horizontal: 'left', vertical: 'center', wrapText: true } })
-        setCell(row, 2, item.document_number || '—', { ...cellStyle, font: { bold: true } })
-        setCell(row, 3, item.total_quantity || 0, cellStyle, 'n')
-        setCell(row, 4, '', cellStyle)
-        row++
-      })
-    }
-
-    // ── Total Row ────────────────────────────────────────────────
-    const totalQty = items.reduce((sum, item) => sum + (item.total_quantity || 0), 0)
-    setCell(row, 0, 'TOTAL', { font: { bold: true }, alignment: { horizontal: 'right' }, border: borderThin })
-    setCell(row, 1, '', { border: borderThin })
-    setCell(row, 2, '', { border: borderThin })
-    setCell(row, 3, totalQty, { font: { bold: true }, alignment: { horizontal: 'center' }, border: borderThin }, 'n')
-    setCell(row, 4, '', { border: borderThin })
-
-    // Re-apply borders to entire table
-    for (let r = tableStartRow; r <= row; r++) {
-      for (let c = 0; c <= 4; c++) {
-        const addr = XLSX.utils.encode_cell({ r, c })
-        if (!ws[addr]) continue
-        ws[addr].s = { ...(ws[addr].s || {}), border: borderThin }
-      }
-    }
+    setCell(row, 0, `Generated: ${exportDate}  |  Total Manifests: ${filteredManifests.length}`, subStyle)
+    ws['!merges'].push({ s: { r: row, c: 0 }, e: { r: row, c: 10 } })
     row += 2
 
-    setCell(row, 2, `TOTAL DOCUMENTS: ${items.length}  |  TOTAL QUANTITY: ${totalQty}`, {
-      font: { bold: true },
-      alignment: { horizontal: 'right' },
+    // Column headers
+    const headers = [
+      'MANIFEST NO.', 'DISPATCH DATE', 'TRUCKER', 'DRIVER',
+      'PLATE NO.', 'TRUCK TYPE', 'TIME START', 'TIME END',
+      'DN / TRA NO.', 'SHIP TO NAME', 'QTY',
+    ]
+    const headerStyle = {
+      font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '1E3A5F' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border: borderThin,
+    }
+    headers.forEach((h, c) => setCell(row, c, h, headerStyle))
+    row++
+
+    // Data rows
+    let grandTotalQty = 0
+    let grandTotalDocs = 0
+    let globalRowIndex = 0
+
+    filteredManifests.forEach((manifest) => {
+      const manifestDate = manifest.manifest_date
+        ? new Date(manifest.manifest_date).toLocaleDateString('en-US', {
+            month: '2-digit', day: '2-digit', year: 'numeric',
+          })
+        : '—'
+
+      const trip = {
+        manifestNo: manifest.manifest_number || manifest.id || '—',
+        date:       manifestDate,
+        trucker:    manifest.trucker || '—',
+        driver:     manifest.driver_name || '—',
+        plate:      manifest.plate_no || '—',
+        truckType:  manifest.truck_type || '—',
+        timeStart:  manifest.time_start || '—',
+        timeEnd:    manifest.time_end || '—',
+      }
+
+      const items = manifest.items || []
+      const rowCount = Math.max(items.length, 1)
+      const rowFill  = { fgColor: { rgb: globalRowIndex % 2 === 0 ? 'F9FAFB' : 'FFFFFF' } }
+
+      const base   = (extra: object = {}) => ({ font: { sz: 10 }, fill: rowFill, border: borderThin, alignment: { vertical: 'center', wrapText: true }, ...extra })
+      const center = (extra: object = {}) => base({ alignment: { horizontal: 'center', vertical: 'center' }, ...extra })
+      const bold   = (extra: object = {}) => base({ font: { sz: 10, bold: true }, ...extra })
+
+      const startRow = row
+
+      if (items.length === 0) {
+        setCell(row, 0,  trip.manifestNo, bold())
+        setCell(row, 1,  trip.date,       center())
+        setCell(row, 2,  trip.trucker,    base())
+        setCell(row, 3,  trip.driver,     base())
+        setCell(row, 4,  trip.plate,      center())
+        setCell(row, 5,  trip.truckType,  base())
+        setCell(row, 6,  trip.timeStart,  center())
+        setCell(row, 7,  trip.timeEnd,    center())
+        setCell(row, 8,  '—',             center())
+        setCell(row, 9,  'No documents',  base())
+        setCell(row, 10, 0,               center(), 'n')
+        row++
+      } else {
+        items.forEach((item, idx) => {
+          const first = idx === 0
+          setCell(row, 0,  first ? trip.manifestNo : '', first ? bold()   : base())
+          setCell(row, 1,  first ? trip.date       : '', first ? center() : base())
+          setCell(row, 2,  first ? trip.trucker    : '', base())
+          setCell(row, 3,  first ? trip.driver     : '', base())
+          setCell(row, 4,  first ? trip.plate      : '', first ? center() : base())
+          setCell(row, 5,  first ? trip.truckType  : '', base())
+          setCell(row, 6,  first ? trip.timeStart  : '', first ? center() : base())
+          setCell(row, 7,  first ? trip.timeEnd    : '', first ? center() : base())
+          setCell(row, 8,  item.document_number || '—', bold({ alignment: { horizontal: 'center', vertical: 'center' } }))
+          setCell(row, 9,  item.ship_to_name || '—',    base())
+          setCell(row, 10, item.total_quantity || 0,     center(), 'n')
+
+          grandTotalQty += item.total_quantity || 0
+          grandTotalDocs++
+          row++
+        })
+
+        // Merge trip-level columns vertically across all item rows
+        if (rowCount > 1) {
+          const endRow = startRow + rowCount - 1;
+          [0, 1, 2, 3, 4, 5, 6, 7].forEach((c) => {
+            ws['!merges']!.push({ s: { r: startRow, c }, e: { r: endRow, c } })
+          })
+        }
+      }
+
+      globalRowIndex++
     })
-    row += 3
 
-    ws['!ref'] = `A1:E${row + 10}`
-    ws['!cols'] = [{ wch: 6 }, { wch: 45 }, { wch: 20 }, { wch: 12 }, { wch: 25 }]
+    // Grand total row
+    row++
+    const totalStyle = {
+      font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '1E3A5F' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: borderMedium,
+    }
+    setCell(row, 0, `GRAND TOTAL  —  ${filteredManifests.length} manifests  |  ${grandTotalDocs} documents`, totalStyle)
+    ws['!merges']!.push({ s: { r: row, c: 0 }, e: { r: row, c: 9 } })
+    setCell(row, 10, grandTotalQty, totalStyle, 'n')
 
-    // Use manifest number or index as sheet name (Excel limits to 31 chars)
-    const sheetName = (manifest.manifest_number || `Manifest-${manifestIndex + 1}`)
-      .replace(/[\\/*?[\]:]/g, '-')
-      .slice(0, 31)
+    ws['!ref']  = `A1:K${row + 5}`
+    ws['!cols'] = [
+      { wch: 18 }, // Manifest No
+      { wch: 14 }, // Date
+      { wch: 22 }, // Trucker
+      { wch: 22 }, // Driver
+      { wch: 14 }, // Plate
+      { wch: 16 }, // Truck Type
+      { wch: 12 }, // Time Start
+      { wch: 12 }, // Time End
+      { wch: 18 }, // DN/TRA No
+      { wch: 40 }, // Ship To Name
+      { wch: 10 }, // Qty
+    ]
 
-    XLSX.utils.book_append_sheet(wb, ws, sheetName)
-  })
+    XLSX.utils.book_append_sheet(wb, ws, 'Monitoring')
 
-  const filename = `Manifests-Export-${new Date().toISOString().slice(0, 10)}.xlsx`
-  XLSX.writeFile(wb, filename)
-}
+    const filename = `Manifest-Monitoring-${new Date().toISOString().slice(0, 10)}.xlsx`
+    XLSX.writeFile(wb, filename)
+  }
+
+  const handleExportAll = () => {
+    const wb = XLSX.utils.book_new()
+
+    filteredManifests.forEach((manifest, manifestIndex) => {
+      const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet([])
+      let row = 0
+
+      const setCell = (
+        r: number,
+        c: number,
+        value: any,
+        style: Partial<XLSX.CellObject['s']> = {},
+        type: XLSX.CellObject['t'] = 's'
+      ) => {
+        const cell: XLSX.CellObject = { v: value, t: type, s: style }
+        ws[XLSX.utils.encode_cell({ r, c })] = cell
+      }
+
+      if (!ws['!merges']) ws['!merges'] = []
+
+      const borderThin = {
+        top: { style: 'thin' }, bottom: { style: 'thin' },
+        left: { style: 'thin' }, right: { style: 'thin' },
+      }
+
+      const manifestDate = manifest.manifest_date
+        ? new Date(manifest.manifest_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+        : '—'
+
+      // ── Header ──────────────────────────────────────────────────
+      setCell(row, 0, 'SF EXPRESS WAREHOUSE', { font: { bold: true, sz: 14 } })
+      setCell(row, 1, 'UPPER TINGUB, MANDAUE, CEBU')
+      row += 2
+
+      setCell(row, 4, manifest.manifest_number || '—', {
+        font: { bold: true, sz: 16 },
+        fill: { fgColor: { rgb: 'FFFFC400' } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } },
+      })
+      row += 3
+
+      setCell(row, 0, 'TRIP MANIFEST', {
+        font: { bold: true, sz: 20 },
+        alignment: { horizontal: 'center', vertical: 'center' },
+      })
+      ws['!merges'].push({ s: { r: row, c: 0 }, e: { r: row, c: 4 } })
+      row += 3
+
+      // ── Trip Info ────────────────────────────────────────────────
+      const infoRows = [
+        ['Client', 'HAIER PHILIPPINES INC.', 'Dispatch Date', manifestDate],
+        ['Trucker', manifest.trucker || 'N/A', 'Driver', manifest.driver_name || '—'],
+        ['Plate No.', manifest.plate_no || '—', 'Truck Type', manifest.truck_type || 'N/A'],
+        ['Time Start', manifest.time_start || '—', 'Time End', manifest.time_end || '—'],
+      ]
+      infoRows.forEach(([l1, v1, l2, v2]) => {
+        setCell(row, 0, l1, { font: { bold: true } })
+        setCell(row, 1, v1)
+        setCell(row, 2, l2, { font: { bold: true } })
+        setCell(row, 3, v2)
+        row++
+      })
+      row++
+
+      // ── Table Header ─────────────────────────────────────────────
+      const tableStartRow = row
+      const headerStyle = {
+        font: { bold: true, sz: 11 },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+        fill: { fgColor: { rgb: 'E8E8E8' } },
+        border: borderThin,
+      }
+      ;['NO.', 'SHIP TO NAME', 'DN/TRA NO.', 'QTY', 'REMARKS'].forEach((h, c) =>
+        setCell(row, c, h, headerStyle)
+      )
+      row++
+
+      // ── Table Items ───────────────────────────────────────────────
+      const items = manifest.items || []
+      if (items.length === 0) {
+        setCell(row, 0, '—', { border: borderThin, alignment: { horizontal: 'center' } })
+        setCell(row, 1, 'No documents added', { border: borderThin })
+        setCell(row, 2, '—', { border: borderThin, alignment: { horizontal: 'center' } })
+        setCell(row, 3, 0, { border: borderThin, alignment: { horizontal: 'center' } }, 'n')
+        setCell(row, 4, '—', { border: borderThin, alignment: { horizontal: 'center' } })
+        row++
+      } else {
+        items.forEach((item, idx) => {
+          const cellStyle = { border: borderThin, alignment: { horizontal: 'center', vertical: 'center' } }
+          setCell(row, 0, idx + 1, cellStyle, 'n')
+          setCell(row, 1, item.ship_to_name || '—', { ...cellStyle, alignment: { horizontal: 'left', vertical: 'center', wrapText: true } })
+          setCell(row, 2, item.document_number || '—', { ...cellStyle, font: { bold: true } })
+          setCell(row, 3, item.total_quantity || 0, cellStyle, 'n')
+          setCell(row, 4, '', cellStyle)
+          row++
+        })
+      }
+
+      // ── Total Row ────────────────────────────────────────────────
+      const totalQty = items.reduce((sum, item) => sum + (item.total_quantity || 0), 0)
+      setCell(row, 0, 'TOTAL', { font: { bold: true }, alignment: { horizontal: 'right' }, border: borderThin })
+      setCell(row, 1, '', { border: borderThin })
+      setCell(row, 2, '', { border: borderThin })
+      setCell(row, 3, totalQty, { font: { bold: true }, alignment: { horizontal: 'center' }, border: borderThin }, 'n')
+      setCell(row, 4, '', { border: borderThin })
+
+      // Re-apply borders to entire table
+      for (let r = tableStartRow; r <= row; r++) {
+        for (let c = 0; c <= 4; c++) {
+          const addr = XLSX.utils.encode_cell({ r, c })
+          if (!ws[addr]) continue
+          ws[addr].s = { ...(ws[addr].s || {}), border: borderThin }
+        }
+      }
+      row += 2
+
+      setCell(row, 2, `TOTAL DOCUMENTS: ${items.length}  |  TOTAL QUANTITY: ${totalQty}`, {
+        font: { bold: true },
+        alignment: { horizontal: 'right' },
+      })
+      row += 3
+
+      ws['!ref'] = `A1:E${row + 10}`
+      ws['!cols'] = [{ wch: 6 }, { wch: 45 }, { wch: 20 }, { wch: 12 }, { wch: 25 }]
+
+      const sheetName = (manifest.manifest_number || `Manifest-${manifestIndex + 1}`)
+        .replace(/[\\/*?[\]:]/g, '-')
+        .slice(0, 31)
+
+      XLSX.utils.book_append_sheet(wb, ws, sheetName)
+    })
+
+    const filename = `Manifests-Export-${new Date().toISOString().slice(0, 10)}.xlsx`
+    XLSX.writeFile(wb, filename)
+  }
 
   return (
     <div className="bg-white over rounded-xl border p-4 sm:p-6 h-full overflow-hidden">
@@ -311,14 +493,24 @@ export function SavedManifestsTab({
           </h3>
           <p className="text-sm text-gray-600">View and download your saved trip manifests</p>
         </div>
-        <button
-          onClick={handleExportAll}
-          disabled={filteredManifests.length === 0}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm font-medium"
-        >
-          <icons.Download className="w-4 h-4" />
-          Export All
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={handleDownloadMonitoring}
+            disabled={filteredManifests.length === 0}
+            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm font-medium"
+          >
+            <icons.BarChart2 className="w-4 h-4" />
+            Download Monitoring
+          </button>
+          <button
+            onClick={handleExportAll}
+            disabled={filteredManifests.length === 0}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm font-medium"
+          >
+            <icons.Download className="w-4 h-4" />
+            Export All
+          </button>
+        </div>
       </div>
 
       {/* Search Bar and Filter */}
