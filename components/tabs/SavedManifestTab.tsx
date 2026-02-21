@@ -426,7 +426,7 @@ export function SavedManifestsTab({
             <button
               onClick={handleExportAll}
               disabled={filteredManifests.length === 0}
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors text-xs font-semibold shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors text-xs font-semibold shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
               Export All
