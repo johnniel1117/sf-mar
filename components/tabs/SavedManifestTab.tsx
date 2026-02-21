@@ -64,15 +64,18 @@ function FilterDropdown({
 // ── Manifest Row ───────────────────────────────────────────────────────────────
 function ManifestRow({
   manifest,
+  expanded,
+  onToggle,
   onView, onEdit, onDownload, onDelete,
 }: {
   manifest: TripManifest
+  expanded: boolean
+  onToggle: () => void
   onView: () => void
   onEdit: () => void
   onDownload: () => void
   onDelete: () => void
 }) {
-  const [expanded, setExpanded] = useState(false)
 
   const totalQty = manifest.items?.reduce((s, i) => s + (i.total_quantity || 0), 0) ?? 0
   const totalDocs = manifest.items?.length ?? 0
@@ -86,7 +89,7 @@ function ManifestRow({
       {/* ── Collapsed Row ── */}
       <div
         className="flex items-center gap-2 px-3 sm:px-4 py-3 hover:bg-gray-50/80 transition-colors cursor-pointer select-none"
-        onClick={() => setExpanded(!expanded)}
+        onClick={onToggle}
       >
         {/* Expand toggle */}
         <ChevronRight
@@ -239,6 +242,7 @@ export function SavedManifestsTab({
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMonth, setSelectedMonth] = useState('All Months')
   const [currentPage, setCurrentPage] = useState(1)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const itemsPerPage = 10
 
   const sortedManifests = useMemo(() =>
@@ -503,6 +507,8 @@ export function SavedManifestsTab({
             <ManifestRow
               key={manifest.id}
               manifest={manifest}
+              expanded={expandedId === manifest.id}
+              onToggle={() => setExpandedId(expandedId === manifest.id ? null : (manifest.id ?? null))}
               onView={() => handleViewManifest(manifest)}
               onEdit={() => handleEditManifest(manifest)}
               onDownload={() => handleDownloadManifest(manifest)}
