@@ -40,6 +40,11 @@ interface CreateManifestTabProps {
   addDocumentWithManualShipTo: (shipToName: string) => void
   searchDocument: (documentNumber: string) => Promise<Array<{ documentNumber: string; shipToName: string; quantity: number }> | null>
   showToast?: (message: string, type: 'success' | 'error' | 'info') => void
+  /**
+   * All existing manifest numbers, used to derive the next sequential suffix.
+   * e.g. ['TM-20250221-001', 'TM-20250221-002'] → next will be TM-20250221-003
+   */
+  existingManifestNumbers?: string[]
 }
 
 interface ManualEntryModalProps {
@@ -181,6 +186,7 @@ export function CreateManifestTab({
   addDocumentWithManualShipTo,
   searchDocument,
   showToast,
+  existingManifestNumbers = [],
 }: CreateManifestTabProps) {
   const [searchResults, setSearchResults] = useState<Array<{ documentNumber: string; shipToName: string; quantity: number }> | null>(null)
   const [isSearching, setIsSearching] = useState(false)
@@ -256,8 +262,21 @@ export function CreateManifestTab({
     const year = now.getFullYear()
     const month = String(now.getMonth() + 1).padStart(2, '0')
     const day = String(now.getDate()).padStart(2, '0')
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    setManifest({ ...manifest, manifest_number: `TM-${year}${month}${day}-${random}` })
+    const datePrefix = `TM-${year}${month}${day}`
+
+    // Find the highest sequence number used today across all existing manifests
+    const todaySequences = existingManifestNumbers
+      .filter((num) => num.startsWith(datePrefix + '-'))
+      .map((num) => {
+        const suffix = num.slice(datePrefix.length + 1) // e.g. "003"
+        const parsed = parseInt(suffix, 10)
+        return isNaN(parsed) ? 0 : parsed
+      })
+
+    const nextSequence = todaySequences.length > 0 ? Math.max(...todaySequences) + 1 : 1
+    const sequencePadded = String(nextSequence).padStart(3, '0')
+
+    setManifest({ ...manifest, manifest_number: `${datePrefix}-${sequencePadded}` })
   }
 
   const regenerateManifestNumber = () => {
@@ -730,12 +749,10 @@ export function CreateManifestTab({
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Time Start</p>
-                    {/* ✅ 12hr format */}
                     <p className="font-semibold text-gray-900">{formatTime12hr(manifest.time_start)}</p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-600">Time End</p>
-                    {/* ✅ 12hr format */}
                     <p className="font-semibold text-gray-900">{formatTime12hr(manifest.time_end)}</p>
                   </div>
                   {manifest.time_start && manifest.time_end && (
