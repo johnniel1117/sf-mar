@@ -1,26 +1,19 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
-import { Truck, Barcode, ClipboardList, Users, Camera, ChevronLeft, ChevronRight, X, Save, AlertCircle, CheckCircle2, Trash2, Edit } from 'lucide-react'
+import React, { useRef } from 'react'
+import {
+  Truck, Barcode, ClipboardList, Users, Camera,
+  ChevronLeft, ChevronRight, X, Save, AlertCircle,
+  CheckCircle2, Trash2, Edit
+} from 'lucide-react'
 import { StepsIndicator } from '@/components/StepsIndicator'
 import { DAMAGE_TYPES, Step } from '@/lib/constants/damageReportConstants'
 import type { DamageItem, DamageReport } from '@/lib/services/damageReportService'
 
-const icons = {
-  Truck,
-  Barcode,
-  ClipboardList,
-  Users,
-  Camera,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Save,
-  AlertCircle,
-  CheckCircle2,
-  Trash2,
-  Edit,
-} as const
+// ── shared styles ──────────────────────────────────────────────────────────────
+const inputCls = "w-full px-4 py-3 bg-[#282828] border border-[#3E3E3E] text-white rounded-xl focus:ring-2 focus:ring-[#E8192C]/50 focus:border-[#E8192C] outline-none transition-all text-sm placeholder-[#6A6A6A]"
+const labelCls = "block text-[10px] font-bold uppercase tracking-widest text-[#B3B3B3] mb-1.5"
+const selectCls = `${inputCls} cursor-pointer`
 
 interface CreateReportTabProps {
   currentStep: Step
@@ -35,16 +28,8 @@ interface CreateReportTabProps {
   setEditingItemIndex: (index: number | null) => void
   editingItemBarcode: string
   setEditingItemBarcode: (barcode: string) => void
-  personnelData: {
-    admins: any[]
-    guards: any[]
-    supervisors: any[]
-  }
-  selectedPersonnel: {
-    admin: string
-    guard: string
-    supervisor: string
-  }
+  personnelData: { admins: any[]; guards: any[]; supervisors: any[] }
+  selectedPersonnel: { admin: string; guard: string; supervisor: string }
   isLoading: boolean
   isEditMode: boolean
   showToast: (message: string, type: 'success' | 'error' | 'info') => void
@@ -64,280 +49,228 @@ interface CreateReportTabProps {
 }
 
 export const CreateReportTab: React.FC<CreateReportTabProps> = ({
-  currentStep,
-  setCurrentStep,
-  report,
-  setReport,
-  barcodeInput,
-  setBarcodeInput,
-  materialLookup,
-  uploadingItemIndex,
-  editingItemIndex,
-  setEditingItemIndex,
-  editingItemBarcode,
-  setEditingItemBarcode,
-  personnelData,
-  selectedPersonnel,
-  isLoading,
-  isEditMode,
-  showToast,
-  handleBarcodeInput,
-  handleEditItemBarcode,
-  handleSaveEditedBarcode,
-  handleCancelEditBarcode,
-  updateItem,
-  removeItem,
-  handlePhotoUpload,
-  handlePersonnelChange,
-  canProceedToStep2,
-  canProceedToStep3,
-  canProceedToStep4,
-  resetForm,
-  saveReport,
+  currentStep, setCurrentStep, report, setReport,
+  barcodeInput, setBarcodeInput, materialLookup,
+  uploadingItemIndex, editingItemIndex, setEditingItemIndex,
+  editingItemBarcode, setEditingItemBarcode,
+  personnelData, selectedPersonnel,
+  isLoading, isEditMode, showToast,
+  handleBarcodeInput, handleEditItemBarcode, handleSaveEditedBarcode,
+  handleCancelEditBarcode, updateItem, removeItem, handlePhotoUpload,
+  handlePersonnelChange, canProceedToStep2, canProceedToStep3,
+  canProceedToStep4, resetForm, saveReport,
 }) => {
   const barcodeInputRef = useRef<HTMLInputElement>(null)
 
-  // Local handler for barcode input
   const handleLocalBarcodeInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    handleBarcodeInput(e).catch(error => {
-      console.error('Error in barcode input:', error)
-      showToast('Error processing barcode', 'error')
-    })
+    handleBarcodeInput(e).catch(() => showToast('Error processing barcode', 'error'))
   }
-
-  // Local handler for saving edited barcode
   const handleLocalSaveEditedBarcode = async (index: number) => {
-    try {
-      await handleSaveEditedBarcode(index)
-    } catch (error) {
-      console.error('Error saving edited barcode:', error)
-      showToast('Error saving barcode', 'error')
-    }
+    try { await handleSaveEditedBarcode(index) }
+    catch { showToast('Error saving barcode', 'error') }
   }
-
-  // Local handler for photo upload
   const handleLocalPhotoUpload = async (index: number, file: File) => {
-    try {
-      await handlePhotoUpload(index, file)
-    } catch (error) {
-      console.error('Error uploading photo:', error)
-      showToast('Error uploading photo', 'error')
-    }
+    try { await handlePhotoUpload(index, file) }
+    catch { showToast('Error uploading photo', 'error') }
   }
-
-  // Local handler for save report
   const handleLocalSaveReport = async () => {
-    try {
-      await saveReport()
-    } catch (error) {
-      console.error('Error saving report:', error)
-      showToast('Error saving report', 'error')
-    }
+    try { await saveReport() }
+    catch { showToast('Error saving report', 'error') }
   }
 
   return (
-    <div className="space-y-6">
-      {/* Progress Steps */}
-      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-6">
-        <StepsIndicator currentStep={currentStep} isEditMode={isEditMode} />
+    <div className="space-y-5">
+      <div className="bg-[#121212] rounded-xl border border-[#282828] shadow-2xl overflow-hidden">
 
-        {/* Step Content */}
-        <div className="mt-8">
-          {/* Step 1: Truck Info */}
+        {/* ── Playlist-style header ── */}
+        <div
+          className="border-b border-[#282828]"
+          style={{ background: 'linear-gradient(180deg, rgba(232,25,44,0.18) 0%, #121212 100%)' }}
+        >
+          <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 pt-5 sm:pt-6 pb-4">
+            <div
+              className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg shadow-xl flex-shrink-0 flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}
+            >
+              <ClipboardList className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+            </div>
+            <div>
+              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#B3B3B3] mb-0.5">
+                {isEditMode ? 'Editing' : 'New'}
+              </p>
+              <h2 className="text-lg sm:text-xl font-black text-white leading-tight">
+                {isEditMode ? 'Edit Report' : 'Create Report'}
+              </h2>
+              <p className="text-xs text-[#B3B3B3] mt-0.5">SF Express Warehouse</p>
+            </div>
+          </div>
+
+          {/* Steps indicator */}
+          <StepsIndicator currentStep={currentStep} isEditMode={isEditMode} />
+        </div>
+
+        {/* ── Step Content ── */}
+        <div className="p-4 sm:p-6">
+
+          {/* ── STEP 1: Vehicle & Shipment Info ── */}
           {currentStep === 1 && (
-            <div className="space-y-4 sm:space-y-6">
-              <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <icons.Truck className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
+                  <Truck className="w-4 h-4 text-white" />
                 </div>
-                <div className="min-w-0">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">Vehicle & Shipment Information</h2>
-                  <p className="text-xs sm:text-sm text-gray-500">Enter the truck and delivery details</p>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white">Vehicle & Shipment Information</h3>
+                  <p className="text-xs text-[#B3B3B3]">Enter truck and delivery details</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                    Report Date
-                  </label>
-                  <input
-                    type="date"
-                    value={report.report_date}
+                  <label className={labelCls}>Report Date</label>
+                  <input type="date" value={report.report_date}
                     onChange={(e) => setReport({ ...report, report_date: e.target.value })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                  />
+                    className={inputCls} />
                 </div>
-
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                    Driver Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={report.driver_name}
+                  <label className={labelCls}>Driver Name <span className="text-[#E8192C]">*</span></label>
+                  <input type="text" value={report.driver_name}
                     onChange={(e) => setReport({ ...report, driver_name: e.target.value })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    placeholder="Driver's name"
-                  />
+                    className={inputCls} placeholder="Driver's name" />
                 </div>
-
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                    Plate No. <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={report.plate_no}
+                  <label className={labelCls}>Plate No. <span className="text-[#E8192C]">*</span></label>
+                  <input type="text" value={report.plate_no}
                     onChange={(e) => setReport({ ...report, plate_no: e.target.value })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    placeholder="Plate number"
-                  />
+                    className={inputCls} placeholder="Plate number" />
                 </div>
-
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                    Seal No.
-                  </label>
-                  <input
-                    type="text"
-                    value={report.seal_no}
+                  <label className={labelCls}>Seal No.</label>
+                  <input type="text" value={report.seal_no}
                     onChange={(e) => setReport({ ...report, seal_no: e.target.value })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    placeholder="Seal number"
-                  />
+                    className={inputCls} placeholder="Seal number" />
                 </div>
-
                 <div className="sm:col-span-2">
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                    Container No.
-                  </label>
-                  <input
-                    type="text"
-                    value={report.container_no}
+                  <label className={labelCls}>Container No.</label>
+                  <input type="text" value={report.container_no}
                     onChange={(e) => setReport({ ...report, container_no: e.target.value })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    placeholder="Container number"
-                  />
+                    className={inputCls} placeholder="Container number" />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Step 2: Scan Items with Barcode Editing */}
+          {/* ── STEP 2: Scan Items ── */}
           {currentStep === 2 && (
-            <div className="space-y-4 sm:space-y-6">
-              <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <icons.Barcode className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
+                  <Barcode className="w-4 h-4 text-white" />
                 </div>
-                <div className="min-w-0">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">Scan Damaged Items</h2>
-                  <p className="text-xs sm:text-sm text-gray-500">Scan barcodes to add items to the report</p>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white">Scan Damaged Items</h3>
+                  <p className="text-xs text-[#B3B3B3]">Scan barcodes to add items to the report</p>
                 </div>
               </div>
 
-              {/* Barcode Scanner */}
-              <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-4 sm:p-6 text-white">
-                <label className="block text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
-                  <icons.Barcode className="w-5 h-5" />
-                  Scan Barcode
+              {/* Barcode input */}
+              <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
+                <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#B3B3B3] mb-3">
+                  <Barcode className="w-3.5 h-3.5 text-[#E8192C]" /> Barcode Scanner
                 </label>
-                <input
-                  ref={barcodeInputRef}
-                  type="text"
-                  value={barcodeInput}
-                  onChange={(e) => setBarcodeInput(e.target.value)}
-                  onKeyDown={handleLocalBarcodeInput}
-                  placeholder="Scan or type barcode and press Enter..."
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white text-gray-900 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  autoFocus
-                />
+                <div className="relative">
+                  <Barcode className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6A6A6A]" />
+                  <input
+                    ref={barcodeInputRef}
+                    type="text"
+                    value={barcodeInput}
+                    onChange={(e) => setBarcodeInput(e.target.value)}
+                    onKeyDown={handleLocalBarcodeInput}
+                    placeholder="Scan or type barcode and press Enter…"
+                    className={`${inputCls} pl-10`}
+                    autoFocus
+                  />
+                </div>
                 {materialLookup.material_description && (
-                  <div className="mt-3 p-3 bg-green-500 bg-opacity-20 border border-green-300 rounded-lg flex items-start gap-2">
-                    <icons.CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <p className="font-medium text-sm break-words">
-                      Found: {materialLookup.material_description} ({materialLookup.category})
+                  <div className="mt-3 p-3 bg-[#282828] border border-green-500/30 rounded-xl flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs font-semibold text-white">
+                      Found: <span className="text-green-400">{materialLookup.material_description}</span>
+                      {materialLookup.category && <span className="text-[#6A6A6A]"> · {materialLookup.category}</span>}
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Items List with Barcode Editing */}
+              {/* Scanned items list */}
               <div>
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#B3B3B3]">
+                    <ClipboardList className="w-3.5 h-3.5 text-[#E8192C]" />
                     Scanned Items ({report.items.length})
-                  </h3>
+                  </h4>
                 </div>
 
                 {report.items.length === 0 ? (
-                  <div className="py-8 sm:py-12 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    <icons.AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 font-medium text-sm sm:text-base">No items scanned yet</p>
-                    <p className="text-gray-500 text-xs sm:text-sm mt-1">Scan a barcode to add items</p>
+                  <div className="py-10 text-center bg-[#1E1E1E] rounded-xl border-2 border-dashed border-[#3E3E3E]">
+                    <AlertCircle className="w-10 h-10 text-[#3E3E3E] mx-auto mb-3" />
+                    <p className="text-[#6A6A6A] font-semibold text-sm">No items scanned yet</p>
+                    <p className="text-xs text-[#6A6A6A] mt-1">Scan a barcode above to add items</p>
                   </div>
                 ) : (
-                  <div className="space-y-2 sm:space-y-3">
+                  <div className="space-y-2">
                     {report.items.map((item, idx) => (
-                      <div key={idx} className="p-3 sm:p-4 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all">
-                        <div className="flex items-start gap-2 sm:gap-3">
-                          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
-                            {item.item_number}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 text-sm truncate">{item.material_description || 'Unknown Item'}</p>
-                            <p className="text-xs text-gray-500 truncate">Code: {item.material_code || 'N/A'}</p>
-                            
-                            {/* Barcode Display/Edit */}
-                            {editingItemIndex === idx ? (
-                              <div className="mt-2 space-y-2">
-                                <input
-                                  type="text"
-                                  value={editingItemBarcode}
-                                  onChange={(e) => setEditingItemBarcode(e.target.value)}
-                                  className="w-full px-3 py-2 border-2 border-orange-500 rounded-lg text-sm "
-                                  placeholder="Enter new barcode..."
-                                  autoFocus
-                                />
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => handleLocalSaveEditedBarcode(idx)}
-                                    className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 transition-colors"
-                                  >
-                                    <icons.Save className="w-3 h-3 inline mr-1" />
-                                    Save
-                                  </button>
-                                  <button
-                                    onClick={handleCancelEditBarcode}
-                                    className="flex-1 px-3 py-1.5 bg-gray-400 text-white rounded text-xs font-semibold hover:bg-gray-500 transition-colors"
-                                  >
-                                    <icons.X className="w-3 h-3 inline mr-1" />
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                                <span className="text-xs text-gray-600">Barcode:</span>
-                                <span className=" text-xs font-semibold break-all">{item.barcode}</span>
-                                <button
-                                  onClick={() => handleEditItemBarcode(idx)}
-                                  className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                  title="Edit barcode"
-                                >
-                                  <icons.Edit className="w-3 h-3" />
+                      <div key={idx} className="group flex items-start gap-3 p-3 sm:p-4 bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl hover:border-[#E8192C]/30 hover:bg-[#282828] transition-all">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0 mt-0.5"
+                          style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
+                          {item.item_number}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white text-sm truncate group-hover:text-[#E8192C] transition-colors">
+                            {item.material_description || 'Unknown Item'}
+                          </p>
+                          <p className="text-[10px] text-[#6A6A6A] mt-0.5">Code: {item.material_code || 'N/A'}</p>
+
+                          {/* Barcode edit / display */}
+                          {editingItemIndex === idx ? (
+                            <div className="mt-2 space-y-2">
+                              <input
+                                type="text"
+                                value={editingItemBarcode}
+                                onChange={(e) => setEditingItemBarcode(e.target.value)}
+                                className={inputCls}
+                                placeholder="Enter new barcode…"
+                                autoFocus
+                              />
+                              <div className="flex gap-2">
+                                <button onClick={() => handleLocalSaveEditedBarcode(idx)}
+                                  className="flex-1 px-3 py-1.5 bg-[#E8192C] text-white rounded-full text-xs font-bold hover:bg-[#FF1F30] transition-colors flex items-center justify-center gap-1">
+                                  <Save className="w-3 h-3" /> Save
+                                </button>
+                                <button onClick={handleCancelEditBarcode}
+                                  className="flex-1 px-3 py-1.5 border border-[#3E3E3E] text-[#B3B3B3] rounded-full text-xs font-semibold hover:border-white hover:text-white transition-colors flex items-center justify-center gap-1">
+                                  <X className="w-3 h-3" /> Cancel
                                 </button>
                               </div>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => removeItem(idx)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
-                          >
-                            <icons.Trash2 className="w-4 h-4" />
-                          </button>
+                            </div>
+                          ) : (
+                            <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                              <span className="text-[10px] text-[#6A6A6A]">Barcode:</span>
+                              <span className="text-[10px] font-mono text-[#B3B3B3] break-all">{item.barcode}</span>
+                              <button onClick={() => handleEditItemBarcode(idx)}
+                                className="p-1 text-[#6A6A6A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 rounded-full transition-all"
+                                title="Edit barcode">
+                                <Edit className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
                         </div>
+                        <button onClick={() => removeItem(idx)}
+                          className="p-1.5 text-[#6A6A6A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 rounded-full transition-all flex-shrink-0">
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -346,105 +279,92 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
             </div>
           )}
 
-          {/* Step 3: Item Details */}
+          {/* ── STEP 3: Damage Details ── */}
           {currentStep === 3 && (
-            <div className="space-y-4 sm:space-y-6">
-              <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <icons.ClipboardList className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
+                  <ClipboardList className="w-4 h-4 text-white" />
                 </div>
-                <div className="min-w-0">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">Damage Details</h2>
-                  <p className="text-xs sm:text-sm text-gray-500">Provide information for each damaged item</p>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white">Damage Details</h3>
+                  <p className="text-xs text-[#B3B3B3]">Provide information for each damaged item</p>
                 </div>
               </div>
 
-              <div className="space-y-3 sm:space-y-4 max-h-[500px] overflow-y-auto pr-1 sm:pr-2">
+              <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
                 {report.items.map((item, idx) => (
-                  <div key={idx} className="border-2 border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50">
-                    <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0">
+                  <div key={idx} className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
                         {item.item_number}
                       </div>
-                      <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                      <h4 className="font-bold text-white text-sm truncate">
                         {item.material_description || 'Item Details'}
                       </h4>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                      <div className="bg-gray-100 p-3 rounded-lg border border-gray-300">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs font-semibold text-gray-700 mb-1">Scanned Serial Number</p>
-                            <p className="text-sm font-bold text-gray-900 break-all">
-                              {item.barcode || 'No barcode scanned'}
-                            </p>
-                          </div>
-                          <icons.Barcode className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                    <div className="space-y-3">
+                      {/* Barcode display */}
+                      <div className="flex items-center justify-between p-3 bg-[#282828] rounded-lg border border-[#3E3E3E]">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Serial / Barcode</p>
+                          <p className="text-sm font-mono font-semibold text-white break-all">{item.barcode || '—'}</p>
                         </div>
+                        <Barcode className="w-4 h-4 text-[#6A6A6A] flex-shrink-0" />
                       </div>
 
+                      {/* Damage type */}
                       <div>
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
-                          Damage Type <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          value={item.damage_type}
+                        <label className={labelCls}>Damage Type <span className="text-[#E8192C]">*</span></label>
+                        <select value={item.damage_type}
                           onChange={(e) => updateItem(idx, 'damage_type', e.target.value)}
-                          className="w-full px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        >
-                          <option value="">Select type</option>
+                          className={selectCls}>
+                          <option value="">Select damage type</option>
                           {DAMAGE_TYPES.map((type) => (
-                            <option key={type} value={type}>
-                              {type}
-                            </option>
+                            <option key={type} value={type}>{type}</option>
                           ))}
                         </select>
                       </div>
 
+                      {/* Damage description */}
                       <div>
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
-                          Damage Description
-                        </label>
-                        <textarea
-                          value={item.damage_description}
+                        <label className={labelCls}>Damage Description</label>
+                        <textarea value={item.damage_description}
                           onChange={(e) => updateItem(idx, 'damage_description', e.target.value)}
-                          placeholder="Describe the damage..."
+                          placeholder="Describe the damage…"
                           rows={2}
-                          className="w-full px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          className={`${inputCls} resize-none`}
                         />
                       </div>
 
+                      {/* Photo upload */}
                       <div>
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                          <icons.Camera className="w-3 h-3 sm:w-4 sm:h-4" />
-                          Photo Evidence
+                        <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#B3B3B3] mb-1.5">
+                          <Camera className="w-3.5 h-3.5 text-[#E8192C]" /> Photo Evidence
                         </label>
                         <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              if (e.target.files?.[0]) {
-                                handleLocalPhotoUpload(idx, e.target.files[0])
-                              }
-                            }}
+                          <input type="file" accept="image/*"
+                            onChange={(e) => { if (e.target.files?.[0]) handleLocalPhotoUpload(idx, e.target.files[0]) }}
                             disabled={uploadingItemIndex === idx}
-                            className="flex-1 px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg text-xs sm:text-sm file:mr-2 sm:file:mr-4 file:py-1 file:px-2 sm:file:px-3 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-                          />
+                            className="flex-1 text-xs text-[#B3B3B3] bg-[#282828] border border-[#3E3E3E] rounded-xl px-3 py-2.5
+                              file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0
+                              file:text-xs file:font-bold file:bg-[#E8192C] file:text-white
+                              hover:file:bg-[#FF1F30] transition-all cursor-pointer" />
                           {item.photo_url && (
-                            <a
-                              href={item.photo_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full sm:w-auto px-3 py-2 bg-orange-600 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-orange-700 transition-colors text-center"
-                            >
-                              View
+                            <a href={item.photo_url} target="_blank" rel="noopener noreferrer"
+                              className="w-full sm:w-auto px-4 py-2 bg-[#282828] border border-[#3E3E3E] text-white rounded-full text-xs font-bold hover:border-white transition-all text-center flex-shrink-0">
+                              View Photo
                             </a>
                           )}
                         </div>
                         {uploadingItemIndex === idx && (
-                          <p className="text-xs text-orange-600 mt-2 font-medium">Uploading...</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <div className="w-3 h-3 rounded-full border-2 border-[#E8192C] border-t-transparent animate-spin" />
+                            <p className="text-xs text-[#E8192C] font-semibold">Uploading…</p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -454,195 +374,129 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
             </div>
           )}
 
-          {/* Step 4: Review & Save with Personnel Dropdowns */}
+          {/* ── STEP 4: Review & Finalize ── */}
           {currentStep === 4 && (
-            <div className="space-y-4 sm:space-y-6">
-              <div className="flex items-start sm:items-center gap-3 mb-4 sm:mb-6">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <icons.Users className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
+                  <Users className="w-4 h-4 text-white" />
                 </div>
-                <div className="min-w-0">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">Review & Finalize</h2>
-                  <p className="text-xs sm:text-sm text-gray-500">Add final notes and signatures</p>
-                </div>
-              </div>
-
-              <div className="space-y-3 sm:space-y-4">
-                {/* Personnel Dropdowns */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                  {/* Admin Dropdown */}
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                      Prepared By (Admin) <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={selectedPersonnel.admin}
-                      onChange={(e) => handlePersonnelChange('admin', e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    >
-                      <option value="">Select Admin</option>
-                      {personnelData.admins.map((admin) => (
-                        <option key={admin.id} value={admin.id}>
-                          {admin.name}
-                        </option>
-                      ))}
-                    </select>
-                    {selectedPersonnel.admin && (
-                      <p className="text-xs text-green-600 mt-1 font-medium">
-                        Selected: {personnelData.admins.find(a => a.id === selectedPersonnel.admin)?.name}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Guard Dropdown */}
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                      Noted By (Guard) <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={selectedPersonnel.guard}
-                      onChange={(e) => handlePersonnelChange('guard', e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    >
-                      <option value="">Select Guard</option>
-                      {personnelData.guards.map((guard) => (
-                        <option key={guard.id} value={guard.id}>
-                          {guard.name}
-                        </option>
-                      ))}
-                    </select>
-                    {selectedPersonnel.guard && (
-                      <p className="text-xs text-green-600 mt-1 font-medium">
-                        Selected: {personnelData.guards.find(g => g.id === selectedPersonnel.guard)?.name}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Supervisor Dropdown */}
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                      Acknowledged By (Supervisor) <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={selectedPersonnel.supervisor}
-                      onChange={(e) => handlePersonnelChange('supervisor', e.target.value)}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    >
-                      <option value="">Select Supervisor</option>
-                      {personnelData.supervisors.map((supervisor) => (
-                        <option key={supervisor.id} value={supervisor.id}>
-                          {supervisor.name}
-                        </option>
-                      ))}
-                    </select>
-                    {selectedPersonnel.supervisor && (
-                      <p className="text-xs text-green-600 mt-1 font-medium">
-                        Selected: {personnelData.supervisors.find(s => s.id === selectedPersonnel.supervisor)?.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                    Narrative Findings
-                  </label>
-                  <textarea
-                    value={report.narrative_findings}
-                    onChange={(e) => setReport({ ...report, narrative_findings: e.target.value })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                    placeholder="Describe what happened and what was found..."
-                    rows={3}
-                  />
+                  <h3 className="text-sm sm:text-base font-black text-white">Review & Finalize</h3>
+                  <p className="text-xs text-[#B3B3B3]">Add final notes and personnel signatures</p>
                 </div>
+              </div>
 
-                {/* Summary */}
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 sm:p-4 mt-4 sm:mt-6">
-                  <h3 className="font-bold text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Report Summary</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                    <div className="flex justify-between sm:flex-col sm:gap-1">
-                      <span className="text-gray-600 font-medium">Driver:</span>
-                      <span className="font-semibold text-gray-900">{report.driver_name || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between sm:flex-col sm:gap-1">
-                      <span className="text-gray-600 font-medium">Plate No:</span>
-                      <span className="font-semibold text-gray-900">{report.plate_no || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between sm:flex-col sm:gap-1">
-                      <span className="text-gray-600 font-medium">Prepared By:</span>
-                      <span className="font-semibold text-gray-900">
-                        {report.prepared_by || 'Not selected'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between sm:flex-col sm:gap-1">
-                      <span className="text-gray-600 font-medium">Total Items:</span>
-                      <span className="font-semibold text-gray-900">{report.items?.length || 0}</span>
-                    </div>
+              {/* Personnel selects */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                {[
+                  { role: 'admin' as const, label: 'Prepared By (Admin)', list: personnelData.admins },
+                  { role: 'guard' as const, label: 'Noted By (Guard)', list: personnelData.guards },
+                  { role: 'supervisor' as const, label: 'Acknowledged By (Supervisor)', list: personnelData.supervisors },
+                ].map(({ role, label, list }) => (
+                  <div key={role}>
+                    <label className={labelCls}>{label} <span className="text-[#E8192C]">*</span></label>
+                    <select value={selectedPersonnel[role]}
+                      onChange={(e) => handlePersonnelChange(role, e.target.value)}
+                      className={selectCls}>
+                      <option value="">Select {role}</option>
+                      {list.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                    {selectedPersonnel[role] && (
+                      <p className="text-[10px] text-green-400 font-semibold mt-1 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                        {list.find(p => p.id === selectedPersonnel[role])?.name}
+                      </p>
+                    )}
                   </div>
+                ))}
+              </div>
+
+              {/* Narrative findings */}
+              <div>
+                <label className={labelCls}>Narrative Findings</label>
+                <textarea value={report.narrative_findings}
+                  onChange={(e) => setReport({ ...report, narrative_findings: e.target.value })}
+                  placeholder="Describe what happened and what was found…"
+                  rows={3}
+                  className={`${inputCls} resize-none`}
+                />
+              </div>
+
+              {/* Summary card */}
+              <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-4">Report Summary</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  {[
+                    ['Driver', report.driver_name || '—'],
+                    ['Plate No.', report.plate_no || '—'],
+                    ['Prepared By', report.prepared_by || 'Not selected'],
+                    ['Total Items', String(report.items?.length || 0)],
+                  ].map(([lbl, val]) => (
+                    <div key={lbl}>
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">{lbl}</p>
+                      <p className="text-xs sm:text-sm font-semibold text-white truncate">{val}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
-        </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t-2 border-gray-200">
-          <button
-            onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as Step)}
-            disabled={currentStep === 1}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold transition-all ${
-              currentStep === 1
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            <icons.ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            Previous
-          </button>
-
-          {currentStep < 4 ? (
+          {/* ── Navigation buttons ── */}
+          <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 pt-5 border-t border-[#282828]">
             <button
-              onClick={() => {
-                if (currentStep === 1 && !canProceedToStep2()) {
-                  showToast('Please fill in all required fields (Driver Name, Plate No.)', 'error')
-                  return
-                }
-                if (currentStep === 2 && !canProceedToStep3()) {
-                  showToast('Please add at least one item', 'error')
-                  return
-                }
-                if (currentStep === 3 && !canProceedToStep4()) {
-                  showToast('Please fill in Damage Type for all items', 'error')
-                  return
-                }
-                setCurrentStep((currentStep + 1) as Step)
-              }}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-all shadow-lg"
+              onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as Step)}
+              disabled={currentStep === 1}
+              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all duration-150 ${
+                currentStep === 1
+                  ? 'bg-[#282828] text-[#6A6A6A] cursor-not-allowed'
+                  : 'border border-[#727272] text-white hover:border-white hover:scale-105 active:scale-100'
+              }`}
             >
-              Next
-              <icons.ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              <ChevronLeft className="w-4 h-4" /> Previous
             </button>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+
+            {currentStep < 4 ? (
               <button
-                onClick={resetForm}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all"
+                onClick={() => {
+                  if (currentStep === 1 && !canProceedToStep2()) {
+                    showToast('Please fill in Driver Name and Plate No.', 'error'); return
+                  }
+                  if (currentStep === 2 && !canProceedToStep3()) {
+                    showToast('Please add at least one item', 'error'); return
+                  }
+                  if (currentStep === 3 && !canProceedToStep4()) {
+                    showToast('Please fill in Damage Type for all items', 'error'); return
+                  }
+                  setCurrentStep((currentStep + 1) as Step)
+                }}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-[#E8192C] text-white font-bold text-sm hover:bg-[#FF1F30] hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/25"
               >
-                <icons.X className="w-4 h-4 sm:w-5 sm:h-5" />
-                Clear
+                Next <ChevronRight className="w-4 h-4" />
               </button>
-              <button
-                onClick={handleLocalSaveReport}
-                disabled={isLoading || !selectedPersonnel.admin || !selectedPersonnel.guard || !selectedPersonnel.supervisor}
-                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-white rounded-lg font-semibold transition-all shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed ${
-                  isEditMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
-                }`}
-              >
-                <icons.Save className="w-4 h-4 sm:w-5 sm:h-5" />
-                {isLoading ? 'Saving...' : isEditMode ? 'Update Report' : 'Save Report'}
-              </button>
-            </div>
-          )}
+            ) : (
+              <div className="flex gap-3 w-full sm:w-auto">
+                <button onClick={resetForm}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-[#727272] text-white rounded-full font-semibold text-sm hover:border-white hover:scale-105 active:scale-100 transition-all">
+                  <X className="w-4 h-4" /> Clear
+                </button>
+                <button onClick={handleLocalSaveReport}
+                  disabled={isLoading || !selectedPersonnel.admin || !selectedPersonnel.guard || !selectedPersonnel.supervisor}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all hover:scale-105 active:scale-100 shadow-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                    isEditMode
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/25'
+                      : 'bg-[#E8192C] hover:bg-[#FF1F30] text-white shadow-[#E8192C]/25'
+                  }`}>
+                  <Save className="w-4 h-4" />
+                  {isLoading ? 'Saving…' : isEditMode ? 'Update' : 'Save'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

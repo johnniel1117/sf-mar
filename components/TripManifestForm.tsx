@@ -347,14 +347,11 @@ export default function TripManifestForm() {
 
         {/* Brand */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}
-          >
-            <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2} />
-          </div>
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center">
+              <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
+            </div>
           <div className="hidden sm:block">
-            <p className="text-[9px] uppercase tracking-widest font-bold text-[#6A6A6A] leading-none mb-0.5">SF Express</p>
+            <p className="text-[9px] uppercase tracking-widest font-bold text-white leading-none mb-0.5">SF Express</p>
             <h1 className="text-white text-sm font-black leading-none">Trip Manifest</h1>
           </div>
           <div className="sm:hidden">

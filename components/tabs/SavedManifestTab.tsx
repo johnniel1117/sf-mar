@@ -411,7 +411,7 @@ export function SavedManifestsTab({
               <FileText className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
             </div>
             <div>
-              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#B3B3B3] mb-0.5">Playlist</p>
+              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#B3B3B3] mb-0.5">View</p>
               <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Saved Reports</h3>
               <p className="text-xs text-[#B3B3B3] mt-0.5">
                 SF Express · {savedManifests.length} manifest{savedManifests.length !== 1 ? 's' : ''}
