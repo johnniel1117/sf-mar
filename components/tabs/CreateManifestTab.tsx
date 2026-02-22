@@ -251,7 +251,7 @@ export function CreateManifestTab({
       />
 
       <div className="bg-[#121212] rounded-xl border border-[#282828] shadow-2xl overflow-hidden">
-      
+        {/* ── Playlist-style header ── */}
         <div
           className="px-4 sm:px-6 pt-5 sm:pt-6 pb-5 border-b border-[#282828]"
           style={{ background: 'linear-gradient(180deg, rgba(232,25,44,0.18) 0%, #121212 100%)' }}
@@ -319,13 +319,20 @@ export function CreateManifestTab({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="sm:col-span-2">
                   <label className={labelCls}>Manifest Number</label>
-                  <input
-                    type="text"
-                    value={manifest.manifest_number}
-                    readOnly
-                    className={`${inputCls} opacity-60 cursor-not-allowed`}
-                    placeholder="TM-YYYYMMDD-XXX"
-                  />
+                  <div className="flex items-center gap-3 px-4 py-3 bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl">
+                    {/* Red accent bar */}
+                    <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ background: 'linear-gradient(180deg, #E8192C 0%, #7f0e18 100%)' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] uppercase tracking-widest font-bold text-[#6A6A6A] mb-0.5">Auto-generated</p>
+                      <p className="text-base sm:text-lg font-black text-white tracking-wider tabular-nums truncate">
+                        {manifest.manifest_number || '—'}
+                      </p>
+                    </div>
+                    {/* Lock badge */}
+                    <div className="flex-shrink-0 px-2 py-1 bg-[#282828] border border-[#3E3E3E] rounded-full">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A]">System</span>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className={labelCls}>Manifest Date <span className="text-[#E8192C]">*</span></label>
