@@ -1,5 +1,7 @@
-import { 
-  Truck, Barcode, Save, ChevronRight, ChevronLeft, Trash2, X, 
+'use client'
+
+import {
+  Truck, Barcode, Save, ChevronRight, ChevronLeft, Trash2, X,
   Package, CheckCircle2, AlertCircle, Search, Clock
 } from 'lucide-react'
 import type { TripManifest, ManifestItem } from '@/lib/services/tripManifestService'
@@ -33,27 +35,18 @@ interface CreateManifestTabProps {
 }
 
 interface ManualEntryModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSave: (shipToName: string) => void
-  documentNumber: string
-  quantity: number
+  isOpen: boolean; onClose: () => void; onSave: (shipToName: string) => void
+  documentNumber: string; quantity: number
 }
 
 function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }: ManualEntryModalProps) {
   const [shipToName, setShipToName] = useState('')
 
-  useEffect(() => {
-    if (isOpen) setShipToName('')
-  }, [isOpen])
+  useEffect(() => { if (isOpen) setShipToName('') }, [isOpen])
 
   const handleSave = () => {
-    if (shipToName.trim()) {
-      onSave(shipToName.trim())
-      onClose()
-    }
+    if (shipToName.trim()) { onSave(shipToName.trim()); onClose() }
   }
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') { e.preventDefault(); handleSave() }
     else if (e.key === 'Escape') { onClose() }
@@ -62,56 +55,59 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-        <div className="flex items-start justify-between mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="bg-[#1E1E1E] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-[#3E3E3E]">
+        <div className="flex items-start justify-between mb-5">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-6 h-6 text-orange-600" />
+            <div className="w-10 h-10 rounded-full bg-[#E8192C]/20 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 text-[#E8192C]" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Ship-To Name Required</h3>
-              <p className="text-sm text-gray-500 mt-1">The system could not find a ship-to name for this document</p>
+              <h3 className="text-base font-black text-white">Ship-To Name Required</h3>
+              <p className="text-xs text-[#B3B3B3] mt-0.5">Document not found in system</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={onClose} className="p-1.5 hover:bg-[#3E3E3E] rounded-full transition-colors">
+            <X className="w-4 h-4 text-[#B3B3B3]" />
           </button>
         </div>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="space-y-3">
+
+        <div className="bg-[#282828] rounded-xl p-4 mb-5 border border-[#3E3E3E]">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-xs font-medium text-gray-700">Document Number</p>
-              <p className="text-sm font-semibold text-gray-900">{documentNumber}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Document No.</p>
+              <p className="text-sm font-semibold text-white">{documentNumber}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-700">Quantity</p>
-              <p className="text-sm font-semibold text-orange-600">{quantity}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Quantity</p>
+              <p className="text-sm font-semibold text-[#E8192C]">{quantity}</p>
             </div>
           </div>
         </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Ship-To Name <span className="text-red-500">*</span>
+
+        <div className="mb-5">
+          <label className="block text-xs font-bold uppercase tracking-widest text-[#B3B3B3] mb-2">
+            Ship-To Name <span className="text-[#E8192C]">*</span>
           </label>
           <input
             type="text"
             value={shipToName}
             onChange={(e) => setShipToName(e.target.value.toUpperCase())}
             onKeyDown={handleKeyDown}
-            placeholder="Enter customer or delivery location name..."
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
+            placeholder="Enter customer or delivery location..."
+            className="w-full px-4 py-3 bg-[#282828] border border-[#3E3E3E] text-white rounded-xl focus:ring-2 focus:ring-[#E8192C]/50 focus:border-[#E8192C] transition-all text-sm placeholder-[#6A6A6A] outline-none"
             autoFocus
           />
         </div>
+
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-all">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 border border-[#3E3E3E] text-[#B3B3B3] rounded-full hover:border-white hover:text-white font-semibold text-sm transition-all">
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!shipToName.trim()}
-            className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            className="flex-1 px-4 py-2.5 bg-[#E8192C] text-white rounded-full hover:bg-[#FF1F30] font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-100 shadow-lg shadow-[#E8192C]/25"
           >
             Save & Add
           </button>
@@ -129,6 +125,10 @@ const formatTime12hr = (time: string | undefined): string => {
   const hour12 = hour % 12 === 0 ? 12 : hour % 12
   return `${hour12}:${minuteStr} ${ampm}`
 }
+
+// ── Shared input class ─────────────────────────────────────────────────────────
+const inputCls = "w-full px-4 py-3 bg-[#282828] border border-[#3E3E3E] text-white rounded-xl focus:ring-2 focus:ring-[#E8192C]/50 focus:border-[#E8192C] outline-none transition-all text-sm placeholder-[#6A6A6A]"
+const labelCls = "block text-[10px] font-bold uppercase tracking-widest text-[#B3B3B3] mb-1.5"
 
 export function CreateManifestTab({
   currentStep, setCurrentStep, manifest, setManifest,
@@ -159,16 +159,14 @@ export function CreateManifestTab({
         try {
           const result = await searchDocument(barcodeInput.trim())
           if (isMountedRef.current) setSearchResults(result)
-        } catch (error) {
-          console.error('Error searching document:', error)
+        } catch {
           if (isMountedRef.current) setSearchResults(null)
         } finally {
           if (isMountedRef.current) {
             setIsSearching(false)
             setTimeout(() => {
-              if (barcodeInputRef.current && document.activeElement !== barcodeInputRef.current) {
+              if (barcodeInputRef.current && document.activeElement !== barcodeInputRef.current)
                 barcodeInputRef.current.focus()
-              }
             }, 0)
           }
         }
@@ -183,7 +181,7 @@ export function CreateManifestTab({
 
   useEffect(() => {
     if (currentStep === 2 && barcodeInputRef.current) {
-      const timer = setTimeout(() => { barcodeInputRef.current?.focus() }, 100)
+      const timer = setTimeout(() => barcodeInputRef.current?.focus(), 100)
       return () => clearTimeout(timer)
     }
   }, [currentStep, searchResults, isSearching])
@@ -193,12 +191,10 @@ export function CreateManifestTab({
       e.preventDefault()
       if (searchResults && searchResults.length === 1) { selectDocument(searchResults[0]); return }
       handleBarcodeInput(e)
-      setSearchResults(null)
-      setBarcodeInput('')
+      setSearchResults(null); setBarcodeInput('')
       requestAnimationFrame(() => { if (barcodeInputRef.current) barcodeInputRef.current.focus() })
     } else if (e.key === 'Escape') {
-      setSearchResults(null)
-      setBarcodeInput('')
+      setSearchResults(null); setBarcodeInput('')
       if (barcodeInputRef.current) barcodeInputRef.current.focus()
     }
   }
@@ -224,7 +220,7 @@ export function CreateManifestTab({
       total_quantity: doc.quantity,
     }
     setManifest({ ...manifest, items: [...manifest.items, newItem] })
-    if (showToast) showToast(`Document ${doc.documentNumber} added successfully`, 'success')
+    if (showToast) showToast(`Document ${doc.documentNumber} added`, 'success')
     setSearchResults(null); setBarcodeInput('')
     requestAnimationFrame(() => { if (barcodeInputRef.current) barcodeInputRef.current.focus() })
   }
@@ -238,20 +234,14 @@ export function CreateManifestTab({
     return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`
   }
 
-  const StepHeader = ({ icon: Icon, title, description }: { icon: typeof Truck; title: string; description: string }) => (
-    <div className="flex items-start gap-3 mb-6">
-      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0">
-        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
-      </div>
-      <div className="min-w-0">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h2>
-        <p className="text-xs sm:text-sm text-gray-500">{description}</p>
-      </div>
-    </div>
-  )
+  const steps = [
+    { number: 1, title: 'Trip Info', icon: Truck },
+    { number: 2, title: 'Scan Docs', icon: Barcode },
+    { number: 3, title: 'Review', icon: Save },
+  ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <ManualEntryModal
         isOpen={showManualEntryModal}
         onClose={() => { setShowManualEntryModal(false); setPendingDocument(null) }}
@@ -260,190 +250,229 @@ export function CreateManifestTab({
         quantity={pendingDocument?.quantity || 0}
       />
 
-      <div className="bg-white rounded-xl p-3 sm:p-6 border border-gray-200">
-        <div className="flex items-center justify-between gap-2 mb-8">
-          {[
-            { number: 1, title: 'Vehicle & Trip Info', icon: Truck },
-            { number: 2, title: 'Scan Documents', icon: Barcode },
-            { number: 3, title: 'Review & Finalize', icon: Save },
-          ].map((step, index) => {
-            const isActive = currentStep === step.number
-            const isCompleted = currentStep > step.number
-            const Icon = step.icon
-            return (
-              <React.Fragment key={step.number}>
-                <div className="flex flex-col items-center flex-1">
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${
-                    isActive ? 'bg-orange-600 text-white scale-110' : isCompleted ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {isCompleted ? <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <Icon className="w-5 h-5 sm:w-6 sm:h-6" />}
+      <div className="bg-[#121212] rounded-xl border border-[#282828] shadow-2xl overflow-hidden">
+      
+        <div
+          className="px-4 sm:px-6 pt-5 sm:pt-6 pb-5 border-b border-[#282828]"
+          style={{ background: 'linear-gradient(180deg, rgba(232,25,44,0.18) 0%, #121212 100%)' }}
+        >
+          <div className="flex items-center gap-3 sm:gap-4 mb-5">
+            <div
+              className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg shadow-xl flex-shrink-0 flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}
+            >
+              <Truck className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+            </div>
+            <div>
+              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#B3B3B3] mb-0.5">
+                {isEditMode ? 'Editing' : 'New'}
+              </p>
+              <h2 className="text-lg sm:text-xl font-black text-white leading-tight">
+                {isEditMode ? 'Edit Manifest' : 'Create Manifest'}
+              </h2>
+              <p className="text-xs text-[#B3B3B3] mt-0.5">SF Express Warehouse</p>
+            </div>
+          </div>
+
+          {/* ── Step indicator — Spotify tracklist style ── */}
+          <div className="flex items-center gap-0">
+            {steps.map((step, index) => {
+              const isActive = currentStep === step.number
+              const isCompleted = currentStep > step.number
+              const Icon = step.icon
+              return (
+                <React.Fragment key={step.number}>
+                  <div className="flex flex-col items-center flex-1">
+                    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      isActive
+                        ? 'bg-[#E8192C] text-white shadow-lg shadow-[#E8192C]/40 scale-110'
+                        : isCompleted
+                        ? 'bg-[#E8192C]/20 text-[#E8192C] border border-[#E8192C]/40'
+                        : 'bg-[#282828] text-[#6A6A6A] border border-[#3E3E3E]'
+                    }`}>
+                      {isCompleted
+                        ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                        : <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      }
+                    </div>
+                    <p className={`text-[10px] sm:text-xs font-bold mt-1.5 text-center ${
+                      isActive ? 'text-white' : isCompleted ? 'text-[#E8192C]' : 'text-[#6A6A6A]'
+                    }`}>{step.title}</p>
                   </div>
-                  <p className={`text-xs sm:text-sm font-semibold mt-2 text-center ${
-                    isActive ? 'text-orange-600' : isCompleted ? 'text-green-600' : 'text-gray-600'
-                  }`}>{step.title}</p>
-                </div>
-                {index < 2 && (
-                  <div className="flex items-center" style={{ marginTop: '-28px', flex: '0 0 auto', width: '60px' }}>
-                    <div className={`h-1 w-full transition-all duration-300 ${isCompleted ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  </div>
-                )}
-              </React.Fragment>
-            )
-          })}
+                  {index < 2 && (
+                    <div className="flex-shrink-0 mx-1 sm:mx-2" style={{ marginBottom: '22px' }}>
+                      <div className={`h-0.5 w-8 sm:w-12 rounded-full transition-all duration-300 ${isCompleted ? 'bg-[#E8192C]' : 'bg-[#3E3E3E]'}`} />
+                    </div>
+                  )}
+                </React.Fragment>
+              )
+            })}
+          </div>
         </div>
 
-        <div className="mt-8 space-y-8">
+        {/* ── Step Content ── */}
+        <div className="p-4 sm:p-6">
+
+          {/* STEP 1 — Vehicle & Trip Info */}
           {currentStep === 1 && (
-            <div className="space-y-6">
-              <StepHeader icon={Truck} title="Vehicle & Trip Information" description="Enter the truck, driver, and trip timing details" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Manifest Number <span className="text-red-500">*</span>
-                  </label>
+                  <label className={labelCls}>Manifest Number</label>
                   <input
                     type="text"
                     value={manifest.manifest_number}
-                    onChange={(e) => !isEditMode && setManifest({ ...manifest, manifest_number: e.target.value.toUpperCase() })}
-                    className={`w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm ${
-                      isEditMode ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''
-                    }`}
-                    placeholder="TM-YYYYMMDD-XXX"
                     readOnly
-                    required
+                    className={`${inputCls} opacity-60 cursor-not-allowed`}
+                    placeholder="TM-YYYYMMDD-XXX"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Manifest Date <span className="text-red-500">*</span></label>
+                  <label className={labelCls}>Manifest Date <span className="text-[#E8192C]">*</span></label>
                   <input type="date" value={manifest.manifest_date}
                     onChange={(e) => setManifest({ ...manifest, manifest_date: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm" required />
+                    className={inputCls} required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time Start <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                    <input type="time" value={manifest.time_start || ''}
-                      onChange={(e) => setManifest({ ...manifest, time_start: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm" required />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time End</label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                    <input type="time" value={manifest.time_end || ''}
-                      onChange={(e) => setManifest({ ...manifest, time_end: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Trucker <span className="text-red-500">*</span></label>
+                  <label className={labelCls}>Trucker <span className="text-[#E8192C]">*</span></label>
                   <input type="text" value={manifest.trucker}
                     onChange={(e) => setManifest({ ...manifest, trucker: e.target.value.toUpperCase() })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    placeholder="ACCLI, SF EXPRESS, SUYLI" required />
+                    className={inputCls} placeholder="ACCLI, SF EXPRESS, SUYLI" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Driver Name <span className="text-red-500">*</span></label>
+                  <label className={labelCls}>Driver Name <span className="text-[#E8192C]">*</span></label>
                   <input type="text" value={manifest.driver_name}
                     onChange={(e) => setManifest({ ...manifest, driver_name: e.target.value.toUpperCase() })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    placeholder="Driver's name" required />
+                    className={inputCls} placeholder="Driver's full name" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Plate No. <span className="text-red-500">*</span></label>
+                  <label className={labelCls}>Plate No. <span className="text-[#E8192C]">*</span></label>
                   <input type="text" value={manifest.plate_no}
                     onChange={(e) => setManifest({ ...manifest, plate_no: e.target.value.toUpperCase() })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm uppercase"
-                    placeholder="e.g., ABC-1234" required />
+                    className={inputCls} placeholder="e.g., ABC-1234" required />
+                </div>
+                <div>
+                  <label className={labelCls}>Time Start <span className="text-[#E8192C]">*</span></label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6A6A6A] pointer-events-none" />
+                    <input type="time" value={manifest.time_start || ''}
+                      onChange={(e) => setManifest({ ...manifest, time_start: e.target.value })}
+                      className={`${inputCls} pl-10`} required />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>Time End</label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6A6A6A] pointer-events-none" />
+                    <input type="time" value={manifest.time_end || ''}
+                      onChange={(e) => setManifest({ ...manifest, time_end: e.target.value })}
+                      className={`${inputCls} pl-10`} />
+                  </div>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Truck Type</label>
+                  <label className={labelCls}>Truck Type</label>
                   <input type="text" value={manifest.truck_type}
                     onChange={(e) => setManifest({ ...manifest, truck_type: e.target.value.toUpperCase() })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-sm"
-                    placeholder="E.G., 10W - 6W" />
+                    className={inputCls} placeholder="E.G., 10W - 6W" />
                 </div>
               </div>
             </div>
           )}
 
+          {/* STEP 2 — Scan Documents */}
           {currentStep === 2 && (
-            <div className="space-y-6">
-              <StepHeader icon={Barcode} title="Scan Documents" description="Scan or manually enter DN/TRA numbers" />
-              <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-4 sm:p-6 text-white">
-                <label className="block text-base font-semibold mb-3 flex items-center gap-2">
-                  <Search className="w-5 h-5" /> Document Search
+            <div className="space-y-5">
+              {/* Search box */}
+              <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
+                <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#B3B3B3] mb-3">
+                  <Search className="w-3.5 h-3.5 text-[#E8192C]" /> Document Search
                 </label>
-                <input
-                  ref={barcodeInputRef}
-                  type="text"
-                  value={barcodeInput}
-                  onChange={(e) => setBarcodeInput(e.target.value.toUpperCase())}
-                  onKeyDown={handleSearchInputKeyDown}
-                  placeholder="Enter DN / TRA number and press Enter..."
-                  className="w-full px-4 py-3 bg-white text-gray-900 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-orange-300 transition-all"
-                  disabled={scanningDocument} inputMode="search" autoFocus autoComplete="off"
-                />
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6A6A6A]" />
+                  <input
+                    ref={barcodeInputRef}
+                    type="text"
+                    value={barcodeInput}
+                    onChange={(e) => setBarcodeInput(e.target.value.toUpperCase())}
+                    onKeyDown={handleSearchInputKeyDown}
+                    placeholder="Enter DN / TRA number and press Enter…"
+                    className={`${inputCls} pl-10`}
+                    disabled={scanningDocument}
+                    inputMode="search" autoComplete="off"
+                  />
+                </div>
+
                 {isSearching && barcodeInput.trim().length >= 1 && (
-                  <div className="mt-3 p-3 bg-white bg-opacity-20 rounded-lg flex items-center gap-2 text-sm">
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" /> Searching...
+                  <div className="mt-3 p-3 bg-[#282828] rounded-xl flex items-center gap-2 text-sm text-[#B3B3B3] border border-[#3E3E3E]">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#E8192C] border-t-transparent" />
+                    Searching…
                   </div>
                 )}
+
                 {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length > 0 && (
-                  <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                  <div className="mt-3 space-y-1.5 max-h-64 overflow-y-auto">
                     {searchResults.map((result, idx) => (
                       <button key={idx} onClick={() => selectDocument(result)} type="button"
-                        className="w-full p-3 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-lg flex items-start gap-2 text-left transition-all shadow-sm hover:shadow-md">
-                        <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5 text-green-600" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-gray-900">{result.documentNumber}</p>
-                          <p className="text-sm text-gray-600 mt-1 truncate">{result.shipToName} • Qty: {result.quantity}</p>
-                        </div>
+                        className="w-full text-left p-3 rounded-xl bg-[#282828] hover:bg-[#3E3E3E] transition-colors border border-[#3E3E3E] hover:border-[#E8192C]/40 group"
+                      >
+                        <div className="font-bold text-white text-sm group-hover:text-[#E8192C] transition-colors">{result.documentNumber}</div>
+                        <div className="text-xs text-[#B3B3B3] mt-0.5">{result.shipToName}</div>
+                        <div className="text-xs text-[#6A6A6A] mt-0.5">Qty: <span className="font-bold text-[#E8192C]">{result.quantity}</span></div>
                       </button>
                     ))}
                   </div>
                 )}
+
                 {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length === 0 && (
-                  <div className="mt-3 p-3 bg-red-500 bg-opacity-20 border border-red-300 rounded-lg flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <div className="mt-3 p-3 bg-[#282828] border border-[#3E3E3E] rounded-xl flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-[#E8192C] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium text-sm">Not Found</p>
-                      <p className="text-sm mt-1">Press Enter to add "{barcodeInput}" manually</p>
+                      <p className="font-bold text-white text-xs">Not Found</p>
+                      <p className="text-xs text-[#B3B3B3] mt-0.5">Press Enter to add "<span className="text-white">{barcodeInput}</span>" manually</p>
                     </div>
                   </div>
                 )}
               </div>
 
+              {/* Scanned list */}
               <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center justify-between">
-                  <span className="flex items-center gap-2"><Package className="w-5 h-5 text-orange-600" />Scanned Documents ({totalDocuments})</span>
-                  {totalQuantity > 0 && <span className="text-sm text-gray-600">Total Qty: <span className="font-bold text-orange-600">{totalQuantity}</span></span>}
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#B3B3B3]">
+                    <Package className="w-3.5 h-3.5 text-[#E8192C]" />
+                    Scanned ({totalDocuments})
+                  </h3>
+                  {totalQuantity > 0 && (
+                    <span className="text-xs text-[#B3B3B3]">
+                      Total Qty: <span className="font-black text-[#E8192C]">{totalQuantity}</span>
+                    </span>
+                  )}
+                </div>
+
                 {manifest.items.length === 0 ? (
-                  <div className="py-10 text-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 font-medium">No documents added yet</p>
-                    <p className="text-sm text-gray-500 mt-1">Start scanning above</p>
+                  <div className="py-10 text-center bg-[#1E1E1E] rounded-xl border-2 border-dashed border-[#3E3E3E]">
+                    <Package className="w-10 h-10 text-[#3E3E3E] mx-auto mb-3" />
+                    <p className="text-[#6A6A6A] font-semibold text-sm">No documents yet</p>
+                    <p className="text-xs text-[#6A6A6A] mt-1">Scan or type a DN/TRA above</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {manifest.items.map((item, idx) => (
-                      <div key={idx} className="p-4 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-orange-300 transition-all">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">{item.item_number}</div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-900 truncate">{item.ship_to_name}</h4>
-                            <div className="mt-1 grid grid-cols-2 gap-4 text-sm">
-                              <div><p className="text-xs text-gray-600">DN/TRA No.</p><p className="font-medium text-gray-900">{item.document_number}</p></div>
-                              <div><p className="text-xs text-gray-600">Quantity</p><p className="font-bold text-orange-600">{item.total_quantity}</p></div>
-                            </div>
-                          </div>
-                          <button onClick={() => removeItem(idx)} className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors">
-                            <Trash2 className="w-5 h-5" />
-                          </button>
+                      <div key={idx} className="group flex items-center gap-3 p-3 sm:p-4 bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl hover:border-[#E8192C]/30 hover:bg-[#282828] transition-all">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-xs sm:text-sm flex-shrink-0 text-white"
+                          style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
+                          {item.item_number}
                         </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white text-sm truncate group-hover:text-[#E8192C] transition-colors">{item.ship_to_name}</p>
+                          <div className="flex gap-3 mt-0.5">
+                            <span className="text-xs text-[#B3B3B3] truncate">{item.document_number}</span>
+                            <span className="text-xs font-bold text-[#E8192C] flex-shrink-0">×{item.total_quantity}</span>
+                          </div>
+                        </div>
+                        <button onClick={() => removeItem(idx)}
+                          className="p-1.5 text-[#6A6A6A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 rounded-full transition-all flex-shrink-0">
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -452,51 +481,66 @@ export function CreateManifestTab({
             </div>
           )}
 
+          {/* STEP 3 — Review */}
           {currentStep === 3 && (
-            <div className="space-y-6">
-              <StepHeader icon={Save} title="Review & Finalize" description="Check all details before saving" />
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-5">
-                <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-orange-600" /> Trip Information
+            <div className="space-y-4">
+              {/* Trip info summary */}
+              <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
+                <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#B3B3B3] mb-4">
+                  <Truck className="w-3.5 h-3.5 text-[#E8192C]" /> Trip Information
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div><p className="text-xs font-medium text-gray-600">Manifest No.</p><p className="font-semibold text-gray-900">{manifest.manifest_number}</p></div>
-                  <div><p className="text-xs font-medium text-gray-600">Date</p><p className="font-semibold text-gray-900">{manifest.manifest_date}</p></div>
-                  <div><p className="text-xs font-medium text-gray-600">Time Start</p><p className="font-semibold text-gray-900">{formatTime12hr(manifest.time_start)}</p></div>
-                  <div><p className="text-xs font-medium text-gray-600">Time End</p><p className="font-semibold text-gray-900">{formatTime12hr(manifest.time_end)}</p></div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
+                  {[
+                    ['Manifest No.', manifest.manifest_number],
+                    ['Date', manifest.manifest_date],
+                    ['Time Start', formatTime12hr(manifest.time_start)],
+                    ['Time End', formatTime12hr(manifest.time_end)],
+                    ['Driver', manifest.driver_name || '—'],
+                    ['Plate No.', manifest.plate_no || '—'],
+                    ['Trucker', manifest.trucker || '—'],
+                    ['Truck Type', manifest.truck_type || '—'],
+                  ].map(([label, val]) => (
+                    <div key={label}>
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">{label}</p>
+                      <p className="font-semibold text-white text-xs sm:text-sm truncate">{val}</p>
+                    </div>
+                  ))}
                   {manifest.time_start && manifest.time_end && (
-                    <div className="sm:col-span-2"><p className="text-xs font-medium text-gray-600">Duration</p><p className="font-semibold text-emerald-600">{getDuration()}</p></div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Duration</p>
+                      <p className="font-black text-[#E8192C] text-xs sm:text-sm">{getDuration()}</p>
+                    </div>
                   )}
-                  <div><p className="text-xs font-medium text-gray-600">Driver</p><p className="font-semibold text-gray-900">{manifest.driver_name || '—'}</p></div>
-                  <div><p className="text-xs font-medium text-gray-600">Plate No.</p><p className="font-semibold text-gray-900">{manifest.plate_no || '—'}</p></div>
-                  <div><p className="text-xs font-medium text-gray-600">Trucker</p><p className="font-semibold text-gray-900">{manifest.trucker || '—'}</p></div>
-                  <div><p className="text-xs font-medium text-gray-600">Truck Type</p><p className="font-semibold text-gray-900">{manifest.truck_type || '—'}</p></div>
                 </div>
               </div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-5">
+
+              {/* Documents summary */}
+              <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                    <Package className="w-5 h-5 text-orange-600" /> Documents Summary ({totalDocuments})
+                  <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#B3B3B3]">
+                    <Package className="w-3.5 h-3.5 text-[#E8192C]" /> Documents ({totalDocuments})
                   </h3>
-                  <span className="text-sm text-gray-600">Total Qty: <span className="font-bold text-orange-600">{totalQuantity}</span></span>
+                  <span className="text-xs text-[#B3B3B3]">
+                    Qty: <span className="font-black text-[#E8192C]">{totalQuantity}</span>
+                  </span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full">
+                  <table className="w-full text-xs sm:text-sm min-w-[280px]">
                     <thead>
-                      <tr className="border-b-2 border-gray-300">
-                        <th className="py-3 text-left text-sm font-medium text-gray-700">No.</th>
-                        <th className="py-3 text-left text-sm font-medium text-gray-700">Ship To</th>
-                        <th className="py-3 text-left text-sm font-medium text-gray-700">DN/TRA No.</th>
-                        <th className="py-3 text-right text-sm font-medium text-gray-700">Qty</th>
+                      <tr className="border-b border-[#3E3E3E] text-[#6A6A6A] uppercase tracking-widest text-[10px]">
+                        <th className="pb-2.5 text-left font-bold w-8">#</th>
+                        <th className="pb-2.5 text-left font-bold">Ship To</th>
+                        <th className="pb-2.5 text-left font-bold hidden sm:table-cell">DN/TRA</th>
+                        <th className="pb-2.5 text-right font-bold">Qty</th>
                       </tr>
                     </thead>
                     <tbody>
                       {manifest.items.map((item) => (
-                        <tr key={item.item_number} className="border-b border-gray-200 hover:bg-orange-50/50">
-                          <td className="py-3 text-sm font-medium text-gray-900">{item.item_number}</td>
-                          <td className="py-3 text-sm text-gray-900">{item.ship_to_name}</td>
-                          <td className="py-3 text-sm text-gray-900">{item.document_number}</td>
-                          <td className="py-3 text-right font-bold text-orange-600">{item.total_quantity}</td>
+                        <tr key={item.item_number} className="border-b border-[#282828] hover:bg-[#282828] transition-colors group">
+                          <td className="py-2.5 text-[#6A6A6A] font-medium">{item.item_number}</td>
+                          <td className="py-2.5 text-white font-medium group-hover:text-[#E8192C] transition-colors truncate max-w-[120px] sm:max-w-none">{item.ship_to_name}</td>
+                          <td className="py-2.5 text-[#B3B3B3] hidden sm:table-cell">{item.document_number}</td>
+                          <td className="py-2.5 text-right font-black text-[#E8192C]">{item.total_quantity}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -505,46 +549,51 @@ export function CreateManifestTab({
               </div>
             </div>
           )}
-        </div>
 
-        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-10 pt-6 border-t-2 border-gray-200">
-          <button
-            onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
-            disabled={currentStep === 1}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
-              currentStep === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            <ChevronLeft className="w-5 h-5" /> Previous
-          </button>
-
-          {currentStep < 3 ? (
+          {/* ── Navigation buttons ── */}
+          <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 pt-5 border-t border-[#282828]">
             <button
-              onClick={() => {
-                if (currentStep === 1 && !canProceedToStep2()) return
-                if (currentStep === 2 && !canProceedToStep3()) return
-                setCurrentStep((currentStep + 1) as 1 | 2 | 3)
-              }}
-              disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-all shadow-lg"
+              onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
+              disabled={currentStep === 1}
+              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all duration-150 ${
+                currentStep === 1
+                  ? 'bg-[#282828] text-[#6A6A6A] cursor-not-allowed'
+                  : 'border border-[#727272] text-white hover:border-white hover:scale-105 active:scale-100'
+              }`}
             >
-              Next <ChevronRight className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4" /> Previous
             </button>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <button onClick={resetForm}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all">
-                <X className="w-5 h-5" /> Clear
+
+            {currentStep < 3 ? (
+              <button
+                onClick={() => {
+                  if (currentStep === 1 && !canProceedToStep2()) return
+                  if (currentStep === 2 && !canProceedToStep3()) return
+                  setCurrentStep((currentStep + 1) as 1 | 2 | 3)
+                }}
+                disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-[#E8192C] text-white font-bold text-sm hover:bg-[#FF1F30] hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/25 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
+              >
+                Next <ChevronRight className="w-4 h-4" />
               </button>
-              <button onClick={saveManifest} disabled={isLoading}
-                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-white rounded-lg font-semibold transition-all shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed ${
-                  isEditMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
-                }`}>
-                <Save className="w-5 h-5" />
-                {isLoading ? 'Saving...' : isEditMode ? 'Update Manifest' : 'Save Manifest'}
-              </button>
-            </div>
-          )}
+            ) : (
+              <div className="flex gap-3 sm:gap-3 w-full sm:w-auto">
+                <button onClick={resetForm}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-[#727272] text-white rounded-full font-semibold text-sm hover:border-white hover:scale-105 active:scale-100 transition-all duration-150">
+                  <X className="w-4 h-4" /> Clear
+                </button>
+                <button onClick={saveManifest} disabled={isLoading}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-150 hover:scale-105 active:scale-100 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                    isEditMode
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/25'
+                      : 'bg-[#E8192C] hover:bg-[#FF1F30] text-white shadow-[#E8192C]/25'
+                  }`}>
+                  <Save className="w-4 h-4" />
+                  {isLoading ? 'Saving…' : isEditMode ? 'Update' : 'Save'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -65,7 +65,7 @@ export default async function LandingPage() {
         {/* Main Section */}
         <div className="px-4 sm:px-8 py-8 sm:py-12 max-w-[1400px] mx-auto">
           <h1 className="text-white text-3xl sm:text-4xl md:text-5xl font-bold mb-8 sm:mb-12">
-            Good evening
+            Good day
           </h1>
 
           {/* Services Grid - Spotify style */}
