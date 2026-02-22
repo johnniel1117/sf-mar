@@ -31,12 +31,12 @@ export function DownloadModal({
             <h3 className="text-base font-black text-white">Download Report</h3>
             <p className="text-xs text-[#6A6A6A] mt-0.5">Choose your export format</p>
           </div>
-          <button
+          {/* <button
             onClick={onClose}
             className="p-2 rounded-full bg-[#282828] hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white transition-all hover:scale-105 active:scale-100"
           >
             <X className="w-4 h-4" />
-          </button>
+          </button> */}
         </div>
 
         {/* Options */}

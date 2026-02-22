@@ -48,12 +48,12 @@ export function ConfirmationModal({
           <div className="flex-1 min-w-0 pt-1">
             <h2 className="text-sm font-black text-white">{title}</h2>
           </div>
-          <button
+          {/* <button
             onClick={onCancel}
             className="p-1.5 rounded-full bg-[#282828] hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white transition-all flex-shrink-0"
           >
             <X className="w-3.5 h-3.5" />
-          </button>
+          </button> */}
         </div>
 
         <p className="text-sm text-[#B3B3B3] leading-relaxed mb-6 pl-14">
