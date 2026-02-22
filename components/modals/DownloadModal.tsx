@@ -1,5 +1,6 @@
 'use client'
-import type React from "react"
+
+import React from 'react'
 import { X, FileText, FileSpreadsheet } from 'lucide-react'
 
 interface DownloadModalProps {
@@ -11,85 +12,78 @@ interface DownloadModalProps {
 }
 
 export function DownloadModal({
-  isOpen,
-  downloadType,
-  onDownloadTypeChange,
-  onConfirm,
-  onClose,
+  isOpen, downloadType, onDownloadTypeChange, onConfirm, onClose,
 }: DownloadModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md w-full animate-scale-in" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl sm:text-2xl font-bold text-gray-800">Choose Download Format</h3>
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-2xl shadow-2xl w-full max-w-sm p-6"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-base font-black text-white">Download Report</h3>
+            <p className="text-xs text-[#6A6A6A] mt-0.5">Choose your export format</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 rounded-full bg-[#282828] hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white transition-all hover:scale-105 active:scale-100"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="space-y-3 mb-8">
-          {/* PDF Option */}
-          <button
-            onClick={() => onDownloadTypeChange('pdf')}
-            className={`w-full flex items-center gap-4 p-4 sm:p-5 border-2 rounded-xl transition-all duration-300 hover:shadow-md ${
-              downloadType === 'pdf'
-                ? 'border-green-500 bg-gradient-to-r from-green-50 to-green-100'
-                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <div
-              className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                downloadType === 'pdf' ? 'border-green-600' : 'border-gray-300'
-              }`}
-            >
-              {downloadType === 'pdf' && <div className="w-3.5 h-3.5 rounded-full bg-green-600" />}
-            </div>
-            <FileText className={`w-6 h-6 ${downloadType === 'pdf' ? 'text-green-600' : 'text-gray-400'}`} />
-            <div className="text-left flex-1">
-              <p className="font-bold text-gray-800">PDF Document</p>
-              <p className="text-sm text-gray-500 mt-0.5">Print-ready format for signatures</p>
-            </div>
-          </button>
-
-          {/* Excel Option */}
-          <button
-            onClick={() => onDownloadTypeChange('excel')}
-            className={`w-full flex items-center gap-4 p-4 sm:p-5 border-2 rounded-xl transition-all duration-300 hover:shadow-md ${
-              downloadType === 'excel'
-                ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-blue-100'
-                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <div
-              className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                downloadType === 'excel' ? 'border-blue-600' : 'border-gray-300'
-              }`}
-            >
-              {downloadType === 'excel' && <div className="w-3.5 h-3.5 rounded-full bg-blue-600" />}
-            </div>
-            <FileSpreadsheet className={`w-6 h-6 ${downloadType === 'excel' ? 'text-blue-600' : 'text-gray-400'}`} />
-            <div className="text-left flex-1">
-              <p className="font-bold text-gray-800">Excel Spreadsheet</p>
-              <p className="text-sm text-gray-500 mt-0.5">Structured data for analysis</p>
-            </div>
-          </button>
+        {/* Options */}
+        <div className="space-y-2 mb-6">
+          {[
+            { type: 'pdf'   as const, label: 'PDF Document',      desc: 'Print-ready format for signatures', icon: FileText },
+            { type: 'excel' as const, label: 'Excel Spreadsheet',  desc: 'Structured data for analysis',      icon: FileSpreadsheet },
+          ].map(opt => {
+            const active = downloadType === opt.type
+            return (
+              <button
+                key={opt.type}
+                onClick={() => onDownloadTypeChange(opt.type)}
+                className={`w-full flex items-center gap-4 p-4 border rounded-xl transition-all duration-150 text-left ${
+                  active
+                    ? 'border-[#E8192C]/50 bg-[#E8192C]/8'
+                    : 'border-[#3E3E3E] hover:border-[#E8192C]/30 hover:bg-[#282828]'
+                }`}
+              >
+                {/* Radio dot */}
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                  active ? 'border-[#E8192C]' : 'border-[#6A6A6A]'
+                }`}>
+                  {active && <div className="w-2.5 h-2.5 rounded-full bg-[#E8192C]" />}
+                </div>
+                <opt.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-[#E8192C]' : 'text-[#6A6A6A]'}`} />
+                <div>
+                  <p className="text-sm font-bold text-white">{opt.label}</p>
+                  <p className="text-xs text-[#6A6A6A]">{opt.desc}</p>
+                </div>
+              </button>
+            )
+          })}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* Actions */}
+        <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition-all"
+            className="flex-1 px-4 py-2.5 border border-[#3E3E3E] text-[#B3B3B3] rounded-full text-sm font-semibold hover:border-white hover:text-white transition-all"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:shadow-lg hover:from-orange-600 hover:to-orange-700 transition-all"
+            className="flex-1 px-4 py-2.5 rounded-full text-white text-sm font-bold hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20 hover:scale-105 active:scale-100"
+            style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}
           >
             Download
           </button>
