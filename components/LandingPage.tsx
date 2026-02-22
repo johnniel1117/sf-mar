@@ -156,7 +156,7 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
             </h1>
           </div>
           <p className="text-[#6A6A6A] text-sm mb-10 sm:mb-14 ml-0.5">
-            Welcome back, <span className="text-[#B3B3B3] font-semibold">{displayName}</span>. Here's your workspace.
+            Welcome back, <span className="text-[#B3B3B3] font-semibold">{displayName}</span>.
           </p>
 
           {/* Services grid */}
