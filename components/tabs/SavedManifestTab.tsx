@@ -263,7 +263,11 @@ export function SavedManifestsTab({
         (manifest.manifest_number || '').toLowerCase().includes(q) ||
         (manifest.driver_name || '').toLowerCase().includes(q) ||
         (manifest.plate_no || '').toLowerCase().includes(q) ||
-        (manifest.trucker || '').toLowerCase().includes(q)
+        (manifest.trucker || '').toLowerCase().includes(q) ||
+        (manifest.items || []).some(item =>
+          (item.document_number || '').toLowerCase().includes(q) ||
+          (item.ship_to_name || '').toLowerCase().includes(q)
+        )
       if (!matchesSearch) return false
       if (selectedMonth === 'All Months') return true
       const date = new Date(manifest.manifest_date || manifest.created_at || '')
@@ -394,6 +398,15 @@ export function SavedManifestsTab({
     })
     XLSX.writeFile(wb,`Manifests-Export-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
+    useEffect(() => {
+      if (!searchQuery) return
+      const hit = filteredManifests.find(m =>
+        (m.items || []).some(i =>
+          (i.document_number || '').toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      )
+      if (hit?.id) setExpandedId(hit.id)
+    }, [searchQuery, filteredManifests])
 
   return (
     <div className="bg-[#121212] rounded-xl border border-[#282828] shadow-2xl overflow-hidden h-full flex flex-col min-h-0">
