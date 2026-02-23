@@ -78,8 +78,9 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
     label: 'Upload Files',
     sub: 'Process data',
     icon: FileSpreadsheet,
-    bg: 'from-red-500/20 to-black-200/90',
+    bg: 'from-black-700/100 to-red-500/10',
     fg: 'text-white',
+    blur: 'blur-[150px]',
     bgImage: '/sf-light.png'
   },
   { 
@@ -87,8 +88,9 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
     label: 'New Trip',
     sub: 'Create manifest',
     icon: Truck,
-    bg: 'from-red-500/20 to-black-200/90',
+    bg: 'from-black-700/100 to-red-500/10',
     fg: 'text-white',
+    blur: 'blur-[150px]',
     bgImage: '/sf-light.png'
   },
   { 
@@ -96,8 +98,9 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
     label: 'Report Issue',
     sub: 'Log damage',
     icon: AlertTriangle,
-    bg: 'from-red-500/20 to-black-200/90',
+    bg: 'from-black-700/100 to-red-500/10',
     fg: 'text-white',
+    blur: 'blur-[150px]',
     bgImage: '/sf-light.png'
   },
 ]
