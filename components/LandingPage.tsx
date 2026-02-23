@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { FileSpreadsheet, AlertTriangle, Truck, LogOut, Sun, Sunset, Moon } from 'lucide-react'
 import { signOut } from '@/lib/actions/auth'
 import LogoGridBackground from './LogoBackground'
+import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
 
-// ── Time-based greeting ────────────────────────────────────────────────────────
 function useGreeting() {
   const [greeting, setGreeting] = useState<{ text: string; icon: React.ReactNode; color: string }>({
     text: 'Good day',
@@ -47,6 +47,7 @@ interface LandingClientProps {
 
 export function LandingClient({ displayName, role }: LandingClientProps) {
   const greeting = useGreeting()
+  const [showSignOutModal, setShowSignOutModal] = useState(false)
 
   const services = [
     {
@@ -72,41 +73,56 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
     },
   ]
 
- const quickLinks = [
-  { 
-    href: '/excel-uploader',
-    label: 'Upload Files',
-    sub: 'Process data',
-    icon: FileSpreadsheet,
-    bg: 'from-black-700/100 to-red-500/10',
-    fg: 'text-white',
-    blur: 'blur-[150px]',
-    bgImage: '/sf-light.png'
-  },
-  { 
-    href: '/trip-manifest',
-    label: 'New Trip',
-    sub: 'Create manifest',
-    icon: Truck,
-    bg: 'from-black-700/100 to-red-500/10',
-    fg: 'text-white',
-    blur: 'blur-[150px]',
-    bgImage: '/sf-light.png'
-  },
-  { 
-    href: '/damage-report',
-    label: 'Report Issue',
-    sub: 'Log damage',
-    icon: AlertTriangle,
-    bg: 'from-black-700/100 to-red-500/10',
-    fg: 'text-white',
-    blur: 'blur-[150px]',
-    bgImage: '/sf-light.png'
-  },
-]
+  const quickLinks = [
+    {
+      href: '/excel-uploader',
+      label: 'Upload Files',
+      sub: 'Process data',
+      icon: FileSpreadsheet,
+      bg: 'from-black-700/100 to-red-500/10',
+      fg: 'text-white',
+      blur: 'blur-[150px]',
+      bgImage: '/sf-light.png',
+    },
+    {
+      href: '/trip-manifest',
+      label: 'New Trip',
+      sub: 'Create manifest',
+      icon: Truck,
+      bg: 'from-black-700/100 to-red-500/10',
+      fg: 'text-white',
+      blur: 'blur-[150px]',
+      bgImage: '/sf-light.png',
+    },
+    {
+      href: '/damage-report',
+      label: 'Report Issue',
+      sub: 'Log damage',
+      icon: AlertTriangle,
+      bg: 'from-black-700/100 to-red-500/10',
+      fg: 'text-white',
+      blur: 'blur-[150px]',
+      bgImage: '/sf-light.png',
+    },
+  ]
+
+  async function handleSignOut() {
+    await signOut()
+  }
 
   return (
     <div className="h-screen bg-black overflow-hidden relative">
+      {/* ── Sign-out confirmation modal ── */}
+      <ConfirmationModal
+        isOpen={showSignOutModal}
+        title="Sign out"
+        message={`You'll be signed out of your account, ${displayName}.`}
+        confirmText="Sign out"
+        cancelText="Cancel"
+        onConfirm={handleSignOut}
+        onCancel={() => setShowSignOutModal(false)}
+      />
+
       {/* ── Fixed background ── */}
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <LogoGridBackground />
@@ -151,16 +167,14 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
               </div>
             </div>
 
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="p-2 sm:p-2.5 rounded-full bg-yellow-500 text-black font-bold
-                         hover:border-white hover:scale-105 transition-all
-                         text-[#6A6A6A] "
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={() => setShowSignOutModal(true)}
+              className="p-2 sm:p-2.5 rounded-full bg-yellow-500 text-black font-bold
+                       hover:border-white hover:scale-105 transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
@@ -192,8 +206,8 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
               <Link key={href} href={href}>
                 <div className="group relative bg-[#1E1E1E] border border-[#282828] rounded-xl p-5 sm:p-6 hover:border-[#3E3E3E] hover:bg-[#282828] transition-all overflow-hidden">
                   <div className="flex items-start gap-4 sm:gap-5 relative z-10">
-                    <div 
-                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}
+                    <div
+                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}
                     >
                       <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" strokeWidth={1.5} />
                     </div>
@@ -203,37 +217,35 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
                     </div>
                   </div>
                   {/* Arrow action button */}
-<div
-  className="
-    absolute bottom-5 right-5
-    w-10 h-10 sm:w-12 sm:h-12
-    rounded-full
-    flex items-center justify-center
-    opacity-0 group-hover:opacity-100
-    translate-y-2 group-hover:translate-y-0
-    transition-all duration-300
-    shadow-2xl
-  "
-  style={{
-    background: 'linear-gradient(135deg, #e8c219, #ffd104)',
-    boxShadow: '0 8px 24px rgba(255, 230, 0, 0.35)',
-  }}
->
-  <svg
-    className="w-5 h-5 sm:w-6 sm:h-6 text-black"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-  </svg>
-</div>
+                  <div
+                    className="
+                      absolute bottom-5 right-5
+                      w-10 h-10 sm:w-12 sm:h-12
+                      rounded-full
+                      flex items-center justify-center
+                      opacity-0 group-hover:opacity-100
+                      translate-y-2 group-hover:translate-y-0
+                      transition-all duration-300
+                      shadow-2xl
+                    "
+                    style={{
+                      background: 'linear-gradient(135deg, #e8c219, #ffd104)',
+                      boxShadow: '0 8px 24px rgba(255, 230, 0, 0.35)',
+                    }}
+                  >
+                    <svg
+                      className="w-5 h-5 sm:w-6 sm:h-6 text-black"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-                
               </Link>
             ))}
-            
           </div>
 
           {/* Quick access */}
@@ -244,39 +256,24 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
                 <Link key={href} href={href}>
                   <div className="group bg-[#1E1E1E] border border-[#282828] rounded-xl p-3 sm:p-4 hover:bg-[#282828] hover:border-[#3E3E3E] transition-all">
                     <div
-  className={`
-    relative
-    aspect-square
-    bg-gradient-to-br ${bg}
-    rounded-xl
-    mb-3 sm:mb-4
-    flex items-center justify-center
-    overflow-hidden
-  `}
-  style={{
-    background: 'linear-gradient(135deg, #2b0004, #000000)',
-    boxShadow: '0 8px 24px rgba(20, 18, 18, 0.35)',
-  }}
->
-  {bgImage && (
-    <img
-      src={bgImage}
-      alt=""
-      className="
-  absolute
-  -right-12 sm:-right-20
-  -bottom-12 sm:-bottom-20
-  w-52 sm:w-80
-  opacity-10
-"
-    />
-  )}
-
-  <Icon
-    className={`relative z-10 w-9 h-9 sm:w-11 sm:h-11 ${fg}`}
-    strokeWidth={1.5}
-  />
-</div>
+                      className={`relative aspect-square bg-gradient-to-br ${bg} rounded-xl mb-3 sm:mb-4 flex items-center justify-center overflow-hidden`}
+                      style={{
+                        background: 'linear-gradient(135deg, #2b0004, #000000)',
+                        boxShadow: '0 8px 24px rgba(20, 18, 18, 0.35)',
+                      }}
+                    >
+                      {bgImage && (
+                        <img
+                          src={bgImage}
+                          alt=""
+                          className="absolute -right-12 sm:-right-20 -bottom-12 sm:-bottom-20 w-52 sm:w-80 opacity-10"
+                        />
+                      )}
+                      <Icon
+                        className={`relative z-10 w-9 h-9 sm:w-11 sm:h-11 ${fg}`}
+                        strokeWidth={1.5}
+                      />
+                    </div>
                     <h3 className="text-white text-xs sm:text-sm font-bold mb-0.5">{label}</h3>
                     <p className="text-[#6A6A6A] text-[10px] sm:text-xs">{sub}</p>
                   </div>
