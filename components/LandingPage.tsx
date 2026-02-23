@@ -154,9 +154,9 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
             <form action={signOut}>
               <button
                 type="submit"
-                className="p-2 sm:p-2.5 rounded-full bg-[#1E1E1E] border border-[#282828]
+                className="p-2 sm:p-2.5 rounded-full bg-yellow-500 text-black font-bold
                          hover:border-white hover:scale-105 transition-all
-                         text-[#6A6A6A] hover:text-white"
+                         text-[#6A6A6A] "
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -215,12 +215,12 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
     shadow-2xl
   "
   style={{
-    background: 'linear-gradient(135deg, #E8192C, #7f0e18)',
-    boxShadow: '0 8px 24px rgba(232,25,44,0.35)',
+    background: 'linear-gradient(135deg, #e8c219, #ffd104)',
+    boxShadow: '0 8px 24px rgba(255, 230, 0, 0.35)',
   }}
 >
   <svg
-    className="w-5 h-5 sm:w-6 sm:h-6 text-white"
+    className="w-5 h-5 sm:w-6 sm:h-6 text-black"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"

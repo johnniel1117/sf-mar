@@ -431,7 +431,7 @@ export function SavedManifestsTab({
             <button
               onClick={handleExportAll}
               disabled={filteredManifests.length === 0}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#E8192C] text-white text-xs font-bold hover:bg-[#FF1F30] hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/25 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-yellow-500 text-black text-xs font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/25 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               <Download className="w-3.5 h-3.5" />
               Export All
