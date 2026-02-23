@@ -253,6 +253,10 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
     flex items-center justify-center
     overflow-hidden
   `}
+  style={{
+    background: 'linear-gradient(135deg, #2b0004, #000000)',
+    boxShadow: '0 8px 24px rgba(20, 18, 18, 0.35)',
+  }}
 >
   {bgImage && (
     <img
