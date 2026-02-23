@@ -60,7 +60,7 @@ function MetaChip({ icon, label, value, highlight }: {
         <span className="text-[#E8192C]">{icon}</span>
         <span className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold">{label}</span>
       </div>
-      <p className={`text-xs sm:text-sm font-semibold truncate ${highlight ? 'text-[#E8192C] font-black' : 'text-white'}`}>
+      <p className={`text-xs sm:text-sm font-semibold truncate ${highlight ? 'text-yellow-500 font-black' : 'text-white'}`}>
         {value}
       </p>
     </div>
@@ -157,7 +157,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
           <div className="flex items-center gap-3 mt-5">
             <button
               onClick={() => { onEdit(manifest); onClose() }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#E8192C] text-white text-sm font-bold hover:bg-[#FF1F30] hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/30"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-yellow-500 text-black text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/30"
             >
               <Edit className="w-4 h-4" /> Edit
             </button>
@@ -233,12 +233,12 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                     </div>
 
                     {/* Mini avatar */}
-                    <div
+                    {/* <div
                       className="w-8 h-8 rounded flex-shrink-0 flex items-center justify-center shadow-md"
                       style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}
                     >
                       <span className="text-[10px] font-black text-white">{idx + 1}</span>
-                    </div>
+                    </div> */}
 
                     {/* Ship to name */}
                     <div className="flex-1 min-w-0">
@@ -253,7 +253,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                     </span>
 
                     {/* Qty */}
-                    <span className="w-10 text-right text-sm font-black text-[#E8192C] flex-shrink-0">
+                    <span className="w-10 text-right text-sm font-black text-white flex-shrink-0">
                       {item.total_quantity ?? 0}
                     </span>
                   </div>
@@ -267,7 +267,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                 <span className="text-xs text-[#6A6A6A] font-semibold uppercase tracking-widest">
                   {totalDocs} document{totalDocs !== 1 ? 's' : ''}
                 </span>
-                <span className="text-xs font-black text-[#E8192C]">
+                <span className="text-xs font-black text-yellow-500">
                   {totalQty} total qty
                 </span>
               </div>

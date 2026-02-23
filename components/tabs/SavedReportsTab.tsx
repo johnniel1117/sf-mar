@@ -150,7 +150,7 @@ function ReportRow({
           {/* Action buttons */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <button onClick={onView}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#E8192C] text-white text-xs sm:text-sm font-bold hover:bg-[#FF1F30] hover:scale-105 active:scale-100 transition-all shadow-lg shadow-[#E8192C]/30">
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-yellow-500 text-black text-xs sm:text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all shadow-lg shadow-[#E8192C]/30">
               <Eye className="w-3.5 h-3.5" /> View
             </button>
             <button onClick={onEdit}

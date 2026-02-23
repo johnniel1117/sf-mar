@@ -151,7 +151,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
           <div className="flex items-center gap-3 mt-5">
             <button
               onClick={() => { onEdit(report); onClose() }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#E8192C] text-white text-sm font-bold hover:bg-[#FF1F30] hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/30"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-yellow-500 text-black text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/30"
             >
               <Edit className="w-4 h-4" /> Edit
             </button>

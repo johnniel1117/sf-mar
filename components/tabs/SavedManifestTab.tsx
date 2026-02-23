@@ -178,7 +178,7 @@ function ManifestRow({
                       <td className="px-3 py-2.5 text-[#6A6A6A]">{idx + 1}</td>
                       <td className="px-3 py-2.5 text-white font-medium truncate max-w-[100px] sm:max-w-none group-hover/row:text-[#E8192C] transition-colors">{item.ship_to_name || '—'}</td>
                       <td className="px-3 py-2.5 font-mono text-[#B3B3B3] hidden sm:table-cell">{item.document_number || '—'}</td>
-                      <td className="px-3 py-2.5 text-right font-bold text-[#E8192C]">{item.total_quantity ?? 0}</td>
+                      <td className="px-3 py-2.5 text-right font-bold text-white">{item.total_quantity ?? 0}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -190,7 +190,7 @@ function ManifestRow({
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
             <button
               onClick={onView}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#E8192C] text-white text-xs sm:text-sm font-bold hover:bg-[#FF1F30] hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/30"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-yellow-500 text-black text-xs sm:text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/30"
             >
               <Eye className="w-3.5 h-3.5" /> View
             </button>
@@ -222,7 +222,7 @@ function DetailItem({ icon, label, value, mono, highlight }: {
         <span className="text-[#E8192C]">{icon}</span>
         <span className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold">{label}</span>
       </div>
-      <p className={`text-xs sm:text-sm truncate ${mono ? 'font-mono' : 'font-semibold'} ${highlight ? 'text-[#E8192C] font-black' : 'text-white'}`}>
+      <p className={`text-xs sm:text-sm truncate ${mono ? 'font-mono' : 'font-semibold'} ${highlight ? 'text-yellow-500 font-black' : 'text-white'}`}>
         {value}
       </p>
     </div>
