@@ -20,19 +20,19 @@ function useGreeting() {
       setGreeting({
         text: 'Good morning',
         icon: <Sun className="w-7 h-7 sm:w-8 sm:h-8 text-yellow-400" strokeWidth={1.5} />,
-        color: 'text-yellow-100',
+        color: 'text-white',
       })
     } else if (h >= 12 && h < 18) {
       setGreeting({
         text: 'Good afternoon',
         icon: <Sunset className="w-7 h-7 sm:w-8 sm:h-8 text-orange-400" strokeWidth={1.5} />,
-        color: 'text-orange-100',
+        color: 'text-white',
       })
     } else {
       setGreeting({
         text: 'Good evening',
         icon: <Moon className="w-7 h-7 sm:w-8 sm:h-8 text-blue-300" strokeWidth={1.5} />,
-        color: 'text-blue-100',
+        color: 'text-white',
       })
     }
   }, [])
@@ -54,29 +54,53 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
       label: 'Serial List',
       desc: 'Upload and process product barcode data',
       icon: FileSpreadsheet,
-      gradient: 'from-blue-500 to-blue-700',
+      gradient: 'from-red-500 to-red-700',
     },
     {
       href: '/trip-manifest',
       label: 'Trip Manifest',
       desc: 'Manage shipment details and delivery logistics',
       icon: Truck,
-      gradient: 'from-emerald-500 to-emerald-700',
+      gradient: 'from-red-500 to-red-700',
     },
     {
       href: '/damage-report',
       label: 'Damage Report',
       desc: 'Document and track damaged products',
       icon: AlertTriangle,
-      gradient: 'from-orange-500 to-orange-700',
+      gradient: 'from-red-500 to-red-700',
     },
   ]
 
-  const quickLinks = [
-    { href: '/excel-uploader', label: 'Upload Files', sub: 'Process data', icon: FileSpreadsheet, bg: 'from-blue-500/20 to-blue-700/20', fg: 'text-blue-400' },
-    { href: '/trip-manifest', label: 'New Trip', sub: 'Create manifest', icon: Truck, bg: 'from-emerald-500/20 to-emerald-700/20', fg: 'text-emerald-400' },
-    { href: '/damage-report', label: 'Report Issue', sub: 'Log damage', icon: AlertTriangle, bg: 'from-orange-500/20 to-orange-700/20', fg: 'text-orange-400' },
-  ]
+ const quickLinks = [
+  { 
+    href: '/excel-uploader',
+    label: 'Upload Files',
+    sub: 'Process data',
+    icon: FileSpreadsheet,
+    bg: 'from-red-500/20 to-black-200/90',
+    fg: 'text-white',
+    bgImage: '/sf-light.png'
+  },
+  { 
+    href: '/trip-manifest',
+    label: 'New Trip',
+    sub: 'Create manifest',
+    icon: Truck,
+    bg: 'from-red-500/20 to-black-200/90',
+    fg: 'text-white',
+    bgImage: '/sf-light.png'
+  },
+  { 
+    href: '/damage-report',
+    label: 'Report Issue',
+    sub: 'Log damage',
+    icon: AlertTriangle,
+    bg: 'from-red-500/20 to-black-200/90',
+    fg: 'text-white',
+    bgImage: '/sf-light.png'
+  },
+]
 
   return (
     <div className="h-screen bg-black overflow-hidden relative">
@@ -165,7 +189,9 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
               <Link key={href} href={href}>
                 <div className="group relative bg-[#1E1E1E] border border-[#282828] rounded-xl p-5 sm:p-6 hover:border-[#3E3E3E] hover:bg-[#282828] transition-all overflow-hidden">
                   <div className="flex items-start gap-4 sm:gap-5 relative z-10">
-                    <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                    <div 
+                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}
+                    >
                       <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 pt-1">
@@ -211,12 +237,39 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
           <div className="mt-12 sm:mt-14">
             <h2 className="text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A] mb-4">Quick access</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              {quickLinks.map(({ href, label, sub, icon: Icon, bg, fg }) => (
+              {quickLinks.map(({ href, label, sub, icon: Icon, bg, fg, bgImage }) => (
                 <Link key={href} href={href}>
                   <div className="group bg-[#1E1E1E] border border-[#282828] rounded-xl p-3 sm:p-4 hover:bg-[#282828] hover:border-[#3E3E3E] transition-all">
-                    <div className={`aspect-square bg-gradient-to-br ${bg} rounded-xl mb-3 sm:mb-4 flex items-center justify-center`}>
-                      <Icon className={`w-9 h-9 sm:w-11 sm:h-11 ${fg}`} strokeWidth={1.5} />
-                    </div>
+                    <div
+  className={`
+    relative
+    aspect-square
+    bg-gradient-to-br ${bg}
+    rounded-xl
+    mb-3 sm:mb-4
+    flex items-center justify-center
+    overflow-hidden
+  `}
+>
+  {bgImage && (
+    <img
+      src={bgImage}
+      alt=""
+      className="
+  absolute
+  -right-12 sm:-right-20
+  -bottom-12 sm:-bottom-20
+  w-52 sm:w-80
+  opacity-10
+"
+    />
+  )}
+
+  <Icon
+    className={`relative z-10 w-9 h-9 sm:w-11 sm:h-11 ${fg}`}
+    strokeWidth={1.5}
+  />
+</div>
                     <h3 className="text-white text-xs sm:text-sm font-bold mb-0.5">{label}</h3>
                     <p className="text-[#6A6A6A] text-[10px] sm:text-xs">{sub}</p>
                   </div>

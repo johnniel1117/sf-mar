@@ -406,7 +406,7 @@ export function SavedManifestsTab({
           <div className="flex items-center gap-3 sm:gap-4">
             <div
               className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg shadow-xl flex-shrink-0 flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}
+              // style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}
             >
               <FileText className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
             </div>
