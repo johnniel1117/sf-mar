@@ -398,6 +398,7 @@ export function SavedManifestsTab({
     })
     XLSX.writeFile(wb,`Manifests-Export-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
+
     useEffect(() => {
       if (!searchQuery) return
       const hit = filteredManifests.find(m =>
