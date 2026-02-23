@@ -329,8 +329,8 @@ export function CreateManifestTab({
                       </p>
                     </div>
                     {/* Lock badge */}
-                    <div className="flex-shrink-0 px-2 py-1 bg-[#282828] border border-[#3E3E3E] rounded-full">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A]">System</span>
+                    <div className="flex-shrink-0 px-2 py-1 bg-yellow-500 border border-[#3E3E3E] rounded-full">
+                      <span className="text-[10px] font-bold uppercase tracking-widest ">System</span>
                     </div>
                   </div>
                 </div>
