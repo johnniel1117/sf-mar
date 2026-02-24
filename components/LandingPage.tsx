@@ -127,9 +127,9 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <LogoGridBackground />
       </div>
-      <div className="fixed inset-0 bg-gradient-to-br from-red-950/40 via-black to-black pointer-events-none" />
-      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-red-800/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-black-950/40 via-black to-black pointer-events-none" />
+      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-black-600/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-black-800/5 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── Foreground ── */}
       <div className="relative z-10 h-full flex flex-col">
@@ -205,7 +205,7 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
   {services.map(({ href, label, desc, icon: Icon, gradient }, i) => (
     <Link key={href} href={href}>
       <div
-        className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-500  p-5 sm:p-6  cursor-pointer"
+        className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-500  p-5 sm:p-10  cursor-pointer"
         style={{ animationDelay: `${i * 60}ms` }}
       >
         {/* Ambient glow on hover */}
@@ -284,7 +284,7 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
                 </Link>
               ))}
 
-              {/* Coming soon */}
+              
               <div className="group bg-[#1E1E1E] border border-[#282828] rounded-xl p-3 sm:p-4 cursor-not-allowed opacity-50">
                 <div className="aspect-square bg-gradient-to-br from-[#282828] to-[#1E1E1E] rounded-xl mb-3 sm:mb-4 flex items-center justify-center border border-[#3E3E3E] border-dashed">
                   <span className="text-[#6A6A6A] text-2xl font-black">+</span>
