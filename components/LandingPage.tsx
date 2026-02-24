@@ -53,14 +53,14 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
     {
       href: '/excel-uploader',
       label: 'Serial List',
-      desc: 'Upload and process product barcode data',
+      desc: 'Upload and process barcode data',
       icon: FileSpreadsheet,
       gradient: 'from-red-500 to-red-700',
     },
     {
       href: '/trip-manifest',
       label: 'Trip Manifest',
-      desc: 'Manage shipment details and delivery logistics',
+      desc: 'Manage shipment details',
       icon: Truck,
       gradient: 'from-red-500 to-red-700',
     },
@@ -219,8 +219,8 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
                   {/* Arrow action button */}
                   <div
                     className="
-                      absolute top-1/2 right-5 -translate-y-1/2
-                      w-10 h-10 sm:w-12 sm:h-12
+                      absolute top-5 right-5 -translate-y-1/2
+                      w-10 h-10 sm:w-10 sm:h-10
                       rounded-full
                       flex items-center justify-center
                       opacity-0 group-hover:opacity-100
