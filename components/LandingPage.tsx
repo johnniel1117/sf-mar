@@ -219,7 +219,7 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
                   {/* Arrow action button */}
                   <div
                     className="
-                      absolute bottom-5 right-5
+                      absolute top-1/2 right-5 -translate-y-1/2
                       w-10 h-10 sm:w-12 sm:h-12
                       rounded-full
                       flex items-center justify-center
