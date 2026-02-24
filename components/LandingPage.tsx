@@ -127,9 +127,9 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <LogoGridBackground />
       </div>
-      <div className="fixed inset-0 bg-gradient-to-br from-black-950/40 via-black to-black pointer-events-none" />
-      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-black-600/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-black-800/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-red-950/40 via-black to-black pointer-events-none" />
+      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-red-800/5 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── Foreground ── */}
       <div className="relative z-10 h-full flex flex-col">
@@ -204,49 +204,39 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
   {services.map(({ href, label, desc, icon: Icon, gradient }, i) => (
     <Link key={href} href={href}>
-      <div
-        className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-500  p-5 sm:p-10  cursor-pointer"
-        style={{ animationDelay: `${i * 60}ms` }}
-      >
-        {/* Ambient glow on hover */}
-        <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${gradient} blur-3xl scale-150`} style={{ opacity: 0 }} />
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500 bg-gradient-to-br from-white to-transparent" />
+      <div className="group relative overflow-hidden rounded-2xl bg-[#141414] border border-[#242424] hover:border-[#333] transition-all duration-300 cursor-pointer h-full">
 
-        <div className="relative z-10 p-5 sm:p-6">
-          {/* Top row: icon + arrow */}
-          <div className="flex items-start justify-between mb-5">
-            <div
-              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}
-            >
-              <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={1.5} />
+        {/* Subtle gradient top bar */}
+        <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${gradient} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
+
+        <div className="p-6 flex flex-col gap-4">
+          {/* Header: icon + arrow */}
+          <div className="flex items-center justify-between">
+            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0`}>
+              <Icon className="w-5 h-5 text-white" strokeWidth={1.5} />
             </div>
 
             <div
-              className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300"
-              style={{
-                background: 'linear-gradient(135deg, #e8c219, #ffd104)',
-                boxShadow: '0 4px 16px rgba(255, 209, 4, 0.4)',
-              }}
+              className="w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-200"
+              style={{ background: 'linear-gradient(135deg, #e8c219, #ffd104)' }}
             >
-              <svg className="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M7 7h10v10" />
               </svg>
             </div>
           </div>
 
-          {/* Text */}
-          <div>
-            <h3 className="text-white/90 text-sm sm:text-[15px] font-semibold tracking-tight mb-1.5 group-hover:text-white transition-colors duration-300">
+          {/* Text content */}
+          <div className="flex flex-col gap-1.5">
+            <h3 className="text-white font-semibold text-[15px] leading-snug tracking-tight">
               {label}
             </h3>
-            <p className="text-white/30 text-xs sm:text-[13px] leading-relaxed group-hover:text-white/40 transition-colors duration-300">
+            <p className="text-[#666] text-[13px] leading-relaxed">
               {desc}
             </p>
           </div>
-
-          {/* Bottom line accent */}
-          <div className={`absolute bottom-0 left-0 h-[2px] w-0 group-hover:w-full bg-gradient-to-r ${gradient} transition-all duration-500 ease-out`} />
         </div>
+
       </div>
     </Link>
   ))}
@@ -284,7 +274,7 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
                 </Link>
               ))}
 
-              
+              {/* Coming soon */}
               <div className="group bg-[#1E1E1E] border border-[#282828] rounded-xl p-3 sm:p-4 cursor-not-allowed opacity-50">
                 <div className="aspect-square bg-gradient-to-br from-[#282828] to-[#1E1E1E] rounded-xl mb-3 sm:mb-4 flex items-center justify-center border border-[#3E3E3E] border-dashed">
                   <span className="text-[#6A6A6A] text-2xl font-black">+</span>
