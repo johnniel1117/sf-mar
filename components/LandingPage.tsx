@@ -229,7 +229,7 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
                       shadow-2xl
                     "
                     style={{
-                      background: 'linear-gradient(135deg, #e8c219, #ffd104)',
+                      background: 'linear-gradient(135deg, #e8c219, #ffbc04)',
                       boxShadow: '0 8px 24px rgba(255, 230, 0, 0.35)',
                     }}
                   >
