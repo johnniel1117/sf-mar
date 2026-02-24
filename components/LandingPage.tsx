@@ -202,45 +202,51 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
 
           {/* Services grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-  {services.map(({ href, label, desc, icon: Icon, gradient }, i) => (
-    <Link key={href} href={href}>
-      <div className="group relative overflow-hidden rounded-2xl bg-[#141414] border border-[#242424] hover:border-[#333] transition-all duration-300 cursor-pointer h-full">
-
-        {/* Subtle gradient top bar */}
-        <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${gradient} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
-
-        <div className="p-6 flex flex-col gap-4">
-          {/* Header: icon + arrow */}
-          <div className="flex items-center justify-between">
-            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0`}>
-              <Icon className="w-5 h-5 text-white" strokeWidth={1.5} />
-            </div>
-
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-200"
-              style={{ background: 'linear-gradient(135deg, #e8c219, #ffd104)' }}
-            >
-              <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M7 7h10v10" />
-              </svg>
-            </div>
+            {services.map(({ href, label, desc, icon: Icon, gradient }) => (
+              <Link key={href} href={href}>
+                <div className="group relative bg-[#1E1E1E] border border-[#282828] rounded-xl p-5 sm:p-6 hover:border-[#3E3E3E] hover:bg-[#282828] transition-all overflow-hidden">
+                  <div className="flex items-start gap-4 sm:gap-5 relative z-10">
+                    <div
+                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}
+                    >
+                      <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <h3 className="text-white text-sm sm:text-base font-black mb-1.5">{label}</h3>
+                      <p className="text-[#6A6A6A] text-xs sm:text-sm leading-relaxed">{desc}</p>
+                    </div>
+                  </div>
+                  {/* Arrow action button */}
+                  <div
+                    className="
+                      absolute top-1/2 right-5 -translate-y-1/2
+                      w-10 h-10 sm:w-12 sm:h-12
+                      rounded-full
+                      flex items-center justify-center
+                      opacity-0 group-hover:opacity-100
+                      translate-y-2 group-hover:translate-y-0
+                      transition-all duration-300
+                      shadow-2xl
+                    "
+                    style={{
+                      background: 'linear-gradient(135deg, #e8c219, #ffd104)',
+                      boxShadow: '0 8px 24px rgba(255, 230, 0, 0.35)',
+                    }}
+                  >
+                    <svg
+                      className="w-5 h-5 sm:w-6 sm:h-6 text-black"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
-
-          {/* Text content */}
-          <div className="flex flex-col gap-1.5">
-            <h3 className="text-white font-semibold text-[15px] leading-snug tracking-tight">
-              {label}
-            </h3>
-            <p className="text-[#666] text-[13px] leading-relaxed">
-              {desc}
-            </p>
-          </div>
-        </div>
-
-      </div>
-    </Link>
-  ))}
-</div>
 
           {/* Quick access */}
           <div className="mt-12 sm:mt-14">
