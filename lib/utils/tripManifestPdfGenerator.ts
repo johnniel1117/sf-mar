@@ -352,7 +352,7 @@ export class TripManifestPDFGenerator {
             <div class="signature-box">
               <div class="signature-label">Checked by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
-                <div class="signature-name">JAYMIE TAGALOG JR. / IRIC RANILI</div>
+                <div class="signature-name">IRIC RANILI</div>
                 <div class="signature-line"></div>
                 <div class="signature-position">Warehouse Checker</div>
               </div>
@@ -379,7 +379,7 @@ export class TripManifestPDFGenerator {
             <div class="signature-box">
               <div class="signature-label">Witnessed by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
-                <div class="signature-name"></div>
+                <div class="signature-name">JUNRY FORMENTERA</div>
                 <div class="signature-line"></div>
                 <div class="signature-position">Security Guard</div>
               </div>
