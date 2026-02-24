@@ -289,10 +289,10 @@ export function SavedManifestsTab({
     if (!ws['!merges']) ws['!merges'] = []
     const bThin = { top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'} }
     const bMedium = { top:{style:'medium'},bottom:{style:'medium'},left:{style:'medium'},right:{style:'medium'} }
-    setCell(row,0,'SF EXPRESS WAREHOUSE — TRIP MANIFEST MONITORING',{font:{bold:true,sz:16,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'DC2626'}},alignment:{horizontal:'center',vertical:'center'},border:bMedium})
+    setCell(row,0,'SF EXPRESS CEBU WAREHOUSE — TRIP MANIFEST MONITORING',{font:{bold:true,sz:16,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'DC2626'}},alignment:{horizontal:'center',vertical:'center'}})
     ws['!merges'].push({s:{r:row,c:0},e:{r:row,c:10}})
     row++
-    setCell(row,0,`Generated: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}  |  Total Manifests: ${filteredManifests.length}`,{font:{sz:10,italic:true},fill:{fgColor:{rgb:'FEE2E2'}},alignment:{horizontal:'center'},border:bThin})
+    setCell(row,0,`Generated: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}  |  Total Manifests: ${filteredManifests.length}`,{font:{sz:10,italic:true},fill:{fgColor:{rgb:'FEE2E2'}},alignment:{horizontal:'center'}})
     ws['!merges'].push({s:{r:row,c:0},e:{r:row,c:10}})
     row+=2
     ;['MANIFEST NO.','DISPATCH DATE','TRUCKER','DRIVER','PLATE NO.','TRUCK TYPE','TIME START','TIME END','DN / TRA NO.','SHIP TO NAME','QTY'].forEach((h,c)=>
@@ -319,12 +319,12 @@ export function SavedManifestsTab({
       }else{
         items.forEach((item,idx)=>{
           const first=idx===0
-          setCell(row,0,first?(manifest.manifest_number||manifest.id||'—'):'',first?bold():base())
+          setCell(row,0,first?(manifest.manifest_number||manifest.id||'—'):'',bold({alignment:{horizontal:'center',vertical:'center'}}))
           setCell(row,1,first?d:'',first?center():base())
-          setCell(row,2,first?(manifest.trucker||'—'):'',base())
-          setCell(row,3,first?(manifest.driver_name||'—'):'',base())
+          setCell(row,2,first?(manifest.trucker||'—'):'',first?center():base())
+          setCell(row,3,first?(manifest.driver_name||'—'):'',first?center():base())
           setCell(row,4,first?(manifest.plate_no||'—'):'',first?center():base())
-          setCell(row,5,first?(manifest.truck_type||'—'):'',base())
+          setCell(row,5,first?(manifest.truck_type||'—'):'',first?center():base())
           setCell(row,6,first?(manifest.time_start||'—'):'',first?center():base())
           setCell(row,7,first?(manifest.time_end||'—'):'',first?center():base())
           setCell(row,8,item.document_number||'—',bold({alignment:{horizontal:'center',vertical:'center'}}))
@@ -361,7 +361,7 @@ export function SavedManifestsTab({
       }
       const bThin={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}}
       const d=manifest.manifest_date?new Date(manifest.manifest_date).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'—'
-      setCell(row,0,'SF EXPRESS WAREHOUSE',{font:{bold:true,sz:14}})
+      setCell(row,0,'SF EXPRESS CEBU WAREHOUSE',{font:{bold:true,sz:14}})
       setCell(row,1,'UPPER TINGUB, MANDAUE, CEBU')
       row+=2
       setCell(row,4,manifest.manifest_number||'—',{font:{bold:true,sz:16},fill:{fgColor:{rgb:'FFFFC400'}},alignment:{horizontal:'center',vertical:'center'},border:{top:{style:'medium'},bottom:{style:'medium'},left:{style:'medium'},right:{style:'medium'}}})
@@ -383,7 +383,7 @@ export function SavedManifestsTab({
       }else{
         items.forEach((item,idx)=>{
           const cs={border:bThin,alignment:{horizontal:'center',vertical:'center'}}
-          setCell(row,0,idx+1,cs,'n');setCell(row,1,item.ship_to_name||'—',{...cs,alignment:{horizontal:'left',vertical:'center',wrapText:true}});setCell(row,2,item.document_number||'—',{...cs,font:{bold:true}});setCell(row,3,item.total_quantity||0,cs,'n');setCell(row,4,'',cs);row++
+          setCell(row,0,idx+1,cs,'n');setCell(row,1,item.ship_to_name||'—',{...cs,alignment:{horizontal:'center',vertical:'center',wrapText:true}});setCell(row,2,item.document_number||'—',{...cs,font:{bold:true}});setCell(row,3,item.total_quantity||0,cs,'n');setCell(row,4,'',cs);row++
         })
       }
       const totalQty=items.reduce((s,i)=>s+(i.total_quantity||0),0)
