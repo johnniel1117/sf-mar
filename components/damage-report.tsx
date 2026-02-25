@@ -22,36 +22,30 @@ import { DownloadModal } from '@/components/modals/DownloadModal'
 import { ViewReportModal } from '@/components/modals/ViewReportModal'
 import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
 
-// ─── Supabase client ─────────────────────────────────────────────────────────
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// ─── Report number generator (same pattern as manifest) ───────────────────────
 function buildNextReportNumber(existingNumbers: string[]): string {
   const now = new Date()
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
   const datePrefix = `DMG-${year}${month}${day}`
-
   const todaySequences = existingNumbers
     .filter(num => num.startsWith(datePrefix + '-'))
     .map(num => {
       const parsed = parseInt(num.slice(datePrefix.length + 1), 10)
       return isNaN(parsed) ? 0 : parsed
     })
-
   const next = todaySequences.length > 0 ? Math.max(...todaySequences) + 1 : 1
   return `${datePrefix}-${String(next).padStart(3, '0')}`
 }
 
 async function fetchNextReportNumber(): Promise<string> {
   try {
-    const { data, error } = await supabase
-      .from('damage_reports')          // ← change to your actual table name if different
-      .select('report_number')
+    const { data, error } = await supabase.from('damage_reports').select('report_number')
     if (error) throw error
     const numbers = (data || []).map((row: { report_number: string }) => row.report_number)
     return buildNextReportNumber(numbers)
@@ -65,7 +59,6 @@ async function fetchNextReportNumber(): Promise<string> {
   }
 }
 
-// ─── Empty report factory ─────────────────────────────────────────────────────
 const EMPTY_REPORT = (): DamageReport => ({
   report_number: '',
   report_date: new Date().toISOString().split('T')[0],
@@ -82,7 +75,6 @@ const EMPTY_REPORT = (): DamageReport => ({
   items: [],
 })
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────────
 type ActiveTab = 'create' | 'saved' | 'materials'
 
 interface ReportSidebarProps {
@@ -93,11 +85,12 @@ interface ReportSidebarProps {
   isCollapsed?: boolean
   onToggleCollapse?: () => void
   onMaterialsTab?: () => void
+  isViewer?: boolean
 }
 
 function ReportSidebar({
   activeTab, onTabChange, isOpen = true, onClose,
-  isCollapsed = false, onToggleCollapse, onMaterialsTab,
+  isCollapsed = false, onToggleCollapse, onMaterialsTab, isViewer,
 }: ReportSidebarProps) {
   const handleTabChange = (tab: ActiveTab) => {
     onTabChange(tab)
@@ -105,11 +98,13 @@ function ReportSidebar({
     onClose?.()
   }
 
-  const navItems: { tab: ActiveTab; label: string; icon: React.ElementType }[] = [
-    { tab: 'create',    label: 'Create Report',    icon: ClipboardList },
-    { tab: 'saved',     label: 'Saved Reports',    icon: FileText },
-    { tab: 'materials', label: 'Material Mappings', icon: Barcode },
+  const allNavItems: { tab: ActiveTab; label: string; icon: React.ElementType; viewerVisible: boolean }[] = [
+    { tab: 'create',    label: 'Create Report',    icon: ClipboardList, viewerVisible: false },
+    { tab: 'saved',     label: 'Saved Reports',    icon: FileText,      viewerVisible: true  },
+    { tab: 'materials', label: 'Material Mappings', icon: Barcode,      viewerVisible: false },
   ]
+
+  const navItems = allNavItems.filter(item => !isViewer || item.viewerVisible)
 
   return (
     <>
@@ -175,16 +170,17 @@ function ReportSidebar({
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function DamageReportForm() {
-  const [currentStep, setCurrentStep]         = useState<Step>(1)
-  const [activeTab, setActiveTab]             = useState<ActiveTab>('create')
-  const [sidebarOpen, setSidebarOpen]         = useState(false)
+export default function DamageReportForm({ role }: { role?: string }) {
+  const isViewer = role?.toLowerCase() === 'viewer'
+  const [currentStep, setCurrentStep]           = useState<Step>(1)
+  const [activeTab, setActiveTab]               = useState<ActiveTab>(isViewer ? 'saved' : 'create')
+  const [sidebarOpen, setSidebarOpen]           = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [mounted, setMounted]                 = useState(false)
+  const [mounted, setMounted]                   = useState(false)
 
   const [report, setReport] = useState<DamageReport>(EMPTY_REPORT())
 
-  const [personnelData, setPersonnelData] = useState({ admins: [] as any[], guards: [] as any[], supervisors: [] as any[] })
+  const [personnelData, setPersonnelData]       = useState({ admins: [] as any[], guards: [] as any[], supervisors: [] as any[] })
   const [selectedPersonnel, setSelectedPersonnel] = useState({ admin: '', guard: '', supervisor: '' })
 
   const [editingItemIndex, setEditingItemIndex]     = useState<number | null>(null)
@@ -199,18 +195,18 @@ export default function DamageReportForm() {
   const [isEditing, setIsEditing]               = useState(false)
   const [searchTerm, setSearchTerm]             = useState('')
 
-  const [showMaterialModal, setShowMaterialModal]   = useState(false)
-  const [pendingBarcode, setPendingBarcode]         = useState('')
+  const [showMaterialModal, setShowMaterialModal]           = useState(false)
+  const [pendingBarcode, setPendingBarcode]                 = useState('')
   const [newMaterialDescription, setNewMaterialDescription] = useState('')
   const [newMaterialCategory, setNewMaterialCategory]       = useState('')
-  const [isSavingMaterial, setIsSavingMaterial]     = useState(false)
+  const [isSavingMaterial, setIsSavingMaterial]             = useState(false)
 
   const [showDownloadModal, setShowDownloadModal]           = useState(false)
   const [downloadType, setDownloadType]                     = useState<'pdf' | 'excel'>('pdf')
   const [selectedDownloadReport, setSelectedDownloadReport] = useState<DamageReport | null>(null)
 
-  const [showViewModal, setShowViewModal]   = useState(false)
-  const [viewingReport, setViewingReport]   = useState<DamageReport | null>(null)
+  const [showViewModal, setShowViewModal] = useState(false)
+  const [viewingReport, setViewingReport] = useState<DamageReport | null>(null)
 
   const [editingReportId, setEditingReportId] = useState<string | null>(null)
   const [isEditMode, setIsEditMode]           = useState(false)
@@ -242,17 +238,12 @@ export default function DamageReportForm() {
     deleteMaterialMapping, getMaterialMappings,
   } = useDamageReport()
 
-  // ── On mount: load reports + generate first report number ──────────────────
   useEffect(() => {
     setMounted(true)
     loadReports()
     fetchPersonnelData()
-    // Generate report number on first load, same pattern as manifest
     fetchNextReportNumber().then(nextNumber => {
-      setReport(prev => ({
-        ...prev,
-        report_number: prev.report_number || nextNumber,
-      }))
+      setReport(prev => ({ ...prev, report_number: prev.report_number || nextNumber }))
     })
   }, [])
 
@@ -280,13 +271,12 @@ export default function DamageReportForm() {
     const selectedSupervisor = personnelData.supervisors.find(s => s.id === selectedPersonnel.supervisor)
     setReport(prev => ({
       ...prev,
-      prepared_by: selectedAdmin?.name || '',
-      noted_by: selectedGuard?.name || '',
+      prepared_by:     selectedAdmin?.name || '',
+      noted_by:        selectedGuard?.name || '',
       acknowledged_by: selectedSupervisor?.name || '',
     }))
   }, [selectedPersonnel, personnelData])
 
-  // ── Reset form: clear and generate next report number ──────────────────────
   const resetForm = async () => {
     const nextNumber = await fetchNextReportNumber()
     setReport({ ...EMPTY_REPORT(), report_number: nextNumber })
@@ -410,8 +400,8 @@ export default function DamageReportForm() {
     try {
       setReport({ ...reportToEdit, items: reportToEdit.items || [] })
       setSelectedPersonnel({
-        admin: (reportToEdit as any).admin_id || '',
-        guard: (reportToEdit as any).guard_id || '',
+        admin:      (reportToEdit as any).admin_id || '',
+        guard:      (reportToEdit as any).guard_id || '',
         supervisor: (reportToEdit as any).supervisor_id || '',
       })
       setEditingReportId(reportToEdit.id || null)
@@ -424,8 +414,8 @@ export default function DamageReportForm() {
     try {
       const reportWithPersonnel = {
         ...report,
-        admin_id: selectedPersonnel.admin,
-        guard_id: selectedPersonnel.guard,
+        admin_id:      selectedPersonnel.admin,
+        guard_id:      selectedPersonnel.guard,
         supervisor_id: selectedPersonnel.supervisor,
       }
       if (isEditMode && editingReportId) {
@@ -464,22 +454,19 @@ export default function DamageReportForm() {
     })
   }
 
-  const handleDownloadReport = (r: DamageReport, type: 'pdf' | 'excel') => {
+  const handleDownloadReport    = (r: DamageReport, type: 'pdf' | 'excel') => {
     if (type === 'pdf') PDFGenerator.generatePDF(r)
     else ExcelGenerator.generateExcel(r)
   }
-
   const handleOpenDownloadModal = (r: DamageReport) => { setSelectedDownloadReport(r); setShowDownloadModal(true) }
-  const handleDownloadConfirm = () => {
+  const handleDownloadConfirm   = () => {
     if (selectedDownloadReport) handleDownloadReport(selectedDownloadReport, downloadType)
     setShowDownloadModal(false); setSelectedDownloadReport(null)
   }
-
-  const handleViewReport     = (r: DamageReport) => { setViewingReport(r); setShowViewModal(true) }
-  const handleCloseViewModal = () => { setShowViewModal(false); setViewingReport(null) }
-
-  const handleEditMaterial  = (material: any) => { setEditingMaterial(material); setIsEditing(true) }
-  const handleSaveMaterial  = async () => {
+  const handleViewReport        = (r: DamageReport) => { setViewingReport(r); setShowViewModal(true) }
+  const handleCloseViewModal    = () => { setShowViewModal(false); setViewingReport(null) }
+  const handleEditMaterial      = (material: any) => { setEditingMaterial(material); setIsEditing(true) }
+  const handleSaveMaterial      = async () => {
     if (!editingMaterial) return
     try {
       if (editingMaterial.id) {
@@ -494,7 +481,6 @@ export default function DamageReportForm() {
       showToast('Material saved successfully!', 'success')
     } catch { showToast('Failed to save material', 'error') }
   }
-
   const handleDeleteMaterial = async (id: string) => {
     showConfirmation('Delete Material Mapping', 'Are you sure you want to delete this material mapping?', async () => {
       try {
@@ -503,17 +489,14 @@ export default function DamageReportForm() {
       } catch { showToast('Failed to delete material', 'error') }
     })
   }
-
   const handleMaterialSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
     setTimeout(() => loadMaterialMappings(), 300)
   }
-
   const handlePersonnelChange = (role: 'admin' | 'guard' | 'supervisor', value: string) => {
     setSelectedPersonnel(prev => ({ ...prev, [role]: value }))
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="h-screen flex flex-col bg-[#121212] overflow-hidden">
 
@@ -547,7 +530,6 @@ export default function DamageReportForm() {
 
         <div className="flex-1" />
 
-        {/* Report number badge in navbar */}
         {activeTab === 'create' && report.report_number && (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-[#3E3E3E] rounded-full">
             <span className="text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A]">No.</span>
@@ -567,20 +549,23 @@ export default function DamageReportForm() {
       <div className="flex flex-1 min-h-0 overflow-hidden bg-black/35">
         <ReportSidebar
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => {
+            if (isViewer && (tab === 'create' || tab === 'materials')) return
+            setActiveTab(tab)
+          }}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           onMaterialsTab={loadMaterialMappings}
+          isViewer={isViewer}
         />
 
         <main className="flex-1 overflow-y-auto min-h-0 min-w-0">
           <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-red-600/3 rounded-full blur-[120px] z-0" />
 
           <div className="relative z-10 p-4 sm:p-6 lg:p-8">
-
-            {activeTab === 'create' && (
+            {activeTab === 'create' && !isViewer && (
               <CreateReportTab
                 currentStep={currentStep}
                 setCurrentStep={setCurrentStep}
@@ -623,11 +608,12 @@ export default function DamageReportForm() {
                   handleEditReport={handleEditReport}
                   handleOpenDownloadModal={handleOpenDownloadModal}
                   handleDeleteReport={handleDeleteReport}
+                  isViewer={isViewer}
                 />
               </div>
             )}
 
-            {activeTab === 'materials' && (
+            {activeTab === 'materials' && !isViewer && (
               <MaterialMappingsTab
                 materialMappings={materialMappings}
                 editingMaterial={editingMaterial}

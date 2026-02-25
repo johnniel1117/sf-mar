@@ -75,11 +75,11 @@ function ManifestAvatar({ seed }: { seed: string }) {
 }
 
 function ManifestRow({
-  manifest, index, expanded, onToggle, onView, onEdit, onDownload, onDelete,
+  manifest, index, expanded, onToggle, onView, onEdit, onDownload, onDelete, isViewer,
 }: {
   manifest: TripManifest; index: number; expanded: boolean
   onToggle: () => void; onView: () => void; onEdit: () => void
-  onDownload: () => void; onDelete: () => void
+  onDownload: () => void; onDelete: () => void; isViewer?: boolean
 }) {
   const totalQty = manifest.items?.reduce((s, i) => s + (i.total_quantity || 0), 0) ?? 0
   const totalDocs = manifest.items?.length ?? 0
@@ -95,16 +95,13 @@ function ManifestRow({
         className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 cursor-pointer select-none"
         onClick={onToggle}
       >
-        {/* Row number — hidden on mobile to save space */}
         <div className="hidden sm:flex flex-shrink-0 w-7 items-center justify-center">
           <span className="text-sm text-[#6A6A6A] tabular-nums group-hover:hidden">{index + 1}</span>
           <Play className="w-4 h-4 text-white hidden group-hover:block fill-white" />
         </div>
 
-        {/* Avatar */}
         <ManifestAvatar seed={manifestId} />
 
-        {/* Title + subtitle — flex-1 with min-w-0 so it truncates */}
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-white text-sm truncate group-hover:text-[#E8192C] transition-colors duration-150 leading-tight">
             {manifestId}
@@ -115,40 +112,36 @@ function ManifestRow({
           </p>
         </div>
 
-        {/* Date — hidden on small mobile */}
         <span className="hidden sm:block text-xs text-[#B3B3B3] flex-shrink-0 w-24 text-right">
           {manifestDate}
         </span>
 
-        {/* Qty badge — always visible, compact */}
         <span className="flex-shrink-0 text-xs font-bold tabular-nums text-[#B3B3B3] group-hover:text-white transition-colors w-8 text-right">
           {totalQty}
         </span>
 
-        {/* Docs — hidden on very small */}
         <span className="hidden xs:block flex-shrink-0 text-xs text-[#6A6A6A] w-12 text-center tabular-nums">
           {totalDocs}d
         </span>
 
-        {/* Expand chevron */}
         <ChevronRight
           className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90 text-[#E8192C]' : 'text-[#6A6A6A] group-hover:text-[#B3B3B3]'}`}
         />
 
-        {/* Delete — ALWAYS visible on mobile, hover-reveal on desktop */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete() }}
-          className="flex-shrink-0 p-1.5 rounded-full text-[#6A6A6A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 transition-all duration-150 sm:opacity-0 sm:group-hover:opacity-100"
-          title="Delete"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+        {!isViewer && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete() }}
+            className="flex-shrink-0 p-1.5 rounded-full text-[#6A6A6A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 transition-all duration-150 sm:opacity-0 sm:group-hover:opacity-100"
+            title="Delete"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {/* ── Expanded Panel ── */}
       {expanded && (
         <div className="border-t border-[#282828] bg-[#121212] px-4 sm:px-5 py-4 sm:py-5">
-          {/* Detail grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3 sm:gap-x-6 sm:gap-y-4 mb-4 sm:mb-5">
             <DetailItem icon={<Calendar className="w-3.5 h-3.5" />} label="Date" value={manifestDate} />
             <DetailItem icon={<User className="w-3.5 h-3.5" />} label="Driver" value={manifest.driver_name || '—'} />
@@ -160,7 +153,6 @@ function ManifestRow({
             <DetailItem icon={<Package className="w-3.5 h-3.5" />} label="Total Qty" value={String(totalQty)} highlight />
           </div>
 
-          {/* Items table */}
           {(manifest.items?.length ?? 0) > 0 && (
             <div className="mb-4 sm:mb-5 rounded-lg overflow-hidden border border-[#282828]">
               <table className="w-full text-xs">
@@ -186,7 +178,6 @@ function ManifestRow({
             </div>
           )}
 
-          {/* Action buttons */}
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
             <button
               onClick={onView}
@@ -194,12 +185,14 @@ function ManifestRow({
             >
               <Eye className="w-3.5 h-3.5" /> View
             </button>
-            <button
-              onClick={onEdit}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-[#727272] text-white text-xs sm:text-sm font-semibold hover:border-white hover:scale-105 active:scale-100 transition-all duration-150"
-            >
-              <Edit className="w-3.5 h-3.5" /> Edit
-            </button>
+            {!isViewer && (
+              <button
+                onClick={onEdit}
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-[#727272] text-white text-xs sm:text-sm font-semibold hover:border-white hover:scale-105 active:scale-100 transition-all duration-150"
+              >
+                <Edit className="w-3.5 h-3.5" /> Edit
+              </button>
+            )}
             <button
               onClick={onDownload}
               className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-[#727272] text-white text-xs sm:text-sm font-semibold hover:border-white hover:scale-105 active:scale-100 transition-all duration-150"
@@ -236,11 +229,12 @@ interface SavedManifestsTabProps {
   handleEditManifest: (manifest: TripManifest) => void
   handleDownloadManifest: (manifest: TripManifest) => void
   handleDeleteManifest: (manifestId: string) => void
+  isViewer?: boolean
 }
 
 export function SavedManifestsTab({
   savedManifests, handleViewManifest, handleEditManifest,
-  handleDownloadManifest, handleDeleteManifest,
+  handleDownloadManifest, handleDeleteManifest, isViewer,
 }: SavedManifestsTabProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMonth, setSelectedMonth] = useState('All Months')
@@ -399,15 +393,15 @@ export function SavedManifestsTab({
     XLSX.writeFile(wb,`Manifests-Export-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
 
-    useEffect(() => {
-      if (!searchQuery) return
-      const hit = filteredManifests.find(m =>
-        (m.items || []).some(i =>
-          (i.document_number || '').toLowerCase().includes(searchQuery.toLowerCase())
-        )
+  useEffect(() => {
+    if (!searchQuery) return
+    const hit = filteredManifests.find(m =>
+      (m.items || []).some(i =>
+        (i.document_number || '').toLowerCase().includes(searchQuery.toLowerCase())
       )
-      if (hit?.id) setExpandedId(hit.id)
-    }, [searchQuery, filteredManifests])
+    )
+    if (hit?.id) setExpandedId(hit.id)
+  }, [searchQuery, filteredManifests])
 
   return (
     <div className="bg-[#121212] rounded-xl border border-[#282828] shadow-2xl overflow-hidden h-full flex flex-col min-h-0">
@@ -418,39 +412,36 @@ export function SavedManifestsTab({
       >
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div
-              className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg shadow-xl flex-shrink-0 flex items-center justify-center"
-              // style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}
-            >
+            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg shadow-xl flex-shrink-0 flex items-center justify-center">
               <FileText className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
             </div>
             <div>
               <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#B3B3B3] mb-0.5">View</p>
-              <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Saved Reports</h3>
+              <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Saved Manifests</h3>
               <p className="text-xs text-[#B3B3B3] mt-0.5">
                 SF Express · {savedManifests.length} manifest{savedManifests.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
 
-          <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
-            <button
-              onClick={handleDownloadMonitoring}
-              disabled={filteredManifests.length === 0}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-[#727272] text-white text-xs font-bold hover:border-white hover:scale-105 active:scale-100 transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:border-[#727272]"
-            >
-              <BarChart2 className="w-3.5 h-3.5 text-[#E8192C]" />
-              <span>Monitoring</span>
-            </button>
-            <button
-              onClick={handleExportAll}
-              disabled={filteredManifests.length === 0}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-yellow-500 text-black text-xs font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/25 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Export All
-            </button>
-          </div>
+            <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
+              <button
+                onClick={handleDownloadMonitoring}
+                disabled={filteredManifests.length === 0}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-[#727272] text-white text-xs font-bold hover:border-white hover:scale-105 active:scale-100 transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:border-[#727272]"
+              >
+                <BarChart2 className="w-3.5 h-3.5 text-[#E8192C]" />
+                <span>Monitoring</span>
+              </button>
+              <button
+                onClick={handleExportAll}
+                disabled={filteredManifests.length === 0}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-yellow-500 text-black text-xs font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/25 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export All
+              </button>
+            </div>
         </div>
 
         {/* Search + Filter */}
@@ -493,7 +484,7 @@ export function SavedManifestsTab({
           <span className="w-8 text-right">Qty</span>
           <span className="hidden xs:block w-12 text-center">Docs</span>
           <span className="w-4" />
-          <span className="w-7" />
+          {!isViewer && <span className="w-7" />}
         </div>
       )}
 
@@ -528,12 +519,13 @@ export function SavedManifestsTab({
               onEdit={() => handleEditManifest(manifest)}
               onDownload={() => handleDownloadManifest(manifest)}
               onDelete={() => manifest.id && handleDeleteManifest(manifest.id)}
+              isViewer={isViewer}
             />
           ))
         )}
       </div>
 
-      {/* ── Pagination — fixed ── */}
+      {/* ── Pagination ── */}
       {totalPages > 1 && (
         <div className="flex-shrink-0 px-3 sm:px-6 py-3 sm:py-3.5 border-t border-[#282828] bg-[#121212] flex items-center justify-between gap-2 sm:gap-3">
           <p className="text-xs text-[#B3B3B3] font-medium">

@@ -24,12 +24,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const icons = {
-  Truck, Barcode, ClipboardList, Download, Plus, X, AlertCircle, Save,
-  FileText, CheckCircle2, Trash2, ChevronRight, ChevronLeft, Eye, Info,
-  Clock, FileSpreadsheet, Home,
-} as const
-
 type Step = 1 | 2 | 3
 
 function buildNextManifestNumber(existingNumbers: string[]): string {
@@ -80,13 +74,15 @@ const EMPTY_MANIFEST = (): TripManifest => ({
   items: [],
 })
 
-export default function TripManifestForm() {
+export default function TripManifestForm({ role }: { role?: string }) {
+  const isViewer = role?.toLowerCase() === 'viewer'
+
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [manifest, setManifest] = useState<TripManifest>(EMPTY_MANIFEST())
   const [barcodeInput, setBarcodeInput] = useState('')
   const [scanningDocument, setScanningDocument] = useState(false)
   const barcodeInputRef = useRef<HTMLInputElement>(null)
-  const [activeTab, setActiveTab] = useState<'create' | 'saved'>('create')
+  const [activeTab, setActiveTab] = useState<'create' | 'saved'>(isViewer ? 'saved' : 'create')
   const [showViewModal, setShowViewModal] = useState(false)
   const [viewingManifest, setViewingManifest] = useState<TripManifest | null>(null)
   const [editingManifestId, setEditingManifestId] = useState<string | null>(null)
@@ -306,26 +302,10 @@ export default function TripManifestForm() {
   }
 
   return (
-    /*
-     * LAYOUT STRATEGY — fixes the scrolling navbar/sidebar issue:
-     *
-     * The page is split into a fixed-height viewport container:
-     *   [fixed navbar 73px] + [below-nav row that fills remaining vh]
-     *
-     * The below-nav row is flex row:
-     *   [sidebar — fixed height, no overflow] + [main — overflow-y-auto]
-     *
-     * This means ONLY the main content area scrolls.
-     * The navbar and sidebar are always visible and never move.
-     */
     <div className="h-screen flex flex-col bg-[#121212] overflow-hidden">
 
-      {/* ── Top Navigation Bar — fixed height, never scrolls ── */}
-      <nav
-        className="flex-shrink-0 h-[73px] border-b border-[#282828] z-50 flex items-center px-4 sm:px-6 gap-3 sm:gap-4 "
-        // style={{ background: 'linear-gradient(90deg, #0a0a0a 0%, #121212 100%)' }}
-      >
-        {/* Mobile sidebar toggle */}
+      {/* ── Top Navigation Bar ── */}
+      <nav className="flex-shrink-0 h-[73px] border-b border-[#282828] z-50 flex items-center px-4 sm:px-6 gap-3 sm:gap-4">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0"
@@ -333,23 +313,16 @@ export default function TripManifestForm() {
           <Menu className="w-5 h-5 text-[#B3B3B3]" />
         </button>
 
-        {/* Home link */}
-        <Link
-          href="/"
-          className="p-2 rounded-full hover:bg-[#282828] transition-colors flex-shrink-0"
-          title="Home"
-        >
+        <Link href="/" className="p-2 rounded-full hover:bg-[#282828] transition-colors flex-shrink-0" title="Home">
           <Home className="w-4 h-4 text-[#6A6A6A] hover:text-[#B3B3B3] transition-colors" />
         </Link>
 
-        {/* Divider */}
         <div className="w-px h-5 bg-[#282828] flex-shrink-0 hidden sm:block" />
 
-        {/* Brand */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center">
-              <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
-            </div>
+            <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
+          </div>
           <div className="hidden sm:block">
             <p className="text-[9px] uppercase tracking-widest font-bold text-white leading-none mb-0.5">SF Express</p>
             <h1 className="text-white text-sm font-black leading-none">Trip Manifest</h1>
@@ -359,28 +332,8 @@ export default function TripManifestForm() {
           </div>
         </div>
 
-        {/* Active tab pill — shows which tab is active */}
-        {/* <div className="hidden md:flex items-center gap-1 ml-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-            activeTab === 'create'
-              ? 'bg-[#E8192C]/15 text-[#E8192C] border border-[#E8192C]/30'
-              : 'text-[#6A6A6A]'
-          }`}>
-            Create
-          </span>
-          <span className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-            activeTab === 'saved'
-              ? 'bg-[#E8192C]/15 text-[#E8192C] border border-[#E8192C]/30'
-              : 'text-[#6A6A6A]'
-          }`}>
-            Saved
-          </span>
-        </div> */}
-
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Right side — manifest number badge when creating */}
         {activeTab === 'create' && manifest.manifest_number && (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-[#3E3E3E] rounded-full">
             <span className="text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A]">No.</span>
@@ -388,7 +341,6 @@ export default function TripManifestForm() {
           </div>
         )}
 
-        {/* Edit mode badge */}
         {isEditMode && (
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/15 border border-blue-500/30 rounded-full flex-shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
@@ -397,26 +349,25 @@ export default function TripManifestForm() {
         )}
       </nav>
 
-      {/* ── Below-nav row — fills remaining height exactly ── */}
+      {/* ── Below-nav row ── */}
       <div className="flex flex-1 min-h-0 overflow-hidden bg-black/35">
-
-        {/* Sidebar — ManifestTabs handles its own fixed positioning */}
         <ManifestTabs
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => {
+            if (isViewer && tab === 'create') return
+            setActiveTab(tab)
+          }}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        {/* ── Main content — ONLY this scrolls ── */}
         <main className="flex-1 overflow-y-auto min-h-0 min-w-0">
-          {/* Subtle red ambient glow */}
           <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#E8192C]/3 rounded-full blur-[120px] z-0" />
 
           <div className="relative z-10 p-4 sm:p-6 lg:p-8">
-            {activeTab === 'create' && (
+            {activeTab === 'create' && !isViewer && (
               <CreateManifestTab
                 currentStep={currentStep}
                 setCurrentStep={setCurrentStep}
@@ -445,7 +396,6 @@ export default function TripManifestForm() {
             )}
 
             {activeTab === 'saved' && (
-              /* SavedManifestsTab is itself a fixed-height flex column — give it the full remaining height */
               <div className="h-[calc(100vh-73px-3rem)] sm:h-[calc(100vh-73px-4rem)]">
                 <SavedManifestsTab
                   savedManifests={savedManifests}
@@ -453,6 +403,7 @@ export default function TripManifestForm() {
                   handleEditManifest={handleEditManifest}
                   handleDownloadManifest={openDownloadModal}
                   handleDeleteManifest={handleDeleteManifest}
+                  isViewer={isViewer}
                 />
               </div>
             )}
@@ -492,7 +443,7 @@ export default function TripManifestForm() {
         }}
       />
 
-      {/* ── Toast — always on top, never affected by scroll ── */}
+      {/* ── Toast ── */}
       {toast.show && (
         <div className={`fixed bottom-5 right-5 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-white z-[100] border ${
           toast.type === 'success'

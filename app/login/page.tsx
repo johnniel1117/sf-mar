@@ -15,21 +15,35 @@ export default function LoginPage() {
   const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+  e.preventDefault()
+  setLoading(true)
+  setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) {
-      setError('Invalid email or password.')
-      setLoading(false)
-      return
-    }
-
-    router.push('/')
-    router.refresh()
+  if (error) {
+    setError('Invalid email or password.')
+    setLoading(false)
+    return
   }
+
+  // Fetch profile to check role
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', data.user.id)
+    .single()
+
+  const role = profile?.role
+
+  if (role === 'viewer') {
+    router.push('/') // viewers can only see manifests & reports
+  } else {
+    router.push('/') // admin/user goes to full dashboard
+  }
+
+  router.refresh()
+}
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">

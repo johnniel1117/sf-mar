@@ -48,14 +48,16 @@ interface LandingClientProps {
 export function LandingClient({ displayName, role }: LandingClientProps) {
   const greeting = useGreeting()
   const [showSignOutModal, setShowSignOutModal] = useState(false)
+  const isViewer = role?.toLowerCase() === 'viewer'
 
-  const services = [
+  const allServices = [
     {
       href: '/excel-uploader',
       label: 'Serial List',
       desc: 'Upload and process barcode data',
       icon: FileSpreadsheet,
       gradient: 'from-red-500 to-red-700',
+      viewerVisible: true,
     },
     {
       href: '/trip-manifest',
@@ -63,6 +65,7 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
       desc: 'Manage shipment details',
       icon: Truck,
       gradient: 'from-red-500 to-red-700',
+      viewerVisible: true,
     },
     {
       href: '/damage-report',
@@ -70,10 +73,11 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
       desc: 'Document and track damaged products',
       icon: AlertTriangle,
       gradient: 'from-red-500 to-red-700',
+      viewerVisible: true,
     },
   ]
 
-  const quickLinks = [
+  const allQuickLinks = [
     {
       href: '/excel-uploader',
       label: 'Upload Files',
@@ -81,8 +85,8 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
       icon: FileSpreadsheet,
       bg: 'from-black-700/100 to-red-500/10',
       fg: 'text-white',
-      blur: 'blur-[150px]',
       bgImage: '/sf-light.png',
+      viewerVisible: true,
     },
     {
       href: '/trip-manifest',
@@ -91,8 +95,8 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
       icon: Truck,
       bg: 'from-black-700/100 to-red-500/10',
       fg: 'text-white',
-      blur: 'blur-[150px]',
       bgImage: '/sf-light.png',
+      viewerVisible: true,
     },
     {
       href: '/damage-report',
@@ -101,10 +105,13 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
       icon: AlertTriangle,
       bg: 'from-black-700/100 to-red-500/10',
       fg: 'text-white',
-      blur: 'blur-[150px]',
       bgImage: '/sf-light.png',
+      viewerVisible: true,
     },
   ]
+
+  const services = allServices.filter(s => !isViewer || s.viewerVisible)
+  const quickLinks = allQuickLinks.filter(q => !isViewer || q.viewerVisible)
 
   async function handleSignOut() {
     await signOut()
@@ -170,15 +177,14 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
             <button
               type="button"
               onClick={() => setShowSignOutModal(true)}
-              className="p-2 sm:p-2.5 rounded-full bg-yellow-500 text-black font-bold
-                       hover:border-white hover:scale-105 transition-all"
+              className="p-2 sm:p-2.5 rounded-full bg-yellow-500 text-black font-bold hover:border-white hover:scale-105 transition-all"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* ── Scrollable content (mobile only) ── */}
+        {/* ── Scrollable content ── */}
         <div
           className="
             flex-1
@@ -216,7 +222,6 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
                       <p className="text-[#6A6A6A] text-xs sm:text-sm leading-relaxed">{desc}</p>
                     </div>
                   </div>
-                  {/* Arrow action button */}
                   <div
                     className="
                       absolute top-5 right-5 -translate-y-1/2

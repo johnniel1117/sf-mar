@@ -13,6 +13,7 @@ interface SavedReportsTabProps {
   handleEditReport: (report: DamageReport) => void
   handleOpenDownloadModal: (report: DamageReport) => void
   handleDeleteReport: (reportNumber: string) => void
+  isViewer?: boolean
 }
 
 function ReportAvatar({ seed }: { seed: string }) {
@@ -39,12 +40,12 @@ function DetailChip({ label, value }: { label: string; value: string }) {
 }
 
 function ReportRow({
-  report, index, expanded, onToggle, onView, onEdit, onDownload, onDelete,
+  report, index, expanded, onToggle, onView, onEdit, onDownload, onDelete, isViewer,
 }: {
   report: DamageReport; index: number; expanded: boolean
   onToggle: () => void; onView: () => void; onEdit: () => void
-  onDownload: () => void; onDelete: () => void
-}) {
+  onDownload: () => void; onDelete: () => void; isViewer?: boolean
+}){
   const reportItems = report.items || (report as any).damage_items || []
   const totalItems = reportItems.length
   const reportId = report.report_number || report.id || '—'
@@ -90,13 +91,15 @@ function ReportRow({
         <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90 text-[#E8192C]' : 'text-[#6A6A6A] group-hover:text-[#B3B3B3]'}`} />
 
         {/* Delete — always visible on mobile, hover on desktop */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete() }}
-          className="flex-shrink-0 p-1.5 rounded-full text-[#6A6A6A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 transition-all duration-150 sm:opacity-0 sm:group-hover:opacity-100"
-          title="Delete"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+{!isViewer && (
+  <button
+    onClick={(e) => { e.stopPropagation(); onDelete() }}
+    className="flex-shrink-0 p-1.5 rounded-full text-[#6A6A6A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 transition-all duration-150 sm:opacity-0 sm:group-hover:opacity-100"
+    title="Delete"
+  >
+    <Trash2 className="w-3.5 h-3.5" />
+  </button>
+)}
       </div>
 
       {/* ── Expanded panel ── */}
@@ -153,10 +156,12 @@ function ReportRow({
               className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-yellow-500 text-black text-xs sm:text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all shadow-lg shadow-[#E8192C]/30">
               <Eye className="w-3.5 h-3.5" /> View
             </button>
-            <button onClick={onEdit}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-[#727272] text-white text-xs sm:text-sm font-semibold hover:border-white hover:scale-105 active:scale-100 transition-all">
-              <Edit className="w-3.5 h-3.5" /> Edit
-            </button>
+            {!isViewer && (
+  <button onClick={onEdit}
+    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-[#727272] text-white text-xs sm:text-sm font-semibold hover:border-white hover:scale-105 active:scale-100 transition-all">
+    <Edit className="w-3.5 h-3.5" /> Edit
+  </button>
+)}
             <button onClick={onDownload}
               className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full border border-[#727272] text-white text-xs sm:text-sm font-semibold hover:border-white hover:scale-105 active:scale-100 transition-all">
               <Download className="w-3.5 h-3.5 text-[#E8192C]" /> Download
@@ -170,10 +175,12 @@ function ReportRow({
 
 export const SavedReportsTab: React.FC<SavedReportsTabProps> = ({
   savedReports, handleViewReport, handleEditReport,
-  handleOpenDownloadModal, handleDeleteReport,
+  handleOpenDownloadModal, handleDeleteReport, isViewer,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  
 
   const filtered = savedReports.filter((r) => {
     const q = searchQuery.toLowerCase()
@@ -266,15 +273,16 @@ export const SavedReportsTab: React.FC<SavedReportsTabProps> = ({
         ) : (
           filtered.map((report, idx) => (
             <ReportRow
-              key={report.id}
-              report={report}
-              index={idx}
-              expanded={expandedId === report.id}
-              onToggle={() => setExpandedId(expandedId === report.id ? null : (report.id ?? null))}
-              onView={() => handleViewReport(report)}
-              onEdit={() => handleEditReport(report)}
-              onDownload={() => handleOpenDownloadModal(report)}
-              onDelete={() => handleDeleteReport(report.report_number || report.id || '')}
+             key={report.id}
+  report={report}
+  index={idx}
+  expanded={expandedId === report.id}
+  onToggle={() => setExpandedId(expandedId === report.id ? null : (report.id ?? null))}
+  onView={() => handleViewReport(report)}
+  onEdit={() => handleEditReport(report)}
+  onDownload={() => handleOpenDownloadModal(report)}
+  onDelete={() => handleDeleteReport(report.report_number || report.id || '')}
+  isViewer={isViewer}
             />
           ))
         )}
