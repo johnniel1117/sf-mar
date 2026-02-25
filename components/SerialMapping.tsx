@@ -1,4 +1,3 @@
-// Create a new component: SerialMappingManager.tsx
 'use client'
 
 import React, { useState, useEffect } from 'react';
