@@ -62,8 +62,8 @@ export default function LoginPage() {
         <div className="w-full max-w-[450px]">
           {/* Logo */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl mb-6">
-              <img src="/sf-light.png" alt="SF Express" className="h-9 w-auto" />
+            <div className="inline-flex items-center justify-center w-32 h-32 rounded-xl mb-6">
+              <img src="/sf-light.png" alt="SF Express" className="h-20 w-auto" />
             </div>
             <h1 className="text-white text-5xl font-bold tracking-tight mb-2">
               Log in to SF Express
