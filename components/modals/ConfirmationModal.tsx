@@ -26,7 +26,7 @@ export function ConfirmationModal({
 }: ConfirmationModalProps) {
   if (!isOpen) return null
 
-  const Icon = isDangerous ? AlertTriangle : AlertCircle
+  // const Icon = isDangerous ? AlertTriangle : AlertCircle
 
   return (
     <div
@@ -40,13 +40,13 @@ export function ConfirmationModal({
         {/* Header */}
         <div className="px-7 pt-7 pb-6 border-b border-[#1a1a1a]">
           {/* Icon */}
-          <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-5 border ${
+          {/* <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-5 border ${
             isDangerous
               ? 'bg-[#E8192C]/10 border-[#E8192C]/20'
               : 'bg-[#E8192C]/8 border-[#E8192C]/15'
           }`}>
             <Icon className="w-4 h-4 text-[#E8192C]" />
-          </div>
+          </div> */}
 
           {/* Eyebrow */}
           <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1.5">
