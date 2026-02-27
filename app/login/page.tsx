@@ -143,14 +143,14 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="text-center">
+            {/* <div className="text-center">
               <button 
                 type="button" 
                 className="text-white text-sm font-medium underline hover:text-black-400 transition-colors"
               >
                 Forgot your password?
               </button>
-            </div>
+            </div> */}
           </div>
 
           {/* Footer */}
