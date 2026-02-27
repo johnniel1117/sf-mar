@@ -728,7 +728,7 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
                           <tbody>
                             {filterGroupedDataBySearch(groupedData).filter(r => r.materialCode && r.materialDescription).map((row, idx) => (
                               <tr key={idx} className={`border-b border-[#282828]/50 hover:bg-[#1E1E1E] transition-colors ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`} style={{ animationDelay: `${idx * 0.02}s` }}>
-                                <td className="px-4 py-3 font-mono text-[10px] text-white font-bold">{row.materialCode}</td>
+                                <td className="px-4 py-3  text-[10px] text-white font-bold">{row.materialCode}</td>
                                 <td className="px-4 py-3 text-[#B3B3B3]">{row.materialDescription}</td>
                                 <td className="px-4 py-3">
                                   <span className="px-2 py-0.5 bg-[#E8192C]/15 border border-[#E8192C]/30 text-[#E8192C] rounded-full text-[10px] font-bold">{row.category}</span>
@@ -738,7 +738,7 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
                                 </td>
                                 <td className="px-4 py-3 text-[#6A6A6A]">—</td>
                                 <td className="px-4 py-3 text-[#B3B3B3]">{row.shipName}</td>
-                                <td className="px-4 py-3 text-[#6A6A6A] font-mono text-[10px]">{row.remarks}</td>
+                                <td className="px-4 py-3 text-[#6A6A6A]  text-[10px]">{row.remarks}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -772,9 +772,9 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
                                 <td className="px-4 py-3 text-white font-bold">{row.dnNo}</td>
                                 <td className="px-4 py-3 text-[#B3B3B3]">{row.location}</td>
                                 <td className="px-4 py-3 text-[#B3B3B3]">{row.binCode}</td>
-                                <td className="px-4 py-3 font-mono text-[10px] text-white font-bold">{row.materialCode}</td>
+                                <td className="px-4 py-3  text-[10px] text-white font-bold">{row.materialCode}</td>
                                 <td className="px-4 py-3 text-[#B3B3B3]">{row.materialDesc}</td>
-                                <td className="px-4 py-3 font-mono text-[10px] font-black text-white">{row.barcode}</td>
+                                <td className="px-4 py-3  text-[10px] font-black text-white">{row.barcode}</td>
                                 <td className="px-4 py-3 text-[#B3B3B3]">{row.shipToName}</td>
                                 <td className="px-4 py-3 text-[#6A6A6A]">{row.shipToAddress}</td>
                               </tr>

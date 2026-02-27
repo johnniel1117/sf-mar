@@ -2,10 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import {
-  Download, Barcode, Plus, X, AlertCircle, Save, FileText,
-  CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck,
-  ClipboardList, Eye, Info, Clock, FileSpreadsheet, Home, Menu, TrendingUp,
-  BarChart2
+  X, Save, FileText, Home, Menu, TrendingUp, BarChart2, ArrowUpRight, Plus, Sun, Moon,
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
@@ -20,6 +17,7 @@ import { ViewManifestModal } from '@/components/modals/ViewManifestModal'
 import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
 import { DownloadModal } from '@/components/modals/DownloadManifestModal'
 import { OutboundAnalyticsPanel } from '@/components/OutboundAnalytics'
+import { useTheme, t } from '@/components/ThemeContext'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,9 +44,7 @@ function buildNextManifestNumber(existingNumbers: string[]): string {
 
 async function fetchNextManifestNumber(): Promise<string> {
   try {
-    const { data, error } = await supabase
-      .from('trip_manifests')
-      .select('manifest_number')
+    const { data, error } = await supabase.from('trip_manifests').select('manifest_number')
     if (error) throw error
     const numbers = (data || []).map((row: { manifest_number: string }) => row.manifest_number)
     return buildNextManifestNumber(numbers)
@@ -75,8 +71,28 @@ const EMPTY_MANIFEST = (): TripManifest => ({
   items: [],
 })
 
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+
+function ThemeToggle() {
+  const { isDark, toggleTheme } = useTheme()
+  const tk = t(isDark)
+  return (
+    <button
+      onClick={toggleTheme}
+      className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-200 ${tk.border} ${tk.textMuted} hover:${isDark ? 'text-white border-[#3E3E3E]' : 'text-[#111110] border-[#c4bfba]'}`}
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+    </button>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function TripManifestForm({ role }: { role?: string }) {
   const isViewer = role?.toLowerCase() === 'viewer'
+  const { isDark } = useTheme()
+  const tk = t(isDark)
 
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [manifest, setManifest] = useState<TripManifest>(EMPTY_MANIFEST())
@@ -159,9 +175,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
       if (!response.ok) throw new Error('Search request failed')
       const { results } = await response.json()
       return results?.length ? results : []
-    } catch {
-      return []
-    }
+    } catch { return [] }
   }
 
   const addDocumentWithManualShipTo = (shipToName: string) => {
@@ -303,67 +317,79 @@ export default function TripManifestForm({ role }: { role?: string }) {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#121212] overflow-hidden">
+    <div className={`h-screen flex flex-col ${tk.pageBg} overflow-hidden transition-colors duration-300`}>
 
-      {/* Top Navigation Bar */}
-<nav className="relative flex-shrink-0 h-[73px] border-b border-[#282828] z-[60] flex items-center px-4 sm:px-6 gap-3 sm:gap-4">   
-<button
-  onClick={() => setSidebarOpen(!sidebarOpen)}  // was setSidebarCollapsed(!sidebarCollapsed)
-  className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0"
->
-  <Menu className="w-5 h-5 text-[#B3B3B3]" />
-</button>
+      {/* ── Navbar ── */}
+      <nav className={`relative flex-shrink-0 h-[73px] border-b ${tk.border} ${tk.navBg} z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4 transition-colors duration-300`}>
 
-        <Link href="/" className="p-2 rounded-full hover:bg-[#282828] transition-colors flex-shrink-0" title="Home">
-          <Home className="w-4 h-4 text-[#6A6A6A] hover:text-[#B3B3B3] transition-colors" />
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className={`lg:hidden p-2 rounded-full transition-colors ${tk.textMuted} hover:${isDark ? 'text-white bg-[#0a0a0a]' : 'text-[#111110] bg-[#f0ede8]'}`}
+        >
+          <Menu className="w-4 h-4" />
+        </button>
+
+        <Link href="/" className={`p-2 rounded-full transition-colors ${tk.textMuted} hover:${isDark ? 'text-white' : 'text-[#111110]'}`} title="Home">
+          <Home className="w-4 h-4" />
         </Link>
 
-        <div className="w-px h-5 bg-[#282828] flex-shrink-0 hidden sm:block" />
+        <div className={`w-px h-4 ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e3df]'} hidden sm:block`} />
 
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center">
-            <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-[9px] uppercase tracking-widest font-bold text-white leading-none mb-0.5">SF Express</p>
-            <h1 className="text-white text-sm font-black leading-none">Trip Manifest</h1>
-          </div>
-          <div className="sm:hidden">
-            <h1 className="text-white text-sm font-black">Trip Manifest</h1>
-          </div>
+          <img
+            src={isDark ? '/sf-light.png' : '/sf-dark.png'}
+            alt="SF Express"
+            className="h-5 sm:h-6 w-auto"
+            onError={(e) => { (e.target as HTMLImageElement).src = '/sf-light.png' }}
+          />
+          <div className={`w-px h-4 ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e3df]'} hidden sm:block`} />
+          <span className={`text-[10px] uppercase tracking-[0.2em] font-bold ${tk.textSub}  hidden sm:block`}>
+            Trip Manifest
+          </span>
+          <span className={`text-[10px] uppercase tracking-[0.2em] font-bold ${tk.textSub}  sm:hidden`}>
+            Manifest
+          </span>
         </div>
 
         <div className="flex-1" />
 
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold transition-all duration-150 ${
-            activeTab === 'analytics'
-              ? 'bg-[#E8192C]/10 border-[#E8192C]/40 text-[#E8192C]'
-              : 'border-[#3E3E3E] text-[#B3B3B3] hover:border-[#727272] hover:text-white'
-          }`}
-        >
-          <TrendingUp className="w-3.5 h-3.5" />
-          Analytics
-        </button>
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Manifest number */}
+          {activeTab === 'create' && manifest.manifest_number && (
+            <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 border ${tk.border} rounded-full flex-shrink-0`}>
+              <span className={`text-[10px]  uppercase tracking-[0.15em] ${tk.textMuted}`}>No.</span>
+              <span className={`text-[11px] font-black ${tk.textPrimary} tabular-nums `}>{manifest.manifest_number}</span>
+            </div>
+          )}
 
-        {activeTab === 'create' && manifest.manifest_number && (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-[#3E3E3E] rounded-full flex-shrink-0">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A]">No.</span>
-            <span className="text-xs font-black text-white tabular-nums">{manifest.manifest_number}</span>
-          </div>
-        )}
+          {/* Edit badge */}
+          {isEditMode && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 border border-blue-500/20 rounded-full flex-shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              <span className="text-[10px]  font-bold uppercase tracking-widest text-blue-400">Editing</span>
+            </div>
+          )}
 
-        {isEditMode && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/15 border border-blue-500/30 rounded-full flex-shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-            <span className="text-xs font-bold text-blue-400">Editing</span>
-          </div>
-        )}
+          {/* Analytics */}
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px]  font-bold uppercase tracking-widest transition-all duration-150 ${
+              activeTab === 'analytics'
+                ? 'border-[#F5A623]/30 text-[#F5A623] bg-[#F5A623]/5'
+                : `${tk.border} ${tk.textMuted} hover:${isDark ? 'border-[#3E3E3E] text-white' : 'border-[#c4bfba] text-[#111110]'}`
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Analytics</span>
+          </button>
+
+          {/* Theme toggle */}
+          <ThemeToggle />
+        </div>
       </nav>
 
-      {/* Main content area */}
-      <div className="flex flex-1 min-h-0 overflow-hidden bg-black/35">
+      {/* Main */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         <ManifestTabs
           activeTab={activeTab}
           onTabChange={(tab) => {
@@ -377,10 +403,13 @@ export default function TripManifestForm({ role }: { role?: string }) {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        <main className="flex-1 overflow-y-auto min-h-0 min-w-0">
-          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#E8192C]/3 rounded-full blur-[120px] z-0" />
+        <main className={`flex-1 overflow-y-auto min-h-0 min-w-0 ${tk.pageBg} transition-colors duration-300`}>
+          {isDark && (
+            <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#E8192C]/3 rounded-full blur-[120px] z-0" />
+          )}
 
-          <div className="relative z-10 p-4 sm:p-6 lg:p-8 h-full">
+          <div className="relative z-10 p-5 sm:p-8 lg:p-10 h-full">
+
             {activeTab === 'create' && !isViewer && (
               <CreateManifestTab
                 currentStep={currentStep}
@@ -423,36 +452,30 @@ export default function TripManifestForm({ role }: { role?: string }) {
             )}
 
             {activeTab === 'analytics' && (
-              <div className="h-full w-full">
-                <div className="h-full w-full overflow-y-auto">
-                  {savedManifests.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center px-4 sm:px-8 py-12">
-                      <div
-                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center mb-6 shadow-2xl"
-                        style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}
+              <div className="h-full w-full overflow-y-auto">
+                {savedManifests.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center px-4 py-16">
+                    <TrendingUp className={`w-10 h-10 ${tk.textGhost} mx-auto mb-5`} />
+                    <p className="text-[10px]  uppercase tracking-[0.25em] text-[#F5A623] mb-3">No data yet</p>
+                    <h4 className={`text-2xl sm:text-3xl font-black ${tk.textPrimary} mb-3 tracking-tight`}>
+                      Nothing to analyze
+                    </h4>
+                    <p className={`text-sm  ${tk.textMuted} max-w-sm mb-8 leading-relaxed`}>
+                      Save trip manifests to see trends, top destinations, trucker performance, and more.
+                    </p>
+                    {!isViewer && (
+                      <button
+                        onClick={() => setActiveTab('create')}
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full border ${tk.border} text-[10px]  font-bold uppercase tracking-widest ${tk.textMuted} hover:${isDark ? 'border-[#3E3E3E] text-white' : 'border-[#c4bfba] text-[#111110]'} transition-all`}
                       >
-                        <BarChart2 className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
-                      </div>
-                      <h4 className="text-2xl sm:text-3xl font-black text-white mb-4">
-                        No data to analyze yet
-                      </h4>
-                      <p className="text-base sm:text-lg text-[#B3B3B3] max-w-md mb-8">
-                        Once you save trip manifests, you'll see trends, top destinations, trucker performance, and more right here.
-                      </p>
-                      {!isViewer && (
-                        <button
-                          onClick={() => setActiveTab('create')}
-                          className="px-6 py-3 rounded-xl bg-[#E8192C] hover:bg-[#c41624] text-white font-bold text-base transition-colors shadow-lg shadow-[#E8192C]/30 flex items-center gap-2"
-                        >
-                          <Plus className="w-5 h-5" />
-                          Create First Manifest
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <OutboundAnalyticsPanel manifests={savedManifests} />
-                  )}
-                </div>
+                        Create First Manifest
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <OutboundAnalyticsPanel manifests={savedManifests} />
+                )}
               </div>
             )}
           </div>
@@ -467,48 +490,36 @@ export default function TripManifestForm({ role }: { role?: string }) {
         onEdit={handleEditManifest}
         onDownloadPDF={openDownloadModal}
       />
-
       <ConfirmationModal
         isOpen={confirmModal.show}
         title={confirmModal.title}
         message={confirmModal.message}
-        onConfirm={() => {
-          confirmModal.onConfirm()
-          setConfirmModal(prev => ({ ...prev, show: false }))
-        }}
+        onConfirm={() => { confirmModal.onConfirm(); setConfirmModal(prev => ({ ...prev, show: false })) }}
         onCancel={confirmModal.onCancel}
       />
-
       <DownloadModal
         isOpen={showDownloadModal}
         downloadType={selectedDownloadType || 'both'}
         onDownloadTypeChange={(type) => setSelectedDownloadType(type)}
         onConfirm={handleConfirmDownload}
-        onClose={() => {
-          setShowDownloadModal(false)
-          setPendingManifestForDownload(null)
-          setSelectedDownloadType(null)
-        }}
+        onClose={() => { setShowDownloadModal(false); setPendingManifestForDownload(null); setSelectedDownloadType(null) }}
       />
 
       {/* Toast */}
       {toast.show && (
-        <div className={`fixed bottom-5 right-5 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-white z-[100] border ${
-          toast.type === 'success'
-            ? 'bg-[#1E1E1E] border-green-500/40 shadow-green-500/10'
-            : toast.type === 'error'
-            ? 'bg-[#1E1E1E] border-[#E8192C]/40 shadow-[#E8192C]/10'
-            : 'bg-[#1E1E1E] border-blue-500/40 shadow-blue-500/10'
+        <div className={`fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] border ${tk.navBg} ${
+          toast.type === 'success' ? 'border-green-500/20'
+          : toast.type === 'error'  ? 'border-[#E8192C]/20'
+          : 'border-blue-500/20'
         }`}>
-          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-            toast.type === 'success' ? 'bg-green-500' : toast.type === 'error' ? 'bg-[#E8192C]' : 'bg-blue-500'
+          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+            toast.type === 'success' ? 'bg-green-500'
+            : toast.type === 'error'  ? 'bg-[#E8192C]'
+            : 'bg-blue-500'
           }`} />
-          <span className="text-sm font-semibold text-white">{toast.message}</span>
-          <button
-            onClick={() => setToast(prev => ({ ...prev, show: false }))}
-            className="ml-1 p-0.5 rounded-full hover:bg-[#3E3E3E] transition-colors"
-          >
-            <X className="w-3 h-3 text-[#6A6A6A]" />
+          <span className={`text-[11px]  font-bold uppercase tracking-widest ${tk.textPrimary}`}>{toast.message}</span>
+          <button onClick={() => setToast(prev => ({ ...prev, show: false }))} className={`ml-1 p-0.5 rounded-full hover:${isDark ? 'bg-[#1a1a1a]' : 'bg-[#f0ede8]'} transition-colors`}>
+            <X className={`w-3 h-3 ${tk.textMuted}`} />
           </button>
         </div>
       )}

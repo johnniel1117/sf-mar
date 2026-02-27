@@ -248,7 +248,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                     </div>
 
                     {/* DN/TRA — hidden on mobile */}
-                    <span className="hidden sm:block w-32 text-right text-xs font-mono text-[#B3B3B3] truncate flex-shrink-0">
+                    <span className="hidden sm:block w-32 text-right text-xs  text-[#B3B3B3] truncate flex-shrink-0">
                       {item.document_number || '—'}
                     </span>
 

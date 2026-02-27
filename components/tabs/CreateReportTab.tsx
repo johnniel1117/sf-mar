@@ -319,7 +319,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                           ) : (
                             <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                               <span className="text-[10px] text-[#6A6A6A]">Barcode:</span>
-                              <span className="text-[10px] font-mono text-[#B3B3B3] break-all">{item.barcode}</span>
+                              <span className="text-[10px]  text-[#B3B3B3] break-all">{item.barcode}</span>
                               <button onClick={() => handleEditItemBarcode(idx)}
                                 className="p-1 text-[#6A6A6A] hover:text-red-500 hover:bg-red-600/10 rounded-full transition-all"
                                 title="Edit barcode">
@@ -372,7 +372,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                       <div className="flex items-center justify-between p-3 bg-[#282828] rounded-lg border border-[#3E3E3E]">
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Serial / Barcode</p>
-                          <p className="text-sm font-mono font-semibold text-white break-all">{item.barcode || '—'}</p>
+                          <p className="text-sm  font-semibold text-white break-all">{item.barcode || '—'}</p>
                         </div>
                         <Barcode className="w-4 h-4 text-[#6A6A6A] flex-shrink-0" />
                       </div>
@@ -532,7 +532,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                                 <td className="py-2.5 text-white font-medium group-hover:text-red-500 transition-colors truncate max-w-[120px] sm:max-w-none">
                                   {item.material_description || '—'}
                                 </td>
-                                <td className="py-2.5 text-[#B3B3B3] font-mono hidden sm:table-cell">{item.barcode}</td>
+                                <td className="py-2.5 text-[#B3B3B3]  hidden sm:table-cell">{item.barcode}</td>
                                 <td className="py-2.5 text-right font-black text-red-500">{item.damage_type || '—'}</td>
                               </tr>
                             ))}

@@ -5,12 +5,14 @@ import Link from 'next/link'
 import {
   FileSpreadsheet, AlertTriangle, Truck, LogOut,
   TrendingUp, ArrowUpRight, ArrowDownRight, ChevronRight, X,
+  Sun, Moon,
 } from 'lucide-react'
 import { signOut } from '@/lib/actions/auth'
 import LogoGridBackground from './LogoBackground'
 import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
 import { OutboundAnalyticsPanel } from '@/components/OutboundAnalytics'
 import type { TripManifest } from '@/lib/services/tripManifestService'
+import { useTheme, t } from '@/components/ThemeContext'
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
@@ -47,7 +49,6 @@ function useCountUp(target: number, duration = 1200, delay = 0) {
       const step = (timestamp: number) => {
         if (!startTime) startTime = timestamp
         const progress = Math.min((timestamp - startTime) / duration, 1)
-        // ease-out cubic
         const eased = 1 - Math.pow(1 - progress, 3)
         setValue(Math.floor(eased * target))
         if (progress < 1) raf = requestAnimationFrame(step)
@@ -79,6 +80,9 @@ const QUICK_JUMPS = [
 // ── Sidebar analytics ─────────────────────────────────────────────────────────
 
 function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; onExpand: () => void }) {
+  const { isDark } = useTheme()
+  const tk = t(isDark)
+
   const monthlyData = useMemo(() => {
     const now = new Date()
     return Array.from({ length: 6 }, (_, i) => {
@@ -109,9 +113,8 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
 
   return (
     <div className="space-y-7">
-      {/* Sparkline — px heights, % won't work inside flex */}
       <div>
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#3E3E3E] mb-3">Qty · last 6 months</p>
+        <p className={`text-[10px] uppercase tracking-[0.2em] font-bold ${tk.textMuted} mb-3`}>Qty · last 6 months</p>
         <div className="flex items-end gap-1.5" style={{ height: 80 }}>
           {monthlyData.map((d, i) => {
             const BAR_MAX = 60
@@ -129,18 +132,15 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
                       ? 'linear-gradient(180deg, #E8192C 0%, #F5A623 100%)'
                       : isPrev
                       ? 'rgba(245,166,35,0.50)'
-                      : 'rgba(255,255,255,0.12)',
+                      : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)',
                     boxShadow: isCurrent
                       ? '0 0 14px rgba(232,25,44,0.7), 0 0 28px rgba(245,166,35,0.35)'
-                      : isPrev
-                      ? '0 0 8px rgba(245,166,35,0.25)'
-                      : 'none',
+                      : isPrev ? '0 0 8px rgba(245,166,35,0.25)' : 'none',
                   }}
                 />
-                <span
-                  className="text-[9px] font-bold"
-                  style={{ color: isCurrent ? '#F5A623' : isPrev ? '#8a6820' : '#3E3E3E' }}
-                >
+                <span className="text-[9px] font-bold" style={{
+                  color: isCurrent ? '#F5A623' : isPrev ? '#8a6820' : isDark ? '#3E3E3E' : '#c4bfba'
+                }}>
                   {d.label}
                 </span>
               </div>
@@ -149,16 +149,15 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
         </div>
       </div>
 
-      {/* Divider stats */}
-      <div className="divide-y divide-[#1a1a1a]">
+      <div className={`divide-y ${tk.divide}`}>
         <div className="flex items-baseline justify-between pb-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">
+          <span className={`text-[10px] uppercase tracking-widest font-bold ${tk.textMuted}`}>
             {MONTH_LABELS[new Date().getMonth()]} qty
           </span>
           <div className="text-right">
-            <p className="text-2xl font-black text-white tabular-nums leading-none">{animCurrentQty.toLocaleString()}</p>
+            <p className={`text-2xl font-black ${tk.textPrimary} tabular-nums leading-none`}>{animCurrentQty.toLocaleString()}</p>
             {delta !== null && (
-              <div className={`flex items-center justify-end gap-0.5 mt-0.5 text-[10px] font-bold ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
+              <div className={`flex items-center justify-end gap-0.5 mt-0.5 text-[10px] font-bold ${positive ? 'text-emerald-500' : 'text-red-500'}`}>
                 {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                 {Math.abs(delta)}% vs {prev.label}
               </div>
@@ -166,28 +165,51 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
           </div>
         </div>
         <div className="flex items-baseline justify-between py-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">Trips</span>
-          <p className="text-2xl font-black text-white tabular-nums">{animCurrentTrips}</p>
+          <span className={`text-[10px] uppercase tracking-widest font-bold ${tk.textMuted}`}>Trips</span>
+          <p className={`text-2xl font-black ${tk.textPrimary} tabular-nums`}>{animCurrentTrips}</p>
         </div>
         <div className="flex items-baseline justify-between py-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">All-time qty</span>
-          <p className="text-2xl font-black text-white tabular-nums">{animTotalAllTime.toLocaleString()}</p>
+          <span className={`text-[10px] uppercase tracking-widest font-bold ${tk.textMuted}`}>All-time qty</span>
+          <p className={`text-2xl font-black ${tk.textPrimary} tabular-nums`}>{animTotalAllTime.toLocaleString()}</p>
         </div>
         <div className="flex items-baseline justify-between pt-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">Manifests</span>
-          <p className="text-2xl font-black text-white tabular-nums">{animManifests}</p>
+          <span className={`text-[10px] uppercase tracking-widest font-bold ${tk.textMuted}`}>Manifests</span>
+          <p className={`text-2xl font-black ${tk.textPrimary} tabular-nums`}>{animManifests}</p>
         </div>
       </div>
 
-      {/* Full analytics — amber accent */}
       <button
         onClick={onExpand}
-        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#3E3E3E] hover:text-[#F5A623] transition-colors group"
+        className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] ${tk.textMuted} hover:text-[#F5A623] transition-colors group`}
       >
         Full analytics
         <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
       </button>
     </div>
+  )
+}
+
+// ── Theme Toggle button ───────────────────────────────────────────────────────
+
+function ThemeToggle() {
+  const { isDark, toggleTheme } = useTheme()
+  return (
+    <button
+      onClick={toggleTheme}
+      className={`
+        flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-200
+        ${isDark
+          ? 'border-[#1a1a1a] text-[#3E3E3E] hover:border-[#3E3E3E] hover:text-white'
+          : 'border-[#e5e3df] text-[#a8a29e] hover:border-[#c4bfba] hover:text-[#111110]'
+        }
+      `}
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark
+        ? <Sun  className="w-3.5 h-3.5" />
+        : <Moon className="w-3.5 h-3.5" />
+      }
+    </button>
   )
 }
 
@@ -202,6 +224,9 @@ interface LandingClientProps {
 export function LandingClient({ displayName, role, manifests = [] }: LandingClientProps) {
   const greeting = useGreeting()
   const time     = useTime()
+  const { isDark } = useTheme()
+  const tk = t(isDark)
+
   const [showSignOutModal,   setShowSignOutModal]   = useState(false)
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
   const isViewer = role?.toLowerCase() === 'viewer'
@@ -222,7 +247,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
   const animQty   = useCountUp(totalQtyThisMonth,   1200, 150)
 
   return (
-    <div className="h-screen bg-black overflow-hidden relative">
+    <div className={`h-screen ${tk.pageBg} overflow-hidden relative transition-colors duration-300`}>
       <ConfirmationModal
         isOpen={showSignOutModal}
         title="Sign out"
@@ -233,7 +258,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
         onCancel={() => setShowSignOutModal(false)}
       />
 
-      {/* ── Analytics modal — bigger, scrollable ── */}
+      {/* Analytics modal */}
       {showAnalyticsModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
@@ -247,7 +272,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
           >
             <button
               onClick={() => setShowAnalyticsModal(false)}
-              className="absolute -top-3 -right-3 z-20 w-9 h-9 rounded-full bg-[#1E1E1E] border border-[#3E3E3E] flex items-center justify-center text-[#B3B3B3] hover:text-white hover:bg-[#282828] transition-all shadow-xl"
+              className={`absolute -top-3 -right-3 z-20 w-9 h-9 rounded-full ${tk.surface} border ${tk.border} flex items-center justify-center ${tk.textSub} hover:${tk.textPrimary} transition-all shadow-xl`}
             >
               <X className="w-4 h-4" />
             </button>
@@ -258,27 +283,45 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
         </div>
       )}
 
-      {/* ── Background (preserved exactly) ── */}
-      <div className="fixed inset-0 opacity-30 pointer-events-none">
-        <LogoGridBackground />
-      </div>
-      <div className="fixed inset-0 bg-gradient-to-br from-black/5 via-black/95 to-black pointer-events-none" />
-      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-black/15 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-black/15 rounded-full blur-[100px] pointer-events-none" />
-      {/* ── Foreground ── */}
+      {/* Background — only visible in dark mode */}
+      {isDark && (
+        <>
+          <div className="fixed inset-0 opacity-30 pointer-events-none">
+            <LogoGridBackground />
+          </div>
+          <div className="fixed inset-0 bg-gradient-to-br from-black/5 via-black/95 to-black pointer-events-none" />
+          <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-black/15 rounded-full blur-[120px] pointer-events-none" />
+          <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-black/15 rounded-full blur-[100px] pointer-events-none" />
+        </>
+      )}
+      {/* Light mode: subtle warm gradient */}
+      {!isDark && (
+        <div className="fixed inset-0 bg-gradient-to-br from-[#f7f6f4] via-[#f7f6f4] to-[#f0ede8] pointer-events-none" />
+      )}
+
+      {/* Foreground */}
       <div className="relative z-10 h-full flex flex-col">
 
         {/* Header */}
-        <header className="fixed sm:static top-0 left-0 right-0 z-50 border-b border-[#282828] backdrop-blur">
+        <header className={`fixed sm:static top-0 left-0 right-0 z-50 border-b ${tk.border} ${tk.navBg} backdrop-blur transition-colors duration-300`}>
           <div className="px-5 sm:px-8 h-[72px] flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
-              <div className="w-px h-4 bg-[#282828]" />
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#6A6A6A]">Dashboard</span>
+              <img
+                src={isDark ? '/sf-light.png' : '/sf-dark.png'}
+                alt="SF Express"
+                className="h-5 sm:h-6 w-auto"
+                onError={(e) => { (e.target as HTMLImageElement).src = '/sf-light.png' }}
+              />
+              <div className={`w-px h-4 ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e3df]'}`} />
+              <span className={`text-[10px] uppercase tracking-[0.2em] font-bold ${tk.textSub} `}>Dashboard</span>
             </div>
 
-            <div className="flex items-center gap-4 sm:gap-5">
-              <span className="hidden sm:block text-[11px] font-mono text-[#3E3E3E] tabular-nums">{time}</span>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className={`hidden sm:block text-[11px]  ${tk.textMuted} tabular-nums`}>{time}</span>
+
+              <ThemeToggle />
+
+              <div className={`w-px h-4 ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e3df]'}`} />
 
               <div className="flex items-center gap-2.5">
                 <div
@@ -288,16 +331,16 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden sm:block">
-                  <p className="text-[12px] font-semibold text-white leading-none">{displayName}</p>
-                  {role && <p className="text-[10px] text-[#6A6A6A] capitalize mt-0.5">{role}</p>}
+                  <p className={`text-[12px] font-semibold ${tk.textPrimary} leading-none`}>{displayName}</p>
+                  {role && <p className={`text-[10px] ${tk.textSub} capitalize mt-0.5`}>{role}</p>}
                 </div>
               </div>
 
-              <div className="w-px h-4 bg-[#282828]" />
+              <div className={`w-px h-4 ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e3df]'}`} />
 
               <button
                 onClick={() => setShowSignOutModal(true)}
-                className="flex items-center gap-1.5 text-[11px] font-bold text-[#6A6A6A] hover:text-white transition-colors uppercase tracking-widest"
+                className={`flex items-center gap-1.5 text-[11px] font-bold ${tk.textSub} hover:${isDark ? 'text-white' : 'text-[#111110]'} transition-colors uppercase tracking-widest`}
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Sign out</span>
@@ -311,45 +354,39 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
           <div className="max-w-[1320px] mx-auto px-5 sm:px-8">
 
             {/* Hero */}
-            <div className="pt-12 sm:pt-16 pb-10 sm:pb-14 border-b border-[#1a1a1a]">
+            <div className={`pt-12 sm:pt-16 pb-10 sm:pb-14 border-b ${tk.border}`}>
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-3">{today}</p>
-                  <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-black text-white leading-[0.93] tracking-tight">
-                    {greeting},<br />
-                    <span className="text-[#3E3E3E]">{displayName}.</span>
+                  <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-3 ">{today}</p>
+                  <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-black leading-[0.93] tracking-tight">
+                    <span className={tk.textPrimary}>{greeting},</span><br />
+                    <span className={tk.textMuted}>{displayName}.</span>
                   </h1>
                 </div>
 
                 {/* Stats strip */}
                 <div className="flex items-center gap-8 sm:gap-10">
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] mb-1.5">
+                    <p className={`text-[10px] uppercase tracking-widest font-bold ${tk.textMuted} mb-1.5 `}>
                       {now.toLocaleString('en-US', { month: 'short' })} trips
                     </p>
-                    <p className="text-5xl font-black text-white tabular-nums leading-none">
+                    <p className={`text-5xl font-black ${tk.textPrimary} tabular-nums leading-none`}>
                       {String(animTrips).padStart(2, '0')}
                     </p>
                   </div>
-                  <div className="w-px h-14 bg-[#1a1a1a]" />
+                  <div className={`w-px h-14 ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e3df]'}`} />
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] mb-1.5">Units out</p>
-                    <p className="text-5xl font-black text-white tabular-nums leading-none">
-                      {animQty >= 1000
-                        ? `${(animQty / 1000).toFixed(1)}k`
-                        : animQty.toLocaleString()}
+                    <p className={`text-[10px] uppercase tracking-widest font-bold ${tk.textMuted} mb-1.5 `}>Units out</p>
+                    <p className={`text-5xl font-black ${tk.textPrimary} tabular-nums leading-none`}>
+                      {animQty >= 1000 ? `${(animQty / 1000).toFixed(1)}k` : animQty.toLocaleString()}
                     </p>
                   </div>
                   {manifests.length > 0 && (
                     <>
-                      <div className="w-px h-14 bg-[#1a1a1a]" />
-                      {/* Analytics button — amber accent, visible on all screen sizes */}
-                      <button
-                        onClick={() => setShowAnalyticsModal(true)}
-                        className="flex flex-col items-start gap-2 group"
-                      >
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] group-hover:text-[#F5A623] transition-colors">Analytics</p>
-                        <div className="flex items-center gap-1.5 text-[#3E3E3E] group-hover:text-[#F5A623] transition-colors">
+                      <div className={`w-px h-14 ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e3df]'}`} />
+                      <button onClick={() => setShowAnalyticsModal(true)} className="flex flex-col items-start gap-2 group">
+                        <p className={`text-[10px] uppercase tracking-widest font-bold ${tk.textMuted} group-hover:text-[#F5A623] transition-colors `}>Analytics</p>
+                        <div className={`flex items-center gap-1.5 ${tk.textMuted} group-hover:text-[#F5A623] transition-colors`}>
                           <TrendingUp className="w-5 h-5" />
                           <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
@@ -361,43 +398,43 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
             </div>
 
             {/* Two-column body */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_340px] divide-y lg:divide-y-0 lg:divide-x divide-[#1a1a1a]">
+            <div className={`grid grid-cols-1 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_340px] divide-y lg:divide-y-0 lg:divide-x ${tk.divide}`}>
 
               {/* LEFT — services */}
               <div className="py-10 sm:py-12 lg:pr-12">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-7">Services</p>
+                <p className={`text-[10px] uppercase tracking-[0.25em] font-bold ${tk.textMuted} mb-7 `}>Services</p>
 
-                <div className="divide-y divide-[#1a1a1a]">
+                <div className={`divide-y ${tk.divide}`}>
                   {SERVICES.map(({ href, label, desc, icon: Icon, index }) => (
                     <Link key={href} href={href} className="group block">
                       <div className="flex items-center gap-5 sm:gap-6 py-5 sm:py-6 transition-all duration-200 group-hover:pl-1.5">
-                        <span className="text-[11px] font-mono font-bold  text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+                        <span className={`text-[11px]  font-bold ${tk.textGhost} w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors`}>
                           {index}
                         </span>
-                        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border bg-red-600 border-[#232323] bg-[#161616] group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6 transition-all duration-200">
-                          <Icon className="w-4 h-4 text-white group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
+                        <div className={`w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border ${tk.border} ${tk.surface} group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6 transition-all duration-200`}>
+                          <Icon className={`w-4 h-4 ${tk.textMuted} group-hover:text-[#E8192C] transition-colors`} strokeWidth={1.5} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[15px] font-black text-[#B3B3B3] group-hover:text-white transition-colors leading-snug">
+                          <p className={`text-[15px] font-black ${isDark ? 'text-[#B3B3B3]' : 'text-[#78716c]'} group-hover:${isDark ? 'text-white' : 'text-[#111110]'} transition-colors leading-snug`}>
                             {label}
                           </p>
-                          <p className="text-[12px] text-[#3E3E3E] mt-0.5 group-hover:text-[#6A6A6A] transition-colors">
+                          <p className={`text-[12px] ${tk.textMuted} mt-0.5 transition-colors`}>
                             {desc}
                           </p>
                         </div>
-                        <ArrowUpRight className="w-4 h-4 text-[#282828] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0" />
+                        <ArrowUpRight className={`w-4 h-4 ${tk.textGhost} group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0`} />
                       </div>
                     </Link>
                   ))}
                 </div>
 
-                {/* Quick jumps — amber accent on hover */}
-                <div className="mt-9 pt-7 border-t border-[#1a1a1a]">
-                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-4">Quick jump</p>
+                {/* Quick jumps */}
+                <div className={`mt-9 pt-7 border-t ${tk.border}`}>
+                  <p className={`text-[10px] uppercase tracking-[0.25em] font-bold ${tk.textMuted} mb-4 `}>Quick jump</p>
                   <div className="flex flex-wrap gap-2">
                     {QUICK_JUMPS.map(({ href, label }) => (
                       <Link key={href} href={href}>
-                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#232323] text-[11px] font-semibold text-[#484848] hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 cursor-pointer">
+                        <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border ${tk.border} text-[11px] font-semibold ${tk.textMuted} hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 cursor-pointer`}>
                           <ChevronRight className="w-3 h-3" />
                           {label}
                         </span>
@@ -409,17 +446,16 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               {/* RIGHT — analytics sidebar */}
               <div className="hidden lg:block py-10 sm:py-12 pl-12">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-7">Outbound</p>
+                <p className={`text-[10px] uppercase tracking-[0.25em] font-bold ${tk.textMuted} mb-7 `}>Outbound</p>
                 {manifests.length === 0 ? (
                   <div className="space-y-3 py-2">
-                    <TrendingUp className="w-5 h-5 text-[#282828]" />
-                    <p className="text-sm font-bold text-[#3E3E3E]">No data yet</p>
-                    <p className="text-[12px] text-[#282828] leading-relaxed max-w-[200px]">
+                    <TrendingUp className={`w-5 h-5 ${tk.textGhost}`} />
+                    <p className={`text-sm font-bold ${tk.textMuted}`}>No data yet</p>
+                    <p className={`text-[12px] ${tk.textGhost} leading-relaxed max-w-[200px]`}>
                       Create your first trip manifest to see outbound analytics.
                     </p>
                     <Link href="/trip-manifest">
-                      {/* amber accent */}
-                      <span className="text-[11px] font-bold text-[#F5A623] uppercase tracking-widest hover:underline cursor-pointer">
+                      <span className="text-[11px] font-bold text-[#F5A623] uppercase tracking-widest hover:underline cursor-pointer ">
                         Get started →
                       </span>
                     </Link>
@@ -431,9 +467,9 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
             </div>
 
             {/* Footer */}
-            <div className="border-t border-[#1a1a1a] py-5 flex items-center justify-between">
-              <p className="text-[11px] text-[#282828] font-mono">SF Express · Cebu Warehouse</p>
-              <p className="text-[11px] text-[#282828] font-mono">{new Date().getFullYear()}</p>
+            <div className={`border-t ${tk.border} py-5 flex items-center justify-between`}>
+              <p className={`text-[11px] ${tk.textGhost} `}>SF Express · Cebu Warehouse</p>
+              <p className={`text-[11px] ${tk.textGhost} `}>{new Date().getFullYear()}</p>
             </div>
           </div>
         </div>

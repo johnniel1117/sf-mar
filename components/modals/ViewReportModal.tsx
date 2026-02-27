@@ -233,7 +233,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                       <p className="text-sm font-semibold text-white truncate group-hover:text-[#E8192C] transition-colors">
                         {item.material_description || 'Unknown Item'}
                       </p>
-                      <p className="text-[10px] text-[#6A6A6A] font-mono truncate">
+                      <p className="text-[10px] text-[#6A6A6A]  truncate">
                         {item.barcode || item.material_code || '—'}
                       </p>
                     </div>
@@ -272,11 +272,11 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Barcode / Serial</p>
-                        <p className="text-xs font-mono text-white">{item.barcode || '—'}</p>
+                        <p className="text-xs  text-white">{item.barcode || '—'}</p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Material Code</p>
-                        <p className="text-xs font-mono text-white">{item.material_code || '—'}</p>
+                        <p className="text-xs  text-white">{item.material_code || '—'}</p>
                       </div>
                     </div>
 

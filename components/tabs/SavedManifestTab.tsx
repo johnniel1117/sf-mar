@@ -87,7 +87,7 @@ function ManifestRow({
         onClick={onToggle}
       >
         {/* Index */}
-        <span className="hidden sm:block text-[11px] font-mono font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+        <span className="hidden sm:block text-[11px]  font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
           {String(index + 1).padStart(2, '0')}
         </span>
 
@@ -162,9 +162,9 @@ function ManifestRow({
               <div className="divide-y divide-[#1a1a1a]">
                 {manifest.items!.map((item, idx) => (
                   <div key={idx} className="grid grid-cols-4 py-3.5 group/row hover:pl-1 transition-all duration-150">
-                    <span className="text-[11px] font-mono font-bold text-[#282828] group-hover/row:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
+                    <span className="text-[11px]  font-bold text-[#282828] group-hover/row:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
                     <span className="text-[13px] font-semibold text-[#B3B3B3] truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1">{item.ship_to_name || '—'}</span>
-                    <span className="text-[13px] font-mono text-[#6A6A6A] truncate hidden sm:block">{item.document_number || '—'}</span>
+                    <span className="text-[13px]  text-[#6A6A6A] truncate hidden sm:block">{item.document_number || '—'}</span>
                     <span className="text-[13px] font-black text-white tabular-nums text-right sm:text-left">{item.total_quantity ?? 0}</span>
                   </div>
                 ))}
@@ -212,7 +212,7 @@ function DetailItem({ icon, label, value, mono, highlight }: {
         <span className="text-[#E8192C]">{icon}</span>
         <span className="text-[10px] uppercase tracking-widest font-bold">{label}</span>
       </div>
-      <p className={`text-sm truncate ${mono ? 'font-mono' : 'font-black'} ${highlight ? 'text-[#F5A623]' : 'text-white'}`}>
+      <p className={`text-sm truncate ${mono ? '' : 'font-black'} ${highlight ? 'text-[#F5A623]' : 'text-white'}`}>
         {value}
       </p>
     </div>

@@ -177,7 +177,7 @@ function TopDestinations({ manifests }: { manifests: TripManifest[] }) {
         <div key={dest.name} className="group py-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4 min-w-0">
-              <span className="text-[11px] font-mono font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+              <span className="text-[11px]  font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
                 {String(i + 1).padStart(2, '0')}
               </span>
               <span className="text-[15px] font-black text-[#B3B3B3] truncate group-hover:text-white transition-colors">
@@ -253,7 +253,7 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
         <div className="divide-y divide-[#1a1a1a]">
           {truckers.map((t, i) => (
             <div key={t.name} className="group flex items-center gap-5 sm:gap-6 py-5 sm:py-6 transition-all duration-200 hover:pl-1.5">
-              <span className="text-[11px] font-mono font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+              <span className="text-[11px]  font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
                 {String(i + 1).padStart(2, '0')}
               </span>
               <div
