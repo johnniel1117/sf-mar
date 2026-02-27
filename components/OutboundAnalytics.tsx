@@ -403,7 +403,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
   ]
 
   return (
-    <div className="bg-black border border-[#1a1a1a] overflow-hidden flex flex-col min-h-0">
+    <div className="bg-black border border-[#1a1a1a] overflow-hidden flex flex-col rounded-2xl min-h-0">
 
       {/* ── Header ── */}
       <div className="px-6 sm:px-8 pt-8 pb-7 border-b border-[#1a1a1a]">
