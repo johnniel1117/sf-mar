@@ -196,12 +196,12 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
           "
         >
           {/* Greeting */}
-          {/* <div className="flex items-center gap-3 mb-2">
-            {greeting.icon}
+          <div className="flex items-center gap-3 mb-2">
+            {/* {greeting.icon} */}
             <h1 className={`text-3xl sm:text-4xl md:text-5xl font-black ${greeting.color}`}>
               {greeting.text}
             </h1>
-          </div> */}
+          </div>
           <p className="text-[#6A6A6A] text-sm mb-10 sm:mb-14 ml-0.5">
             Welcome back, <span className="text-[#B3B3B3] font-semibold">{displayName}</span>.
           </p>
