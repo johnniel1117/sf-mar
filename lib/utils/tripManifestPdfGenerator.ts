@@ -282,8 +282,9 @@ export class TripManifestPDFGenerator {
               </div>
             </div>
             <div class="title-section">
-              <div class="manifest-number">${manifestData.manifest_number}</div>
-            </div>
+  <div style="font-size: 9px; font-weight: bold; text-align: center; margin-bottom: 4px; letter-spacing: 0.05em;">MANIFEST NO.</div>
+  <div class="manifest-number">${manifestData.manifest_number}</div>
+</div>
           </div>
 
           <!-- Title -->
