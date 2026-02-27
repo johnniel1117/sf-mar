@@ -37,6 +37,29 @@ function useTime() {
   return time
 }
 
+function useCountUp(target: number, duration = 1200, delay = 0) {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    if (target === 0) { setValue(0); return }
+    let startTime: number | null = null
+    let raf: number
+    const startDelay = setTimeout(() => {
+      const step = (timestamp: number) => {
+        if (!startTime) startTime = timestamp
+        const progress = Math.min((timestamp - startTime) / duration, 1)
+        // ease-out cubic
+        const eased = 1 - Math.pow(1 - progress, 3)
+        setValue(Math.floor(eased * target))
+        if (progress < 1) raf = requestAnimationFrame(step)
+        else setValue(target)
+      }
+      raf = requestAnimationFrame(step)
+    }, delay)
+    return () => { clearTimeout(startDelay); cancelAnimationFrame(raf) }
+  }, [target, duration, delay])
+  return value
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -78,6 +101,11 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
   const delta    = prev.qty === 0 ? null : Math.round(((current.qty - prev.qty) / prev.qty) * 100)
   const positive = delta !== null && delta >= 0
   const totalAllTime = manifests.reduce((s, m) => s + (m.items || []).reduce((si, it) => si + (it.total_quantity || 0), 0), 0)
+
+  const animCurrentQty   = useCountUp(current.qty,   1000, 0)
+  const animCurrentTrips = useCountUp(current.trips, 800,  100)
+  const animTotalAllTime = useCountUp(totalAllTime,   1400, 200)
+  const animManifests    = useCountUp(manifests.length, 800, 300)
 
   return (
     <div className="space-y-7">
@@ -128,7 +156,7 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
             {MONTH_LABELS[new Date().getMonth()]} qty
           </span>
           <div className="text-right">
-            <p className="text-2xl font-black text-white tabular-nums leading-none">{current.qty.toLocaleString()}</p>
+            <p className="text-2xl font-black text-white tabular-nums leading-none">{animCurrentQty.toLocaleString()}</p>
             {delta !== null && (
               <div className={`flex items-center justify-end gap-0.5 mt-0.5 text-[10px] font-bold ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
                 {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
@@ -139,15 +167,15 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
         </div>
         <div className="flex items-baseline justify-between py-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">Trips</span>
-          <p className="text-2xl font-black text-white tabular-nums">{current.trips}</p>
+          <p className="text-2xl font-black text-white tabular-nums">{animCurrentTrips}</p>
         </div>
         <div className="flex items-baseline justify-between py-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">All-time qty</span>
-          <p className="text-2xl font-black text-white tabular-nums">{totalAllTime.toLocaleString()}</p>
+          <p className="text-2xl font-black text-white tabular-nums">{animTotalAllTime.toLocaleString()}</p>
         </div>
         <div className="flex items-baseline justify-between pt-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">Manifests</span>
-          <p className="text-2xl font-black text-white tabular-nums">{manifests.length}</p>
+          <p className="text-2xl font-black text-white tabular-nums">{animManifests}</p>
         </div>
       </div>
 
@@ -189,6 +217,9 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
   const totalQtyThisMonth   = thisMonthManifests.reduce(
     (sum, m) => sum + (m.items || []).reduce((s, i) => s + (i.total_quantity || 0), 0), 0
   )
+
+  const animTrips = useCountUp(totalTripsThisMonth, 900, 0)
+  const animQty   = useCountUp(totalQtyThisMonth,   1200, 150)
 
   return (
     <div className="h-screen bg-black overflow-hidden relative">
@@ -297,16 +328,16 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                       {now.toLocaleString('en-US', { month: 'short' })} trips
                     </p>
                     <p className="text-5xl font-black text-white tabular-nums leading-none">
-                      {String(totalTripsThisMonth).padStart(2, '0')}
+                      {String(animTrips).padStart(2, '0')}
                     </p>
                   </div>
                   <div className="w-px h-14 bg-[#1a1a1a]" />
                   <div>
                     <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] mb-1.5">Units out</p>
                     <p className="text-5xl font-black text-white tabular-nums leading-none">
-                      {totalQtyThisMonth >= 1000
-                        ? `${(totalQtyThisMonth / 1000).toFixed(1)}k`
-                        : totalQtyThisMonth.toLocaleString()}
+                      {animQty >= 1000
+                        ? `${(animQty / 1000).toFixed(1)}k`
+                        : animQty.toLocaleString()}
                     </p>
                   </div>
                   {manifests.length > 0 && (
