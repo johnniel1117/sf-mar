@@ -75,8 +75,8 @@ export default function ExcelUploader() {
   const [notifications, setNotifications]     = useState<Notification[]>([])
   const [showScrollTop, setShowScrollTop]     = useState(false)
   const [searchQuery, setSearchQuery]         = useState("")
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [sidebarOpen, setSidebarOpen]         = useState(true)  // open by default like ManifestTabs
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
+  const [sidebarOpen, setSidebarOpen]         = useState(true)  // open by default on mobile
   const [mounted, setMounted]                 = useState(false)
 
   useEffect(() => {
