@@ -123,9 +123,8 @@ export class TripManifestPDFGenerator {
           .manifest-number {
             font-size: 15px;
             font-weight: bold;
-            color: #000;
-            background-color: #ffc400;
-            border: 2px solid #000;
+            color: #FF0000;
+            border: 2px solid #FF0000;
             padding: 6px 14px;
             display: inline-block;
             border-radius: 3px; 
