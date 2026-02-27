@@ -60,38 +60,38 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className={`${tk.navBg} rounded-2xl shadow-2xl max-w-md w-full p-7 border ${tk.border}`}>
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-[#E8192C]/10 flex items-center justify-center flex-shrink-0 border border-[#E8192C]/20">
-              <AlertCircle className="w-5 h-5 text-[#E8192C]" />
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md">
+      <div className={`${tk.navBg} rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md p-6 sm:p-7 border ${tk.border}`}>
+        <div className="flex items-start justify-between mb-5">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#E8192C]/10 flex items-center justify-center flex-shrink-0 border border-[#E8192C]/20">
+              <AlertCircle className="w-4 h-4 text-[#E8192C]" />
             </div>
             <div>
-              <h3 className={`text-base font-black ${tk.textPrimary} tracking-tight`}>Ship-To Name Required</h3>
-              <p className={`text-[11px]  ${tk.textMuted} uppercase tracking-widest mt-0.5`}>Document not found in system</p>
+              <h3 className={`text-sm font-black ${tk.textPrimary} tracking-tight`}>Ship-To Name Required</h3>
+              <p className={`text-[11px] ${tk.textMuted} uppercase tracking-widest mt-0.5`}>Document not found in system</p>
             </div>
           </div>
-          <button onClick={onClose} className={`p-1.5 rounded-full transition-colors ${tk.textMuted} hover:${isDark ? 'bg-[#1a1a1a]' : 'bg-[#f0ede8]'}`}>
+          <button onClick={onClose} className={`p-1.5 rounded-full transition-colors ${tk.textMuted}`}>
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className={`${tk.surface} rounded-xl p-4 mb-6 border ${tk.border}`}>
+        <div className={`${tk.surface} rounded-xl p-4 mb-5 border ${tk.border}`}>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-1`}>Document No.</p>
+              <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-1`}>Document No.</p>
               <p className={`text-sm font-black ${tk.textPrimary} tabular-nums`}>{documentNumber}</p>
             </div>
             <div>
-              <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-1`}>Quantity</p>
+              <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-1`}>Quantity</p>
               <p className="text-sm font-black text-[#E8192C] tabular-nums">{quantity}</p>
             </div>
           </div>
         </div>
 
-        <div className="mb-6">
-          <label className={`block text-[10px]  uppercase tracking-[0.2em] ${tk.textSub} mb-2`}>
+        <div className="mb-5">
+          <label className={`block text-[10px] uppercase tracking-[0.2em] ${tk.textSub} mb-2`}>
             Ship-To Name <span className="text-[#E8192C]">*</span>
           </label>
           <input
@@ -100,19 +100,19 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
             onChange={(e) => setShipToName(e.target.value.toUpperCase())}
             onKeyDown={handleKeyDown}
             placeholder="Enter customer or delivery location..."
-            className={`w-full px-4 py-3 ${tk.inputBg} border ${tk.inputBorder} ${tk.inputText} rounded-xl focus:ring-1 ${tk.inputFocus} transition-all text-sm ${tk.inputPlaceholder}  outline-none`}
+            className={`w-full px-4 py-3 ${tk.inputBg} border ${tk.inputBorder} ${tk.inputText} rounded-xl focus:ring-1 ${tk.inputFocus} transition-all text-sm ${tk.inputPlaceholder} outline-none`}
             autoFocus
           />
         </div>
 
         <div className="flex gap-3">
-          <button onClick={onClose} className={`flex-1 px-4 py-2.5 border ${tk.border} ${tk.textMuted} rounded-full hover:${tk.textPrimary} font-bold text-xs uppercase tracking-widest transition-all`}>
+          <button onClick={onClose} className={`flex-1 px-4 py-3 border ${tk.border} ${tk.textMuted} rounded-full font-bold text-xs uppercase tracking-widest transition-all`}>
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!shipToName.trim()}
-            className="flex-1 px-4 py-2.5 bg-[#E8192C] text-white rounded-full hover:bg-[#FF1F30] font-black text-xs uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-[#E8192C]/20"
+            className="flex-1 px-4 py-3 bg-[#E8192C] text-white rounded-full hover:bg-[#FF1F30] font-black text-xs uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-[#E8192C]/20"
           >
             Save & Add
           </button>
@@ -152,9 +152,8 @@ export function CreateManifestTab({
   const totalDocuments = manifest.items.length
   const totalQuantity = manifest.items.reduce((sum, item) => sum + item.total_quantity, 0)
 
-  // Derived class helpers
-  const inputCls = `w-full px-4 py-3 ${tk.inputBg} border ${tk.inputBorder} ${tk.inputText} rounded-xl focus:ring-1 ${tk.inputFocus} outline-none transition-all text-sm ${tk.inputPlaceholder} `
-  const labelCls = `block text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-2`
+  const inputCls = `w-full px-4 py-3 ${tk.inputBg} border ${tk.inputBorder} ${tk.inputText} rounded-xl focus:ring-1 ${tk.inputFocus} outline-none transition-all text-sm ${tk.inputPlaceholder}`
+  const labelCls = `block text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-2`
 
   useEffect(() => {
     isMountedRef.current = true
@@ -245,9 +244,9 @@ export function CreateManifestTab({
   }
 
   const steps = [
-    { number: 1, title: 'Trip Info', icon: Truck },
-    { number: 2, title: 'Scan Docs', icon: Barcode },
-    { number: 3, title: 'Review',    icon: Save    },
+    { number: 1, title: 'Trip Info',  shortTitle: 'Info',  icon: Truck  },
+    { number: 2, title: 'Scan Docs',  shortTitle: 'Scan',  icon: Barcode },
+    { number: 3, title: 'Review',     shortTitle: 'Review', icon: Save   },
   ]
 
   return (
@@ -264,31 +263,32 @@ export function CreateManifestTab({
       <div className={`${tk.navBg} border ${tk.border} rounded-2xl overflow-hidden transition-colors duration-300`}>
 
         {/* Header */}
-        <div className={`px-6 sm:px-8 pt-8 pb-7 border-b ${tk.border}`}>
-          <div className="flex items-end justify-between mb-8">
+        <div className={`px-4 sm:px-8 pt-5 sm:pt-8 pb-5 sm:pb-7 border-b ${tk.border}`}>
+
+          {/* Title row */}
+          <div className="flex items-center justify-between mb-5 sm:mb-8">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-2 ">
+              <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1 sm:mb-2">
                 {isEditMode ? 'Editing manifest' : 'New manifest'}
               </p>
-              <h2 className={`text-[clamp(1.6rem,4vw,2.4rem)] font-black ${tk.textPrimary} leading-[0.93] tracking-tight`}>
+              <h2 className={`text-2xl sm:text-[clamp(1.6rem,4vw,2.4rem)] font-black ${tk.textPrimary} leading-[0.93] tracking-tight`}>
                 {isEditMode ? 'Edit Manifest' : 'Create Manifest'}
               </h2>
-              <p className={`text-[11px]  ${tk.textMuted} uppercase tracking-widest mt-1.5`}>
+              <p className={`text-[11px] ${tk.textMuted} uppercase tracking-widest mt-1`}>
                 SF Express · Cebu Warehouse
               </p>
             </div>
-            <div className="hidden sm:flex items-center gap-6">
-              <div className="text-right">
-                <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-1`}>Step</p>
-                <p className={`text-4xl font-black ${tk.textPrimary} tabular-nums leading-none`}>
-                  {String(currentStep).padStart(2, '0')}
-                  <span className={`text-lg ${tk.textGhost}`}>/03</span>
-                </p>
-              </div>
+
+            {/* Step counter — visible on all sizes, compact on mobile */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <p className={`text-3xl sm:text-4xl font-black ${tk.textPrimary} tabular-nums leading-none`}>
+                {String(currentStep).padStart(2, '0')}
+              </p>
+              <span className={`text-base sm:text-lg ${tk.textGhost} leading-none`}>/03</span>
             </div>
           </div>
 
-          {/* Step indicator */}
+          {/* Step indicator — compact on mobile */}
           <div className="flex items-center">
             {steps.map((step, index) => {
               const isActive = currentStep === step.number
@@ -296,8 +296,8 @@ export function CreateManifestTab({
               const Icon = step.icon
               return (
                 <React.Fragment key={step.number}>
-                  <div className="flex items-center gap-2.5 flex-shrink-0">
-                    <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300 flex-shrink-0 ${
+                  <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0 min-w-0">
+                    <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300 flex-shrink-0 ${
                       isActive
                         ? 'bg-[#E8192C] text-white shadow-lg shadow-[#E8192C]/30'
                         : isCompleted
@@ -305,16 +305,20 @@ export function CreateManifestTab({
                         : `bg-transparent ${tk.textMuted} border ${tk.border}`
                     }`}>
                       {isCompleted
-                        ? <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        : <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        ? <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                        : <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
                       }
                     </div>
-                    <p className={`text-[10px]  uppercase tracking-[0.15em] font-bold transition-colors ${
+                    {/* Show short title on mobile, full title on sm+ */}
+                    <p className={`text-[9px] sm:text-[10px] uppercase tracking-[0.1em] sm:tracking-[0.15em] font-bold transition-colors truncate ${
                       isActive ? tk.textPrimary : isCompleted ? 'text-[#E8192C]' : tk.textMuted
-                    }`}>{step.title}</p>
+                    }`}>
+                      <span className="sm:hidden">{step.shortTitle}</span>
+                      <span className="hidden sm:inline">{step.title}</span>
+                    </p>
                   </div>
                   {index < 2 && (
-                    <div className="flex-1 mx-3 sm:mx-4">
+                    <div className="flex-1 mx-2 sm:mx-4">
                       <div className={`h-px transition-all duration-500 ${isCompleted ? 'bg-[#E8192C]/40' : isDark ? 'bg-[#1a1a1a]' : 'bg-[#e5e3df]'}`} />
                     </div>
                   )}
@@ -325,26 +329,26 @@ export function CreateManifestTab({
         </div>
 
         {/* Step content */}
-        <div className="p-6 sm:p-8">
+        <div className="p-4 sm:p-8">
 
-          {/* STEP 1 */}
+          {/* ── STEP 1 ─────────────────────────────────────────────────────── */}
           {currentStep === 1 && (
-            <div className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            <div className="space-y-4 sm:space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
 
                 {/* Manifest number */}
                 <div className="sm:col-span-2">
                   <label className={labelCls}>Manifest Number</label>
-                  <div className={`flex items-center gap-4 px-5 py-4 ${tk.surface} border ${tk.border} rounded-xl`}>
-                    <div className="w-0.5 h-10 rounded-full bg-[#E8192C]/60 flex-shrink-0" />
+                  <div className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 ${tk.surface} border ${tk.border} rounded-xl`}>
+                    <div className="w-0.5 h-9 rounded-full bg-[#E8192C]/60 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Auto-generated</p>
-                      <p className={`text-xl sm:text-2xl font-black ${tk.textPrimary} tracking-wider tabular-nums truncate leading-none`}>
+                      <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Auto-generated</p>
+                      <p className={`text-lg sm:text-2xl font-black ${tk.textPrimary} tracking-wider tabular-nums truncate leading-none`}>
                         {manifest.manifest_number || '—'}
                       </p>
                     </div>
-                    <div className="flex-shrink-0 px-2.5 py-1 bg-yellow-600/10 border border-yellow-600/20 rounded-full">
-                      <span className="text-[10px]  font-bold uppercase tracking-widest text-yellow-600">System</span>
+                    <div className="flex-shrink-0 px-2 py-1 bg-yellow-600/10 border border-yellow-600/20 rounded-full">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-yellow-600">System</span>
                     </div>
                   </div>
                 </div>
@@ -401,12 +405,12 @@ export function CreateManifestTab({
             </div>
           )}
 
-          {/* STEP 2 */}
+          {/* ── STEP 2 ─────────────────────────────────────────────────────── */}
           {currentStep === 2 && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Search box */}
-              <div className={`border ${tk.border} rounded-xl p-5 sm:p-6`}>
-                <label className={`flex items-center gap-2 text-[10px]  uppercase tracking-[0.2em] font-bold ${tk.textMuted} mb-4`}>
+              <div className={`border ${tk.border} rounded-xl p-4 sm:p-6`}>
+                <label className={`flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold ${tk.textMuted} mb-3 sm:mb-4`}>
                   <Search className="w-3.5 h-3.5 text-[#E8192C]" /> Document Search
                 </label>
                 <div className="relative">
@@ -417,7 +421,7 @@ export function CreateManifestTab({
                     value={barcodeInput}
                     onChange={(e) => setBarcodeInput(e.target.value.toUpperCase())}
                     onKeyDown={handleSearchInputKeyDown}
-                    placeholder="Enter DN / TRA number and press Enter…"
+                    placeholder="DN / TRA number…"
                     className={`${inputCls} pl-10`}
                     disabled={scanningDocument}
                     inputMode="search" autoComplete="off"
@@ -425,26 +429,26 @@ export function CreateManifestTab({
                 </div>
 
                 {isSearching && barcodeInput.trim().length >= 1 && (
-                  <div className={`mt-3 p-3 ${tk.surface} rounded-xl flex items-center gap-2 text-[11px]  ${tk.textMuted} border ${tk.border}`}>
+                  <div className={`mt-3 p-3 ${tk.surface} rounded-xl flex items-center gap-2 text-[11px] ${tk.textMuted} border ${tk.border}`}>
                     <div className="animate-spin rounded-full h-3.5 w-3.5 border border-[#E8192C] border-t-transparent" />
                     Searching…
                   </div>
                 )}
 
                 {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length > 0 && (
-                  <div className={`mt-3 space-y-0 max-h-64 overflow-y-auto divide-y ${tk.divide}`}>
+                  <div className={`mt-3 space-y-0 max-h-56 overflow-y-auto divide-y ${tk.divide} rounded-xl border ${tk.border}`}>
                     {searchResults.map((result, idx) => (
                       <button key={idx} onClick={() => selectDocument(result)} type="button"
-                        className={`w-full text-left px-1 py-3 transition-colors group ${tk.surfaceHover}`}
+                        className={`w-full text-left px-3 py-3 transition-colors group ${tk.surfaceHover}`}
                       >
-                        <div className="flex items-baseline justify-between">
-                          <div>
-                            <span className={`text-[10px]  ${tk.textMuted} mr-2`}>{String(idx + 1).padStart(2, '0')}</span>
-                            <span className={`font-black ${tk.textPrimary} text-sm group-hover:text-[#E8192C] transition-colors`}>{result.documentNumber}</span>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <div className="flex items-baseline gap-2 min-w-0">
+                            <span className={`text-[10px] ${tk.textMuted} flex-shrink-0`}>{String(idx + 1).padStart(2, '0')}</span>
+                            <span className={`font-black ${tk.textPrimary} text-sm group-hover:text-[#E8192C] transition-colors truncate`}>{result.documentNumber}</span>
                           </div>
-                          <span className="text-[10px]  font-bold text-[#E8192C]">×{result.quantity}</span>
+                          <span className="text-[10px] font-bold text-[#E8192C] flex-shrink-0">×{result.quantity}</span>
                         </div>
-                        <p className={`text-[11px]  ${tk.textMuted} mt-0.5 pl-5`}>{result.shipToName}</p>
+                        <p className={`text-[11px] ${tk.textMuted} mt-0.5 pl-6 truncate`}>{result.shipToName}</p>
                       </button>
                     ))}
                   </div>
@@ -455,7 +459,7 @@ export function CreateManifestTab({
                     <AlertCircle className="w-4 h-4 text-[#E8192C] flex-shrink-0 mt-0.5" />
                     <div>
                       <p className={`font-black ${tk.textPrimary} text-xs uppercase tracking-widest`}>Not Found</p>
-                      <p className={`text-[11px]  ${tk.textMuted} mt-1`}>
+                      <p className={`text-[11px] ${tk.textMuted} mt-1`}>
                         Press Enter to add <span className={`${tk.textPrimary} font-bold`}>"{barcodeInput}"</span> manually
                       </p>
                     </div>
@@ -465,41 +469,41 @@ export function CreateManifestTab({
 
               {/* Scanned list */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <p className={`flex items-center gap-2 text-[10px]  uppercase tracking-[0.2em] font-bold ${tk.textMuted}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <p className={`flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold ${tk.textMuted}`}>
                     <Package className="w-3.5 h-3.5 text-[#E8192C]" />
                     Scanned ({totalDocuments})
                   </p>
                   {totalQuantity > 0 && (
-                    <span className={`text-[10px]  ${tk.textMuted}`}>
-                      Total Qty: <span className={`font-black ${tk.textPrimary} tabular-nums`}>{totalQuantity}</span>
+                    <span className={`text-[10px] ${tk.textMuted}`}>
+                      Total: <span className={`font-black ${tk.textPrimary} tabular-nums`}>{totalQuantity}</span>
                     </span>
                   )}
                 </div>
 
                 {manifest.items.length === 0 ? (
-                  <div className={`py-12 text-center border border-dashed ${tk.border} rounded-xl`}>
-                    <Package className={`w-8 h-8 ${tk.textGhost} mx-auto mb-3`} />
-                    <p className={`${tk.textMuted} font-black text-sm uppercase tracking-widest`}>No documents yet</p>
-                    <p className={`text-[11px]  ${tk.textGhost} mt-1.5`}>Scan or type a DN/TRA above</p>
+                  <div className={`py-10 text-center border border-dashed ${tk.border} rounded-xl`}>
+                    <Package className={`w-7 h-7 ${tk.textGhost} mx-auto mb-2.5`} />
+                    <p className={`${tk.textMuted} font-black text-xs uppercase tracking-widest`}>No documents yet</p>
+                    <p className={`text-[11px] ${tk.textGhost} mt-1`}>Scan or type a DN/TRA above</p>
                   </div>
                 ) : (
                   <div className={`divide-y ${tk.divide}`}>
                     {manifest.items.map((item, idx) => (
-                      <div key={idx} className="group flex items-center gap-4 py-4 transition-all duration-200 hover:pl-1">
-                        <span className={`text-[11px]  font-bold ${tk.textGhost} w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors`}>
+                      <div key={idx} className="group flex items-center gap-3 py-3.5 transition-all duration-200">
+                        <span className={`text-[11px] font-bold ${tk.textGhost} w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors`}>
                           {String(item.item_number).padStart(2, '0')}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className={`font-black ${isDark ? 'text-[#B3B3B3]' : 'text-[#78716c]'} text-sm truncate group-hover:${isDark ? 'text-white' : 'text-[#111110]'} transition-colors`}>
+                          <p className={`font-black text-sm truncate ${isDark ? 'text-[#B3B3B3] group-hover:text-white' : 'text-[#78716c] group-hover:text-[#111110]'} transition-colors`}>
                             {item.ship_to_name}
                           </p>
-                          <p className={`text-[11px]  ${tk.textMuted} mt-0.5`}>{item.document_number}</p>
+                          <p className={`text-[11px] ${tk.textMuted} mt-0.5 truncate`}>{item.document_number}</p>
                         </div>
                         <span className="text-sm font-black text-[#E8192C] tabular-nums flex-shrink-0">×{item.total_quantity}</span>
                         <button onClick={() => removeItem(idx)}
-                          className={`p-1.5 ${tk.textGhost} hover:text-[#E8192C] transition-colors flex-shrink-0`}>
-                          <Trash2 className="w-3.5 h-3.5" />
+                          className={`p-1.5 ${tk.textGhost} hover:text-[#E8192C] transition-colors flex-shrink-0 touch-manipulation`}>
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -509,86 +513,92 @@ export function CreateManifestTab({
             </div>
           )}
 
-          {/* STEP 3 */}
+          {/* ── STEP 3 ─────────────────────────────────────────────────────── */}
           {currentStep === 3 && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Trip info */}
-              <div className={`border ${tk.border} rounded-xl p-5 sm:p-6`}>
-                <p className={`flex items-center gap-2 text-[10px]  uppercase tracking-[0.2em] font-bold ${tk.textMuted} mb-5`}>
+              <div className={`border ${tk.border} rounded-xl p-4 sm:p-6`}>
+                <p className={`flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold ${tk.textMuted} mb-4`}>
                   <Truck className="w-3.5 h-3.5 text-[#E8192C]" /> Trip Information
                 </p>
-                <div className={`grid grid-cols-2 sm:grid-cols-3 gap-y-5 gap-x-4 divide-y sm:divide-y-0 sm:divide-x ${tk.divide}`}>
-                  <div className="space-y-5 sm:pr-4">
-                    {[['Manifest No.', manifest.manifest_number], ['Date', manifest.manifest_date]].map(([label, val]) => (
-                      <div key={label}>
-                        <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>{label}</p>
-                        <p className={`font-black ${tk.textPrimary} text-sm sm:text-base tabular-nums`}>{val}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-5 sm:px-4">
-                    {[['Driver', manifest.driver_name || '—'], ['Plate No.', manifest.plate_no || '—']].map(([label, val]) => (
-                      <div key={label}>
-                        <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>{label}</p>
-                        <p className={`font-black ${tk.textPrimary} text-sm truncate`}>{val}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-5 sm:pl-4">
-                    <div>
-                      <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Time Start</p>
-                      <p className={`font-black ${tk.textPrimary} text-sm tabular-nums`}>{formatTime12hr(manifest.time_start)}</p>
-                    </div>
-                    <div>
-                      <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Time End</p>
-                      <p className={`font-black ${tk.textPrimary} text-sm tabular-nums`}>{formatTime12hr(manifest.time_end)}</p>
-                    </div>
-                    {manifest.time_start && manifest.time_end && (
-                      <div>
-                        <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Duration</p>
-                        <p className="font-black text-[#F5A623] text-sm tabular-nums">{getDuration()}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className={`flex gap-6 mt-5 pt-5 border-t ${tk.border}`}>
+
+                {/* 2-col grid on mobile, 3-col on sm+ */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-y-5">
                   <div>
-                    <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Trucker</p>
-                    <p className={`font-black ${tk.textPrimary} text-sm`}>{manifest.trucker || '—'}</p>
+                    <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Manifest No.</p>
+                    <p className={`font-black ${tk.textPrimary} text-sm tabular-nums truncate`}>{manifest.manifest_number}</p>
                   </div>
                   <div>
-                    <p className={`text-[10px]  uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Truck Type</p>
+                    <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Date</p>
+                    <p className={`font-black ${tk.textPrimary} text-sm tabular-nums`}>{manifest.manifest_date}</p>
+                  </div>
+                  <div>
+                    <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Trucker</p>
+                    <p className={`font-black ${tk.textPrimary} text-sm truncate`}>{manifest.trucker || '—'}</p>
+                  </div>
+                  <div>
+                    <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Driver</p>
+                    <p className={`font-black ${tk.textPrimary} text-sm truncate`}>{manifest.driver_name || '—'}</p>
+                  </div>
+                  <div>
+                    <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Plate No.</p>
+                    <p className={`font-black ${tk.textPrimary} text-sm`}>{manifest.plate_no || '—'}</p>
+                  </div>
+                  <div>
+                    <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Truck Type</p>
                     <p className={`font-black ${tk.textPrimary} text-sm`}>{manifest.truck_type || '—'}</p>
                   </div>
+                  <div>
+                    <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Time Start</p>
+                    <p className={`font-black ${tk.textPrimary} text-sm tabular-nums`}>{formatTime12hr(manifest.time_start)}</p>
+                  </div>
+                  <div>
+                    <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Time End</p>
+                    <p className={`font-black ${tk.textPrimary} text-sm tabular-nums`}>{formatTime12hr(manifest.time_end)}</p>
+                  </div>
+                  {manifest.time_start && manifest.time_end && (
+                    <div>
+                      <p className={`text-[10px] uppercase tracking-[0.2em] ${tk.textMuted} mb-0.5`}>Duration</p>
+                      <p className="font-black text-[#F5A623] text-sm tabular-nums">{getDuration()}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Documents */}
-              <div className={`border ${tk.border} rounded-xl p-5 sm:p-6`}>
-                <div className="flex items-center justify-between mb-5">
-                  <p className={`flex items-center gap-2 text-[10px]  uppercase tracking-[0.2em] font-bold ${tk.textMuted}`}>
+              {/* Documents list */}
+              <div className={`border ${tk.border} rounded-xl p-4 sm:p-6`}>
+                <div className="flex items-center justify-between mb-4">
+                  <p className={`flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold ${tk.textMuted}`}>
                     <Package className="w-3.5 h-3.5 text-[#E8192C]" /> Documents ({totalDocuments})
                   </p>
-                  <span className={`text-[10px]  ${tk.textMuted}`}>
+                  <span className={`text-[10px] ${tk.textMuted}`}>
                     Total Qty: <span className={`font-black ${tk.textPrimary} tabular-nums`}>{totalQuantity}</span>
                   </span>
                 </div>
+
                 <div className={`divide-y ${tk.divide}`}>
-                  <div className={`grid grid-cols-[2rem_1fr_auto_auto] gap-3 pb-2.5 text-[10px]  uppercase tracking-[0.15em] ${tk.textGhost}`}>
-                    <span>#</span><span>Ship To</span>
-                    <span className="hidden sm:block">DN/TRA</span>
+                  {/* Header row — 3 cols on mobile (no DN/TRA), 4 cols on sm+ */}
+                  <div className={`grid grid-cols-[1.5rem_1fr_auto] sm:grid-cols-[1.5rem_1fr_auto_auto] gap-x-3 pb-2.5 text-[10px] uppercase tracking-[0.15em] ${tk.textGhost}`}>
+                    <span>#</span>
+                    <span>Ship To</span>
+                    <span className="hidden sm:block">DN / TRA</span>
                     <span className="text-right">Qty</span>
                   </div>
+
                   {manifest.items.map((item) => (
                     <div key={item.item_number}
-                      className="grid grid-cols-[2rem_1fr_auto_auto] gap-3 py-3 group transition-all duration-200 hover:pl-1 items-center">
-                      <span className={`text-[11px]  font-bold ${tk.textGhost} group-hover:text-[#E8192C] transition-colors`}>
+                      className="grid grid-cols-[1.5rem_1fr_auto] sm:grid-cols-[1.5rem_1fr_auto_auto] gap-x-3 py-3 group transition-all duration-200 items-center">
+                      <span className={`text-[11px] font-bold ${tk.textGhost} group-hover:text-[#E8192C] transition-colors`}>
                         {String(item.item_number).padStart(2, '0')}
                       </span>
-                      <span className={`font-black ${isDark ? 'text-[#B3B3B3]' : 'text-[#78716c]'} text-sm group-hover:${isDark ? 'text-white' : 'text-[#111110]'} transition-colors truncate`}>
-                        {item.ship_to_name}
-                      </span>
-                      <span className={`text-[11px]  ${tk.textMuted} hidden sm:block`}>{item.document_number}</span>
+                      <div className="min-w-0">
+                        <p className={`font-black text-sm truncate ${isDark ? 'text-[#B3B3B3] group-hover:text-white' : 'text-[#78716c] group-hover:text-[#111110]'} transition-colors`}>
+                          {item.ship_to_name}
+                        </p>
+                        {/* Show DN on mobile below ship-to name */}
+                        <p className={`sm:hidden text-[11px] ${tk.textMuted} mt-0.5 truncate`}>{item.document_number}</p>
+                      </div>
+                      <span className={`text-[11px] ${tk.textMuted} hidden sm:block`}>{item.document_number}</span>
                       <span className="text-sm font-black text-[#E8192C] tabular-nums text-right">×{item.total_quantity}</span>
                     </div>
                   ))}
@@ -597,18 +607,20 @@ export function CreateManifestTab({
             </div>
           )}
 
-          {/* Navigation */}
-          <div className={`flex flex-col sm:flex-row justify-between gap-3 mt-8 pt-7 border-t ${tk.border}`}>
+          {/* ── Navigation ─────────────────────────────────────────────────── */}
+          <div className={`flex justify-between gap-3 mt-6 sm:mt-8 pt-5 sm:pt-7 border-t ${tk.border}`}>
             <button
               onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
               disabled={currentStep === 1}
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-150 border ${tk.border} ${
+              className={`flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-150 border ${tk.border} ${
                 currentStep === 1
                   ? `${tk.textGhost} cursor-not-allowed`
                   : `${tk.textSub} hover:${isDark ? 'border-[#3E3E3E] text-white' : 'border-[#c4bfba] text-[#111110]'}`
               }`}
             >
-              <ChevronLeft className="w-3.5 h-3.5" /> Previous
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Previous</span>
+              <span className="xs:hidden">Back</span>
             </button>
 
             {currentStep < 3 ? (
@@ -619,18 +631,19 @@ export function CreateManifestTab({
                   setCurrentStep((currentStep + 1) as 1 | 2 | 3)
                 }}
                 disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-[#E8192C] text-white font-black text-xs uppercase tracking-widest hover:bg-[#FF1F30] transition-all duration-150 shadow-lg shadow-[#E8192C]/20 disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none"
+                className="flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2.5 rounded-full bg-[#E8192C] text-white font-black text-xs uppercase tracking-widest hover:bg-[#FF1F30] transition-all duration-150 shadow-lg shadow-[#E8192C]/20 disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 Next <ChevronRight className="w-3.5 h-3.5" />
               </button>
             ) : (
-              <div className="flex gap-3 w-full sm:w-auto">
+              <div className="flex gap-2 sm:gap-3">
                 <button onClick={resetForm}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 border ${tk.border} ${tk.textSub} rounded-full font-bold text-xs uppercase tracking-widest hover:${isDark ? 'border-[#3E3E3E] text-white' : 'border-[#c4bfba] text-[#111110]'} transition-all duration-150`}>
-                  <X className="w-3.5 h-3.5" /> Clear
+                  className={`flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 border ${tk.border} ${tk.textSub} rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-150`}>
+                  <X className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Clear</span>
                 </button>
                 <button onClick={saveManifest} disabled={isLoading}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-full font-black text-xs uppercase tracking-widest transition-all duration-150 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed ${
+                  className={`flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2.5 rounded-full font-black text-xs uppercase tracking-widest transition-all duration-150 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed ${
                     isEditMode
                       ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20'
                       : 'bg-[#E8192C] hover:bg-[#FF1F30] text-white shadow-[#E8192C]/20'
@@ -641,6 +654,7 @@ export function CreateManifestTab({
               </div>
             )}
           </div>
+
         </div>
       </div>
     </div>
