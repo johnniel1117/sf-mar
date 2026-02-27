@@ -1,7 +1,6 @@
 'use client'
 
 import { ClipboardList, FileText, BarChart2, ChevronRight, ChevronLeft } from 'lucide-react'
-import { useTheme, t } from '@/components/ThemeContext'
 
 type Tab = 'create' | 'saved' | 'analytics'
 
@@ -22,18 +21,15 @@ export function ManifestTabs({
   isCollapsed = false,
   onToggleCollapse,
 }: ManifestTabsProps) {
-  const { isDark } = useTheme()
-  const tk = t(isDark)
-
   const handleTabChange = (tab: Tab) => {
     onTabChange(tab)
     onClose?.()
   }
 
   const tabs = [
-    { id: 'create'    as const, label: 'Create Manifest', index: '01', icon: ClipboardList },
-    { id: 'saved'     as const, label: 'Saved Manifests', index: '02', icon: FileText      },
-    { id: 'analytics' as const, label: 'Analytics',       index: '03', icon: BarChart2     },
+    { id: 'create' as const, label: 'Create Manifest', index: '01', icon: ClipboardList },
+    { id: 'saved'  as const, label: 'Saved Manifests', index: '02', icon: FileText      },
+    { id: 'analytics' as const, label: 'Analytics',    index: '03', icon: BarChart2     },
   ]
 
   return (
@@ -50,7 +46,7 @@ export function ManifestTabs({
       {/* Sidebar */}
       <aside
         className={`
-          fixed left-0 top-[73px] ${tk.sidebarBg} border-r ${tk.border} flex flex-col z-50
+          fixed left-0 top-[73px] bg-black border-r border-[#1a1a1a] flex flex-col z-50
           transition-all duration-300 ease-in-out
           lg:translate-x-0 lg:sticky lg:top-[73px]
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -60,7 +56,7 @@ export function ManifestTabs({
       >
         {/* Nav Items */}
         <nav className="flex-1 py-5 overflow-hidden">
-          <div className={`divide-y ${tk.divide}`}>
+          <div className="divide-y divide-[#1a1a1a]">
             {tabs.map(({ id, label, index, icon: Icon }) => {
               const isActive = activeTab === id
               return (
@@ -79,31 +75,22 @@ export function ManifestTabs({
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-8 bg-[#E8192C]" />
                   )}
 
-                  {/* Index number */}
+                  {/* Index number — landing style */}
                   {!isCollapsed && (
                     <span className={`text-[11px]  font-bold w-5 flex-shrink-0 transition-colors ${
-                      isActive
-                        ? 'text-[#E8192C]'
-                        : `${tk.textGhost} group-hover:text-[#E8192C]`
+                      isActive ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'
                     }`}>
                       {index}
                     </span>
                   )}
 
-                  <Icon
-                    className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                      isActive
-                        ? 'text-[#E8192C]'
-                        : `${tk.textMuted} group-hover:${isDark ? 'text-white' : 'text-[#111110]'}`
-                    }`}
-                    strokeWidth={1.5}
-                  />
+                  <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${
+                    isActive ? 'text-[#E8192C]' : 'text-[#3E3E3E] group-hover:text-white'
+                  }`} strokeWidth={1.5} />
 
                   {!isCollapsed && (
                     <span className={`text-[13px] font-black leading-snug transition-colors ${
-                      isActive
-                        ? tk.textPrimary
-                        : `${tk.textMuted} group-hover:${isDark ? 'text-white' : 'text-[#111110]'}`
+                      isActive ? 'text-white' : 'text-[#3E3E3E] group-hover:text-white'
                     }`}>
                       {label}
                     </span>
@@ -111,14 +98,13 @@ export function ManifestTabs({
 
                   {/* Collapsed tooltip */}
                   {isCollapsed && (
-                    <div className={`
+                    <div className="
                       absolute left-14 top-1/2 -translate-y-1/2
-                      ${tk.tooltipBg}
+                      bg-black border border-[#1a1a1a]
                       px-3 py-1.5 rounded-lg whitespace-nowrap
                       opacity-0 group-hover:opacity-100 transition-opacity
-                      pointer-events-none text-[11px]  ${tk.tooltipText} z-50 shadow-2xl
-                      border
-                    `}>
+                      pointer-events-none text-[11px]  text-white z-50 shadow-2xl
+                    ">
                       {label}
                     </div>
                   )}
@@ -129,10 +115,10 @@ export function ManifestTabs({
         </nav>
 
         {/* Collapse toggle (desktop only) */}
-        <div className={`flex-shrink-0 border-t ${tk.border} p-3`}>
+        <div className="flex-shrink-0 border-t border-[#1a1a1a] p-3">
           <button
             onClick={onToggleCollapse}
-            className={`hidden lg:flex w-full items-center justify-center p-2.5 rounded-full transition-colors ${tk.textMuted} hover:${isDark ? 'text-white bg-[#0a0a0a]' : 'text-[#111110] bg-[#f0ede8]'}`}
+            className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full hover:bg-[#0a0a0a] transition-colors text-[#282828] hover:text-white"
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed
@@ -142,7 +128,7 @@ export function ManifestTabs({
           </button>
 
           {!isCollapsed && (
-            <p className={`text-[10px]  ${tk.textGhost} text-center pt-1`}>v1.0.0</p>
+            <p className="text-[10px]  text-[#1a1a1a] text-center pt-1">v1.0.0</p>
           )}
         </div>
       </aside>

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { AlertTriangle, AlertCircle } from 'lucide-react'
+import { AlertTriangle, AlertCircle, ArrowUpRight } from 'lucide-react'
 
 interface ConfirmationModalProps {
   isOpen: boolean
@@ -19,7 +19,7 @@ export function ConfirmationModal({
   title,
   message,
   confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  cancelText  = 'Cancel',
   isDangerous = false,
   onConfirm,
   onCancel,
@@ -30,52 +30,59 @@ export function ConfirmationModal({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
       onClick={onCancel}
     >
       <div
-        className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+        className="bg-black border border-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        {/* Body */}
-        <div className="p-6">
+        {/* Header */}
+        <div className="px-7 pt-7 pb-6 border-b border-[#1a1a1a]">
           {/* Icon */}
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-5 border ${
             isDangerous
-              ? 'bg-[#E8192C]/15 border border-[#E8192C]/30'
-              : 'bg-[#E8192C]/10 border border-[#E8192C]/20'
+              ? 'bg-[#E8192C]/10 border-[#E8192C]/20'
+              : 'bg-[#E8192C]/8 border-[#E8192C]/15'
           }`}>
-            <Icon className="w-5 h-5 text-[#E8192C]" />
+            <Icon className="w-4 h-4 text-[#E8192C]" />
           </div>
 
-          {/* Title + message */}
-          <h2 className="text-base font-black text-white mb-1.5">{title}</h2>
-          <p className="text-sm text-[#6A6A6A] leading-relaxed">{message}</p>
+          {/* Eyebrow */}
+          <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1.5">
+            {isDangerous ? 'Warning' : 'Confirm'}
+          </p>
 
-          {/* Danger notice */}
+          {/* Title */}
+          <h2 className="text-xl font-black text-white tracking-tight leading-none mb-3">
+            {title}
+          </h2>
+
+          {/* Message */}
+          <p className="text-[12px]  text-[#3E3E3E] leading-relaxed">
+            {message}
+          </p>
+
+          {/* Danger strip */}
           {isDangerous && (
-            <div className="flex items-center gap-2 px-3 py-2.5 mt-4 bg-[#E8192C]/8 border border-[#E8192C]/20 rounded-xl">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#E8192C] flex-shrink-0" />
-              <p className="text-xs text-[#E8192C] font-semibold">This action cannot be undone.</p>
+            <div className="flex items-center gap-2 px-3 py-2.5 mt-4 border border-[#E8192C]/15 rounded-xl bg-[#E8192C]/5">
+              <div className="w-1 h-5 rounded-full bg-[#E8192C]/60 flex-shrink-0" />
+              <p className="text-[11px]  text-[#E8192C]/70">This action cannot be undone.</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-6 pb-6">
+        <div className="flex gap-3 px-7 py-5">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 border border-[#3E3E3E] text-[#B3B3B3] rounded-full text-sm font-semibold hover:border-white hover:text-white transition-all"
+            className="flex-1 py-2.5 border border-[#1a1a1a] text-[#6A6A6A] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-2.5 rounded-full text-white text-sm font-bold transition-all hover:scale-105 active:scale-100"
-            style={{
-              background: 'linear-gradient(135deg, #E8192C, #7f0e18)',
-              boxShadow: '0 4px 16px rgba(232,25,44,0.25)',
-            }}
+            className="flex-1 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
           >
             {confirmText}
           </button>

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, FileText, FileSpreadsheet, Download } from 'lucide-react'
+import { X, FileText, FileSpreadsheet, Download, ArrowUpRight } from 'lucide-react'
 
 interface DownloadModalProps {
   isOpen: boolean
@@ -21,72 +21,94 @@ export function DownloadModal({
   if (!isOpen) return null
 
   const options = [
-    { type: 'pdf'   as const, label: 'PDF Document',      desc: 'Best for printing & signatures', icon: FileText },
-    { type: 'excel' as const, label: 'Excel Spreadsheet', desc: 'Editable data & analysis',        icon: FileSpreadsheet },
-    { type: 'both'  as const, label: 'Both Formats',       desc: 'PDF + Excel downloaded at once',  icon: Download },
+    { type: 'pdf'   as const, label: 'PDF Document',      desc: 'Best for printing & signatures', index: '01', icon: FileText       },
+    { type: 'excel' as const, label: 'Excel Spreadsheet', desc: 'Editable data & analysis',        index: '02', icon: FileSpreadsheet },
+    { type: 'both'  as const, label: 'Both Formats',      desc: 'PDF + Excel downloaded at once',  index: '03', icon: Download        },
   ]
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
       onClick={onClose}
     >
       <div
-        className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-2xl shadow-2xl w-full max-w-sm p-6"
+        className="bg-black border border-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-5">
+        {/* Header */}
+        <div className="px-7 pt-7 pb-5 border-b border-[#1a1a1a] flex items-end justify-between">
           <div>
-            <h3 className="text-base font-black text-white">Download Manifest</h3>
-            <p className="text-xs text-[#6A6A6A] mt-0.5">Choose your export format</p>
+            <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1.5">
+              Export
+            </p>
+            <h3 className="text-xl font-black text-white tracking-tight leading-none">
+              Download Manifest
+            </h3>
           </div>
-          {/* <button
+          <button
             onClick={onClose}
-            className="p-2 rounded-full bg-[#282828] hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white transition-all hover:scale-105 active:scale-100"
+            className="p-1.5 rounded-full hover:bg-[#0a0a0a] text-[#3E3E3E] hover:text-white transition-colors mb-0.5"
           >
             <X className="w-4 h-4" />
-          </button> */}
+          </button>
         </div>
 
-        <div className="space-y-2 mb-6">
+        {/* Options — landing services-list style */}
+        <div className="divide-y divide-[#1a1a1a] px-0">
           {options.map(opt => {
             const active = downloadType === opt.type
+            const Icon   = opt.icon
             return (
               <button
                 key={opt.type}
                 onClick={() => onDownloadTypeChange(opt.type)}
-                className={`w-full flex items-center gap-4 p-4 border rounded-xl transition-all duration-150 text-left ${
-                  active
-                    ? 'border-[#E8192C]/50 bg-[#E8192C]/8'
-                    : 'border-[#3E3E3E] hover:border-[#E8192C]/30 hover:bg-[#282828]'
+                className={`w-full flex items-center gap-5 px-7 py-4 transition-all duration-200 group text-left ${
+                  active ? 'pl-8' : 'hover:pl-8'
                 }`}
               >
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                  active ? 'border-[#E8192C]' : 'border-[#6A6A6A]'
+                <span className={`text-[11px]  font-bold w-5 flex-shrink-0 transition-colors ${
+                  active ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'
                 }`}>
-                  {active && <div className="w-2.5 h-2.5 rounded-full bg-[#E8192C]" />}
+                  {opt.index}
+                </span>
+                <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200 ${
+                  active
+                    ? 'border-[#E8192C]/20 bg-[#E8192C]/8'
+                    : 'border-[#1a1a1a] bg-transparent group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6'
+                }`}>
+                  <Icon className={`w-4 h-4 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#3E3E3E] group-hover:text-[#E8192C]'}`} strokeWidth={1.5} />
                 </div>
-                <opt.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-[#E8192C]' : 'text-[#6A6A6A]'}`} />
-                <div>
-                  <p className="text-sm font-bold text-white">{opt.label}</p>
-                  <p className="text-xs text-[#6A6A6A]">{opt.desc}</p>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[13px] font-black leading-snug transition-colors ${
+                    active ? 'text-white' : 'text-[#3E3E3E] group-hover:text-white'
+                  }`}>
+                    {opt.label}
+                  </p>
+                  <p className={`text-[11px]  mt-0.5 transition-colors ${
+                    active ? 'text-[#6A6A6A]' : 'text-[#282828] group-hover:text-[#3E3E3E]'
+                  }`}>
+                    {opt.desc}
+                  </p>
                 </div>
+                <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0 ${
+                  active ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'
+                }`} />
               </button>
             )
           })}
         </div>
 
-        <div className="flex gap-3">
+        {/* Footer actions */}
+        <div className="flex gap-3 px-7 py-5 border-t border-[#1a1a1a]">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[#3E3E3E] text-[#B3B3B3] rounded-full text-sm font-semibold hover:border-white hover:text-white transition-all"
+            className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#6A6A6A] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 rounded-full text-white text-sm font-bold hover:scale-105 active:scale-100 transition-all"
-            style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)', boxShadow: '0 4px 16px rgba(232,25,44,0.25)' }}
+            className="flex-1 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
           >
             Download
           </button>

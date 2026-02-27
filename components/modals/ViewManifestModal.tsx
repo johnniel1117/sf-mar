@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react'
 import {
-  X, Truck, User, Hash, Clock, Package, Calendar,
-  Edit, Download, FileText, Play, ChevronRight
+  X, Truck, User, Hash, Clock, Package,
+  Edit, Download, FileText
 } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
 
@@ -33,51 +33,15 @@ const getDuration = (timeStart?: string, timeEnd?: string): string | null => {
   return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`
 }
 
-function ManifestAvatar({ seed, size = 'lg' }: { seed: string; size?: 'sm' | 'lg' }) {
-  let hash = 0
-  for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash)
-  const lightness = 25 + (Math.abs(hash) % 15)
-  const sz = size === 'lg' ? 'w-16 h-16 sm:w-20 sm:h-20' : 'w-9 h-9'
-  const iconSz = size === 'lg' ? 'w-7 h-7 sm:w-9 sm:h-9' : 'w-4 h-4'
-  return (
-    <div
-      className={`${sz} rounded-xl shadow-2xl flex items-center justify-center flex-shrink-0`}
-      style={{
-        background: `linear-gradient(135deg, hsl(352,${70 + (Math.abs(hash) % 20)}%,${lightness}%) 0%, hsl(5,80%,${lightness - 8}%) 100%)`
-      }}
-    >
-      <FileText className={`${iconSz} text-white/40`} />
-    </div>
-  )
-}
-
-function MetaChip({ icon, label, value, highlight }: {
-  icon: React.ReactNode; label: string; value: string; highlight?: boolean
-}) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <div className="flex items-center gap-1 text-[#6A6A6A]">
-        <span className="text-[#E8192C]">{icon}</span>
-        <span className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold">{label}</span>
-      </div>
-      <p className={`text-xs sm:text-sm font-semibold truncate ${highlight ? 'text-yellow-500 font-black' : 'text-white'}`}>
-        {value}
-      </p>
-    </div>
-  )
-}
-
 export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloadPDF }: ViewManifestModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     if (isOpen) document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
 
-  // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden'
     else document.body.style.overflow = ''
@@ -86,86 +50,83 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
 
   if (!isOpen || !manifest) return null
 
-  const manifestId = manifest.manifest_number || manifest.id || '—'
+  const manifestId   = manifest.manifest_number || manifest.id || '—'
   const manifestDate = manifest.manifest_date
     ? new Date(manifest.manifest_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
     : '—'
-  const totalQty = manifest.items?.reduce((s, i) => s + (i.total_quantity || 0), 0) ?? 0
+  const totalQty  = manifest.items?.reduce((s, i) => s + (i.total_quantity || 0), 0) ?? 0
   const totalDocs = manifest.items?.length ?? 0
-  const duration = getDuration(manifest.time_start, manifest.time_end)
+  const duration  = getDuration(manifest.time_start, manifest.time_end)
 
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md"
       onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
     >
-      {/* Sheet — slides up on mobile, centered modal on sm+ */}
-      <div className="relative w-full sm:max-w-2xl bg-[#121212] sm:rounded-2xl shadow-2xl border border-[#282828] flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden rounded-t-2xl">
+      <div className="relative w-full sm:max-w-2xl bg-black sm:rounded-2xl shadow-2xl border border-[#1a1a1a] flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden rounded-t-2xl">
 
-        {/* ── Spotify-style "album header" gradient ── */}
-        <div
-          className="flex-shrink-0 px-5 sm:px-6 pt-6 pb-5"
-          style={{ background: 'linear-gradient(180deg, rgba(232,25,44,0.25) 0%, #121212 100%)' }}
-        >
-          {/* Close pill */}
-          <div className="flex justify-end mb-4">
+        {/* ── Header ── */}
+        <div className="flex-shrink-0 px-6 sm:px-8 pt-7 pb-6 border-b border-[#1a1a1a]">
+
+          {/* Close */}
+          <div className="flex justify-end mb-5">
             <button
               onClick={onClose}
-              className="p-2 rounded-full bg-[#282828] hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white transition-all duration-150 hover:scale-105 active:scale-100"
+              className="p-1.5 rounded-full hover:bg-[#0a0a0a] text-[#3E3E3E] hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Avatar + title row */}
-          <div className="flex items-end gap-4 sm:gap-5">
-            <ManifestAvatar seed={manifestId} size="lg" />
-            <div className="flex-1 min-w-0 pb-1">
-              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#B3B3B3] mb-1">Trip Manifest</p>
-              <h2 className="text-xl sm:text-3xl font-black text-white leading-none tracking-tight truncate mb-1">
-                {manifestId}
-              </h2>
-              <p className="text-xs sm:text-sm text-[#B3B3B3]">{manifestDate}</p>
-            </div>
-          </div>
+          {/* Eyebrow + manifest number — landing hero style */}
+          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-yellow-600  mb-2">
+            Trip Manifest
+          </p>
+          <h2 className="text-[clamp(1.4rem,4vw,2.2rem)] font-black text-white leading-[0.93] tracking-tight mb-1.5">
+            {manifestId}
+          </h2>
+          <p className="text-[11px]  text-[#3E3E3E] uppercase tracking-widest">{manifestDate}</p>
 
-          {/* Quick stats row — like Spotify's "X songs · duration" */}
-          <div className="flex items-center gap-3 mt-4 flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#E8192C]" />
-              <span className="text-xs text-[#B3B3B3] font-medium">
-                <span className="text-white font-bold">{totalDocs}</span> document{totalDocs !== 1 ? 's' : ''}
-              </span>
+          {/* Stats strip — landing hero style */}
+          <div className="flex items-center gap-6 sm:gap-8 mt-6">
+            <div>
+              <p className="text-[10px]  uppercase tracking-widest text-[#3E3E3E] mb-1">Documents</p>
+              <p className="text-3xl font-black text-white tabular-nums leading-none">
+                {String(totalDocs).padStart(2, '0')}
+              </p>
             </div>
-            <span className="text-[#6A6A6A] text-xs">·</span>
-            <span className="text-xs text-[#B3B3B3] font-medium">
-              <span className="text-[#E8192C] font-black">{totalQty}</span> total qty
-            </span>
+            <div className="w-px h-10 bg-[#1a1a1a]" />
+            <div>
+              <p className="text-[10px]  uppercase tracking-widest text-[#3E3E3E] mb-1">Total Qty</p>
+              <p className="text-3xl font-black text-white tabular-nums leading-none">
+                {totalQty >= 1000 ? `${(totalQty / 1000).toFixed(1)}k` : totalQty}
+              </p>
+            </div>
             {duration && (
               <>
-                <span className="text-[#6A6A6A] text-xs">·</span>
-                <span className="text-xs text-[#B3B3B3] font-medium">
-                  <Clock className="w-3 h-3 inline mr-1 text-[#6A6A6A]" />
-                  {duration}
-                </span>
+                <div className="w-px h-10 bg-[#1a1a1a]" />
+                <div>
+                  <p className="text-[10px]  uppercase tracking-widest text-[#3E3E3E] mb-1">Duration</p>
+                  <p className="text-3xl font-black text-[#F5A623] tabular-nums leading-none">{duration}</p>
+                </div>
               </>
             )}
           </div>
 
-          {/* Action buttons — Spotify play-bar style */}
-          <div className="flex items-center gap-3 mt-5">
+          {/* Action buttons — landing pill style */}
+          <div className="flex items-center gap-2.5 mt-6">
             <button
               onClick={() => { onEdit(manifest); onClose() }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-yellow-500 text-black text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/30"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#E8192C] text-white text-[11px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
             >
-              <Edit className="w-4 h-4" /> Edit
+              <Edit className="w-3.5 h-3.5" /> Edit
             </button>
             <button
               onClick={() => onDownloadPDF(manifest)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#727272] text-white text-sm font-semibold hover:border-white hover:scale-105 active:scale-100 transition-all duration-150"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#1a1a1a] text-[#6A6A6A] text-[11px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
             >
-              <Download className="w-4 h-4 text-[#E8192C]" /> Download
+              <Download className="w-3.5 h-3.5" /> Download
             </button>
           </div>
         </div>
@@ -173,109 +134,100 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
         {/* ── Scrollable body ── */}
         <div className="flex-1 overflow-y-auto min-h-0">
 
-          {/* Trip details section */}
-          <div className="px-5 sm:px-6 py-5 border-b border-[#282828]">
-            <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A] mb-4">
-              <Truck className="w-3.5 h-3.5 text-[#E8192C]" /> Trip Details
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-4">
-              <MetaChip icon={<User className="w-3 h-3" />} label="Driver" value={manifest.driver_name || '—'} />
-              <MetaChip icon={<Hash className="w-3 h-3" />} label="Plate No." value={manifest.plate_no || '—'} />
-              <MetaChip icon={<Truck className="w-3 h-3" />} label="Trucker" value={manifest.trucker || '—'} />
-              <MetaChip icon={<Truck className="w-3 h-3" />} label="Truck Type" value={manifest.truck_type || '—'} />
-              <MetaChip icon={<Clock className="w-3 h-3" />} label="Time Start" value={formatTime12hr(manifest.time_start)} />
-              <MetaChip icon={<Clock className="w-3 h-3" />} label="Time End" value={formatTime12hr(manifest.time_end)} />
-              {duration && (
-                <MetaChip icon={<Clock className="w-3 h-3" />} label="Duration" value={duration} highlight />
-              )}
-              <MetaChip icon={<Package className="w-3 h-3" />} label="Total Qty" value={String(totalQty)} highlight />
+          {/* Trip details — landing services-list style */}
+          <div className="px-6 sm:px-8 py-6 border-b border-[#1a1a1a]">
+            <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-5">
+              Trip Details
+            </p>
+            <div className="divide-y divide-[#1a1a1a]">
+              {[
+                { label: 'Driver',      value: manifest.driver_name  || '—', icon: User  },
+                { label: 'Plate No.',   value: manifest.plate_no     || '—', icon: Hash  },
+                { label: 'Trucker',     value: manifest.trucker      || '—', icon: Truck },
+                { label: 'Truck Type',  value: manifest.truck_type   || '—', icon: Truck },
+                { label: 'Time Start',  value: formatTime12hr(manifest.time_start), icon: Clock },
+                { label: 'Time End',    value: formatTime12hr(manifest.time_end),   icon: Clock },
+              ].map(({ label, value, icon: Icon }) => (
+                <div key={label}
+                  className="flex items-center gap-5 sm:gap-6 py-3.5 group transition-all duration-200 hover:pl-1.5"
+                >
+                  <Icon className="w-4 h-4 text-[#282828] group-hover:text-[#E8192C] transition-colors flex-shrink-0" strokeWidth={1.5} />
+                  <span className="text-[11px]  uppercase tracking-[0.15em] text-[#3E3E3E] w-20 flex-shrink-0">{label}</span>
+                  <span className="font-black text-[#B3B3B3] text-sm group-hover:text-white transition-colors">{value}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Documents tracklist section */}
-          <div className="px-5 sm:px-6 py-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A]">
-                <Package className="w-3.5 h-3.5 text-[#E8192C]" /> Documents
-              </h3>
-              <span className="text-xs text-[#6A6A6A]">
+          {/* Documents list — landing services-list style */}
+          <div className="px-6 sm:px-8 py-6">
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-[#3E3E3E]">
+                Documents
+              </p>
+              <span className="text-[10px]  text-[#3E3E3E]">
                 {totalDocs} doc{totalDocs !== 1 ? 's' : ''}
               </span>
             </div>
 
-            {/* Tracklist column headers */}
-            {totalDocs > 0 && (
-              <div className="flex items-center gap-3 px-3 pb-2 border-b border-[#282828] text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-1">
-                <span className="w-6 text-center">#</span>
-                <span className="w-8" />
-                <span className="flex-1">Ship To</span>
-                <span className="hidden sm:block w-32 text-right">DN / TRA</span>
-                <span className="w-10 text-right">Qty</span>
-              </div>
-            )}
-
             {totalDocs === 0 ? (
-              <div className="py-10 text-center bg-[#1E1E1E] rounded-xl border-2 border-dashed border-[#3E3E3E]">
-                <Package className="w-10 h-10 text-[#3E3E3E] mx-auto mb-3" />
-                <p className="text-[#6A6A6A] font-semibold text-sm">No documents</p>
+              <div className="py-12 text-center border border-dashed border-[#1a1a1a] rounded-xl">
+                <Package className="w-8 h-8 text-[#1a1a1a] mx-auto mb-3" />
+                <p className="text-[#282828] font-black text-sm uppercase tracking-widest">No documents</p>
               </div>
             ) : (
-              <div className="space-y-0.5">
-                {manifest.items!.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="group flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1E1E1E] transition-colors duration-100 cursor-default"
-                  >
-                    {/* Track number → play icon */}
-                    <div className="w-6 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs text-[#6A6A6A] tabular-nums group-hover:hidden">{idx + 1}</span>
-                      <Play className="w-3.5 h-3.5 text-white hidden group-hover:block fill-white" />
-                    </div>
+              <>
+                {/* Column headers */}
+                <div className="grid grid-cols-[2rem_1fr_auto_auto] gap-3 pb-2.5 text-[10px]  uppercase tracking-[0.15em] text-[#282828] border-b border-[#1a1a1a] mb-0">
+                  <span>#</span>
+                  <span>Ship To</span>
+                  <span className="hidden sm:block">DN/TRA</span>
+                  <span className="text-right">Qty</span>
+                </div>
 
-                    {/* Mini avatar */}
-                    {/* <div
-                      className="w-8 h-8 rounded flex-shrink-0 flex items-center justify-center shadow-md"
-                      style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}
+                <div className="divide-y divide-[#1a1a1a]">
+                  {manifest.items!.map((item, idx) => (
+                    <div key={idx}
+                      className="grid grid-cols-[2rem_1fr_auto_auto] gap-3 py-3.5 group transition-all duration-200 hover:pl-1 items-center"
                     >
-                      <span className="text-[10px] font-black text-white">{idx + 1}</span>
-                    </div> */}
-
-                    {/* Ship to name */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate group-hover:text-[#E8192C] transition-colors">
-                        {item.ship_to_name || '—'}
-                      </p>
+                      <span className="text-[11px]  font-bold text-[#282828] group-hover:text-[#E8192C] transition-colors">
+                        {String(idx + 1).padStart(2, '0')}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-black text-[#B3B3B3] text-sm truncate group-hover:text-white transition-colors">
+                          {item.ship_to_name || '—'}
+                        </p>
+                        {/* DN visible on mobile under ship-to */}
+                        <p className="text-[11px]  text-[#3E3E3E] mt-0.5 sm:hidden">{item.document_number || '—'}</p>
+                      </div>
+                      <span className="hidden sm:block text-[11px]  text-[#3E3E3E] text-right flex-shrink-0">
+                        {item.document_number || '—'}
+                      </span>
+                      <span className="text-sm font-black text-[#E8192C] tabular-nums text-right flex-shrink-0">
+                        ×{item.total_quantity ?? 0}
+                      </span>
                     </div>
+                  ))}
+                </div>
 
-                    {/* DN/TRA — hidden on mobile */}
-                    <span className="hidden sm:block w-32 text-right text-xs  text-[#B3B3B3] truncate flex-shrink-0">
-                      {item.document_number || '—'}
-                    </span>
-
-                    {/* Qty */}
-                    <span className="w-10 text-right text-sm font-black text-white flex-shrink-0">
-                      {item.total_quantity ?? 0}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Footer total row — like Spotify's "total duration" */}
-            {totalDocs > 0 && (
-              <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#282828] px-3">
-                <span className="text-xs text-[#6A6A6A] font-semibold uppercase tracking-widest">
-                  {totalDocs} document{totalDocs !== 1 ? 's' : ''}
-                </span>
-                <span className="text-xs font-black text-yellow-500">
-                  {totalQty} total qty
-                </span>
-              </div>
+                {/* Footer total */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#1a1a1a]">
+                  <span className="text-[10px]  uppercase tracking-[0.2em] text-[#3E3E3E]">
+                    {totalDocs} document{totalDocs !== 1 ? 's' : ''}
+                  </span>
+                  <span className="text-[10px]  font-black text-white tabular-nums">
+                    Total: <span className="text-[#E8192C]">{totalQty}</span>
+                  </span>
+                </div>
+              </>
             )}
           </div>
 
-          {/* Bottom safe area padding for mobile */}
-          <div className="h-4 flex-shrink-0" />
+          {/* Footer — landing style */}
+          <div className="border-t border-[#1a1a1a] mx-6 sm:mx-8 py-4 flex items-center justify-between mb-2">
+            <p className="text-[11px] text-[#1a1a1a] ">SF Express · Cebu Warehouse</p>
+            <p className="text-[11px] text-[#1a1a1a] ">{new Date().getFullYear()}</p>
+          </div>
         </div>
       </div>
     </div>

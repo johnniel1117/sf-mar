@@ -48,64 +48,56 @@ export const useTheme = () => useContext(ThemeContext)
 
 export function t(isDark: boolean) {
   return {
-    // Page / shell
-    // Light: crisp white page so cards/borders read clearly
-    pageBg:       isDark ? 'bg-black'        : 'bg-[#f0eeeb]',
-    pageBgRaw:    isDark ? '#000000'          : '#f0eeeb',
+    // Page / shell — warm mid-tone, not white, not cream
+    pageBg:    isDark ? 'bg-black'     : 'bg-[#e8e4df]',
+    pageBgRaw: isDark ? '#000000'      : '#e8e4df',
 
-    // Surfaces (cards, panels, inputs)
-    // Light: pure white so they pop against the off-white page
-    surface:      isDark ? 'bg-[#0a0a0a]'    : 'bg-white',
-    surfaceHover: isDark ? 'hover:bg-[#0a0a0a]' : 'hover:bg-[#fafaf8]',
+    // Surfaces — lighter than page so cards lift off the background
+    surface:      isDark ? 'bg-[#0a0a0a]'       : 'bg-[#f2f0ed]',
+    surfaceHover: isDark ? 'hover:bg-[#0a0a0a]' : 'hover:bg-[#eeebe7]',
 
-    // Borders / dividers
-    // Light: noticeably darker so lines are legible
-    border:       isDark ? 'border-[#1a1a1a]' : 'border-[#d1cdc7]',
-    borderRaw:    isDark ? '#1a1a1a'           : '#d1cdc7',
-    divide:       isDark ? 'divide-[#1a1a1a]' : 'divide-[#d1cdc7]',
+    // Borders / dividers — dark enough to always be visible
+    border:    isDark ? 'border-[#1a1a1a]' : 'border-[#c4bfb8]',
+    borderRaw: isDark ? '#1a1a1a'           : '#c4bfb8',
+    divide:    isDark ? 'divide-[#1a1a1a]' : 'divide-[#c4bfb8]',
 
-    // Text — punched up at every level
-    // primary:  near-black
-    // sub:      dark stone (readable body copy)
-    // muted:    medium stone (labels, captions — was too light before)
-    // ghost:    light stone (decorative only — index numbers, dividers)
-    textPrimary:  isDark ? 'text-white'       : 'text-[#1c1917]',
-    textSub:      isDark ? 'text-[#6A6A6A]'  : 'text-[#44403c]',
-    textMuted:    isDark ? 'text-[#3E3E3E]'  : 'text-[#78716c]',
-    textGhost:    isDark ? 'text-[#282828]'  : 'text-[#a8a29e]',
+    // Text — full contrast stack
+    textPrimary: isDark ? 'text-white'      : 'text-[#1c1917]',
+    textSub:     isDark ? 'text-[#6A6A6A]' : 'text-[#3d3834]',
+    textMuted:   isDark ? 'text-[#3E3E3E]' : 'text-[#6b6460]',
+    textGhost:   isDark ? 'text-[#282828]' : 'text-[#9e9890]',
 
-    // Inputs
-    // Light: white bg, visible border, dark text, legible placeholder
-    inputBg:          isDark ? 'bg-[#0a0a0a]'    : 'bg-white',
-    inputBorder:      isDark ? 'border-[#1a1a1a]' : 'border-[#d1cdc7]',
-    inputText:        isDark ? 'text-white'        : 'text-[#1c1917]',
-    inputPlaceholder: isDark ? 'placeholder-[#282828]' : 'placeholder-[#a8a29e]',
+    // Inputs — slightly lighter than surface so they feel interactive
+    inputBg:          isDark ? 'bg-[#0a0a0a]'        : 'bg-[#f7f5f2]',
+    inputBorder:      isDark ? 'border-[#1a1a1a]'    : 'border-[#c4bfb8]',
+    inputText:        isDark ? 'text-white'            : 'text-[#1c1917]',
+    inputPlaceholder: isDark ? 'placeholder-[#282828]': 'placeholder-[#9e9890]',
     inputFocus:       isDark
       ? 'focus:ring-[#E8192C]/40 focus:border-[#E8192C]/60'
       : 'focus:ring-[#E8192C]/30 focus:border-[#E8192C]/60',
 
-    // Nav / sidebar — white so they contrast against the off-white page bg
-    navBg:     isDark ? 'bg-black' : 'bg-white',
-    sidebarBg: isDark ? 'bg-black' : 'bg-white',
+    // Nav / sidebar — same as surface so they feel part of the shell
+    navBg:     isDark ? 'bg-black' : 'bg-[#f2f0ed]',
+    sidebarBg: isDark ? 'bg-black' : 'bg-[#f2f0ed]',
 
     // Sidebar item states
     sidebarActive:      isDark ? 'text-white'      : 'text-[#1c1917]',
-    sidebarInactive:    isDark ? 'text-[#3E3E3E]'  : 'text-[#78716c]',
+    sidebarInactive:    isDark ? 'text-[#3E3E3E]'  : 'text-[#6b6460]',
     sidebarHoverText:   isDark ? 'hover:text-white' : 'hover:text-[#1c1917]',
     sidebarIndexActive: isDark ? 'text-[#E8192C]'  : 'text-[#E8192C]',
-    sidebarIndexIdle:   isDark ? 'text-[#282828]'  : 'text-[#a8a29e]',
+    sidebarIndexIdle:   isDark ? 'text-[#282828]'  : 'text-[#9e9890]',
 
-    // Accents (unchanged in both themes)
+    // Accents
     red:        '#E8192C',
     redHover:   '#FF1F30',
     amber:      '#F5A623',
-    amberDim:   isDark ? 'text-[#3E3E3E]' : 'text-[#78716c]',
+    amberDim:   isDark ? 'text-[#3E3E3E]' : 'text-[#6b6460]',
     amberHover: 'hover:text-[#F5A623]',
 
     // Misc
-    spinner:    isDark ? 'border-[#E8192C]' : 'border-[#E8192C]',
-    dashed:     isDark ? 'border-[#1a1a1a]' : 'border-[#d1cdc7]',
-    tooltipBg:  isDark ? 'bg-black border-[#1a1a1a]' : 'bg-white border-[#d1cdc7]',
-    tooltipText: isDark ? 'text-white' : 'text-[#1c1917]',
+    spinner:     isDark ? 'border-[#E8192C]'              : 'border-[#E8192C]',
+    dashed:      isDark ? 'border-[#1a1a1a]'              : 'border-[#c4bfb8]',
+    tooltipBg:   isDark ? 'bg-black border-[#1a1a1a]'     : 'bg-[#f2f0ed] border-[#c4bfb8]',
+    tooltipText: isDark ? 'text-white'                     : 'text-[#1c1917]',
   }
 }
