@@ -306,13 +306,13 @@ export default function TripManifestForm({ role }: { role?: string }) {
     <div className="h-screen flex flex-col bg-[#121212] overflow-hidden">
 
       {/* Top Navigation Bar */}
-      <nav className="flex-shrink-0 h-[73px] border-b border-[#282828] z-50 flex items-center px-4 sm:px-6 gap-3 sm:gap-4">
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0"
-        >
-          <Menu className="w-5 h-5 text-[#B3B3B3]" />
-        </button>
+<nav className="relative flex-shrink-0 h-[73px] border-b border-[#282828] z-[60] flex items-center px-4 sm:px-6 gap-3 sm:gap-4">   
+<button
+  onClick={() => setSidebarOpen(!sidebarOpen)}  // was setSidebarCollapsed(!sidebarCollapsed)
+  className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0"
+>
+  <Menu className="w-5 h-5 text-[#B3B3B3]" />
+</button>
 
         <Link href="/" className="p-2 rounded-full hover:bg-[#282828] transition-colors flex-shrink-0" title="Home">
           <Home className="w-4 h-4 text-[#6A6A6A] hover:text-[#B3B3B3] transition-colors" />

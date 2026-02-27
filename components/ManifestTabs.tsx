@@ -35,12 +35,14 @@ export function ManifestTabs({
   return (
     <>
       {/* Mobile Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm lg:hidden z-40"
-          onClick={onClose}
-        />
-      )}
+      {/* Mobile Overlay */}
+{isOpen && (
+  <div
+    className="fixed inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm lg:hidden z-40"
+    style={{ top: '73px' }}
+    onClick={onClose}
+  />
+)}
 
       {/* Sidebar */}
       <aside
