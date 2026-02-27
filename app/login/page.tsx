@@ -80,7 +80,7 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
-                requiblack
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-[#121212] border border-[#727272] rounded-md text-white placeholder-[#6a6a6a] focus:outline-none focus:border-white hover:border-white transition-colors"
@@ -97,7 +97,7 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  requiblack
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 bg-[#121212] border border-[#727272] rounded-md text-white placeholder-[#6a6a6a] focus:outline-none focus:border-white hover:border-white transition-colors"
@@ -132,7 +132,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleLogin}
               disabled={loading}
-              className="w-full bg-yellow-600 hover:bg-black-700  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white font-bold py-3.5 rounded-2xl transition-all duration-200"
+              className="w-full bg-black-600 hover:bg-black-700 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white font-bold py-3.5 rounded-full transition-all duration-200"
             >
               {loading ? 'Signing in...' : 'Log In'}
             </button>
@@ -143,14 +143,14 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* <div className="text-center">
+            <div className="text-center">
               <button 
                 type="button" 
                 className="text-white text-sm font-medium underline hover:text-black-400 transition-colors"
               >
                 Forgot your password?
               </button>
-            </div> */}
+            </div>
           </div>
 
           {/* Footer */}
