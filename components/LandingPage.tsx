@@ -8,9 +8,9 @@ import LogoGridBackground from './LogoBackground'
 import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
 
 function useGreeting() {
-  const [greeting, setGreeting] = useState<{ text: string; icon: React.ReactNode; color: string }>({
+  const [greeting, setGreeting] = useState<{ text: string;  color: string }>({
     text: 'Good day',
-    icon: null,
+    // icon: null,
     color: 'text-white',
   })
 
@@ -19,19 +19,19 @@ function useGreeting() {
     if (h >= 5 && h < 12) {
       setGreeting({
         text: 'Good morning',
-        icon: <Sun className="w-7 h-7 sm:w-8 sm:h-8 text-yellow-400" strokeWidth={1.5} />,
+        // icon: <Sun className="w-7 h-7 sm:w-8 sm:h-8 text-yellow-400" strokeWidth={1.5} />,
         color: 'text-white',
       })
     } else if (h >= 12 && h < 18) {
       setGreeting({
         text: 'Good afternoon',
-        icon: <Sunset className="w-7 h-7 sm:w-8 sm:h-8 text-orange-400" strokeWidth={1.5} />,
+        // icon: <Sunset className="w-7 h-7 sm:w-8 sm:h-8 text-orange-400" strokeWidth={1.5} />,
         color: 'text-white',
       })
     } else {
       setGreeting({
         text: 'Good evening',
-        icon: <Moon className="w-7 h-7 sm:w-8 sm:h-8 text-blue-300" strokeWidth={1.5} />,
+        // icon: <Moon className="w-7 h-7 sm:w-8 sm:h-8 text-blue-300" strokeWidth={1.5} />,
         color: 'text-white',
       })
     }
@@ -196,12 +196,12 @@ export function LandingClient({ displayName, role }: LandingClientProps) {
           "
         >
           {/* Greeting */}
-          <div className="flex items-center gap-3 mb-2">
+          {/* <div className="flex items-center gap-3 mb-2">
             {greeting.icon}
             <h1 className={`text-3xl sm:text-4xl md:text-5xl font-black ${greeting.color}`}>
               {greeting.text}
             </h1>
-          </div>
+          </div> */}
           <p className="text-[#6A6A6A] text-sm mb-10 sm:mb-14 ml-0.5">
             Welcome back, <span className="text-[#B3B3B3] font-semibold">{displayName}</span>.
           </p>
