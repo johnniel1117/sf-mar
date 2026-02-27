@@ -70,7 +70,7 @@ export default function LoginPage() {
             Secure access
           </p>
           <h1 className="text-[2.2rem] font-black text-white leading-[0.95] tracking-tight">
-            Sign in to <span className="text-[#3E3E3E]">your account</span>
+            Sign in to your account
           </h1>
         </div>
 
