@@ -18,7 +18,6 @@ export class TripManifestPDFGenerator {
       })
     }
 
-    // ✅ 12hr time formatter
     const formatTime12hr = (time?: string) => {
       if (!time) return '—'
       const [hourStr, minuteStr] = time.split(':')
@@ -81,6 +80,8 @@ export class TripManifestPDFGenerator {
             line-height: 1.4;
             color: #000;
             background: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
           
           .page-container {
@@ -92,7 +93,6 @@ export class TripManifestPDFGenerator {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            border-bottom: 2px solid #000;
             padding-bottom: 10px;
           }
           
@@ -119,6 +119,27 @@ export class TripManifestPDFGenerator {
           .title-section {
             text-align: right;
           }
+
+          /* ── Doc title row ── */
+          .doc-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+          }
+
+          .doc-title-line {
+            flex: 1;
+            border-top: 1px solid #000;
+            align-self: center;
+          }
+
+          .doc-title {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+          }
           
           .manifest-number {
             font-size: 15px;
@@ -130,18 +151,6 @@ export class TripManifestPDFGenerator {
             border-radius: 3px; 
             min-width: 140px;
             text-align: center;
-          }
-          
-          .document-header {
-            text-align: center;
-            margin: 15px 0;
-            padding: 10px 0;
-          }
-          
-          .doc-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 4px;
           }
           
           .info-section {
@@ -175,7 +184,7 @@ export class TripManifestPDFGenerator {
           }
           
           .data-table thead {
-            background-color: #e8e8e8;
+           
             border: 1px solid #000;
           }
           
@@ -278,8 +287,10 @@ export class TripManifestPDFGenerator {
           </div>
 
           <!-- Title -->
-          <div class="document-header">
-            <div class="doc-title">TRIP MANIFEST</div>
+          <div class="doc-title-row">
+            <div class="doc-title-line"></div>
+            <div class="doc-title">Trip Manifest</div>
+            <div class="doc-title-line"></div>
           </div>
 
           <!-- Trip Information -->
@@ -311,8 +322,6 @@ export class TripManifestPDFGenerator {
               <div class="info-label">Time End</div>
               <div class="info-value">${formatTime12hr(manifestData.time_end)}</div>
             </div>
-
-           
           </div>
 
           <!-- Items Table -->
@@ -328,7 +337,7 @@ export class TripManifestPDFGenerator {
             </thead>
             <tbody>
               ${itemsHtml}
-              <tr style="font-weight: bold; background: #f8f8f8;">
+              <tr style="font-weight: bold; ">
                 <td colspan="3" style="text-align: right; padding: 8px;">TOTAL</td>
                 <td style="text-align: center; padding: 8px;">${totalQty}</td>
                 <td></td>

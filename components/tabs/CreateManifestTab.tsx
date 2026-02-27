@@ -60,8 +60,8 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md">
-      <div className={`${tk.navBg} rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md p-6 sm:p-7 border ${tk.border}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div className={`${tk.navBg} rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-7 border ${tk.border}`}>
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-[#E8192C]/10 flex items-center justify-center flex-shrink-0 border border-[#E8192C]/20">
