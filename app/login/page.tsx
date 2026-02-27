@@ -123,7 +123,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="bg-black-500/10 border border-black-500/30 text-black-400 text-sm px-4 py-3 rounded-md">
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-md">
                 {error}
               </div>
             )}
@@ -132,7 +132,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleLogin}
               disabled={loading}
-              className="w-full bg-black-600 hover:bg-black-700 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white font-bold py-3.5 rounded-full transition-all duration-200"
+              className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white font-bold py-3.5 rounded-2xl transition-all duration-200"
             >
               {loading ? 'Signing in...' : 'Log In'}
             </button>
