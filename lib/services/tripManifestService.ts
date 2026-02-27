@@ -19,7 +19,7 @@ export interface TripManifest {
   time_end?: string         // HH:mm format
   // departure_time?: string
   // arrival_time?: string
-  remarks?: string
+  // remarks?: string
   status: 'draft' | 'completed'
   items: ManifestItem[]
   created_at?: string
