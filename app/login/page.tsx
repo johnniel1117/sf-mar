@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import LogoGridBackground from '@/components/LogoBackground'
+import { ArrowRight, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -15,150 +16,154 @@ export default function LoginPage() {
   const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setLoading(true)
-  setError(null)
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
-    setError('Invalid email or password.')
-    setLoading(false)
-    return
+    if (error) {
+      setError('Invalid email or password.')
+      setLoading(false)
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
+
+    const role = profile?.role
+
+    if (role === 'viewer') {
+      router.push('/')
+    } else {
+      router.push('/')
+    }
+
+    router.refresh()
   }
-
-  // Fetch profile to check role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', data.user.id)
-    .single()
-
-  const role = profile?.role
-
-  if (role === 'viewer') {
-    router.push('/') // viewers can only see manifests & reports
-  } else {
-    router.push('/') // admin/user goes to full dashboard
-  }
-
-  router.refresh()
-}
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* Subtle animated background */}
-      <div className="absolute inset-0 opacity-30">
+    <div className="min-h-screen bg-black relative overflow-hidden flex items-center justify-center">
+
+      {/* ── Background ── */}
+      <div className="absolute inset-0 opacity-30 pointer-events-none">
         <LogoGridBackground />
       </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-black/10 via-black/95 to-black pointer-events-none" />
 
-      {/* Gradient overlays - more subtle */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black-950/40 via-black to-black" />
-      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-black-600/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-black-800/5 rounded-full blur-[100px]" />
+      {/* ── Logo top-left ── */}
+      <div className="absolute top-8 left-8 z-20 flex items-center gap-3">
+        <img src="/sf-light.png" alt="SF Express" className="h-5 w-auto" />
+        <div className="w-px h-4 bg-[#282828]" />
+        <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#3E3E3E]">Warehouse</span>
+      </div>
 
-      {/* Main content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-[450px]">
-          {/* Logo */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-32 h-32 rounded-xl mb-6">
-              <img src="/sf-light.png" alt="SF Express" className="h-20 w-auto" />
-            </div>
-            <h1 className="text-white text-5xl font-bold tracking-tight mb-2">
-              Log in to SF Express
-            </h1>
-          </div>
+      {/* ── Centered form ── */}
+      <div className="relative z-10 w-full max-w-[480px] px-6">
 
-          {/* Login form */}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-white text-sm font-medium mb-2">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-[#121212] border border-[#727272] rounded-md text-white placeholder-[#6a6a6a] focus:outline-none focus:border-white hover:border-white transition-colors"
-                placeholder="name@domain.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-white text-sm font-medium mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-[#121212] border border-[#727272] rounded-md text-white placeholder-[#6a6a6a] focus:outline-none focus:border-white hover:border-white transition-colors"
-                  placeholder="Password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a7a7a7] hover:text-white transition-colors"
-                >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-md">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleLogin}
-              disabled={loading}
-              className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white font-bold py-3.5 rounded-2xl transition-all duration-200"
-            >
-              {loading ? 'Signing in...' : 'Log In'}
-            </button>
-
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#292929]"></div>
-              </div>
-            </div>
-
-            {/* <div className="text-center">
-              <button 
-                type="button" 
-                className="text-white text-sm font-medium underline hover:text-black-400 transition-colors"
-              >
-                Forgot your password?
-              </button>
-            </div> */}
-          </div>
-
-          {/* Footer */}
-          <div className="mt-20 text-center text-[#6a6a6a] text-xs">
-            <p>© 2026 SF Express Logistics Dashboard</p>
-            <p className="mt-2">Developed by MAR</p>
-          </div>
+        {/* Heading */}
+        <div className="mb-10">
+          <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-yellow-600 mb-4">
+            Secure access
+          </p>
+          <h1 className="text-[2.2rem] font-black text-white leading-[0.95] tracking-tight">
+            Sign in to <span className="text-[#3E3E3E]">your account</span>
+          </h1>
         </div>
+
+        {/* Form */}
+        <form onSubmit={handleLogin} className="space-y-4">
+
+          {/* Email */}
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-[10px] uppercase tracking-[0.2em] font-bold text-[#3E3E3E]">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3.5 bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg text-white text-[13px] placeholder-[#282828] focus:outline-none focus:border-[#3E3E3E] hover:border-[#2e2e2e] transition-colors font-medium"
+              placeholder="name@domain.com"
+            />
+          </div>
+
+          {/* Password */}
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.2em] font-bold text-[#3E3E3E]">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3.5 bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg text-white text-[13px] placeholder-[#282828] focus:outline-none focus:border-[#3E3E3E] hover:border-[#2e2e2e] transition-colors font-medium pr-11"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#3E3E3E] hover:text-[#6A6A6A] transition-colors"
+              >
+                {showPassword
+                  ? <EyeOff className="w-4 h-4" />
+                  : <Eye className="w-4 h-4" />
+                }
+              </button>
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-start gap-3 bg-[#E8192C]/8 border border-[#E8192C]/20 text-[#E8192C] text-[12px] px-4 py-3 rounded-lg">
+              <span className="w-1 h-1 rounded-full bg-[#E8192C] mt-1.5 flex-shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {/* Submit */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full relative flex items-center justify-center gap-2.5 py-3.5 rounded-lg font-black text-[12px] uppercase tracking-[0.2em] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group"
+              style={{
+                background: loading
+                  ? '#1a1a1a'
+                  : 'linear-gradient(135deg, #E8192C 0%, #c01020 100%)',
+                color: '#fff',
+              }}
+            >
+              {/* Shimmer on hover */}
+              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: 'linear-gradient(135deg, #ff2d42 0%, #E8192C 100%)' }} />
+              <span className="relative">
+                {loading ? 'Signing in…' : 'Sign in'}
+              </span>
+              {!loading && (
+                <ArrowRight className="relative w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Divider */}
+        <div className="mt-8 pt-8 border-t border-[#111]">
+          <p className="text-[11px] text-[#282828] text-center">
+            SF Express · Upper Tingub, Mandaue, Cebu
+          </p>
+        </div>
+
       </div>
     </div>
   )
