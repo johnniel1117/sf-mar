@@ -7,9 +7,8 @@ import { MATCODE_CATEGORY_MAP, getCategoryFromBinCode } from '../components/Cate
 import {
   Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2,
   Layers, AlertCircle, ArrowUp, Search, Home, Menu,
-  ChevronRight, ChevronLeft
+  ChevronRight, ChevronLeft, ArrowUpRight
 } from "lucide-react"
-import LogoGridBackground from "../components/LogoBackground"
 import Link from "next/link"
 import JsBarcode from "jsbarcode"
 
@@ -132,10 +131,10 @@ export default function ExcelUploader() {
     }
   }
 
-  const formatDate = () => {
-    return new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
-  }
-  const formatDateShort = () => new Date().toLocaleDateString("en-US", { month: '2-digit', day: '2-digit', year: 'numeric' })
+  const formatDate = () =>
+    new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
+  const formatDateShort = () =>
+    new Date().toLocaleDateString("en-US", { month: '2-digit', day: '2-digit', year: 'numeric' })
 
   const generateBarcodeSVG = (value: string): string => {
     const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
@@ -367,7 +366,7 @@ export default function ExcelUploader() {
       const totalQty = file.serialData.filter(r => r.materialCode && r.barcode).length
       return `<div class="${pageBreakClass}"><div class="header-section"><div class="logo-section"><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height:60px;width:auto"/><div style="font-size:9px;line-height:1.4;margin-top:5px"><strong>SF Express Warehouse</strong><br/>UPPER TINGUB, MANDAUE, CEBU</div></div><div class="title-section"><div class="dealer-copy">DEALER'S COPY</div><div style="margin-top:8px;text-align:right">${generateBarcodeSVG(file.dnNo)}</div></div></div><div class="document-header"><div class="doc-number">ORDER NO: ${file.dnNo}</div></div><div class="info-row"><div class="info-label">Client</div><div class="info-value">HAIER PHILIPPINES INC.</div></div><div class="info-row"><div class="info-label">Date</div><div class="info-value">${formatDateShort()}</div></div><div class="info-row"><div class="info-label">Customer</div><div class="info-value">${shipToName}</div></div><div class="info-row"><div class="info-label">Address</div><div class="info-value">${shipToAddress}</div></div><table class="data-table"><thead><tr><th style="width:40px">NO.</th><th style="width:120px">CATEGORY</th><th style="width:280px">MATERIAL DESCRIPTION</th><th style="width:200px">SERIAL NUMBER</th><th style="width:100px">REMARKS</th></tr></thead><tbody>${file.serialData.filter(r => r.materialCode && r.barcode).map((r, idx) => `<tr><td style="text-align:center">${idx + 1}</td><td style="text-align:center">${getCategoryFromBinCode(r.barcode).toUpperCase()}</td><td style="text-align:center">${r.materialDesc || r.materialCode}</td><td style="text-align:center;font-weight:bold">${r.barcode}</td><td></td></tr>`).join("")}</tbody></table><div class="footer-info"><div><strong>TOTAL QTY: ${totalQty}</strong></div></div></div>`
     }).join("")
-const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</title><style>@page{size:portrait;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:15px;font-size:11px}.page-break{page-break-after:always;margin-bottom:20px;margin-right:10px}.header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #000}.title-section{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start}.dealer-copy{font-size:15px;font-weight:bold;letter-spacing:1px;margin-right:10px;text-align:right;color:#FF2C2C}.document-header{text-align:center;margin:15px 0;font-size:20px;font-weight:bold}.doc-number{font-size:20px;font-weight:bold}.info-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px}.info-label{font-weight:bold;width:80px}.data-table{width:100%;border-collapse:collapse;margin:15px 0;border:2px solid #000}.data-table th{border:1px solid #000;padding:8px 6px;font-weight:bold;font-size:10px;text-align:center;background:#fff}.data-table td{border:1px solid #000;padding:6px;font-size:10px}.footer-info{margin:10px 0;font-size:11px}@media print{body{margin:0;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:portrait;margin:10mm}}</style></head><body>${allDNContent}</body></html>`
+    const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</title><style>@page{size:portrait;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:15px;font-size:11px}.page-break{page-break-after:always;margin-bottom:20px;margin-right:10px}.header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #000}.title-section{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start}.dealer-copy{font-size:15px;font-weight:bold;letter-spacing:1px;margin-right:10px;text-align:right;color:#FF2C2C}.document-header{text-align:center;margin:15px 0;font-size:20px;font-weight:bold}.doc-number{font-size:20px;font-weight:bold}.info-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px}.info-label{font-weight:bold;width:80px}.data-table{width:100%;border-collapse:collapse;margin:15px 0;border:2px solid #000}.data-table th{border:1px solid #000;padding:8px 6px;font-weight:bold;font-size:10px;text-align:center;background:#fff}.data-table td{border:1px solid #000;padding:6px;font-size:10px}.footer-info{margin:10px 0;font-size:11px}@media print{body{margin:0;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:portrait;margin:10mm}}</style></head><body>${allDNContent}</body></html>`
     printWindow.document.write(htmlContent)
     printWindow.document.close()
     setTimeout(() => printWindow.print(), 250)
@@ -399,7 +398,7 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
     setSelectedDownloadFile(null); setIsDownloadingAllDN(false)
   }
 
-  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true) }
+  const handleDragOver  = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true) }
   const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false) }
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault(); setIsDragging(false)
@@ -416,45 +415,46 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
   }
 
   const tabs = [
-    { id: "consolidated" as TabType, label: "Consolidated",   icon: Layers },
-    { id: "serialList"   as TabType, label: "Serial List",    icon: FileText },
-    { id: "individualDN" as TabType, label: "Individual DN",  icon: Download },
+    { id: "consolidated" as TabType, label: "Consolidated",  index: "01", icon: Layers        },
+    { id: "serialList"   as TabType, label: "Serial List",   index: "02", icon: FileText       },
+    { id: "individualDN" as TabType, label: "Individual DN", index: "03", icon: Download       },
   ]
 
   return (
-    <div className="h-screen flex flex-col bg-[#121212] overflow-hidden">
+    <div className="h-screen flex flex-col bg-black overflow-hidden">
 
-      {/* ── Navbar ── */}
-      <nav className="flex-shrink-0 h-[73px] border-b border-[#282828] z-50 flex items-center px-4 sm:px-6 gap-3 sm:gap-4">
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0">
-          <Menu className="w-5 h-5 text-[#B3B3B3]" />
+      {/* ── Navbar — landing page style ── */}
+      <nav className="flex-shrink-0 h-[73px] border-b border-[#1a1a1a] z-50 flex items-center px-5 sm:px-8 gap-3 sm:gap-4 bg-black">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden p-2 hover:bg-[#0a0a0a] rounded-full transition-colors flex-shrink-0"
+        >
+          <Menu className="w-4 h-4 text-[#3E3E3E]" />
         </button>
 
-        <Link href="/" className="p-2 rounded-full hover:bg-[#282828] transition-colors flex-shrink-0" title="Home">
-          <Home className="w-4 h-4 text-[#6A6A6A] hover:text-[#B3B3B3] transition-colors" />
+        <Link href="/" className="p-2 rounded-full hover:bg-[#0a0a0a] transition-colors flex-shrink-0" title="Home">
+          <Home className="w-4 h-4 text-[#3E3E3E] hover:text-white transition-colors" />
         </Link>
 
-        <div className="w-px h-5 bg-[#282828] flex-shrink-0 hidden sm:block" />
+        <div className="w-px h-4 bg-[#1a1a1a] flex-shrink-0 hidden sm:block" />
 
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center">
-            <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-[9px] uppercase tracking-widest font-bold text-white leading-none mb-0.5">SF Express</p>
-            <h1 className="text-white text-sm font-black leading-none">Excel Uploader</h1>
-          </div>
-          <div className="sm:hidden">
-            <h1 className="text-white text-sm font-black">Excel Uploader</h1>
-          </div>
+          <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
+          <div className="w-px h-4 bg-[#1a1a1a] hidden sm:block" />
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#6A6A6A]  hidden sm:block">
+            Serial List
+          </p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#6A6A6A]  sm:hidden">
+            Upload
+          </p>
         </div>
 
         <div className="flex-1" />
 
         {uploadedFiles.length > 0 && (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-[#3E3E3E] rounded-full">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A]">Files</span>
-            <span className="text-xs font-black text-white tabular-nums">{uploadedFiles.length}</span>
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-[#1a1a1a] rounded-full flex-shrink-0">
+            <span className="text-[10px]  uppercase tracking-[0.15em] text-[#3E3E3E]">Files</span>
+            <span className="text-[11px] font-black text-white tabular-nums ">{uploadedFiles.length}</span>
           </div>
         )}
       </nav>
@@ -462,17 +462,17 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
       {/* ── Toast notifications ── */}
       <div className="fixed top-[85px] right-4 z-[100] space-y-2 max-w-sm pointer-events-none">
         {notifications.map(n => (
-          <div key={n.id} className={`flex items-start gap-3 px-4 py-3 rounded-2xl shadow-2xl border pointer-events-auto animate-slideInRight ${
-            n.type === 'error'   ? 'bg-[#1E1E1E] border-[#E8192C]/40' :
-            n.type === 'warning' ? 'bg-[#1E1E1E] border-yellow-500/40' :
-                                   'bg-[#1E1E1E] border-green-500/40'
+          <div key={n.id} className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border pointer-events-auto animate-slideInRight bg-black ${
+            n.type === 'error'   ? 'border-[#E8192C]/20' :
+            n.type === 'warning' ? 'border-yellow-600/20' :
+                                   'border-green-500/20'
           }`}>
-            <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${
-              n.type === 'error' ? 'bg-[#E8192C]' : n.type === 'warning' ? 'bg-yellow-500' : 'bg-green-500'
+            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+              n.type === 'error' ? 'bg-[#E8192C]' : n.type === 'warning' ? 'bg-yellow-600' : 'bg-green-500'
             }`} />
-            <p className="text-sm font-semibold text-white flex-1">{n.message}</p>
-            <button onClick={() => removeNotification(n.id)} className="p-0.5 hover:bg-[#3E3E3E] rounded-full transition-colors ml-1">
-              <X className="w-3 h-3 text-[#6A6A6A]" />
+            <p className="text-[11px]  font-bold uppercase tracking-widest text-white flex-1">{n.message}</p>
+            <button onClick={() => removeNotification(n.id)} className="p-0.5 hover:bg-[#1a1a1a] rounded-full transition-colors">
+              <X className="w-3 h-3 text-[#3E3E3E]" />
             </button>
           </div>
         ))}
@@ -485,134 +485,175 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
         .animate-row { animation: fadeInUp 0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
       `}</style>
 
-      {/* ── Below-nav row ── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden bg-black/35">
+      {/* ── Below-nav layout ── */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* ── Sidebar ── */}
-        {sidebarOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm lg:hidden z-40" onClick={() => setSidebarOpen(false)} />}
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-md lg:hidden z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* ── Sidebar — landing services-list style ── */}
         <aside className={`
-          fixed left-0 top-[73px] bg-[#121212] border-r border-[#282828] flex flex-col z-50
+          fixed left-0 top-[73px] bg-black border-r border-[#1a1a1a] flex flex-col z-50
           transition-all duration-300 ease-in-out
           lg:translate-x-0 lg:sticky lg:top-[73px]
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          ${sidebarCollapsed ? 'w-[72px]' : 'w-64'}
+          ${sidebarCollapsed ? 'w-[60px]' : 'w-60'}
         `} style={{ height: 'calc(100vh - 73px)' }}>
-          <nav className="flex-1 py-3 overflow-hidden">
-            <div className="space-y-0.5 px-2">
+
+          <nav className="flex-1 py-5 overflow-hidden">
+            <div className="divide-y divide-[#1a1a1a]">
+
               {/* Upload action */}
-              <label htmlFor="file-upload" className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold text-sm cursor-pointer transition-all duration-150 text-[#B3B3B3] hover:bg-[#282828] hover:text-white ${sidebarCollapsed ? 'justify-center' : ''} group relative`}>
-                <Upload className="w-5 h-5 flex-shrink-0 text-[#E8192C]" />
-                {!sidebarCollapsed && <span>Upload Files</span>}
+              <label htmlFor="file-upload" className={`
+                w-full flex items-center gap-4 cursor-pointer transition-all duration-200 group relative
+                ${sidebarCollapsed ? 'justify-center px-0 py-4' : 'px-5 sm:px-6 py-5 hover:pl-7'}
+              `}>
+                <span className="text-[11px]  font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors hidden lg:block"
+                  style={{ display: sidebarCollapsed ? 'none' : undefined }}>
+                  ↑
+                </span>
+                <Upload className="w-4 h-4 flex-shrink-0 text-[#3E3E3E] group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
+                {!sidebarCollapsed && (
+                  <span className="text-[13px] font-black text-[#3E3E3E] group-hover:text-white transition-colors">Upload Files</span>
+                )}
                 {sidebarCollapsed && (
-                  <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#282828] border border-[#3E3E3E] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-xs text-white z-50 shadow-xl">Upload Files</div>
+                  <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black border border-[#1a1a1a] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px]  text-white z-50 shadow-2xl">
+                    Upload Files
+                  </div>
                 )}
                 <input id="file-upload" type="file" accept=".xlsx,.xls,.csv" multiple onChange={handleFileUpload} className="hidden" />
               </label>
 
-              <div className="h-px bg-[#282828] my-2" />
-
-              {tabs.map(({ id, label, icon: Icon }) => {
+              {/* Tab navigation */}
+              {tabs.map(({ id, label, index, icon: Icon }) => {
                 const isActive = activeTab === id && (groupedData.length > 0 || serialListData.length > 0)
                 return (
-                  <button key={id} onClick={() => { setActiveTab(id); setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100) }}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold text-sm transition-all duration-150 relative group ${sidebarCollapsed ? 'justify-center' : ''} ${isActive ? 'bg-[#E8192C]/15 text-white' : 'text-[#B3B3B3] hover:bg-[#282828] hover:text-white'}`}
+                  <button key={id}
+                    onClick={() => { setActiveTab(id); setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100) }}
                     title={sidebarCollapsed ? label : undefined}
+                    className={`
+                      w-full flex items-center gap-4 transition-all duration-200 relative group
+                      ${sidebarCollapsed ? 'justify-center px-0 py-4' : 'px-5 sm:px-6 py-5'}
+                      ${isActive ? 'pl-6 sm:pl-7' : sidebarCollapsed ? '' : 'hover:pl-7 sm:hover:pl-8'}
+                    `}
                   >
-                    {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#E8192C] rounded-r-full" />}
-                    <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#E8192C]' : ''}`} />
-                    {!sidebarCollapsed && <span>{label}</span>}
+                    {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-8 bg-[#E8192C]" />}
+                    {!sidebarCollapsed && (
+                      <span className={`text-[11px]  font-bold w-5 flex-shrink-0 transition-colors ${
+                        isActive ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'
+                      }`}>{index}</span>
+                    )}
+                    <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${
+                      isActive ? 'text-[#E8192C]' : 'text-[#3E3E3E] group-hover:text-white'
+                    }`} strokeWidth={1.5} />
+                    {!sidebarCollapsed && (
+                      <span className={`text-[13px] font-black leading-snug transition-colors ${
+                        isActive ? 'text-white' : 'text-[#3E3E3E] group-hover:text-white'
+                      }`}>{label}</span>
+                    )}
                     {sidebarCollapsed && (
-                      <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#282828] border border-[#3E3E3E] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-xs text-white z-50 shadow-xl">{label}</div>
+                      <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black border border-[#1a1a1a] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px]  text-white z-50 shadow-2xl">
+                        {label}
+                      </div>
                     )}
                   </button>
                 )
               })}
 
+              {/* Clear all */}
               {uploadedFiles.length > 0 && (
-                <>
-                  <div className="h-px bg-[#282828] my-2" />
-                  <button onClick={handleClear} className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold text-sm transition-all duration-150 text-[#6A6A6A] hover:bg-[#E8192C]/10 hover:text-[#E8192C] ${sidebarCollapsed ? 'justify-center' : ''} group relative`}>
-                    <X className="w-5 h-5 flex-shrink-0" />
-                    {!sidebarCollapsed && <span>Clear All</span>}
-                    {sidebarCollapsed && <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#282828] border border-[#3E3E3E] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-xs text-white z-50 shadow-xl">Clear All</div>}
-                  </button>
-                </>
+                <button
+                  onClick={handleClear}
+                  className={`w-full flex items-center gap-4 transition-all duration-200 group relative
+                    ${sidebarCollapsed ? 'justify-center px-0 py-4' : 'px-5 sm:px-6 py-5 hover:pl-7'}
+                  `}
+                >
+                  <X className="w-4 h-4 flex-shrink-0 text-[#282828] group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
+                  {!sidebarCollapsed && (
+                    <span className="text-[13px] font-black text-[#282828] group-hover:text-[#E8192C] transition-colors">Clear All</span>
+                  )}
+                  {sidebarCollapsed && (
+                    <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-black border border-[#1a1a1a] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px]  text-white z-50 shadow-2xl">
+                      Clear All
+                    </div>
+                  )}
+                </button>
               )}
             </div>
           </nav>
 
-          <div className="flex-shrink-0 border-t border-[#282828] p-2">
-            <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-lg hover:bg-[#282828] transition-colors text-[#6A6A6A] hover:text-white">
-              {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {/* Collapse toggle */}
+          <div className="flex-shrink-0 border-t border-[#1a1a1a] p-3">
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full hover:bg-[#0a0a0a] transition-colors text-[#282828] hover:text-white"
+            >
+              {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
             </button>
-            {!sidebarCollapsed && <p className="text-[10px] text-[#6A6A6A] text-center pb-1 pt-0.5">v1.0.0</p>}
+            {!sidebarCollapsed && <p className="text-[10px]  text-[#1a1a1a] text-center pt-1">v1.0.0</p>}
           </div>
         </aside>
 
         {/* ── Main scrollable area ── */}
-        <main className="flex-1 overflow-y-auto min-h-0 min-w-0">
+        <main className="flex-1 overflow-y-auto min-h-0 min-w-0 bg-black">
           <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#E8192C]/3 rounded-full blur-[120px] z-0" />
 
-          <div className="relative z-10 p-4 sm:p-6 lg:p-8 space-y-6">
-            
-            {/* ── Upload drop zone ── */}
-            <div className="bg-[#121212] rounded-xl border border-[#282828] shadow-2xl overflow-hidden"
-              style={{ background: 'linear-gradient(180deg, rgba(232,25,44,0.08) 0%, #121212 100%)' }}>
-              <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-[#282828]">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg shadow-xl flex-shrink-0 flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}>
-                    <FileSpreadsheet className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#B3B3B3] mb-0.5">Haier Barcode Excel</p>
-                    <h2 className="text-base sm:text-lg font-black text-white leading-tight">Upload Files</h2>
-                  </div>
-                </div>
+          <div className="relative z-10 p-5 sm:p-8 lg:p-10 space-y-6">
+
+            {/* ── Upload zone ── */}
+            <div className="border border-[#1a1a1a] rounded-2xl overflow-hidden">
+              {/* Header — landing hero style */}
+              <div className="px-6 sm:px-8 pt-7 pb-6 border-b border-[#1a1a1a]">
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-yellow-600  mb-2">
+                  Haier Barcode Excel
+                </p>
+                <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-black text-white tracking-tight leading-[0.93]">
+                  Upload Files
+                </h2>
+                <p className="text-[11px]  text-[#3E3E3E] uppercase tracking-widest mt-1.5">
+                  SF Express · Cebu Warehouse
+                </p>
               </div>
 
-              <div className="p-5 sm:p-6">
-                <label htmlFor="file-upload-main" onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-                  className={`relative block cursor-pointer transition-all duration-300 ${isDragging ? 'scale-[1.01]' : ''}`}>
-                  <div className={`border-2 border-dashed rounded-xl transition-all duration-300 ${
-                    isDragging ? 'border-[#E8192C] bg-[#E8192C]/5' : 'border-[#3E3E3E] hover:border-[#E8192C]/50 hover:bg-[#E8192C]/3'
+              <div className="p-6 sm:p-8">
+                <label htmlFor="file-upload-main"
+                  onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+                  className={`relative block cursor-pointer transition-all duration-300 ${isDragging ? 'scale-[1.01]' : ''}`}
+                >
+                  <div className={`border border-dashed rounded-xl transition-all duration-300 ${
+                    isDragging ? 'border-[#E8192C]/60 bg-[#E8192C]/4' : 'border-[#1a1a1a] hover:border-[#E8192C]/30 hover:bg-[#E8192C]/2'
                   }`}>
-                    <div className="flex flex-col items-center justify-center py-12 px-6">
-                      <div className="relative mb-5">
-                        {isDragging && <div className="absolute inset-0 rounded-full bg-[#E8192C]/20 animate-ping" />}
-                        <div className={`relative p-5 rounded-full transition-all duration-300 ${
-                          isDragging ? 'scale-110' : 'group-hover:scale-105'
-                        }`} style={{ background: isDragging ? 'linear-gradient(135deg, #E8192C, #7f0e18)' : 'linear-gradient(135deg, #282828, #1E1E1E)' }}>
-                          <Upload className={`w-8 h-8 transition-colors duration-300 ${isDragging ? 'text-white' : 'text-[#B3B3B3]'}`} />
-                        </div>
+                    <div className="flex flex-col items-center justify-center py-14 px-6">
+                      <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-5 border transition-all duration-300 ${
+                        isDragging ? 'border-[#E8192C]/40 bg-[#E8192C]/10' : 'border-[#1a1a1a] bg-transparent'
+                      }`}>
+                        <Upload className={`w-6 h-6 transition-colors duration-300 ${isDragging ? 'text-[#E8192C]' : 'text-[#282828]'}`} />
                       </div>
-                      <p className={`text-lg font-black mb-1 transition-colors duration-300 ${isDragging ? 'text-[#E8192C]' : 'text-white'}`}>
+                      <p className={`text-base font-black mb-1 tracking-tight transition-colors duration-300 ${isDragging ? 'text-[#E8192C]' : 'text-white'}`}>
                         {isDragging ? 'Drop files here' : 'Drop files or click to upload'}
                       </p>
-                      <p className="text-sm text-[#6A6A6A] mb-4">Haier barcode Excel files</p>
+                      <p className="text-[11px]  text-[#3E3E3E] mb-5">Haier barcode Excel files</p>
                       <div className="flex items-center gap-2">
                         {['.xlsx', '.xls', '.csv'].map(ext => (
-                          <span key={ext} className="px-3 py-1 bg-[#282828] border border-[#3E3E3E] text-[#B3B3B3] rounded-full text-xs font-bold">{ext}</span>
+                          <span key={ext} className="px-3 py-1 border border-[#1a1a1a] text-[#3E3E3E] rounded-full text-[10px]  font-bold">{ext}</span>
                         ))}
                       </div>
                     </div>
-
-                    {/* Corner decorations */}
-                    {['top-3 left-3 border-t-2 border-l-2 rounded-tl-lg', 'top-3 right-3 border-t-2 border-r-2 rounded-tr-lg', 'bottom-3 left-3 border-b-2 border-l-2 rounded-bl-lg', 'bottom-3 right-3 border-b-2 border-r-2 rounded-br-lg'].map((cls, i) => (
-                      <div key={i} className={`absolute w-5 h-5 ${cls} ${isDragging ? 'border-[#E8192C]/60' : 'border-[#3E3E3E]'} transition-colors duration-300`} />
-                    ))}
                   </div>
                   <input id="file-upload-main" type="file" accept=".xlsx,.xls,.csv" multiple onChange={handleFileUpload} className="hidden" />
                 </label>
 
                 {isLoading && (
-                  <div className="mt-6 flex items-center gap-4 p-4 bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl">
-                    <div className="relative flex-shrink-0">
-                      <div className="w-8 h-8 rounded-full border-2 border-[#3E3E3E] animate-spin border-t-[#E8192C]" />
-                    </div>
+                  <div className="mt-5 flex items-center gap-4 p-4 border border-[#1a1a1a] rounded-xl">
+                    <div className="w-4 h-4 rounded-full border border-[#1a1a1a] border-t-[#E8192C] animate-spin flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-white">Processing files…</p>
-                      <div className="mt-1.5 h-1.5 bg-[#282828] rounded-full overflow-hidden">
+                      <p className="text-[11px]  font-bold uppercase tracking-widest text-white">Processing files…</p>
+                      <div className="mt-2 h-px bg-[#1a1a1a] rounded-full overflow-hidden">
                         <div className="h-full bg-[#E8192C] rounded-full animate-pulse" style={{ width: '60%' }} />
                       </div>
                     </div>
@@ -623,37 +664,45 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
 
             {/* ── Uploaded files list ── */}
             {uploadedFiles.length > 0 && (
-              <div className="bg-[#121212] rounded-xl border border-[#282828] shadow-2xl overflow-hidden">
-                <button onClick={() => setShowFilesList(!showFilesList)}
-                  className="w-full flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[#282828] hover:bg-[#1E1E1E] transition-colors">
-                  <div className="flex items-center gap-3">
-                    <FileSpreadsheet className="w-4 h-4 text-[#E8192C]" />
-                    <span className="text-sm font-bold text-white uppercase tracking-widest">Uploaded Files</span>
-                    <span className="px-2.5 py-0.5 bg-[#E8192C]/15 border border-[#E8192C]/30 text-[#E8192C] rounded-full text-xs font-black">{uploadedFiles.length}</span>
+              <div className="border border-[#1a1a1a] rounded-2xl overflow-hidden">
+                <button
+                  onClick={() => setShowFilesList(!showFilesList)}
+                  className="w-full flex items-center justify-between px-6 sm:px-8 py-5 hover:bg-[#0a0a0a] transition-colors group"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-[11px]  font-bold text-[#282828] w-5 group-hover:text-[#E8192C] transition-colors">↓</span>
+                    <FileSpreadsheet className="w-4 h-4 text-[#3E3E3E] group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
+                    <span className="text-[13px] font-black text-[#3E3E3E] group-hover:text-white transition-colors">Uploaded Files</span>
+                    <span className="px-2 py-0.5 border border-[#1a1a1a] text-[#3E3E3E] rounded-full text-[10px]  font-bold">{uploadedFiles.length}</span>
                   </div>
-                  <ChevronRight className={`w-4 h-4 text-[#6A6A6A] transition-transform duration-300 ${showFilesList ? 'rotate-90' : ''}`} />
+                  <ArrowUpRight className={`w-4 h-4 text-[#282828] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 ${showFilesList ? 'rotate-90' : 'translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0'}`} />
                 </button>
 
                 {showFilesList && (
-                  <div className="p-4 space-y-2 max-h-72 overflow-y-auto">
-                    {uploadedFiles.map((file, idx) => (
-                      <div key={file.id} onClick={() => handleSelectFile(file.id)}
-                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 ${
-                          selectedFileId === file.id
-                            ? 'border-[#E8192C]/40 bg-[#E8192C]/8'
-                            : 'border-[#282828] bg-[#1E1E1E] hover:border-[#3E3E3E] hover:bg-[#282828]'
+                  <div className="border-t border-[#1a1a1a] divide-y divide-[#1a1a1a] max-h-72 overflow-y-auto">
+                    {uploadedFiles.map((file) => (
+                      <div key={file.id}
+                        onClick={() => handleSelectFile(file.id)}
+                        className={`flex items-center gap-4 px-6 sm:px-8 py-4 cursor-pointer transition-all duration-200 group ${
+                          selectedFileId === file.id ? 'bg-[#0a0a0a] pl-8 sm:pl-9' : 'hover:pl-8 sm:hover:pl-9'
+                        }`}
+                      >
+                        <span className={`text-[11px]  font-bold w-5 flex-shrink-0 transition-colors ${
+                          selectedFileId === file.id ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'
                         }`}>
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ background: selectedFileId === file.id ? 'linear-gradient(135deg, #E8192C, #7f0e18)' : '#282828' }}>
-                          <FileSpreadsheet className={`w-4 h-4 ${selectedFileId === file.id ? 'text-white' : 'text-[#6A6A6A]'}`} />
-                        </div>
+                          {selectedFileId === file.id ? '→' : '·'}
+                        </span>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-semibold truncate ${selectedFileId === file.id ? 'text-white' : 'text-[#B3B3B3]'}`}>{file.name}</p>
-                          <p className="text-[10px] text-[#6A6A6A] mt-0.5">ORDER: {file.dnNo} · {file.data.length} items</p>
+                          <p className={`text-[13px] font-black truncate transition-colors ${
+                            selectedFileId === file.id ? 'text-white' : 'text-[#3E3E3E] group-hover:text-white'
+                          }`}>{file.name}</p>
+                          <p className="text-[10px]  text-[#282828] mt-0.5">{file.dnNo} · {file.data.length} items</p>
                         </div>
-                        {selectedFileId === file.id && <CheckCircle2 className="w-4 h-4 text-[#E8192C] flex-shrink-0" />}
-                        <button onClick={e => { e.stopPropagation(); handleDeleteFile(file.id) }}
-                          className="p-1.5 text-[#6A6A6A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 rounded-full transition-all flex-shrink-0">
+                        {selectedFileId === file.id && <CheckCircle2 className="w-3.5 h-3.5 text-[#E8192C] flex-shrink-0" />}
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDeleteFile(file.id) }}
+                          className="p-1 text-[#282828] hover:text-[#E8192C] transition-colors flex-shrink-0"
+                        >
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -665,80 +714,96 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
 
             {/* ── Data table section ── */}
             {(groupedData.length > 0 || serialListData.length > 0) && (
-              <div ref={tableRef} className="bg-[#121212] rounded-xl border border-[#282828] shadow-2xl overflow-hidden">
+              <div ref={tableRef} className="border border-[#1a1a1a] rounded-2xl overflow-hidden">
 
-                {/* Tab bar */}
-                <div className="flex border-b border-[#282828]">
-                  {tabs.map(({ id, label, icon: Icon }) => (
-                    <button key={id} onClick={() => setActiveTab(id)}
-                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-3.5 text-xs font-bold uppercase tracking-widest transition-all duration-150 relative ${
-                        activeTab === id ? 'text-white bg-[#1E1E1E]' : 'text-[#6A6A6A] hover:text-[#B3B3B3] hover:bg-[#1E1E1E]/50'
-                      }`}>
-                      <Icon className={`w-3.5 h-3.5 ${activeTab === id ? 'text-[#E8192C]' : ''}`} />
-                      <span className="hidden sm:inline">{label}</span>
-                      {activeTab === id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E8192C]" />}
-                    </button>
-                  ))}
+                {/* Tab bar — landing services-list style */}
+                <div className="divide-y divide-[#1a1a1a] border-b border-[#1a1a1a]">
+                  <div className="flex">
+                    {tabs.map(({ id, label, index, icon: Icon }) => (
+                      <button key={id} onClick={() => setActiveTab(id)}
+                        className={`flex-1 flex items-center justify-center gap-2.5 px-3 py-4 text-[10px]  uppercase tracking-[0.15em] font-bold transition-all duration-150 relative border-r border-[#1a1a1a] last:border-r-0 ${
+                          activeTab === id ? 'text-white bg-[#0a0a0a]' : 'text-[#282828] hover:text-[#3E3E3E] hover:bg-[#0a0a0a]/50'
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${activeTab === id ? 'text-[#E8192C]' : ''}`} strokeWidth={1.5} />
+                        <span className="hidden sm:inline">{label}</span>
+                        {activeTab === id && <div className="absolute bottom-0 left-0 right-0 h-px bg-[#E8192C]" />}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="p-4 sm:p-6">
-                  {/* Search */}
-                  <div className="flex gap-3 mb-5">
+                <div className="p-6 sm:p-8">
+                  {/* Search + download row */}
+                  <div className="flex gap-3 mb-6">
                     <div className="relative flex-1 max-w-sm">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6A6A6A]" />
-                      <input type="text" placeholder="Search DN, serial, material…" value={searchQuery}
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#282828]" />
+                      <input
+                        type="text"
+                        placeholder="Search DN, serial, material…"
+                        value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-[#1E1E1E] border border-[#3E3E3E] text-white rounded-xl text-sm placeholder-[#6A6A6A] focus:outline-none focus:ring-2 focus:ring-[#E8192C]/50 focus:border-[#E8192C] transition-all" />
+                        className="w-full pl-10 pr-4 py-2.5 bg-[#0a0a0a] border border-[#1a1a1a] text-white rounded-xl text-[11px]  placeholder-[#282828] focus:outline-none focus:ring-1 focus:ring-[#E8192C]/40 focus:border-[#E8192C]/60 transition-all"
+                      />
                     </div>
                     <div className="flex gap-2">
                       {searchQuery && (
-                        <button onClick={() => setSearchQuery("")} className="px-3 py-2.5 bg-[#1E1E1E] border border-[#3E3E3E] text-[#B3B3B3] rounded-xl text-xs font-bold hover:border-white hover:text-white transition-all">
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="px-3 py-2.5 border border-[#1a1a1a] text-[#3E3E3E] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
+                        >
                           Clear
                         </button>
                       )}
-                      <button onClick={() => setShowDownloadModal(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-xs font-bold hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
-                        style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
+                      <button
+                        onClick={() => setShowDownloadModal(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
+                      >
                         <Download className="w-3.5 h-3.5" /> Download
                       </button>
                     </div>
                   </div>
 
-                  {/* Consolidated tab */}
+                  {/* ── Consolidated tab ── */}
                   {activeTab === "consolidated" && (
                     <>
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-baseline justify-between mb-5">
                         <div>
-                          <h2 className="text-base font-black text-white">Consolidated Materials</h2>
-                          <p className="text-xs text-[#6A6A6A] mt-0.5">
-                            {selectedFileId ? `Viewing: ${uploadedFiles.find(f => f.id === selectedFileId)?.name}` : 'All uploaded files combined'}
+                          <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-1">
+                            {selectedFileId ? `Viewing: ${uploadedFiles.find(f => f.id === selectedFileId)?.name}` : 'All files combined'}
                           </p>
+                          <h3 className="text-lg font-black text-white tracking-tight">Consolidated Materials</h3>
                         </div>
-                        <span className="text-xs text-[#E8192C] font-black">{filterGroupedDataBySearch(groupedData).length} items</span>
+                        <span className="text-[10px]  font-black text-white tabular-nums">
+                          <span className="text-[#E8192C]">{filterGroupedDataBySearch(groupedData).length}</span> items
+                        </span>
                       </div>
-                      <div className="overflow-x-auto rounded-xl border border-[#282828]">
-                        <table className="w-full text-xs">
+                      <div className="overflow-x-auto rounded-xl border border-[#1a1a1a]">
+                        <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[#282828]" style={{ background: '#1E1E1E' }}>
-                              {["Material Code","Material Description","Category","Qty.","UM","Ship Name","Remarks"].map(h => (
-                                <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A]">{h}</th>
+                            <tr className="border-b border-[#1a1a1a]">
+                              {["#","Material Code","Material Description","Category","Qty.","Ship Name","Remarks"].map((h, i) => (
+                                <th key={h} className="px-4 py-3 text-left text-[10px]  uppercase tracking-[0.15em] text-[#282828]">{h}</th>
                               ))}
                             </tr>
                           </thead>
-                          <tbody>
+                          <tbody className="divide-y divide-[#1a1a1a]">
                             {filterGroupedDataBySearch(groupedData).filter(r => r.materialCode && r.materialDescription).map((row, idx) => (
-                              <tr key={idx} className={`border-b border-[#282828]/50 hover:bg-[#1E1E1E] transition-colors ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`} style={{ animationDelay: `${idx * 0.02}s` }}>
-                                <td className="px-4 py-3  text-[10px] text-white font-bold">{row.materialCode}</td>
-                                <td className="px-4 py-3 text-[#B3B3B3]">{row.materialDescription}</td>
-                                <td className="px-4 py-3">
-                                  <span className="px-2 py-0.5 bg-[#E8192C]/15 border border-[#E8192C]/30 text-[#E8192C] rounded-full text-[10px] font-bold">{row.category}</span>
+                              <tr key={idx}
+                                className={`group transition-all duration-200 hover:pl-1 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`}
+                                style={{ animationDelay: `${idx * 0.02}s` }}
+                              >
+                                <td className="px-4 py-3.5 text-[11px]  text-[#282828] group-hover:text-[#E8192C] transition-colors">
+                                  {String(idx + 1).padStart(2, '0')}
                                 </td>
-                                <td className="px-4 py-3 text-center">
-                                  <span className="px-2.5 py-1 rounded-full font-black text-white text-xs" style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>{row.qty}</span>
+                                <td className="px-4 py-3.5 text-sm font-black text-white">{row.materialCode}</td>
+                                <td className="px-4 py-3.5 text-sm font-black text-[#B3B3B3] group-hover:text-white transition-colors">{row.materialDescription}</td>
+                                <td className="px-4 py-3.5">
+                                  <span className="text-[10px]  font-bold text-[#3E3E3E]">{row.category}</span>
                                 </td>
-                                <td className="px-4 py-3 text-[#6A6A6A]">—</td>
-                                <td className="px-4 py-3 text-[#B3B3B3]">{row.shipName}</td>
-                                <td className="px-4 py-3 text-[#6A6A6A]  text-[10px]">{row.remarks}</td>
+                                <td className="px-4 py-3.5 text-sm font-black text-[#E8192C] tabular-nums">{row.qty}</td>
+                                <td className="px-4 py-3.5 text-[11px]  text-[#3E3E3E]">{row.shipName || '—'}</td>
+                                <td className="px-4 py-3.5 text-[10px]  text-[#282828]">{row.remarks}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -747,36 +812,44 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
                     </>
                   )}
 
-                  {/* Serial list tab */}
+                  {/* ── Serial list tab ── */}
                   {activeTab === "serialList" && (
                     <>
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-baseline justify-between mb-5">
                         <div>
-                          <h2 className="text-base font-black text-white">Bulking Serial List</h2>
-                          <p className="text-xs text-[#6A6A6A] mt-0.5">All serial numbers combined</p>
+                          <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-1">All serial numbers combined</p>
+                          <h3 className="text-lg font-black text-white tracking-tight">Bulking Serial List</h3>
                         </div>
-                        <span className="text-xs text-[#E8192C] font-black">{filterSerialDataBySearch(serialListData).length} rows</span>
+                        <span className="text-[10px]  font-black text-white tabular-nums">
+                          <span className="text-[#E8192C]">{filterSerialDataBySearch(serialListData).length}</span> rows
+                        </span>
                       </div>
-                      <div className="overflow-x-auto rounded-xl border border-[#282828]">
-                        <table className="w-full text-xs">
+                      <div className="overflow-x-auto rounded-xl border border-[#1a1a1a]">
+                        <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[#282828]" style={{ background: '#1E1E1E' }}>
-                              {["DN No","Location","Bin Code","Material Code","Material Desc","Barcode","Ship To Name","Ship To Address"].map(h => (
-                                <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A]">{h}</th>
+                            <tr className="border-b border-[#1a1a1a]">
+                              {["#","DN No","Location","Bin Code","Material Code","Material Desc","Barcode","Ship To Name","Ship To Address"].map(h => (
+                                <th key={h} className="px-4 py-3 text-left text-[10px]  uppercase tracking-[0.15em] text-[#282828]">{h}</th>
                               ))}
                             </tr>
                           </thead>
-                          <tbody>
+                          <tbody className="divide-y divide-[#1a1a1a]">
                             {filterSerialDataBySearch(serialListData).filter(r => r.materialCode && r.barcode).map((row, idx) => (
-                              <tr key={idx} className={`border-b border-[#282828]/50 hover:bg-[#1E1E1E] transition-colors ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`} style={{ animationDelay: `${idx * 0.02}s` }}>
-                                <td className="px-4 py-3 text-white font-bold">{row.dnNo}</td>
-                                <td className="px-4 py-3 text-[#B3B3B3]">{row.location}</td>
-                                <td className="px-4 py-3 text-[#B3B3B3]">{row.binCode}</td>
-                                <td className="px-4 py-3  text-[10px] text-white font-bold">{row.materialCode}</td>
-                                <td className="px-4 py-3 text-[#B3B3B3]">{row.materialDesc}</td>
-                                <td className="px-4 py-3  text-[10px] font-black text-white">{row.barcode}</td>
-                                <td className="px-4 py-3 text-[#B3B3B3]">{row.shipToName}</td>
-                                <td className="px-4 py-3 text-[#6A6A6A]">{row.shipToAddress}</td>
+                              <tr key={idx}
+                                className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`}
+                                style={{ animationDelay: `${idx * 0.02}s` }}
+                              >
+                                <td className="px-4 py-3.5 text-[11px]  text-[#282828] group-hover:text-[#E8192C] transition-colors">
+                                  {String(idx + 1).padStart(2, '0')}
+                                </td>
+                                <td className="px-4 py-3.5 text-sm font-black text-white">{row.dnNo}</td>
+                                <td className="px-4 py-3.5 text-[11px]  text-[#3E3E3E]">{row.location}</td>
+                                <td className="px-4 py-3.5 text-[11px]  text-[#3E3E3E]">{row.binCode}</td>
+                                <td className="px-4 py-3.5 text-sm font-black text-white">{row.materialCode}</td>
+                                <td className="px-4 py-3.5 text-sm font-black text-[#B3B3B3] group-hover:text-white transition-colors">{row.materialDesc}</td>
+                                <td className="px-4 py-3.5 text-sm font-black text-[#E8192C]">{row.barcode}</td>
+                                <td className="px-4 py-3.5 text-[11px]  text-[#3E3E3E]">{row.shipToName}</td>
+                                <td className="px-4 py-3.5 text-[10px]  text-[#282828]">{row.shipToAddress}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -785,46 +858,52 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
                     </>
                   )}
 
-                  {/* Individual DN tab */}
+                  {/* ── Individual DN tab ── */}
                   {activeTab === "individualDN" && (
                     <>
-                      <div className="mb-5">
-                        <h2 className="text-base font-black text-white">Individual DN Downloads</h2>
-                        <p className="text-xs text-[#6A6A6A] mt-0.5">Download per-DN serial lists or all at once</p>
+                      <div className="mb-6">
+                        <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-1">Download per-DN or all at once</p>
+                        <h3 className="text-lg font-black text-white tracking-tight">Individual DN Downloads</h3>
                       </div>
-                      <div className="space-y-3">
-                        {/* Download all card */}
-                        <div className="flex items-center justify-between p-4 bg-[#1E1E1E] border border-[#E8192C]/20 rounded-xl hover:border-[#E8192C]/40 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
-                              <Layers className="w-4 h-4 text-white" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-white">Download All DN Serial Lists</p>
-                              <p className="text-xs text-[#6A6A6A]">{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available</p>
-                            </div>
+                      <div className="divide-y divide-[#1a1a1a]">
+                        {/* Download all row */}
+                        <div className="flex items-center gap-5 py-5 group transition-all duration-200 hover:pl-1.5">
+                          <span className="text-[11px]  font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">↓</span>
+                          <Layers className="w-4 h-4 text-[#3E3E3E] group-hover:text-[#E8192C] transition-colors flex-shrink-0" strokeWidth={1.5} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-black text-[#B3B3B3] group-hover:text-white transition-colors">
+                              Download All DN Serial Lists
+                            </p>
+                            <p className="text-[10px]  text-[#282828] mt-0.5">
+                              {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available
+                            </p>
                           </div>
-                          <button onClick={() => { setIsDownloadingAllDN(true); setShowDownloadModal(true) }}
-                            className="flex items-center gap-2 px-4 py-2 rounded-full text-white text-xs font-bold hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
-                            style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
-                            <Download className="w-3.5 h-3.5" /> Download All
+                          <button
+                            onClick={() => { setIsDownloadingAllDN(true); setShowDownloadModal(true) }}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20 flex-shrink-0"
+                          >
+                            <Download className="w-3 h-3" /> All
                           </button>
                         </div>
 
                         {filterDNsBySearch(uploadedFiles).map((file, idx) => (
-                          <div key={file.id} className="flex items-center justify-between p-4 bg-[#1E1E1E] border border-[#282828] rounded-xl hover:border-[#3E3E3E] transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-lg bg-[#282828] flex items-center justify-center">
-                                <FileSpreadsheet className="w-4 h-4 text-[#6A6A6A]" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-white">{file.dnNo}</p>
-                                <p className="text-xs text-[#6A6A6A]">{file.name}</p>
-                              </div>
+                          <div key={file.id} className="flex items-center gap-5 py-5 group transition-all duration-200 hover:pl-1.5">
+                            <span className="text-[11px]  font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+                              {String(idx + 1).padStart(2, '0')}
+                            </span>
+                            <FileSpreadsheet className="w-4 h-4 text-[#3E3E3E] group-hover:text-white transition-colors flex-shrink-0" strokeWidth={1.5} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-black text-[#B3B3B3] group-hover:text-white transition-colors truncate">
+                                {file.dnNo}
+                              </p>
+                              <p className="text-[10px]  text-[#282828] mt-0.5 truncate">{file.name}</p>
                             </div>
-                            <button onClick={() => { setSelectedDownloadFile(file); setIsDownloadingAllDN(false); setShowDownloadModal(true) }}
-                              className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#727272] text-white text-xs font-bold hover:border-white transition-all">
-                              <Download className="w-3.5 h-3.5 text-[#E8192C]" /> Download
+                            <button
+                              onClick={() => { setSelectedDownloadFile(file); setIsDownloadingAllDN(false); setShowDownloadModal(true) }}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#1a1a1a] text-[#6A6A6A] text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all flex-shrink-0"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span className="hidden sm:inline">Download</span>
                             </button>
                           </div>
                         ))}
@@ -836,51 +915,68 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
             )}
 
             {/* Footer */}
-            <div className="pt-4 pb-2 text-center">
-              <p className="text-[10px] text-[#6A6A6A]">
-                Developed by <span className="font-bold text-[#B3B3B3]">MAR</span> · All Rights Reserved © {new Date().getFullYear()}
-              </p>
+            <div className="border-t border-[#1a1a1a] py-5 flex items-center justify-between">
+              <p className="text-[11px] text-[#1a1a1a] ">SF Express · Cebu Warehouse</p>
+              <p className="text-[11px] text-[#1a1a1a] ">{new Date().getFullYear()}</p>
             </div>
           </div>
         </main>
       </div>
 
-      {/* ── Download modal ── */}
+      {/* ── Download modal — landing style ── */}
       {showDownloadModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="text-base font-black text-white mb-1">Download Format</h3>
-            <p className="text-xs text-[#6A6A6A] mb-5">Choose how you'd like to export the data</p>
-
-            <div className="space-y-2 mb-6">
-              {[
-                { type: 'excel', label: 'Excel (.xlsx)', desc: 'Editable spreadsheet', icon: FileSpreadsheet },
-                { type: 'pdf',   label: 'PDF',           desc: 'Print-ready document', icon: FileText },
-              ].map(opt => (
-                <button key={opt.type} onClick={() => setDownloadType(opt.type as 'pdf' | 'excel')}
-                  className={`w-full flex items-center gap-4 p-4 border rounded-xl transition-all duration-150 ${
-                    downloadType === opt.type ? 'border-[#E8192C]/50 bg-[#E8192C]/8' : 'border-[#3E3E3E] hover:border-[#E8192C]/30 hover:bg-[#282828]'
-                  }`}>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${downloadType === opt.type ? 'border-[#E8192C]' : 'border-[#6A6A6A]'}`}>
-                    {downloadType === opt.type && <div className="w-2.5 h-2.5 rounded-full bg-[#E8192C]" />}
-                  </div>
-                  <opt.icon className={`w-5 h-5 flex-shrink-0 ${downloadType === opt.type ? 'text-[#E8192C]' : 'text-[#6A6A6A]'}`} />
-                  <div className="text-left">
-                    <p className="text-sm font-bold text-white">{opt.label}</p>
-                    <p className="text-xs text-[#6A6A6A]">{opt.desc}</p>
-                  </div>
-                </button>
-              ))}
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}
+        >
+          <div
+            className="bg-black border border-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-7 pt-7 pb-5 border-b border-[#1a1a1a]">
+              <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1.5">Export</p>
+              <h3 className="text-xl font-black text-white tracking-tight leading-none">Download Format</h3>
             </div>
 
-            <div className="flex gap-3">
-              <button onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}
-                className="flex-1 px-4 py-2.5 border border-[#3E3E3E] text-[#B3B3B3] rounded-full text-sm font-semibold hover:border-white hover:text-white transition-all">
+            <div className="divide-y divide-[#1a1a1a]">
+              {[
+                { type: 'excel', label: 'Excel (.xlsx)', index: '01', desc: 'Editable spreadsheet', icon: FileSpreadsheet },
+                { type: 'pdf',   label: 'PDF',           index: '02', desc: 'Print-ready document', icon: FileText       },
+              ].map(opt => {
+                const active = downloadType === opt.type
+                return (
+                  <button key={opt.type} onClick={() => setDownloadType(opt.type as 'pdf' | 'excel')}
+                    className={`w-full flex items-center gap-5 px-7 py-4 transition-all duration-200 group text-left ${active ? 'pl-8' : 'hover:pl-8'}`}
+                  >
+                    <span className={`text-[11px]  font-bold w-5 flex-shrink-0 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'}`}>
+                      {opt.index}
+                    </span>
+                    <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200 ${
+                      active ? 'border-[#E8192C]/20 bg-[#E8192C]/8' : 'border-[#1a1a1a] group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6'
+                    }`}>
+                      <opt.icon className={`w-4 h-4 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#3E3E3E] group-hover:text-[#E8192C]'}`} strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[13px] font-black leading-snug transition-colors ${active ? 'text-white' : 'text-[#3E3E3E] group-hover:text-white'}`}>{opt.label}</p>
+                      <p className={`text-[11px]  mt-0.5 transition-colors ${active ? 'text-[#6A6A6A]' : 'text-[#282828] group-hover:text-[#3E3E3E]'}`}>{opt.desc}</p>
+                    </div>
+                    <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0 ${active ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'}`} />
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="flex gap-3 px-7 py-5 border-t border-[#1a1a1a]">
+              <button
+                onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}
+                className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#6A6A6A] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
+              >
                 Cancel
               </button>
-              <button onClick={handleDownloadConfirm}
-                className="flex-1 px-4 py-2.5 rounded-full text-white text-sm font-bold hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
-                style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
+              <button
+                onClick={handleDownloadConfirm}
+                className="flex-1 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
+              >
                 Download
               </button>
             </div>
@@ -890,10 +986,11 @@ const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</titl
 
       {/* ── Scroll to top ── */}
       {showScrollTop && (
-        <button onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3.5 rounded-full text-white shadow-2xl hover:bg-[#FF1F30] transition-all hover:scale-110 shadow-[#E8192C]/25"
-          style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
-          <ArrowUp className="w-5 h-5" />
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full border border-[#1a1a1a] text-[#3E3E3E] hover:text-white hover:border-[#3E3E3E] transition-all bg-black shadow-2xl"
+        >
+          <ArrowUp className="w-4 h-4" />
         </button>
       )}
     </div>

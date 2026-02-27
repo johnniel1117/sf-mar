@@ -278,7 +278,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
             </div>
 
             <div className="flex items-center gap-4 sm:gap-5">
-              <span className="hidden sm:block text-[11px] font-mono text-[#3E3E3E] tabular-nums">{time}</span>
+              <span className="hidden sm:block text-[11px]  text-[#3E3E3E] tabular-nums">{time}</span>
 
               <div className="flex items-center gap-2.5">
                 <div
@@ -371,7 +371,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   {SERVICES.map(({ href, label, desc, icon: Icon, index }) => (
                     <Link key={href} href={href} className="group block">
                       <div className="flex items-center gap-5 sm:gap-6 py-5 sm:py-6 transition-all duration-200 group-hover:pl-1.5">
-                        <span className="text-[11px] font-mono font-bold  text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+                        <span className="text-[11px]  font-bold  text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
                           {index}
                         </span>
                         <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border bg-red-600 border-[#232323] bg-[#161616] group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6 transition-all duration-200">
@@ -432,8 +432,8 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
             {/* Footer */}
             <div className="border-t border-[#1a1a1a] py-5 flex items-center justify-between">
-              <p className="text-[11px] text-[#282828] font-mono">SF Express · Cebu Warehouse</p>
-              <p className="text-[11px] text-[#282828] font-mono">{new Date().getFullYear()}</p>
+              <p className="text-[11px] text-[#282828] ">SF Express · Cebu Warehouse</p>
+              <p className="text-[11px] text-[#282828] ">{new Date().getFullYear()}</p>
             </div>
           </div>
         </div>
