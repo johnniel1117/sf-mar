@@ -38,6 +38,13 @@ export class TripManifestExcelGenerator {
     setCell(row, 1, 'UPPER TINGUB, MANDAUE, CEBU');
     row += 2;
 
+    // Manifest number label
+    setCell(row, 4, 'MANIFEST NO.', {
+      font: { bold: true, sz: 9, color: { rgb: 'FF0000' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+    });
+    row++;
+
     // Manifest number (yellow box)
     setCell(row, 4, manifestData.manifest_number || '—', {
       font: { bold: true, sz: 16, color: { rgb: '000000' } },
@@ -45,7 +52,7 @@ export class TripManifestExcelGenerator {
       alignment: { horizontal: 'center', vertical: 'center' },
       border: { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } },
     });
-    row += 3;
+    row += 2;
 
     // Title
     setCell(row, 0, 'TRIP MANIFEST', {
@@ -72,15 +79,6 @@ export class TripManifestExcelGenerator {
       row++;
     });
 
-    // if (manifestData.remarks) {
-    //   setCell(row, 0, 'Remarks', { font: { bold: true } });
-    //   setCell(row, 1, manifestData.remarks);
-    //   ws['!merges']?.push({ s: { r: row, c: 1 }, e: { r: row, c: 3 } });
-    //   row += 2;
-    // } else {
-    //   row += 1;
-    // }
-
     // ─── Table Header Row ─────────────────────────────────────
     const tableStartRow = row;
     const headers = ['NO.', 'SHIP TO NAME', 'DN/TRA NO.', 'QTY', 'REMARKS'];
@@ -97,7 +95,6 @@ export class TripManifestExcelGenerator {
     row++;
 
     // ─── Table Data Rows ──────────────────────────────────────
-    const tableDataStart = row;
     if (items.length === 0) {
       setCell(row, 0, '—', { border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }, alignment: { horizontal: 'center' } });
       setCell(row, 1, 'No documents added', { border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } } });
@@ -142,9 +139,9 @@ export class TripManifestExcelGenerator {
       font: { bold: true },
       alignment: { horizontal: 'right', vertical: 'center' },
     });
-    row += 3; // spacing before signatures
+    row += 3;
 
-    // ─── Signature Section (exactly like PDF) ─────────────────
+    // ─── Signature Section ────────────────────────────────────
     const sigStart = row;
 
     // Row 1 – Labels (Checked + Approved)
@@ -162,7 +159,7 @@ export class TripManifestExcelGenerator {
 
     // Row 3 – Names
     const name1 = sigStart + 2;
-    setCell(name1, 0, 'JAYMIE TAGALOG JR. / IRIC RANILI', { font: { bold: true, sz: 10 }, alignment: { horizontal: 'center' } });
+    setCell(name1, 0, 'IRIC RANILI', { font: { bold: true, sz: 10 }, alignment: { horizontal: 'center' } });
     ws['!merges']?.push({ s: { r: name1, c: 0 }, e: { r: name1, c: 1 } });
     setCell(name1, 2, 'KENNETH IRVIN BELICARIO / ANTHONYLOU CHAN', { font: { bold: true, sz: 10 }, alignment: { horizontal: 'center' } });
     ws['!merges']?.push({ s: { r: name1, c: 2 }, e: { r: name1, c: 3 } });
@@ -188,11 +185,11 @@ export class TripManifestExcelGenerator {
     setCell(line2, 2, '', { border: { top: { style: 'medium' } } });
     ws['!merges']?.push({ s: { r: line2, c: 2 }, e: { r: line2, c: 3 } });
 
-    // Row 8 – Names (empty)
+    // Row 8 – Names (empty for Customer/Security)
     const name2 = sigStart2 + 2;
     setCell(name2, 0, '', { alignment: { horizontal: 'center' } });
     ws['!merges']?.push({ s: { r: name2, c: 0 }, e: { r: name2, c: 1 } });
-    setCell(name2, 2, '', { alignment: { horizontal: 'center' } });
+    setCell(name2, 2, 'JUNRY FORMENTERA', { font: { bold: true, sz: 10 }, alignment: { horizontal: 'center' } });
     ws['!merges']?.push({ s: { r: name2, c: 2 }, e: { r: name2, c: 3 } });
 
     // Row 9 – Positions
@@ -204,7 +201,7 @@ export class TripManifestExcelGenerator {
 
     const finalRow = pos2 + 2;
 
-    // ─── Apply thin borders to the entire table area (NO. → TOTAL) ───
+    // ─── Apply thin borders to the entire table area ──────────
     const tableEndRow = totalRow;
     for (let r = tableStartRow; r <= tableEndRow; r++) {
       for (let c = 0; c <= 4; c++) {
@@ -232,7 +229,7 @@ export class TripManifestExcelGenerator {
 
     XLSX.utils.book_append_sheet(wb, ws, 'Trip Manifest');
 
-    const filename = `Trip-Manifest-${manifestData.manifest_number || 'export'}-${new Date().toISOString().slice(0,10)}.xlsx`;
+    const filename = `Trip-Manifest-${manifestData.manifest_number || 'export'}-${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(wb, filename);
   }
 }
