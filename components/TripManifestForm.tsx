@@ -90,7 +90,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
   const [showManualEntryModal, setShowManualEntryModal] = useState(false)
   const [pendingDocument, setPendingDocument] = useState<{ documentNumber: string; quantity: number } | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+ const [sidebarCollapsed, setSidebarCollapsed] = useState(true) 
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; show: boolean }>({
     message: '', type: 'info', show: false,
@@ -307,11 +307,11 @@ export default function TripManifestForm({ role }: { role?: string }) {
       {/* ── Top Navigation Bar ── */}
       <nav className="flex-shrink-0 h-[73px] border-b border-[#282828] z-50 flex items-center px-4 sm:px-6 gap-3 sm:gap-4">
         <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0"
-        >
-          <Menu className="w-5 h-5 text-[#B3B3B3]" />
-        </button>
+  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+  className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0"
+>
+  <Menu className="w-5 h-5 text-[#B3B3B3]" />
+</button>
 
         <Link href="/" className="p-2 rounded-full hover:bg-[#282828] transition-colors flex-shrink-0" title="Home">
           <Home className="w-4 h-4 text-[#6A6A6A] hover:text-[#B3B3B3] transition-colors" />
@@ -352,16 +352,17 @@ export default function TripManifestForm({ role }: { role?: string }) {
       {/* ── Below-nav row ── */}
       <div className="flex flex-1 min-h-0 overflow-hidden bg-black/35">
         <ManifestTabs
-          activeTab={activeTab}
-          onTabChange={(tab) => {
-            if (isViewer && tab === 'create') return
-            setActiveTab(tab)
-          }}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          isCollapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
+  activeTab={activeTab}
+  onTabChange={(tab) => {
+  if (isViewer && tab === 'create') return
+  setActiveTab(tab)
+  setSidebarCollapsed(true)  
+}}
+  isOpen={sidebarOpen}
+  onClose={() => setSidebarOpen(false)}
+  isCollapsed={sidebarCollapsed}
+  onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+/>
 
         <main className="flex-1 overflow-y-auto min-h-0 min-w-0">
           <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#E8192C]/3 rounded-full blur-[120px] z-0" />
