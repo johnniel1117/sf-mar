@@ -1,10 +1,12 @@
 'use client'
 
-import { ClipboardList, FileText, X, ChevronRight, ChevronLeft } from 'lucide-react'
+import { ClipboardList, FileText, BarChart2, X, ChevronRight, ChevronLeft } from 'lucide-react'
+
+type Tab = 'create' | 'saved' | 'analytics'
 
 interface ManifestTabsProps {
-  activeTab: 'create' | 'saved'
-  onTabChange: (tab: 'create' | 'saved') => void
+  activeTab: Tab
+  onTabChange: (tab: Tab) => void
   isOpen?: boolean
   onClose?: () => void
   isCollapsed?: boolean
@@ -12,13 +14,23 @@ interface ManifestTabsProps {
 }
 
 export function ManifestTabs({
-  activeTab, onTabChange, isOpen = true, onClose,
-  isCollapsed = false, onToggleCollapse,
+  activeTab,
+  onTabChange,
+  isOpen = true,
+  onClose,
+  isCollapsed = false,
+  onToggleCollapse,
 }: ManifestTabsProps) {
-  const handleTabChange = (tab: 'create' | 'saved') => {
+  const handleTabChange = (tab: Tab) => {
     onTabChange(tab)
     onClose?.()
   }
+
+  const tabs = [
+    { id: 'create' as const, label: 'Create Manifest', icon: ClipboardList },
+    { id: 'saved' as const, label: 'Saved Manifests', icon: FileText },
+    { id: 'analytics' as const, label: 'Analytics', icon: BarChart2 },
+  ]
 
   return (
     <>
@@ -30,7 +42,7 @@ export function ManifestTabs({
         />
       )}
 
-      {/* Sidebar — position: fixed on mobile, sticky on desktop */}
+      {/* Sidebar */}
       <aside
         className={`
           fixed left-0 top-[73px] bg-[#121212] border-r border-[#282828] flex flex-col z-50
@@ -41,42 +53,15 @@ export function ManifestTabs({
         `}
         style={{ height: 'calc(100vh - 73px)' }}
       >
-        {/* Mobile close */}
-        {/* <button
-          onClick={onClose}
-          className="absolute top-4 right-4 lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors"
-        >
-          <X className="w-4 h-4 text-[#B3B3B3]" />
-        </button> */}
-
-        {/* Brand */}
-        {/* <div className={`${isCollapsed ? 'px-3 py-5 justify-center' : 'px-5 py-5'} flex items-center gap-3 border-b border-[#282828] flex-shrink-0`}>
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}
-          >
-            <ClipboardList className="w-4 h-4 text-white" />
-          </div>
-          {!isCollapsed && (
-            <div>
-              <p className="text-[9px] uppercase tracking-widest font-bold text-[#6A6A6A]">SF Express</p>
-              <p className="text-sm font-black text-white leading-tight">Manifest</p>
-            </div>
-          )}
-        </div> */}
-
-        {/* Nav */}
+        {/* Nav Items */}
         <nav className="flex-1 py-3 overflow-hidden">
           <div className="space-y-0.5 px-2">
-            {([
-              { tab: 'create' as const, label: 'Create Manifest', icon: ClipboardList },
-              { tab: 'saved' as const, label: 'Saved Manifests', icon: FileText },
-            ]).map(({ tab, label, icon: Icon }) => {
-              const isActive = activeTab === tab
+            {tabs.map(({ id, label, icon: Icon }) => {
+              const isActive = activeTab === id
               return (
                 <button
-                  key={tab}
-                  onClick={() => handleTabChange(tab)}
+                  key={id}
+                  onClick={() => handleTabChange(id)}
                   className={`
                     w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold text-sm
                     transition-all duration-150 relative group
@@ -92,12 +77,20 @@ export function ManifestTabs({
                   {isActive && (
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#E8192C] rounded-r-full" />
                   )}
+
                   <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#E8192C]' : ''}`} />
+
                   {!isCollapsed && <span>{label}</span>}
 
-                  {/* Tooltip on collapsed */}
+                  {/* Tooltip when collapsed */}
                   {isCollapsed && (
-                    <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#282828] border border-[#3E3E3E] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-xs text-white z-50 shadow-xl">
+                    <div className="
+                      absolute left-16 top-1/2 -translate-y-1/2 
+                      bg-[#282828] border border-[#3E3E3E] 
+                      px-3 py-1.5 rounded-lg whitespace-nowrap 
+                      opacity-0 group-hover:opacity-100 transition-opacity 
+                      pointer-events-none text-xs text-white z-50 shadow-xl
+                    ">
                       {label}
                     </div>
                   )}
@@ -117,7 +110,7 @@ export function ManifestTabs({
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
 
-          {/* Version footer */}
+          {/* Optional version footer */}
           {!isCollapsed && (
             <p className="text-[10px] text-[#6A6A6A] text-center pb-1 pt-0.5">v1.0.0</p>
           )}

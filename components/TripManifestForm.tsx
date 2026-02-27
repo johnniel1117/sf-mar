@@ -4,7 +4,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
   Download, Barcode, Plus, X, AlertCircle, Save, FileText,
   CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck,
-  ClipboardList, Eye, Info, Clock, FileSpreadsheet, Home, Menu
+  ClipboardList, Eye, Info, Clock, FileSpreadsheet, Home, Menu, TrendingUp,
+  BarChart2
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
@@ -18,6 +19,7 @@ import { SavedManifestsTab } from '@/components/tabs/SavedManifestTab'
 import { ViewManifestModal } from '@/components/modals/ViewManifestModal'
 import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
 import { DownloadModal } from '@/components/modals/DownloadManifestModal'
+import { OutboundAnalyticsPanel } from '@/components/OutboundAnalytics'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -69,7 +71,6 @@ const EMPTY_MANIFEST = (): TripManifest => ({
   truck_type: '',
   time_start: '',
   time_end: '',
-  // remarks: '',
   status: 'draft',
   items: [],
 })
@@ -82,7 +83,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
   const [barcodeInput, setBarcodeInput] = useState('')
   const [scanningDocument, setScanningDocument] = useState(false)
   const barcodeInputRef = useRef<HTMLInputElement>(null)
-  const [activeTab, setActiveTab] = useState<'create' | 'saved'>(isViewer ? 'saved' : 'create')
+  const [activeTab, setActiveTab] = useState<'create' | 'saved' | 'analytics'>(isViewer ? 'saved' : 'create')
   const [showViewModal, setShowViewModal] = useState(false)
   const [viewingManifest, setViewingManifest] = useState<TripManifest | null>(null)
   const [editingManifestId, setEditingManifestId] = useState<string | null>(null)
@@ -90,7 +91,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
   const [showManualEntryModal, setShowManualEntryModal] = useState(false)
   const [pendingDocument, setPendingDocument] = useState<{ documentNumber: string; quantity: number } | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
- const [sidebarCollapsed, setSidebarCollapsed] = useState(true) 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; show: boolean }>({
     message: '', type: 'info', show: false,
@@ -304,14 +305,14 @@ export default function TripManifestForm({ role }: { role?: string }) {
   return (
     <div className="h-screen flex flex-col bg-[#121212] overflow-hidden">
 
-      {/* ── Top Navigation Bar ── */}
+      {/* Top Navigation Bar */}
       <nav className="flex-shrink-0 h-[73px] border-b border-[#282828] z-50 flex items-center px-4 sm:px-6 gap-3 sm:gap-4">
         <button
-  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-  className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0"
->
-  <Menu className="w-5 h-5 text-[#B3B3B3]" />
-</button>
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0"
+        >
+          <Menu className="w-5 h-5 text-[#B3B3B3]" />
+        </button>
 
         <Link href="/" className="p-2 rounded-full hover:bg-[#282828] transition-colors flex-shrink-0" title="Home">
           <Home className="w-4 h-4 text-[#6A6A6A] hover:text-[#B3B3B3] transition-colors" />
@@ -334,8 +335,20 @@ export default function TripManifestForm({ role }: { role?: string }) {
 
         <div className="flex-1" />
 
+        <button
+          onClick={() => setActiveTab('analytics')}
+          className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold transition-all duration-150 ${
+            activeTab === 'analytics'
+              ? 'bg-[#E8192C]/10 border-[#E8192C]/40 text-[#E8192C]'
+              : 'border-[#3E3E3E] text-[#B3B3B3] hover:border-[#727272] hover:text-white'
+          }`}
+        >
+          <TrendingUp className="w-3.5 h-3.5" />
+          Analytics
+        </button>
+
         {activeTab === 'create' && manifest.manifest_number && (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-[#3E3E3E] rounded-full">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-[#3E3E3E] rounded-full flex-shrink-0">
             <span className="text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A]">No.</span>
             <span className="text-xs font-black text-white tabular-nums">{manifest.manifest_number}</span>
           </div>
@@ -349,25 +362,25 @@ export default function TripManifestForm({ role }: { role?: string }) {
         )}
       </nav>
 
-      {/* ── Below-nav row ── */}
+      {/* Main content area */}
       <div className="flex flex-1 min-h-0 overflow-hidden bg-black/35">
         <ManifestTabs
-  activeTab={activeTab}
-  onTabChange={(tab) => {
-  if (isViewer && tab === 'create') return
-  setActiveTab(tab)
-  setSidebarCollapsed(true)  
-}}
-  isOpen={sidebarOpen}
-  onClose={() => setSidebarOpen(false)}
-  isCollapsed={sidebarCollapsed}
-  onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-/>
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            if (isViewer && tab === 'create') return
+            setActiveTab(tab as 'create' | 'saved' | 'analytics')
+            setSidebarCollapsed(true)
+          }}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
 
         <main className="flex-1 overflow-y-auto min-h-0 min-w-0">
           <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#E8192C]/3 rounded-full blur-[120px] z-0" />
 
-          <div className="relative z-10 p-4 sm:p-6 lg:p-8">
+          <div className="relative z-10 p-4 sm:p-6 lg:p-8 h-full">
             {activeTab === 'create' && !isViewer && (
               <CreateManifestTab
                 currentStep={currentStep}
@@ -397,7 +410,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
             )}
 
             {activeTab === 'saved' && (
-              <div className="h-[calc(100vh-73px-3rem)] sm:h-[calc(100vh-73px-4rem)]">
+              <div className="h-full">
                 <SavedManifestsTab
                   savedManifests={savedManifests}
                   handleViewManifest={(m) => { setViewingManifest(m); setShowViewModal(true) }}
@@ -408,11 +421,45 @@ export default function TripManifestForm({ role }: { role?: string }) {
                 />
               </div>
             )}
+
+            {activeTab === 'analytics' && (
+              <div className="h-full w-full">
+                <div className="h-full w-full overflow-y-auto">
+                  {savedManifests.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center px-4 sm:px-8 py-12">
+                      <div
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center mb-6 shadow-2xl"
+                        style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}
+                      >
+                        <BarChart2 className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+                      </div>
+                      <h4 className="text-2xl sm:text-3xl font-black text-white mb-4">
+                        No data to analyze yet
+                      </h4>
+                      <p className="text-base sm:text-lg text-[#B3B3B3] max-w-md mb-8">
+                        Once you save trip manifests, you'll see trends, top destinations, trucker performance, and more right here.
+                      </p>
+                      {!isViewer && (
+                        <button
+                          onClick={() => setActiveTab('create')}
+                          className="px-6 py-3 rounded-xl bg-[#E8192C] hover:bg-[#c41624] text-white font-bold text-base transition-colors shadow-lg shadow-[#E8192C]/30 flex items-center gap-2"
+                        >
+                          <Plus className="w-5 h-5" />
+                          Create First Manifest
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <OutboundAnalyticsPanel manifests={savedManifests} />
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
 
-      {/* ── Modals ── */}
+      {/* Modals */}
       <ViewManifestModal
         isOpen={showViewModal}
         manifest={viewingManifest}
@@ -444,7 +491,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
         }}
       />
 
-      {/* ── Toast ── */}
+      {/* Toast */}
       {toast.show && (
         <div className={`fixed bottom-5 right-5 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-white z-[100] border ${
           toast.type === 'success'
