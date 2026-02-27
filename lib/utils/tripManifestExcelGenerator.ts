@@ -72,14 +72,14 @@ export class TripManifestExcelGenerator {
       row++;
     });
 
-    if (manifestData.remarks) {
-      setCell(row, 0, 'Remarks', { font: { bold: true } });
-      setCell(row, 1, manifestData.remarks);
-      ws['!merges']?.push({ s: { r: row, c: 1 }, e: { r: row, c: 3 } });
-      row += 2;
-    } else {
-      row += 1;
-    }
+    // if (manifestData.remarks) {
+    //   setCell(row, 0, 'Remarks', { font: { bold: true } });
+    //   setCell(row, 1, manifestData.remarks);
+    //   ws['!merges']?.push({ s: { r: row, c: 1 }, e: { r: row, c: 3 } });
+    //   row += 2;
+    // } else {
+    //   row += 1;
+    // }
 
     // ─── Table Header Row ─────────────────────────────────────
     const tableStartRow = row;

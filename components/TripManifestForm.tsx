@@ -69,7 +69,7 @@ const EMPTY_MANIFEST = (): TripManifest => ({
   truck_type: '',
   time_start: '',
   time_end: '',
-  remarks: '',
+  // remarks: '',
   status: 'draft',
   items: [],
 })

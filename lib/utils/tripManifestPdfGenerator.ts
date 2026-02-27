@@ -313,12 +313,7 @@ export class TripManifestPDFGenerator {
               <div class="info-value">${formatTime12hr(manifestData.time_end)}</div>
             </div>
 
-            ${manifestData.remarks ? `
-            <div class="info-row">
-              <div class="info-label">Remarks</div>
-              <div class="info-value" style="grid-column: span 3;">${manifestData.remarks}</div>
-            </div>
-            ` : ''}
+           
           </div>
 
           <!-- Items Table -->
