@@ -81,26 +81,38 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
 
   return (
     <div className="space-y-7">
-      {/* Sparkline */}
+      {/* Sparkline — px heights, % won't work inside flex */}
       <div>
         <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#3E3E3E] mb-3">Qty · last 6 months</p>
         <div className="flex items-end gap-1.5" style={{ height: 80 }}>
           {monthlyData.map((d, i) => {
+            const BAR_MAX = 60
             const isCurrent = i === monthlyData.length - 1
-            const hPct = Math.max((d.qty / maxQty) * 100, d.qty > 0 ? 6 : 0)
+            const isPrev    = i === monthlyData.length - 2
+            const hPx = Math.max(Math.round((d.qty / maxQty) * BAR_MAX), 8)
             return (
               <div key={d.label} className="flex-1 flex flex-col items-center gap-1.5">
                 <div
                   className="w-full rounded-sm transition-all duration-500"
                   style={{
-                    height: `${hPct}%`,
+                    height: hPx,
+                    flexShrink: 0,
                     background: isCurrent
-                      ? 'linear-gradient(180deg, #E8192C 0%, #7f0e18 100%)'
-                      : 'rgba(255,255,255,0.07)',
-                    boxShadow: isCurrent ? '0 0 10px rgba(232,25,44,0.35)' : 'none',
+                      ? 'linear-gradient(180deg, #E8192C 0%, #F5A623 100%)'
+                      : isPrev
+                      ? 'rgba(245,166,35,0.50)'
+                      : 'rgba(255,255,255,0.12)',
+                    boxShadow: isCurrent
+                      ? '0 0 14px rgba(232,25,44,0.7), 0 0 28px rgba(245,166,35,0.35)'
+                      : isPrev
+                      ? '0 0 8px rgba(245,166,35,0.25)'
+                      : 'none',
                   }}
                 />
-                <span className={`text-[9px] font-bold ${isCurrent ? 'text-[#E8192C]' : 'text-[#3E3E3E]'}`}>
+                <span
+                  className="text-[9px] font-bold"
+                  style={{ color: isCurrent ? '#F5A623' : isPrev ? '#8a6820' : '#3E3E3E' }}
+                >
                   {d.label}
                 </span>
               </div>
@@ -139,9 +151,10 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
         </div>
       </div>
 
+      {/* Full analytics — amber accent */}
       <button
         onClick={onExpand}
-        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#3E3E3E] hover:text-[#E8192C] transition-colors group"
+        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#3E3E3E] hover:text-[#F5A623] transition-colors group"
       >
         Full analytics
         <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -201,7 +214,6 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
             style={{ maxHeight: '92vh' }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               onClick={() => setShowAnalyticsModal(false)}
               className="absolute -top-3 -right-3 z-20 w-9 h-9 rounded-full bg-[#1E1E1E] border border-[#3E3E3E] flex items-center justify-center text-[#B3B3B3] hover:text-white hover:bg-[#282828] transition-all shadow-xl"
@@ -215,14 +227,13 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
         </div>
       )}
 
-      {/* ── Original background (preserved exactly) ── */}
+      {/* ── Background (preserved exactly) ── */}
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <LogoGridBackground />
       </div>
       <div className="fixed inset-0 bg-gradient-to-br from-black/5 via-black/95 to-black pointer-events-none" />
       <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-black/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-black/15 rounded-full blur-[100px] pointer-events-none" />
-
       {/* ── Foreground ── */}
       <div className="relative z-10 h-full flex flex-col">
 
@@ -301,12 +312,13 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   {manifests.length > 0 && (
                     <>
                       <div className="hidden sm:block w-px h-14 bg-[#1a1a1a]" />
+                      {/* Analytics button — amber accent */}
                       <button
                         onClick={() => setShowAnalyticsModal(true)}
                         className="hidden sm:flex flex-col items-start gap-2 group"
                       >
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] group-hover:text-[#E8192C] transition-colors">Analytics</p>
-                        <div className="flex items-center gap-1.5 text-[#3E3E3E] group-hover:text-[#E8192C] transition-colors">
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] group-hover:text-[#F5A623] transition-colors">Analytics</p>
+                        <div className="flex items-center gap-1.5 text-[#3E3E3E] group-hover:text-[#F5A623] transition-colors">
                           <TrendingUp className="w-5 h-5" />
                           <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
@@ -348,21 +360,22 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   ))}
                 </div>
 
-                {/* Quick jumps */}
+                {/* Quick jumps — amber accent on hover */}
                 <div className="mt-9 pt-7 border-t border-[#1a1a1a]">
                   <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-4">Quick jump</p>
                   <div className="flex flex-wrap gap-2">
                     {QUICK_JUMPS.map(({ href, label }) => (
                       <Link key={href} href={href}>
-                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#232323] text-[11px] font-semibold text-[#484848] hover:border-[#E8192C]/30 hover:text-white hover:bg-[#E8192C]/5 transition-all duration-200 cursor-pointer">
+                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#232323] text-[11px] font-semibold text-[#484848] hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 cursor-pointer">
                           <ChevronRight className="w-3 h-3" />
                           {label}
                         </span>
                       </Link>
                     ))}
+                    {/* Mobile analytics pill */}
                     <button
                       onClick={() => setShowAnalyticsModal(true)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#232323] text-[11px] font-semibold text-[#484848] hover:border-[#E8192C]/30 hover:text-white hover:bg-[#E8192C]/5 transition-all duration-200 lg:hidden"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#232323] text-[11px] font-semibold text-[#484848] hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 lg:hidden"
                     >
                       <TrendingUp className="w-3 h-3" />
                       Analytics
@@ -382,7 +395,8 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                       Create your first trip manifest to see outbound analytics.
                     </p>
                     <Link href="/trip-manifest">
-                      <span className="text-[11px] font-bold text-[#E8192C] uppercase tracking-widest hover:underline cursor-pointer">
+                      {/* amber accent */}
+                      <span className="text-[11px] font-bold text-[#F5A623] uppercase tracking-widest hover:underline cursor-pointer">
                         Get started →
                       </span>
                     </Link>
