@@ -283,7 +283,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
             <div className="pt-12 sm:pt-16 pb-10 sm:pb-14 border-b border-[#1a1a1a]">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-[#E8192C] mb-3">{today}</p>
+                  <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-3">{today}</p>
                   <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-black text-white leading-[0.93] tracking-tight">
                     {greeting},<br />
                     <span className="text-[#3E3E3E]">{displayName}.</span>
@@ -340,11 +340,11 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   {SERVICES.map(({ href, label, desc, icon: Icon, index }) => (
                     <Link key={href} href={href} className="group block">
                       <div className="flex items-center gap-5 sm:gap-6 py-5 sm:py-6 transition-all duration-200 group-hover:pl-1.5">
-                        <span className="text-[11px] font-mono font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+                        <span className="text-[11px] font-mono font-bold  text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
                           {index}
                         </span>
-                        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-[#232323] bg-[#161616] group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6 transition-all duration-200">
-                          <Icon className="w-4 h-4 text-[#484848] group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
+                        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border bg-red-600 border-[#232323] bg-[#161616] group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6 transition-all duration-200">
+                          <Icon className="w-4 h-4 text-white group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[15px] font-black text-[#B3B3B3] group-hover:text-white transition-colors leading-snug">
