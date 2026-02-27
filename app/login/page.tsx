@@ -53,9 +53,9 @@ export default function LoginPage() {
       </div>
 
       {/* Gradient overlays - more subtle */}
-      <div className="absolute inset-0 bg-gradient-to-br from-red-950/40 via-black to-black" />
-      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-red-800/5 rounded-full blur-[100px]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-black-950/40 via-black to-black" />
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-black-600/5 rounded-full blur-[120px]" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-black-800/5 rounded-full blur-[100px]" />
 
       {/* Main content */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
@@ -80,7 +80,7 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
-                required
+                requiblack
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-[#121212] border border-[#727272] rounded-md text-white placeholder-[#6a6a6a] focus:outline-none focus:border-white hover:border-white transition-colors"
@@ -97,7 +97,7 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  required
+                  requiblack
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 bg-[#121212] border border-[#727272] rounded-md text-white placeholder-[#6a6a6a] focus:outline-none focus:border-white hover:border-white transition-colors"
@@ -123,7 +123,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-md">
+              <div className="bg-black-500/10 border border-black-500/30 text-black-400 text-sm px-4 py-3 rounded-md">
                 {error}
               </div>
             )}
@@ -132,7 +132,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleLogin}
               disabled={loading}
-              className="w-full bg-red-600 hover:bg-red-700 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white font-bold py-3.5 rounded-full transition-all duration-200"
+              className="w-full bg-yellow-600 hover:bg-black-700  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-white font-bold py-3.5 rounded-2xl transition-all duration-200"
             >
               {loading ? 'Signing in...' : 'Log In'}
             </button>
@@ -143,14 +143,14 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="text-center">
+            {/* <div className="text-center">
               <button 
                 type="button" 
-                className="text-white text-sm font-medium underline hover:text-red-400 transition-colors"
+                className="text-white text-sm font-medium underline hover:text-black-400 transition-colors"
               >
                 Forgot your password?
               </button>
-            </div>
+            </div> */}
           </div>
 
           {/* Footer */}
