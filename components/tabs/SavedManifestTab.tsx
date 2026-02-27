@@ -242,13 +242,17 @@ export function SavedManifestsTab({
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const itemsPerPage = 10
 
+  const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc')
+
   const sortedManifests = useMemo(() =>
-    [...savedManifests].sort((a, b) => {
-      if (a.created_at && b.created_at) return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      if (a.manifest_date && b.manifest_date) return new Date(b.manifest_date).getTime() - new Date(a.manifest_date).getTime()
-      if (a.id && b.id) return b.id.localeCompare(a.id)
-      return 0
-    }), [savedManifests])
+  [...savedManifests].sort((a, b) => {
+    const aTime = new Date(a.manifest_date || '').getTime()
+    const bTime = new Date(b.manifest_date || '').getTime()
+    if (!isNaN(aTime) && !isNaN(bTime)) return sortDir === 'desc' ? bTime - aTime : aTime - bTime
+    if (!isNaN(bTime)) return 1   // b has date, a doesn't → b first
+    if (!isNaN(aTime)) return -1  // a has date, b doesn't → a first
+    return 0
+  }), [savedManifests, sortDir])
 
   const filteredManifests = useMemo(() =>
     sortedManifests.filter((manifest) => {
@@ -463,6 +467,9 @@ export function SavedManifestsTab({
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
+            <span className="hidden sm:flex items-center gap-1 w-24 justify-end">
+ 
+</span>
           </div>
           <FilterDropdown selectedMonth={selectedMonth} onMonthChange={(m) => { setSelectedMonth(m); setCurrentPage(1) }} months={MONTHS} />
         </div>
@@ -480,7 +487,14 @@ export function SavedManifestsTab({
           <span className="hidden sm:block w-7 text-center">#</span>
           <span className="w-9 sm:w-10" />
           <span className="flex-1">Title</span>
-          <span className="hidden sm:block w-24 text-right">Date</span>
+          <button
+  onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
+  className="hidden sm:flex items-center justify-end gap-1 w-24 hover:text-white transition-colors duration-150 cursor-pointer"
+  title={sortDir === 'desc' ? 'Newest first' : 'Oldest first'}
+>
+  Date
+  <span className="text-[#E8192C]">{sortDir === 'desc' ? '↓' : '↑'}</span>
+</button>
           <span className="w-8 text-right">Qty</span>
           <span className="hidden xs:block w-12 text-center">Docs</span>
           <span className="w-4" />
