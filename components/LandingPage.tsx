@@ -311,11 +311,11 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   </div>
                   {manifests.length > 0 && (
                     <>
-                      <div className="hidden sm:block w-px h-14 bg-[#1a1a1a]" />
-                      {/* Analytics button — amber accent */}
+                      <div className="w-px h-14 bg-[#1a1a1a]" />
+                      {/* Analytics button — amber accent, visible on all screen sizes */}
                       <button
                         onClick={() => setShowAnalyticsModal(true)}
-                        className="hidden sm:flex flex-col items-start gap-2 group"
+                        className="flex flex-col items-start gap-2 group"
                       >
                         <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] group-hover:text-[#F5A623] transition-colors">Analytics</p>
                         <div className="flex items-center gap-1.5 text-[#3E3E3E] group-hover:text-[#F5A623] transition-colors">
@@ -372,14 +372,6 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                         </span>
                       </Link>
                     ))}
-                    {/* Mobile analytics pill */}
-                    <button
-                      onClick={() => setShowAnalyticsModal(true)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#232323] text-[11px] font-semibold text-[#484848] hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 lg:hidden"
-                    >
-                      <TrendingUp className="w-3 h-3" />
-                      Analytics
-                    </button>
                   </div>
                 </div>
               </div>
