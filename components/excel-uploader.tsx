@@ -12,6 +12,24 @@ import {
 import Link from "next/link"
 import JsBarcode from "jsbarcode"
 
+// ── Design tokens ─────────────────────────────────────────────────────────────
+const C = {
+  bg:          '#080808',
+  surface:     '#0f0f0f',
+  border:      '#1a1a1a',
+  borderHover: '#2a2a2a',
+  divider:     '#111111',
+  accent:      '#E8192C',
+  accentHover: '#FF1F30',
+  accentGlow:  'rgba(232,25,44,0.2)',
+  amber:       '#F5A623',
+  textPrimary: '#FFFFFF',
+  textSilver:  '#C0C0C0',
+  textSub:     '#888888',
+  textMuted:   '#666666',
+  textGhost:   '#3E3E3E',
+}
+
 interface MaterialData {
   materialCode: string
   materialDescription: string
@@ -76,7 +94,8 @@ export default function ExcelUploader() {
   const [showScrollTop, setShowScrollTop]     = useState(false)
   const [searchQuery, setSearchQuery]         = useState("")
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
-  const [sidebarOpen, setSidebarOpen]         = useState(true)  // open by default on mobile
+  // ── FIX: closed by default on mobile ─────────────────────────────────────────
+  const [sidebarOpen, setSidebarOpen]         = useState(false)
   const [mounted, setMounted]                 = useState(false)
 
   useEffect(() => {
@@ -420,37 +439,49 @@ export default function ExcelUploader() {
     { id: "individualDN" as TabType, label: "Individual DN", index: "03", icon: Download       },
   ]
 
+  // ── Shared sidebar item helpers ──────────────────────────────────────────────
+  const sidebarItemBase = `w-full flex items-center transition-all duration-200 relative group`
+  const sidebarRowCls = sidebarCollapsed
+    ? `${sidebarItemBase} flex-row gap-4 px-5 py-5 lg:flex-col lg:justify-center lg:gap-1.5 lg:px-0 lg:py-4`
+    : `${sidebarItemBase} flex-row gap-4 px-5 py-5`
+
   return (
-    <div className="h-screen flex flex-col bg-black overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: C.bg }}>
 
       {/* ── Navbar ── */}
-      <nav className="flex-shrink-0 h-[73px] border-b border-[#1a1a1a] z-50 flex items-center px-5 sm:px-8 gap-3 sm:gap-4 bg-black">
+      <nav className="flex-shrink-0 h-[73px] z-50 flex items-center px-5 sm:px-8 gap-3 sm:gap-4" style={{ background: C.bg, borderBottom: `1px solid ${C.border}` }}>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden p-2 hover:bg-[#0a0a0a] rounded-full transition-colors flex-shrink-0"
+          className="lg:hidden p-2 rounded-full transition-colors flex-shrink-0"
+          style={{ color: C.textSub }}
+          onMouseEnter={e => (e.currentTarget.style.background = C.surface)}
+          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
         >
-          <Menu className="w-4 h-4 text-[#9A9A9A]" />
+          <Menu className="w-4 h-4" />
         </button>
 
-        <Link href="/" className="p-2 rounded-full hover:bg-[#0a0a0a] transition-colors flex-shrink-0" title="Home">
-          <Home className="w-4 h-4 text-[#9A9A9A] hover:text-white transition-colors" />
+        <Link href="/" className="p-2 rounded-full transition-colors flex-shrink-0" style={{ color: C.textSub }}
+          onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = C.surface)}
+          onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = 'transparent')}
+          title="Home">
+          <Home className="w-4 h-4" />
         </Link>
 
-        <div className="w-px h-4 bg-[#1a1a1a] flex-shrink-0 hidden sm:block" />
+        <div className="w-px h-4 flex-shrink-0 hidden sm:block" style={{ background: C.border }} />
 
         <div className="flex items-center gap-3 flex-shrink-0">
           <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
-          <div className="w-px h-4 bg-[#1a1a1a] hidden sm:block" />
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A] hidden sm:block">Serial List</p>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A] sm:hidden">Upload</p>
+          <div className="w-px h-4 hidden sm:block" style={{ background: C.border }} />
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold hidden sm:block" style={{ color: C.textMuted }}>Serial List</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold sm:hidden" style={{ color: C.textMuted }}>Upload</p>
         </div>
 
         <div className="flex-1" />
 
         {uploadedFiles.length > 0 && (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-[#1a1a1a] rounded-full flex-shrink-0">
-            <span className="text-[10px] uppercase tracking-[0.15em] text-[#9A9A9A]">Files</span>
-            <span className="text-[11px] font-black text-white tabular-nums">{uploadedFiles.length}</span>
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0" style={{ border: `1px solid ${C.border}` }}>
+            <span className="text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textMuted }}>Files</span>
+            <span className="text-[11px] font-black tabular-nums" style={{ color: C.textPrimary }}>{uploadedFiles.length}</span>
           </div>
         )}
       </nav>
@@ -458,17 +489,16 @@ export default function ExcelUploader() {
       {/* ── Toast notifications ── */}
       <div className="fixed top-[85px] right-4 z-[100] space-y-2 max-w-sm pointer-events-none">
         {notifications.map(n => (
-          <div key={n.id} className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border pointer-events-auto animate-slideInRight bg-black ${
-            n.type === 'error'   ? 'border-[#E8192C]/20' :
-            n.type === 'warning' ? 'border-yellow-600/20' :
-                                   'border-green-500/20'
-          }`}>
-            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-              n.type === 'error' ? 'bg-[#E8192C]' : n.type === 'warning' ? 'bg-yellow-600' : 'bg-green-500'
-            }`} />
-            <p className="text-[11px] font-bold uppercase tracking-widest text-white flex-1">{n.message}</p>
-            <button onClick={() => removeNotification(n.id)} className="p-0.5 hover:bg-[#1a1a1a] rounded-full transition-colors">
-              <X className="w-3 h-3 text-[#9A9A9A]" />
+          <div key={n.id} className="flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl pointer-events-auto"
+            style={{
+              background: C.bg,
+              border: `1px solid ${n.type === 'error' ? 'rgba(232,25,44,0.2)' : n.type === 'warning' ? 'rgba(245,166,35,0.2)' : 'rgba(34,197,94,0.2)'}`,
+              animation: 'slideInRight 0.3s ease forwards',
+            }}>
+            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: n.type === 'error' ? C.accent : n.type === 'warning' ? C.amber : '#22c55e' }} />
+            <p className="text-[11px] font-bold uppercase tracking-widest flex-1" style={{ color: C.textPrimary }}>{n.message}</p>
+            <button onClick={() => removeNotification(n.id)} className="p-0.5 rounded-full transition-colors" style={{ color: C.textMuted }}>
+              <X className="w-3 h-3" />
             </button>
           </div>
         ))}
@@ -477,130 +507,91 @@ export default function ExcelUploader() {
       <style>{`
         @keyframes slideInRight { from { opacity:0; transform:translateX(20px) } to { opacity:1; transform:translateX(0) } }
         @keyframes fadeInUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
-        .animate-slideInRight { animation: slideInRight 0.3s ease forwards; }
         .animate-row { animation: fadeInUp 0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
       `}</style>
 
-      {/* ── Below-nav layout ── */}
+      {/* ── Layout ── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* Mobile overlay — tap to close */}
+        {/* Mobile overlay */}
         <div
           aria-hidden="true"
           onClick={() => setSidebarOpen(false)}
-          className={`
-            fixed inset-0 top-[73px] bg-black/70 backdrop-blur-md z-40
-            lg:hidden transition-opacity duration-300
-            ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
-          `}
+          className="fixed inset-0 top-[73px] z-40 lg:hidden transition-opacity duration-300"
+          style={{
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(12px)',
+            opacity: sidebarOpen ? 1 : 0,
+            pointerEvents: sidebarOpen ? 'auto' : 'none',
+          }}
         />
 
-        {/* ── Sidebar — matches ManifestTabs exactly ── */}
-        <aside className={`
-          fixed left-0 top-[73px] bg-black border-r border-[#1a1a1a] flex flex-col z-50
-          transition-all duration-300 ease-in-out
-          w-60
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:sticky lg:top-[73px]
-          ${sidebarCollapsed ? 'lg:w-[60px]' : 'lg:w-60'}
-        `} style={{ height: 'calc(100dvh - 73px)' }}>
+        {/* ── Sidebar ── */}
+        <aside
+          className="sidebar-aside fixed left-0 top-[73px] flex flex-col z-50 transition-all duration-300 ease-in-out w-60"
+          style={{
+            background: C.bg,
+            borderRight: `1px solid ${C.border}`,
+            height: 'calc(100dvh - 73px)',
+            transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+          }}
+        >
+
+          <style>{`
+            @media (min-width: 1024px) {
+              .sidebar-aside { transform: translateX(0) !important; position: sticky !important; top: 73px; width: ${sidebarCollapsed ? '60px' : '240px'} !important; flex-shrink: 0; }
+            }
+          `}</style>
 
           <nav className="flex-1 py-5 overflow-y-auto overflow-x-hidden">
-            <div className="divide-y divide-[#1a1a1a]">
+            <div style={{ borderBottom: `1px solid ${C.border}` }}>
 
-              {/* Upload action */}
-              <label htmlFor="file-upload" className={`
-                w-full flex items-center gap-4 cursor-pointer transition-all duration-200 group relative
-                flex-row px-5 py-5 hover:pl-7
-                lg:${sidebarCollapsed ? 'flex-col justify-center px-0 py-4 gap-1.5 hover:pl-0' : 'flex-row px-5 py-5 hover:pl-7'}
-              `}>
-                {/* Index */}
-                <span className={`
-                  text-[11px] font-bold w-5 flex-shrink-0 transition-colors text-[#5A5A5A] group-hover:text-[#E8192C]
-                  ${sidebarCollapsed ? 'lg:hidden' : ''}
-                `}>↑</span>
-
-                <Upload className={`w-4 h-4 flex-shrink-0 text-[#9A9A9A] group-hover:text-[#E8192C] transition-colors`} strokeWidth={1.5} />
-
-                {/* Index below icon on desktop collapsed */}
+              {/* Upload */}
+              <label htmlFor="file-upload"
+                className={`${sidebarRowCls} cursor-pointer hover:pl-7 ${sidebarCollapsed ? 'lg:hover:pl-0' : ''}`}
+                style={{ borderBottom: `1px solid ${C.border}` }}
+              >
+                <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`}
+                  style={{ color: C.textGhost }}>↑</span>
+                <Upload className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
+                {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest transition-colors" style={{ color: C.textGhost }}>↑</span>}
+                <span className={`text-[13px] font-black transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textSub }}>Upload Files</span>
                 {sidebarCollapsed && (
-                  <span className="hidden lg:block text-[10px] font-bold tracking-widest text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors">↑</span>
-                )}
-
-                {/* Label — always visible, hidden on desktop collapsed */}
-                <span className={`
-                  text-[13px] font-black text-[#9A9A9A] group-hover:text-white transition-colors
-                  ${sidebarCollapsed ? 'lg:hidden' : ''}
-                `}>Upload Files</span>
-
-                {/* Desktop collapsed tooltip */}
-                {sidebarCollapsed && (
-                  <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 bg-black border border-[#1a1a1a] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] text-white z-50 shadow-2xl">
+                  <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
+                    style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>
                     Upload Files
                   </div>
                 )}
                 <input id="file-upload" type="file" accept=".xlsx,.xls,.csv" multiple onChange={handleFileUpload} className="hidden" />
               </label>
 
-              {/* Tab navigation */}
+              {/* Tabs */}
               {tabs.map(({ id, label, index, icon: Icon }) => {
                 const isActive = activeTab === id && (groupedData.length > 0 || serialListData.length > 0)
                 return (
-                  <button
-                    key={id}
-                    onClick={() => {
-                      setActiveTab(id)
-                      setSidebarOpen(false)
-                      setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
-                    }}
-                    title={sidebarCollapsed ? label : undefined}
-                    className={`
-                      w-full flex items-center transition-all duration-200 relative group
-                      flex-row gap-4 px-5 py-5
-                      ${sidebarCollapsed ? 'lg:flex-col lg:justify-center lg:gap-1.5 lg:px-0 lg:py-4' : ''}
-                      ${isActive
-                        ? (sidebarCollapsed ? 'pl-6 lg:pl-0' : 'pl-6 sm:pl-7')
-                        : (sidebarCollapsed ? 'hover:pl-7 lg:hover:pl-0' : 'hover:pl-7 sm:hover:pl-8')
-                      }
-                    `}
+                  <button key={id}
+                    onClick={() => { setActiveTab(id); setSidebarOpen(false); setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100) }}
+                    className={`${sidebarRowCls} ${isActive ? 'pl-6' : 'hover:pl-7'} ${sidebarCollapsed ? 'lg:hover:pl-0' : ''}`}
+                    style={{ borderBottom: `1px solid ${C.border}` }}
                   >
-                    {/* Active left bar — always on mobile */}
-                    {isActive && (
-                      <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-px h-8 bg-[#E8192C] ${sidebarCollapsed ? 'lg:hidden' : ''}`} />
-                    )}
-                    {/* Active top bar — desktop collapsed only */}
-                    {isActive && sidebarCollapsed && (
-                      <span className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 h-px w-6 bg-[#E8192C]" />
-                    )}
+                    {isActive && <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-px h-8 ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ background: C.accent }} />}
+                    {isActive && sidebarCollapsed && <span className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 h-px w-6" style={{ background: C.accent }} />}
 
-                    {/* Index — always on mobile, hidden on desktop collapsed */}
-                    <span className={`
-                      text-[11px] font-bold w-5 flex-shrink-0 transition-colors
-                      ${sidebarCollapsed ? 'lg:hidden' : ''}
-                      ${isActive ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'}
-                    `}>{index}</span>
+                    <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`}
+                      style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>
 
-                    <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                      isActive ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-white'
-                    }`} strokeWidth={1.5} />
+                    <Icon className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: isActive ? C.accent : C.textSub }} strokeWidth={1.5} />
 
-                    {/* Index below icon — desktop collapsed only */}
                     {sidebarCollapsed && (
-                      <span className={`hidden lg:block text-[10px] font-bold tracking-widest transition-colors ${
-                        isActive ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
-                      }`}>{index}</span>
+                      <span className="hidden lg:block text-[10px] font-bold tracking-widest transition-colors" style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>
                     )}
 
-                    {/* Label — always visible, hidden on desktop collapsed */}
-                    <span className={`
-                      text-[13px] font-black leading-snug transition-colors
-                      ${sidebarCollapsed ? 'lg:hidden' : ''}
-                      ${isActive ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'}
-                    `}>{label}</span>
+                    <span className={`text-[13px] font-black leading-snug transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`}
+                      style={{ color: isActive ? C.textPrimary : C.textSub }}>{label}</span>
 
-                    {/* Desktop collapsed tooltip */}
                     {sidebarCollapsed && (
-                      <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 bg-black border border-[#1a1a1a] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] text-white z-50 shadow-2xl">
+                      <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
+                        style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>
                         {label}
                       </div>
                     )}
@@ -612,30 +603,15 @@ export default function ExcelUploader() {
               {uploadedFiles.length > 0 && (
                 <button
                   onClick={() => { handleClear(); setSidebarOpen(false) }}
-                  className={`
-                    w-full flex items-center transition-all duration-200 group relative
-                    flex-row gap-4 px-5 py-5 hover:pl-7
-                    ${sidebarCollapsed ? 'lg:flex-col lg:justify-center lg:gap-1.5 lg:px-0 lg:py-4 lg:hover:pl-0' : ''}
-                  `}
+                  className={`${sidebarRowCls} hover:pl-7 ${sidebarCollapsed ? 'lg:hover:pl-0' : ''}`}
                 >
-                  <span className={`
-                    text-[11px] font-bold w-5 flex-shrink-0 transition-colors text-[#5A5A5A] group-hover:text-[#E8192C]
-                    ${sidebarCollapsed ? 'lg:hidden' : ''}
-                  `}>×</span>
-
-                  <X className="w-4 h-4 flex-shrink-0 text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
-
+                  <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>×</span>
+                  <X className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textGhost }} strokeWidth={1.5} />
+                  {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest" style={{ color: C.textGhost }}>×</span>}
+                  <span className={`text-[13px] font-black transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>Clear All</span>
                   {sidebarCollapsed && (
-                    <span className="hidden lg:block text-[10px] font-bold tracking-widest text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors">×</span>
-                  )}
-
-                  <span className={`
-                    text-[13px] font-black text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors
-                    ${sidebarCollapsed ? 'lg:hidden' : ''}
-                  `}>Clear All</span>
-
-                  {sidebarCollapsed && (
-                    <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 bg-black border border-[#1a1a1a] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] text-white z-50 shadow-2xl">
+                    <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
+                      style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>
                       Clear All
                     </div>
                   )}
@@ -644,37 +620,39 @@ export default function ExcelUploader() {
             </div>
           </nav>
 
-          {/* Collapse toggle — desktop only */}
-          <div className="flex-shrink-0 border-t border-[#1a1a1a] p-3">
+          {/* Collapse toggle */}
+          <div className="flex-shrink-0 p-3" style={{ borderTop: `1px solid ${C.border}` }}>
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full hover:bg-[#0a0a0a] transition-colors text-[#5A5A5A] hover:text-white"
-              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full transition-colors"
+              style={{ color: C.textGhost }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.surface; e.currentTarget.style.color = C.textPrimary }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textGhost }}
             >
               {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
             </button>
-            {!sidebarCollapsed && <p className="text-[10px] text-[#1a1a1a] text-center pt-1">v1.0.0</p>}
+            {!sidebarCollapsed && <p className="text-[10px] text-center pt-1" style={{ color: C.textGhost }}>v1.0.0</p>}
           </div>
         </aside>
 
-        {/* ── Main scrollable area ── */}
-        <main className="flex-1 overflow-y-auto min-h-0 min-w-0 bg-black">
-          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#E8192C]/3 rounded-full blur-[120px] z-0" />
+        {/* ── Main content ── */}
+        <main className="flex-1 overflow-y-auto min-h-0 min-w-0" style={{ background: C.bg }}>
+          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] rounded-full blur-[120px] z-0" style={{ background: 'rgba(232,25,44,0.03)' }} />
 
           <div className="relative z-10 p-5 sm:p-8 lg:p-10 space-y-6">
 
-            {/* ── Upload zone ── */}
-            <div className="border border-[#1a1a1a] rounded-2xl overflow-hidden">
-              <div className="px-6 sm:px-8 pt-7 pb-6 border-b border-[#1a1a1a]">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-2">
-                  Haier Barcode Excel
-                </p>
-                <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-black text-white tracking-tight leading-[0.93]">
-                  Upload Files
-                </h2>
-                <p className="text-[11px] text-[#9A9A9A] uppercase tracking-widest mt-1.5">
-                  SF Express · Cebu Warehouse
-                </p>
+            {/* Upload zone */}
+            <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
+              <div className="px-6 sm:px-8 pt-7 pb-6" style={{ borderBottom: `1px solid ${C.border}` }}>
+                <div className="flex items-center gap-2.5 mb-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{ background: C.accent }} />
+                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: C.accent }} />
+                  </span>
+                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.amber }}>Haier Barcode Excel</p>
+                </div>
+                <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-black tracking-tight leading-[0.93]" style={{ color: C.textPrimary }}>Upload Files</h2>
+                <p className="text-[11px] uppercase tracking-widest mt-1.5" style={{ color: C.textMuted }}>SF Express · Cebu Warehouse</p>
               </div>
 
               <div className="p-6 sm:p-8">
@@ -682,22 +660,26 @@ export default function ExcelUploader() {
                   onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
                   className={`relative block cursor-pointer transition-all duration-300 ${isDragging ? 'scale-[1.01]' : ''}`}
                 >
-                  <div className={`border border-dashed rounded-xl transition-all duration-300 ${
-                    isDragging ? 'border-[#E8192C]/60 bg-[#E8192C]/4' : 'border-[#1a1a1a] hover:border-[#E8192C]/30 hover:bg-[#E8192C]/2'
-                  }`}>
+                  <div className="border border-dashed rounded-xl transition-all duration-300"
+                    style={{
+                      borderColor: isDragging ? 'rgba(232,25,44,0.5)' : C.border,
+                      background: isDragging ? 'rgba(232,25,44,0.04)' : 'transparent',
+                    }}>
                     <div className="flex flex-col items-center justify-center py-14 px-6">
-                      <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-5 border transition-all duration-300 ${
-                        isDragging ? 'border-[#E8192C]/40 bg-[#E8192C]/10' : 'border-[#1a1a1a] bg-transparent'
-                      }`}>
-                        <Upload className={`w-6 h-6 transition-colors duration-300 ${isDragging ? 'text-[#E8192C]' : 'text-[#5A5A5A]'}`} />
+                      <div className="w-14 h-14 rounded-full flex items-center justify-center mb-5 transition-all duration-300"
+                        style={{
+                          border: `1px solid ${isDragging ? 'rgba(232,25,44,0.4)' : C.border}`,
+                          background: isDragging ? 'rgba(232,25,44,0.1)' : 'transparent',
+                        }}>
+                        <Upload className="w-6 h-6 transition-colors duration-300" style={{ color: isDragging ? C.accent : C.textGhost }} />
                       </div>
-                      <p className={`text-base font-black mb-1 tracking-tight transition-colors duration-300 ${isDragging ? 'text-[#E8192C]' : 'text-white'}`}>
+                      <p className="text-base font-black mb-1 tracking-tight transition-colors duration-300" style={{ color: isDragging ? C.accent : C.textPrimary }}>
                         {isDragging ? 'Drop files here' : 'Drop files or click to upload'}
                       </p>
-                      <p className="text-[11px] text-[#9A9A9A] mb-5">Haier barcode Excel files</p>
+                      <p className="text-[11px] mb-5" style={{ color: C.textMuted }}>Haier barcode Excel files</p>
                       <div className="flex items-center gap-2">
                         {['.xlsx', '.xls', '.csv'].map(ext => (
-                          <span key={ext} className="px-3 py-1 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold">{ext}</span>
+                          <span key={ext} className="px-3 py-1 rounded-full text-[10px] font-bold" style={{ border: `1px solid ${C.border}`, color: C.textMuted }}>{ext}</span>
                         ))}
                       </div>
                     </div>
@@ -706,12 +688,12 @@ export default function ExcelUploader() {
                 </label>
 
                 {isLoading && (
-                  <div className="mt-5 flex items-center gap-4 p-4 border border-[#1a1a1a] rounded-xl">
-                    <div className="w-4 h-4 rounded-full border border-[#1a1a1a] border-t-[#E8192C] animate-spin flex-shrink-0" />
+                  <div className="mt-5 flex items-center gap-4 p-4 rounded-xl" style={{ border: `1px solid ${C.border}` }}>
+                    <div className="w-4 h-4 rounded-full border animate-spin flex-shrink-0" style={{ borderColor: C.border, borderTopColor: C.accent }} />
                     <div className="flex-1">
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-white">Processing files…</p>
-                      <div className="mt-2 h-px bg-[#1a1a1a] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#E8192C] rounded-full animate-pulse" style={{ width: '60%' }} />
+                      <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: C.textPrimary }}>Processing files…</p>
+                      <div className="mt-2 h-px rounded-full overflow-hidden" style={{ background: C.border }}>
+                        <div className="h-full rounded-full animate-pulse" style={{ width: '60%', background: C.accent }} />
                       </div>
                     </div>
                   </div>
@@ -719,47 +701,52 @@ export default function ExcelUploader() {
               </div>
             </div>
 
-            {/* ── Uploaded files list ── */}
+            {/* Uploaded files list */}
             {uploadedFiles.length > 0 && (
-              <div className="border border-[#1a1a1a] rounded-2xl overflow-hidden">
+              <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
                 <button
                   onClick={() => setShowFilesList(!showFilesList)}
-                  className="w-full flex items-center justify-between px-6 sm:px-8 py-5 hover:bg-[#0a0a0a] transition-colors group"
+                  className="w-full flex items-center justify-between px-6 sm:px-8 py-5 transition-colors group"
+                  onMouseEnter={e => (e.currentTarget.style.background = C.surface)}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <div className="flex items-center gap-4">
-                    <span className="text-[11px] font-bold text-[#5A5A5A] w-5 group-hover:text-[#E8192C] transition-colors">↓</span>
-                    <FileSpreadsheet className="w-4 h-4 text-[#9A9A9A] group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
-                    <span className="text-[13px] font-black text-[#9A9A9A] group-hover:text-white transition-colors">Uploaded Files</span>
-                    <span className="px-2 py-0.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold">{uploadedFiles.length}</span>
+                    <span className="text-[11px] font-bold w-5 transition-colors" style={{ color: C.textGhost }}>↓</span>
+                    <FileSpreadsheet className="w-4 h-4 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
+                    <span className="text-[13px] font-black transition-colors" style={{ color: C.textSub }}>Uploaded Files</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ border: `1px solid ${C.border}`, color: C.textMuted }}>{uploadedFiles.length}</span>
                   </div>
-                  <ArrowUpRight className={`w-4 h-4 text-[#5A5A5A] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 ${showFilesList ? 'rotate-90' : 'translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0'}`} />
+                  <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 ${showFilesList ? 'rotate-90' : ''}`} style={{ color: C.textGhost }} />
                 </button>
 
                 {showFilesList && (
-                  <div className="border-t border-[#1a1a1a] divide-y divide-[#1a1a1a] max-h-72 overflow-y-auto">
+                  <div className="max-h-72 overflow-y-auto" style={{ borderTop: `1px solid ${C.border}` }}>
                     {uploadedFiles.map((file) => (
                       <div key={file.id}
                         onClick={() => handleSelectFile(file.id)}
-                        className={`flex items-center gap-4 px-6 sm:px-8 py-4 cursor-pointer transition-all duration-200 group ${
-                          selectedFileId === file.id ? 'bg-[#0a0a0a] pl-8 sm:pl-9' : 'hover:pl-8 sm:hover:pl-9'
-                        }`}
+                        className="flex items-center gap-4 px-6 sm:px-8 py-4 cursor-pointer transition-all duration-200 group"
+                        style={{
+                          borderBottom: `1px solid ${C.divider}`,
+                          background: selectedFileId === file.id ? C.surface : 'transparent',
+                          paddingLeft: selectedFileId === file.id ? '2.25rem' : undefined,
+                        }}
+                        onMouseEnter={e => { if (selectedFileId !== file.id) e.currentTarget.style.paddingLeft = '2.25rem' }}
+                        onMouseLeave={e => { if (selectedFileId !== file.id) e.currentTarget.style.paddingLeft = '1.5rem' }}
                       >
-                        <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${
-                          selectedFileId === file.id ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
-                        }`}>
+                        <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors"
+                          style={{ color: selectedFileId === file.id ? C.accent : C.textGhost }}>
                           {selectedFileId === file.id ? '→' : '·'}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-[13px] font-black truncate transition-colors ${
-                            selectedFileId === file.id ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'
-                          }`}>{file.name}</p>
-                          <p className="text-[10px] text-[#5A5A5A] mt-0.5">{file.dnNo} · {file.data.length} items</p>
+                          <p className="text-[13px] font-black truncate transition-colors"
+                            style={{ color: selectedFileId === file.id ? C.textPrimary : C.textSub }}>{file.name}</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: C.textGhost }}>{file.dnNo} · {file.data.length} items</p>
                         </div>
-                        {selectedFileId === file.id && <CheckCircle2 className="w-3.5 h-3.5 text-[#E8192C] flex-shrink-0" />}
-                        <button
-                          onClick={e => { e.stopPropagation(); handleDeleteFile(file.id) }}
-                          className="p-1 text-[#5A5A5A] hover:text-[#E8192C] transition-colors flex-shrink-0"
-                        >
+                        {selectedFileId === file.id && <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.accent }} />}
+                        <button onClick={e => { e.stopPropagation(); handleDeleteFile(file.id) }}
+                          className="p-1 flex-shrink-0 transition-colors" style={{ color: C.textGhost }}
+                          onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
+                          onMouseLeave={e => (e.currentTarget.style.color = C.textGhost)}>
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -769,86 +756,102 @@ export default function ExcelUploader() {
               </div>
             )}
 
-            {/* ── Data table section ── */}
+            {/* Data table section */}
             {(groupedData.length > 0 || serialListData.length > 0) && (
-              <div ref={tableRef} className="border border-[#1a1a1a] rounded-2xl overflow-hidden">
+              <div ref={tableRef} className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
 
-                <div className="divide-y divide-[#1a1a1a] border-b border-[#1a1a1a]">
-                  <div className="flex">
-                    {tabs.map(({ id, label, index, icon: Icon }) => (
-                      <button key={id} onClick={() => setActiveTab(id)}
-                        className={`flex-1 flex items-center justify-center gap-2.5 px-3 py-4 text-[10px] uppercase tracking-[0.15em] font-bold transition-all duration-150 relative border-r border-[#1a1a1a] last:border-r-0 ${
-                          activeTab === id ? 'text-white bg-[#0a0a0a]' : 'text-[#5A5A5A] hover:text-[#9A9A9A] hover:bg-[#0a0a0a]/50'
-                        }`}
-                      >
-                        <Icon className={`w-3.5 h-3.5 ${activeTab === id ? 'text-[#E8192C]' : ''}`} strokeWidth={1.5} />
-                        <span className="hidden sm:inline">{label}</span>
-                        {activeTab === id && <div className="absolute bottom-0 left-0 right-0 h-px bg-[#E8192C]" />}
-                      </button>
-                    ))}
-                  </div>
+                {/* Tab bar */}
+                <div className="flex" style={{ borderBottom: `1px solid ${C.border}` }}>
+                  {tabs.map(({ id, label, index, icon: Icon }) => (
+                    <button key={id} onClick={() => setActiveTab(id)}
+                      className="flex-1 flex items-center justify-center gap-2.5 px-3 py-4 text-[10px] uppercase tracking-[0.15em] font-bold transition-all duration-150 relative"
+                      style={{
+                        borderRight: `1px solid ${C.border}`,
+                        color: activeTab === id ? C.textPrimary : C.textGhost,
+                        background: activeTab === id ? C.surface : 'transparent',
+                      }}
+                    >
+                      <Icon className="w-3.5 h-3.5" style={{ color: activeTab === id ? C.accent : C.textGhost }} strokeWidth={1.5} />
+                      <span className="hidden sm:inline">{label}</span>
+                      {activeTab === id && <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: C.accent }} />}
+                    </button>
+                  ))}
                 </div>
 
                 <div className="p-6 sm:p-8">
+                  {/* Search + download row */}
                   <div className="flex gap-3 mb-6">
                     <div className="relative flex-1 max-w-sm">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A5A5A]" />
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: C.textGhost }} />
                       <input
                         type="text"
                         placeholder="Search DN, serial, material…"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-[#0a0a0a] border border-[#1a1a1a] text-white rounded-xl text-[11px] placeholder-[#282828] focus:outline-none focus:ring-1 focus:ring-[#E8192C]/40 focus:border-[#E8192C]/60 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl text-[11px] outline-none transition-all"
+                        style={{
+                          background: C.surface,
+                          border: `1px solid ${C.border}`,
+                          color: C.textSilver,
+                        }}
+                        onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
+                        onBlur={e => (e.currentTarget.style.borderColor = C.border)}
                       />
                     </div>
                     <div className="flex gap-2">
                       {searchQuery && (
-                        <button onClick={() => setSearchQuery("")} className="px-3 py-2.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all">
+                        <button onClick={() => setSearchQuery("")}
+                          className="px-3 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all"
+                          style={{ border: `1px solid ${C.border}`, color: C.textSub }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
                           Clear
                         </button>
                       )}
-                      <button
-                        onClick={() => setShowDownloadModal(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
-                      >
+                      <button onClick={() => setShowDownloadModal(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all"
+                        style={{ background: C.accent, color: '#fff', boxShadow: `0 8px 24px ${C.accentGlow}` }}
+                        onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
+                        onMouseLeave={e => (e.currentTarget.style.background = C.accent)}>
                         <Download className="w-3.5 h-3.5" /> Download
                       </button>
                     </div>
                   </div>
 
-                  {/* Consolidated tab */}
+                  {/* Consolidated */}
                   {activeTab === "consolidated" && (
                     <>
                       <div className="flex items-baseline justify-between mb-5">
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-1">
+                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>
                             {selectedFileId ? `Viewing: ${uploadedFiles.find(f => f.id === selectedFileId)?.name}` : 'All files combined'}
                           </p>
-                          <h3 className="text-lg font-black text-white tracking-tight">Consolidated Materials</h3>
+                          <h3 className="text-lg font-black tracking-tight" style={{ color: C.textPrimary }}>Consolidated Materials</h3>
                         </div>
-                        <span className="text-[10px] font-black text-white tabular-nums">
-                          <span className="text-[#E8192C]">{filterGroupedDataBySearch(groupedData).length}</span> items
+                        <span className="text-[10px] font-black tabular-nums" style={{ color: C.textPrimary }}>
+                          <span style={{ color: C.accent }}>{filterGroupedDataBySearch(groupedData).length}</span> items
                         </span>
                       </div>
-                      <div className="overflow-x-auto rounded-xl border border-[#1a1a1a]">
+                      <div className="overflow-x-auto rounded-xl" style={{ border: `1px solid ${C.border}` }}>
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[#1a1a1a]">
+                            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
                               {["#","Material Code","Material Description","Category","Qty.","Ship Name","Remarks"].map(h => (
-                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em] text-[#5A5A5A]">{h}</th>
+                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textGhost }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-[#1a1a1a]">
+                          <tbody>
                             {filterGroupedDataBySearch(groupedData).filter(r => r.materialCode && r.materialDescription).map((row, idx) => (
-                              <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`} style={{ animationDelay: `${idx * 0.02}s` }}>
-                                <td className="px-4 py-3.5 text-[11px] text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</td>
-                                <td className="px-4 py-3.5 text-sm font-black text-white">{row.materialCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-black text-[#D0D0D0] group-hover:text-white transition-colors">{row.materialDescription}</td>
-                                <td className="px-4 py-3.5"><span className="text-[10px] font-bold text-[#9A9A9A]">{row.category}</span></td>
-                                <td className="px-4 py-3.5 text-sm font-black text-[#E8192C] tabular-nums">{row.qty}</td>
-                                <td className="px-4 py-3.5 text-[11px] text-[#9A9A9A]">{row.shipName || '—'}</td>
-                                <td className="px-4 py-3.5 text-[10px] text-[#5A5A5A]">{row.remarks}</td>
+                              <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`}
+                                style={{ borderBottom: `1px solid ${C.divider}`, animationDelay: `${idx * 0.02}s` }}>
+                                <td className="px-4 py-3.5 text-[11px] transition-colors" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</td>
+                                <td className="px-4 py-3.5 text-sm font-black" style={{ color: C.textPrimary }}>{row.materialCode}</td>
+                                <td className="px-4 py-3.5 text-sm font-black transition-colors" style={{ color: C.textSilver }}>{row.materialDescription}</td>
+                                <td className="px-4 py-3.5"><span className="text-[10px] font-bold" style={{ color: C.textSub }}>{row.category}</span></td>
+                                <td className="px-4 py-3.5 text-sm font-black tabular-nums" style={{ color: C.accent }}>{row.qty}</td>
+                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.shipName || '—'}</td>
+                                <td className="px-4 py-3.5 text-[10px]" style={{ color: C.textMuted }}>{row.remarks}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -857,39 +860,40 @@ export default function ExcelUploader() {
                     </>
                   )}
 
-                  {/* Serial list tab */}
+                  {/* Serial list */}
                   {activeTab === "serialList" && (
                     <>
                       <div className="flex items-baseline justify-between mb-5">
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-1">All serial numbers combined</p>
-                          <h3 className="text-lg font-black text-white tracking-tight">Bulking Serial List</h3>
+                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>All serial numbers combined</p>
+                          <h3 className="text-lg font-black tracking-tight" style={{ color: C.textPrimary }}>Bulking Serial List</h3>
                         </div>
-                        <span className="text-[10px] font-black text-white tabular-nums">
-                          <span className="text-[#E8192C]">{filterSerialDataBySearch(serialListData).length}</span> rows
+                        <span className="text-[10px] font-black tabular-nums" style={{ color: C.textPrimary }}>
+                          <span style={{ color: C.accent }}>{filterSerialDataBySearch(serialListData).length}</span> rows
                         </span>
                       </div>
-                      <div className="overflow-x-auto rounded-xl border border-[#1a1a1a]">
+                      <div className="overflow-x-auto rounded-xl" style={{ border: `1px solid ${C.border}` }}>
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[#1a1a1a]">
+                            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
                               {["#","DN No","Location","Bin Code","Material Code","Material Desc","Barcode","Ship To Name","Ship To Address"].map(h => (
-                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em] text-[#5A5A5A]">{h}</th>
+                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textGhost }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-[#1a1a1a]">
+                          <tbody>
                             {filterSerialDataBySearch(serialListData).filter(r => r.materialCode && r.barcode).map((row, idx) => (
-                              <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`} style={{ animationDelay: `${idx * 0.02}s` }}>
-                                <td className="px-4 py-3.5 text-[11px] text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</td>
-                                <td className="px-4 py-3.5 text-sm font-black text-white">{row.dnNo}</td>
-                                <td className="px-4 py-3.5 text-[11px] text-[#9A9A9A]">{row.location}</td>
-                                <td className="px-4 py-3.5 text-[11px] text-[#9A9A9A]">{row.binCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-black text-white">{row.materialCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-black text-[#D0D0D0] group-hover:text-white transition-colors">{row.materialDesc}</td>
-                                <td className="px-4 py-3.5 text-sm font-black text-[#E8192C]">{row.barcode}</td>
-                                <td className="px-4 py-3.5 text-[11px] text-[#9A9A9A]">{row.shipToName}</td>
-                                <td className="px-4 py-3.5 text-[10px] text-[#5A5A5A]">{row.shipToAddress}</td>
+                              <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`}
+                                style={{ borderBottom: `1px solid ${C.divider}`, animationDelay: `${idx * 0.02}s` }}>
+                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</td>
+                                <td className="px-4 py-3.5 text-sm font-black" style={{ color: C.textPrimary }}>{row.dnNo}</td>
+                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.location}</td>
+                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.binCode}</td>
+                                <td className="px-4 py-3.5 text-sm font-black" style={{ color: C.textPrimary }}>{row.materialCode}</td>
+                                <td className="px-4 py-3.5 text-sm font-black transition-colors" style={{ color: C.textSilver }}>{row.materialDesc}</td>
+                                <td className="px-4 py-3.5 text-sm font-black" style={{ color: C.accent }}>{row.barcode}</td>
+                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.shipToName}</td>
+                                <td className="px-4 py-3.5 text-[10px]" style={{ color: C.textMuted }}>{row.shipToAddress}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -898,37 +902,46 @@ export default function ExcelUploader() {
                     </>
                   )}
 
-                  {/* Individual DN tab */}
+                  {/* Individual DN */}
                   {activeTab === "individualDN" && (
                     <>
                       <div className="mb-6">
-                        <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-1">Download per-DN or all at once</p>
-                        <h3 className="text-lg font-black text-white tracking-tight">Individual DN Downloads</h3>
+                        <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>Download per-DN or all at once</p>
+                        <h3 className="text-lg font-black tracking-tight" style={{ color: C.textPrimary }}>Individual DN Downloads</h3>
                       </div>
-                      <div className="divide-y divide-[#1a1a1a]">
-                        <div className="flex items-center gap-5 py-5 group transition-all duration-200 hover:pl-1.5">
-                          <span className="text-[11px] font-bold text-[#5A5A5A] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">↓</span>
-                          <Layers className="w-4 h-4 text-[#9A9A9A] group-hover:text-[#E8192C] transition-colors flex-shrink-0" strokeWidth={1.5} />
+                      <div style={{ borderTop: `1px solid ${C.border}` }}>
+                        {/* Download all row */}
+                        <div className="flex items-center gap-5 py-5 group transition-all duration-200 cursor-pointer"
+                          style={{ borderBottom: `1px solid ${C.divider}` }}>
+                          <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors" style={{ color: C.textGhost }}>↓</span>
+                          <Layers className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-black text-[#D0D0D0] group-hover:text-white transition-colors">Download All DN Serial Lists</p>
-                            <p className="text-[10px] text-[#5A5A5A] mt-0.5">{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available</p>
+                            <p className="text-[13px] font-black transition-colors" style={{ color: C.textSilver }}>Download All DN Serial Lists</p>
+                            <p className="text-[10px] mt-0.5" style={{ color: C.textGhost }}>{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available</p>
                           </div>
                           <button onClick={() => { setIsDownloadingAllDN(true); setShowDownloadModal(true) }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20 flex-shrink-0">
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex-shrink-0"
+                            style={{ background: C.accent, color: '#fff', boxShadow: `0 6px 20px ${C.accentGlow}` }}
+                            onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
+                            onMouseLeave={e => (e.currentTarget.style.background = C.accent)}>
                             <Download className="w-3 h-3" /> All
                           </button>
                         </div>
 
                         {filterDNsBySearch(uploadedFiles).map((file, idx) => (
-                          <div key={file.id} className="flex items-center gap-5 py-5 group transition-all duration-200 hover:pl-1.5">
-                            <span className="text-[11px] font-bold text-[#5A5A5A] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
-                            <FileSpreadsheet className="w-4 h-4 text-[#9A9A9A] group-hover:text-white transition-colors flex-shrink-0" strokeWidth={1.5} />
+                          <div key={file.id} className="flex items-center gap-5 py-5 group transition-all duration-200"
+                            style={{ borderBottom: `1px solid ${C.divider}` }}>
+                            <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</span>
+                            <FileSpreadsheet className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
                             <div className="flex-1 min-w-0">
-                              <p className="text-[13px] font-black text-[#D0D0D0] group-hover:text-white transition-colors truncate">{file.dnNo}</p>
-                              <p className="text-[10px] text-[#5A5A5A] mt-0.5 truncate">{file.name}</p>
+                              <p className="text-[13px] font-black truncate transition-colors" style={{ color: C.textSilver }}>{file.dnNo}</p>
+                              <p className="text-[10px] mt-0.5 truncate" style={{ color: C.textGhost }}>{file.name}</p>
                             </div>
                             <button onClick={() => { setSelectedDownloadFile(file); setIsDownloadingAllDN(false); setShowDownloadModal(true) }}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#1a1a1a] text-[#9A9A9A] text-[10px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all flex-shrink-0">
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0"
+                              style={{ border: `1px solid ${C.border}`, color: C.textSub }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
                               <Download className="w-3 h-3" />
                               <span className="hidden sm:inline">Download</span>
                             </button>
@@ -941,9 +954,10 @@ export default function ExcelUploader() {
               </div>
             )}
 
-            <div className="border-t border-[#1a1a1a] py-5 flex items-center justify-between">
-              <p className="text-[11px] text-[#1a1a1a]">SF Express · Cebu Warehouse</p>
-              <p className="text-[11px] text-[#1a1a1a]">{new Date().getFullYear()}</p>
+            {/* Footer */}
+            <div className="py-5 flex items-center justify-between" style={{ borderTop: `1px solid ${C.divider}` }}>
+              <p className="text-[11px]" style={{ color: C.divider }}>SF Express · Cebu Warehouse</p>
+              <p className="text-[11px]" style={{ color: C.divider }}>{new Date().getFullYear()}</p>
             </div>
           </div>
         </main>
@@ -952,46 +966,62 @@ export default function ExcelUploader() {
       {/* ── Download modal ── */}
       {showDownloadModal && (
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}
           onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}
         >
-          <div className="bg-black border border-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="px-7 pt-7 pb-5 border-b border-[#1a1a1a]">
-              <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1.5">Export</p>
-              <h3 className="text-xl font-black text-white tracking-tight leading-none">Download Format</h3>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}
+            style={{ background: C.bg, border: `1px solid ${C.border}` }}>
+
+            <div className="px-7 pt-7 pb-5" style={{ borderBottom: `1px solid ${C.border}` }}>
+              <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1.5" style={{ color: C.amber }}>Export</p>
+              <h3 className="text-xl font-black tracking-tight leading-none" style={{ color: C.textPrimary }}>Download Format</h3>
             </div>
 
-            <div className="divide-y divide-[#1a1a1a]">
+            <div>
               {[
                 { type: 'excel', label: 'Excel (.xlsx)', index: '01', desc: 'Editable spreadsheet', icon: FileSpreadsheet },
-                { type: 'pdf',   label: 'PDF',           index: '02', desc: 'Print-ready document', icon: FileText       },
+                { type: 'pdf',   label: 'PDF',           index: '02', desc: 'Print-ready document', icon: FileText },
               ].map(opt => {
                 const active = downloadType === opt.type
                 return (
                   <button key={opt.type} onClick={() => setDownloadType(opt.type as 'pdf' | 'excel')}
-                    className={`w-full flex items-center gap-5 px-7 py-4 transition-all duration-200 group text-left ${active ? 'pl-8' : 'hover:pl-8'}`}
+                    className="w-full flex items-center gap-5 px-7 py-4 transition-all duration-200 text-left"
+                    style={{
+                      borderBottom: `1px solid ${C.border}`,
+                      paddingLeft: active ? '2rem' : undefined,
+                    }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.paddingLeft = '2rem' }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.paddingLeft = '1.75rem' }}
                   >
-                    <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'}`}>{opt.index}</span>
-                    <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200 ${active ? 'border-[#E8192C]/20 bg-[#E8192C]/8' : 'border-[#1a1a1a] group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6'}`}>
-                      <opt.icon className={`w-4 h-4 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-[#E8192C]'}`} strokeWidth={1.5} />
+                    <span className="text-[11px] font-bold w-5 flex-shrink-0" style={{ color: active ? C.accent : C.textGhost }}>{opt.index}</span>
+                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg transition-all duration-200"
+                      style={{ border: `1px solid ${active ? 'rgba(232,25,44,0.2)' : C.border}`, background: active ? 'rgba(232,25,44,0.08)' : 'transparent' }}>
+                      <opt.icon className="w-4 h-4" style={{ color: active ? C.accent : C.textSub }} strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-[13px] font-black leading-snug transition-colors ${active ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'}`}>{opt.label}</p>
-                      <p className={`text-[11px] mt-0.5 transition-colors ${active ? 'text-[#9A9A9A]' : 'text-[#5A5A5A] group-hover:text-[#9A9A9A]'}`}>{opt.desc}</p>
+                      <p className="text-[13px] font-black leading-snug" style={{ color: active ? C.textPrimary : C.textSub }}>{opt.label}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: active ? C.textSub : C.textGhost }}>{opt.desc}</p>
                     </div>
-                    <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0 ${active ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'}`} />
+                    <ArrowUpRight className="w-4 h-4 flex-shrink-0" style={{ color: active ? C.accent : C.textGhost }} />
                   </button>
                 )
               })}
             </div>
 
-            <div className="flex gap-3 px-7 py-5 border-t border-[#1a1a1a]">
+            <div className="flex gap-3 px-7 py-5" style={{ borderTop: `1px solid ${C.border}` }}>
               <button onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}
-                className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all">
+                className="flex-1 px-4 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all"
+                style={{ border: `1px solid ${C.border}`, color: C.textSub }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
                 Cancel
               </button>
               <button onClick={handleDownloadConfirm}
-                className="flex-1 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20">
+                className="flex-1 px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all"
+                style={{ background: C.accent, color: '#fff', boxShadow: `0 8px 24px ${C.accentGlow}` }}
+                onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
+                onMouseLeave={e => (e.currentTarget.style.background = C.accent)}>
                 Download
               </button>
             </div>
@@ -1002,7 +1032,10 @@ export default function ExcelUploader() {
       {/* Scroll to top */}
       {showScrollTop && (
         <button onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 rounded-full border border-[#1a1a1a] text-[#9A9A9A] hover:text-white hover:border-[#3E3E3E] transition-all bg-black shadow-2xl">
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full transition-all shadow-2xl"
+          style={{ border: `1px solid ${C.border}`, color: C.textSub, background: C.bg }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
           <ArrowUp className="w-4 h-4" />
         </button>
       )}
