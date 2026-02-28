@@ -58,7 +58,7 @@ export default function LoginPage() {
       <div className="absolute top-8 left-8 z-20 flex items-center gap-3">
         <img src="/sf-light.png" alt="SF Express" className="h-5 w-auto" />
         <div className="w-px h-4 bg-[#282828]" />
-        <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#3E3E3E]">Warehouse</span>
+        <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500">Warehouse</span>
       </div>
 
       {/* ── Centered form ── */}
@@ -79,7 +79,7 @@ export default function LoginPage() {
 
           {/* Email */}
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-[10px] uppercase tracking-[0.2em] font-bold text-[#3E3E3E]">
+            <label htmlFor="email" className="block text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500">
               Email
             </label>
             <input
@@ -89,14 +89,14 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3.5 bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg text-white text-[13px] placeholder-[#282828] focus:outline-none focus:border-[#3E3E3E] hover:border-[#2e2e2e] transition-colors font-medium"
+              className="w-full px-4 py-3.5 bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg text-white text-[13px] placeholder-[#282828] focus:outline-none focus:border-gray-500 hover:border-[#2e2e2e] transition-colors font-medium"
               placeholder="name@domain.com"
             />
           </div>
 
           {/* Password */}
           <div className="space-y-2">
-            <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.2em] font-bold text-[#3E3E3E]">
+            <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500">
               Password
             </label>
             <div className="relative">
@@ -107,13 +107,13 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3.5 bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg text-white text-[13px] placeholder-[#282828] focus:outline-none focus:border-[#3E3E3E] hover:border-[#2e2e2e] transition-colors font-medium pr-11"
+                className="w-full px-4 py-3.5 bg-[#0d0d0d] border border-[#1e1e1e] rounded-lg text-white text-[13px] placeholder-[#282828] focus:outline-none focus:border-gray-500 hover:border-[#2e2e2e] transition-colors font-medium pr-11"
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#3E3E3E] hover:text-[#6A6A6A] transition-colors"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#6A6A6A] transition-colors"
               >
                 {showPassword
                   ? <EyeOff className="w-4 h-4" />

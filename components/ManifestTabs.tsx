@@ -107,7 +107,7 @@ export function ManifestTabs({
 
                   <Icon
                     className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                      isActive ? 'text-[#E8192C]' : 'text-[#3E3E3E] group-hover:text-white'
+                      isActive ? 'text-[#E8192C]' : 'text-gray-500 group-hover:text-white'
                     }`}
                     strokeWidth={1.5}
                   />
@@ -125,7 +125,7 @@ export function ManifestTabs({
                   <span className={`
                     text-[13px] font-black leading-snug transition-colors
                     ${isCollapsed ? 'lg:hidden' : ''}
-                    ${isActive ? 'text-white' : 'text-[#3E3E3E] group-hover:text-white'}
+                    ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-white'}
                   `}>
                     {label}
                   </span>

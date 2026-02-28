@@ -107,7 +107,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
           <div className="flex justify-end mb-4">
             <button
               onClick={onClose}
-              className="p-2 rounded-full bg-[#282828] hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white transition-all duration-150 hover:scale-105 active:scale-100"
+              className="p-2 rounded-full bg-[#282828] hover:bg-gray-500 text-[#B3B3B3] hover:text-white transition-all duration-150 hover:scale-105 active:scale-100"
             >
               <X className="w-4 h-4" />
             </button>
@@ -203,8 +203,8 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
             )}
 
             {totalItems === 0 ? (
-              <div className="py-10 text-center bg-[#1E1E1E] rounded-xl border-2 border-dashed border-[#3E3E3E]">
-                <ClipboardList className="w-10 h-10 text-[#3E3E3E] mx-auto mb-3" />
+              <div className="py-10 text-center bg-[#1E1E1E] rounded-xl border-2 border-dashed border-gray-500">
+                <ClipboardList className="w-10 h-10 text-gray-500 mx-auto mb-3" />
                 <p className="text-[#6A6A6A] font-semibold text-sm">No items recorded</p>
               </div>
             ) : (
@@ -256,7 +256,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
               </h3>
               <div className="space-y-3">
                 {items.map((item: any, idx: number) => (
-                  <div key={idx} className="bg-[#1E1E1E] border border-[#282828] rounded-xl p-4 hover:border-[#3E3E3E] transition-colors">
+                  <div key={idx} className="bg-[#1E1E1E] border border-[#282828] rounded-xl p-4 hover:border-gray-500 transition-colors">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
@@ -283,7 +283,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                     {item.damage_description && (
                       <div className="mb-3">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-1">Description</p>
-                        <p className="text-xs text-[#B3B3B3] leading-relaxed bg-[#282828] rounded-lg px-3 py-2.5 border border-[#3E3E3E]">
+                        <p className="text-xs text-[#B3B3B3] leading-relaxed bg-[#282828] rounded-lg px-3 py-2.5 border border-gray-500">
                           {item.damage_description}
                         </p>
                       </div>
@@ -294,7 +294,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                         href={item.photo_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-3 py-2 bg-[#282828] border border-[#3E3E3E] text-white rounded-full text-xs font-bold hover:border-white transition-all hover:scale-105 active:scale-100"
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-[#282828] border border-gray-500 text-white rounded-full text-xs font-bold hover:border-white transition-all hover:scale-105 active:scale-100"
                       >
                         <Camera className="w-3.5 h-3.5 text-[#E8192C]" /> View Photo
                       </a>
@@ -328,7 +328,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                 { role: 'Noted By',    name: report.noted_by,    sub: 'Security Guard' },
                 { role: 'Acknowledged By', name: report.acknowledged_by, sub: 'Supervisor' },
               ].map(({ role, name, sub }) => (
-                <div key={role} className="bg-[#1E1E1E] border border-[#282828] rounded-xl p-4 hover:border-[#3E3E3E] transition-colors">
+                <div key={role} className="bg-[#1E1E1E] border border-[#282828] rounded-xl p-4 hover:border-gray-500 transition-colors">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-1">{role}</p>
                   <p className="text-sm font-bold text-white">{name || '—'}</p>
                   <p className="text-[10px] text-[#6A6A6A] mt-1">{sub}</p>

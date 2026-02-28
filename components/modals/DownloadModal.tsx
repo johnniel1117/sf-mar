@@ -22,7 +22,7 @@ export function DownloadModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-2xl shadow-2xl w-full max-w-sm p-6"
+        className="bg-[#1E1E1E] border border-gray-500 rounded-2xl shadow-2xl w-full max-w-sm p-6"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -33,7 +33,7 @@ export function DownloadModal({
           </div>
           {/* <button
             onClick={onClose}
-            className="p-2 rounded-full bg-[#282828] hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white transition-all hover:scale-105 active:scale-100"
+            className="p-2 rounded-full bg-[#282828] hover:bg-gray-500 text-[#B3B3B3] hover:text-white transition-all hover:scale-105 active:scale-100"
           >
             <X className="w-4 h-4" />
           </button> */}
@@ -53,7 +53,7 @@ export function DownloadModal({
                 className={`w-full flex items-center gap-4 p-4 border rounded-xl transition-all duration-150 text-left ${
                   active
                     ? 'border-[#E8192C]/50 bg-[#E8192C]/8'
-                    : 'border-[#3E3E3E] hover:border-[#E8192C]/30 hover:bg-[#282828]'
+                    : 'border-gray-500 hover:border-[#E8192C]/30 hover:bg-[#282828]'
                 }`}
               >
                 {/* Radio dot */}
@@ -76,7 +76,7 @@ export function DownloadModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[#3E3E3E] text-[#B3B3B3] rounded-full text-sm font-semibold hover:border-white hover:text-white transition-all"
+            className="flex-1 px-4 py-2.5 border border-gray-500 text-[#B3B3B3] rounded-full text-sm font-semibold hover:border-white hover:text-white transition-all"
           >
             Cancel
           </button>

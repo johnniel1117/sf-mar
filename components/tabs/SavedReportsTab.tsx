@@ -224,7 +224,7 @@ export const SavedReportsTab: React.FC<SavedReportsTabProps> = ({
             placeholder="Search reports…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 pl-10 pr-8 bg-[#3E3E3E] rounded-full text-sm text-white placeholder-[#6A6A6A] focus:outline-none focus:ring-2 focus:ring-[#E8192C]/50 transition-all"
+            className="w-full h-10 pl-10 pr-8 bg-gray-500 rounded-full text-sm text-white placeholder-[#6A6A6A] focus:outline-none focus:ring-2 focus:ring-[#E8192C]/50 transition-all"
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery('')}

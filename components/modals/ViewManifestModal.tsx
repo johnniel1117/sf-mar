@@ -73,7 +73,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
           <div className="flex justify-end mb-5">
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-[#0a0a0a] text-[#3E3E3E] hover:text-white transition-colors"
+              className="p-1.5 rounded-full hover:bg-[#0a0a0a] text-gray-500 hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -86,19 +86,19 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
           <h2 className="text-[clamp(1.4rem,4vw,2.2rem)] font-black text-white leading-[0.93] tracking-tight mb-1.5">
             {manifestId}
           </h2>
-          <p className="text-[11px]  text-[#3E3E3E] uppercase tracking-widest">{manifestDate}</p>
+          <p className="text-[11px]  text-gray-500 uppercase tracking-widest">{manifestDate}</p>
 
           {/* Stats strip — landing hero style */}
           <div className="flex items-center gap-6 sm:gap-8 mt-6">
             <div>
-              <p className="text-[10px]  uppercase tracking-widest text-[#3E3E3E] mb-1">Documents</p>
+              <p className="text-[10px]  uppercase tracking-widest text-gray-500 mb-1">Documents</p>
               <p className="text-3xl font-black text-white tabular-nums leading-none">
                 {String(totalDocs).padStart(2, '0')}
               </p>
             </div>
             <div className="w-px h-10 bg-[#1a1a1a]" />
             <div>
-              <p className="text-[10px]  uppercase tracking-widest text-[#3E3E3E] mb-1">Total Qty</p>
+              <p className="text-[10px]  uppercase tracking-widest text-gray-500 mb-1">Total Qty</p>
               <p className="text-3xl font-black text-white tabular-nums leading-none">
                 {totalQty >= 1000 ? `${(totalQty / 1000).toFixed(1)}k` : totalQty}
               </p>
@@ -107,7 +107,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
               <>
                 <div className="w-px h-10 bg-[#1a1a1a]" />
                 <div>
-                  <p className="text-[10px]  uppercase tracking-widest text-[#3E3E3E] mb-1">Duration</p>
+                  <p className="text-[10px]  uppercase tracking-widest text-gray-500 mb-1">Duration</p>
                   <p className="text-3xl font-black text-[#F5A623] tabular-nums leading-none">{duration}</p>
                 </div>
               </>
@@ -124,7 +124,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
             </button>
             <button
               onClick={() => onDownloadPDF(manifest)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#1a1a1a] text-[#6A6A6A] text-[11px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#1a1a1a] text-[#6A6A6A] text-[11px] font-bold uppercase tracking-widest hover:border-gray-500 hover:text-white transition-all"
             >
               <Download className="w-3.5 h-3.5" /> Download
             </button>
@@ -136,7 +136,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
 
           {/* Trip details — landing services-list style */}
           <div className="px-6 sm:px-8 py-6 border-b border-[#1a1a1a]">
-            <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-5">
+            <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-gray-500 mb-5">
               Trip Details
             </p>
             <div className="divide-y divide-[#1a1a1a]">
@@ -152,7 +152,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                   className="flex items-center gap-5 sm:gap-6 py-3.5 group transition-all duration-200 hover:pl-1.5"
                 >
                   <Icon className="w-4 h-4 text-[#282828] group-hover:text-[#E8192C] transition-colors flex-shrink-0" strokeWidth={1.5} />
-                  <span className="text-[11px]  uppercase tracking-[0.15em] text-[#3E3E3E] w-20 flex-shrink-0">{label}</span>
+                  <span className="text-[11px]  uppercase tracking-[0.15em] text-gray-500 w-20 flex-shrink-0">{label}</span>
                   <span className="font-black text-[#B3B3B3] text-sm group-hover:text-white transition-colors">{value}</span>
                 </div>
               ))}
@@ -162,10 +162,10 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
           {/* Documents list — landing services-list style */}
           <div className="px-6 sm:px-8 py-6">
             <div className="flex items-center justify-between mb-5">
-              <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-[#3E3E3E]">
+              <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-gray-500">
                 Documents
               </p>
-              <span className="text-[10px]  text-[#3E3E3E]">
+              <span className="text-[10px]  text-gray-500">
                 {totalDocs} doc{totalDocs !== 1 ? 's' : ''}
               </span>
             </div>
@@ -198,9 +198,9 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                           {item.ship_to_name || '—'}
                         </p>
                         {/* DN visible on mobile under ship-to */}
-                        <p className="text-[11px]  text-[#3E3E3E] mt-0.5 sm:hidden">{item.document_number || '—'}</p>
+                        <p className="text-[11px]  text-gray-500 mt-0.5 sm:hidden">{item.document_number || '—'}</p>
                       </div>
-                      <span className="hidden sm:block text-[11px]  text-[#3E3E3E] text-right flex-shrink-0">
+                      <span className="hidden sm:block text-[11px]  text-gray-500 text-right flex-shrink-0">
                         {item.document_number || '—'}
                       </span>
                       <span className="text-sm font-black text-[#E8192C] tabular-nums text-right flex-shrink-0">
@@ -212,7 +212,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
 
                 {/* Footer total */}
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#1a1a1a]">
-                  <span className="text-[10px]  uppercase tracking-[0.2em] text-[#3E3E3E]">
+                  <span className="text-[10px]  uppercase tracking-[0.2em] text-gray-500">
                     {totalDocs} document{totalDocs !== 1 ? 's' : ''}
                   </span>
                   <span className="text-[10px]  font-black text-white tabular-nums">

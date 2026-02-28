@@ -111,7 +111,7 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
     <div className="space-y-7">
       {/* Sparkline — px heights, % won't work inside flex */}
       <div>
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#3E3E3E] mb-3">Qty · last 6 months</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-3">Qty · last 6 months</p>
         <div className="flex items-end gap-1.5" style={{ height: 80 }}>
           {monthlyData.map((d, i) => {
             const BAR_MAX = 60
@@ -152,7 +152,7 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
       {/* Divider stats */}
       <div className="divide-y divide-[#1a1a1a]">
         <div className="flex items-baseline justify-between pb-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500">
             {MONTH_LABELS[new Date().getMonth()]} qty
           </span>
           <div className="text-right">
@@ -166,15 +166,15 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
           </div>
         </div>
         <div className="flex items-baseline justify-between py-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">Trips</span>
+          <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500">Trips</span>
           <p className="text-2xl font-black text-white tabular-nums">{animCurrentTrips}</p>
         </div>
         <div className="flex items-baseline justify-between py-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">All-time qty</span>
+          <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500">All-time qty</span>
           <p className="text-2xl font-black text-white tabular-nums">{animTotalAllTime.toLocaleString()}</p>
         </div>
         <div className="flex items-baseline justify-between pt-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">Manifests</span>
+          <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500">Manifests</span>
           <p className="text-2xl font-black text-white tabular-nums">{animManifests}</p>
         </div>
       </div>
@@ -182,7 +182,7 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
       {/* Full analytics — amber accent */}
       <button
         onClick={onExpand}
-        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#3E3E3E] hover:text-[#F5A623] transition-colors group"
+        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-gray-500 hover:text-[#F5A623] transition-colors group"
       >
         Full analytics
         <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -247,7 +247,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
           >
             <button
               onClick={() => setShowAnalyticsModal(false)}
-              className="absolute -top-3 -right-3 z-20 w-9 h-9 rounded-full bg-[#1E1E1E] border border-[#3E3E3E] flex items-center justify-center text-[#B3B3B3] hover:text-white hover:bg-[#282828] transition-all shadow-xl"
+              className="absolute -top-3 -right-3 z-20 w-9 h-9 rounded-full bg-[#1E1E1E] border border-gray-500 flex items-center justify-center text-[#B3B3B3] hover:text-white hover:bg-[#282828] transition-all shadow-xl"
             >
               <X className="w-4 h-4" />
             </button>
@@ -278,7 +278,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
             </div>
 
             <div className="flex items-center gap-4 sm:gap-5">
-              <span className="hidden sm:block text-[11px]  text-[#3E3E3E] tabular-nums">{time}</span>
+              <span className="hidden sm:block text-[11px]  text-gray-500 tabular-nums">{time}</span>
 
               <div className="flex items-center gap-2.5">
                 <div
@@ -317,14 +317,14 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-3">{today}</p>
                   <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-black text-white leading-[0.93] tracking-tight">
                     {greeting},<br />
-                    <span className="text-[#3E3E3E]">{displayName}.</span>
+                    <span className="text-gray-500">{displayName}.</span>
                   </h1>
                 </div>
 
                 {/* Stats strip */}
                 <div className="flex items-center gap-8 sm:gap-10">
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] mb-1.5">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 mb-1.5">
                       {now.toLocaleString('en-US', { month: 'short' })} trips
                     </p>
                     <p className="text-5xl font-black text-white tabular-nums leading-none">
@@ -333,7 +333,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   </div>
                   <div className="w-px h-14 bg-[#1a1a1a]" />
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] mb-1.5">Units out</p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 mb-1.5">Units out</p>
                     <p className="text-5xl font-black text-white tabular-nums leading-none">
                       {animQty >= 1000
                         ? `${(animQty / 1000).toFixed(1)}k`
@@ -348,7 +348,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                         onClick={() => setShowAnalyticsModal(true)}
                         className="flex flex-col items-start gap-2 group"
                       >
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E] group-hover:text-[#F5A623] transition-colors">Analytics</p>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 group-hover:text-[#F5A623] transition-colors">Analytics</p>
                         <div className="flex items-center gap-1.5 text-white group-hover:text-[#F5A623] transition-colors">
                           <TrendingUp className="w-10 h-10" />
                           <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -365,7 +365,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               {/* LEFT — services */}
               <div className="py-10 sm:py-12 lg:pr-12">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-7">Services</p>
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-7">Services</p>
 
                 <div className="divide-y divide-[#1a1a1a]">
                   {SERVICES.map(({ href, label, desc, icon: Icon, index }) => (
@@ -381,7 +381,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                           <p className="text-[15px] font-black text-[#B3B3B3] group-hover:text-white transition-colors leading-snug">
                             {label}
                           </p>
-                          <p className="text-[12px] text-[#3E3E3E] mt-0.5 group-hover:text-[#6A6A6A] transition-colors">
+                          <p className="text-[12px] text-gray-500 mt-0.5 group-hover:text-[#6A6A6A] transition-colors">
                             {desc}
                           </p>
                         </div>
@@ -393,7 +393,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
                 {/* Quick jumps — amber accent on hover */}
                 <div className="mt-9 pt-7 border-t border-[#1a1a1a]">
-                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-4">Quick jump</p>
+                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-4">Quick jump</p>
                   <div className="flex flex-wrap gap-2">
                     {QUICK_JUMPS.map(({ href, label }) => (
                       <Link key={href} href={href}>
@@ -409,11 +409,11 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               {/* RIGHT — analytics sidebar */}
               <div className="hidden lg:block py-10 sm:py-12 pl-12">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#3E3E3E] mb-7">Outbound</p>
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-7">Outbound</p>
                 {manifests.length === 0 ? (
                   <div className="space-y-3 py-2">
                     <TrendingUp className="w-5 h-5 text-[#282828]" />
-                    <p className="text-sm font-bold text-[#3E3E3E]">No data yet</p>
+                    <p className="text-sm font-bold text-gray-500">No data yet</p>
                     <p className="text-[12px] text-[#282828] leading-relaxed max-w-[200px]">
                       Create your first trip manifest to see outbound analytics.
                     </p>

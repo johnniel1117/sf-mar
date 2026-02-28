@@ -64,7 +64,7 @@ export function t(isDark: boolean) {
     // Text — full contrast stack
     textPrimary: isDark ? 'text-white'      : 'text-[#1c1917]',
     textSub:     isDark ? 'text-[#6A6A6A]' : 'text-[#3d3834]',
-    textMuted:   isDark ? 'text-[#3E3E3E]' : 'text-[#6b6460]',
+    textMuted:   isDark ? 'text-gray-500' : 'text-[#6b6460]',
     textGhost:   isDark ? 'text-[#282828]' : 'text-[#9e9890]',
 
     // Inputs — slightly lighter than surface so they feel interactive
@@ -82,7 +82,7 @@ export function t(isDark: boolean) {
 
     // Sidebar item states
     sidebarActive:      isDark ? 'text-white'      : 'text-[#1c1917]',
-    sidebarInactive:    isDark ? 'text-[#3E3E3E]'  : 'text-[#6b6460]',
+    sidebarInactive:    isDark ? 'text-gray-500'  : 'text-[#6b6460]',
     sidebarHoverText:   isDark ? 'hover:text-white' : 'hover:text-[#1c1917]',
     sidebarIndexActive: isDark ? 'text-[#E8192C]'  : 'text-[#E8192C]',
     sidebarIndexIdle:   isDark ? 'text-[#282828]'  : 'text-[#9e9890]',
@@ -91,7 +91,7 @@ export function t(isDark: boolean) {
     red:        '#E8192C',
     redHover:   '#FF1F30',
     amber:      '#F5A623',
-    amberDim:   isDark ? 'text-[#3E3E3E]' : 'text-[#6b6460]',
+    amberDim:   isDark ? 'text-gray-500' : 'text-[#6b6460]',
     amberHover: 'hover:text-[#F5A623]',
 
     // Misc

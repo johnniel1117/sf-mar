@@ -615,7 +615,7 @@ export function CreateManifestTab({
               className={`flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-150 border ${tk.border} ${
                 currentStep === 1
                   ? `${tk.textGhost} cursor-not-allowed`
-                  : `${tk.textSub} hover:${isDark ? 'border-[#3E3E3E] text-white' : 'border-[#c4bfba] text-[#111110]'}`
+                  : `${tk.textSub} hover:${isDark ? 'border-gray-500 text-white' : 'border-[#c4bfba] text-[#111110]'}`
               }`}
             >
               <ChevronLeft className="w-3.5 h-3.5" />

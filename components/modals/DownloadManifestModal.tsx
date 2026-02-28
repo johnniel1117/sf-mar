@@ -47,7 +47,7 @@ export function DownloadModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-[#0a0a0a] text-[#3E3E3E] hover:text-white transition-colors mb-0.5"
+            className="p-1.5 rounded-full hover:bg-[#0a0a0a] text-gray-500 hover:text-white transition-colors mb-0.5"
           >
             <X className="w-4 h-4" />
           </button>
@@ -76,16 +76,16 @@ export function DownloadModal({
                     ? 'border-[#E8192C]/20 bg-[#E8192C]/8'
                     : 'border-[#1a1a1a] bg-transparent group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6'
                 }`}>
-                  <Icon className={`w-4 h-4 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#3E3E3E] group-hover:text-[#E8192C]'}`} strokeWidth={1.5} />
+                  <Icon className={`w-4 h-4 transition-colors ${active ? 'text-[#E8192C]' : 'text-gray-500 group-hover:text-[#E8192C]'}`} strokeWidth={1.5} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={`text-[13px] font-black leading-snug transition-colors ${
-                    active ? 'text-white' : 'text-[#3E3E3E] group-hover:text-white'
+                    active ? 'text-white' : 'text-gray-500 group-hover:text-white'
                   }`}>
                     {opt.label}
                   </p>
                   <p className={`text-[11px]  mt-0.5 transition-colors ${
-                    active ? 'text-[#6A6A6A]' : 'text-[#282828] group-hover:text-[#3E3E3E]'
+                    active ? 'text-[#6A6A6A]' : 'text-[#282828] group-hover:text-gray-500'
                   }`}>
                     {opt.desc}
                   </p>
@@ -102,7 +102,7 @@ export function DownloadModal({
         <div className="flex gap-3 px-7 py-5 border-t border-[#1a1a1a]">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#6A6A6A] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
+            className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#6A6A6A] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-gray-500 hover:text-white transition-all"
           >
             Cancel
           </button>

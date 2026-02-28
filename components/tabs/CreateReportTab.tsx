@@ -11,7 +11,7 @@ import { DAMAGE_TYPES, Step } from '@/lib/constants/damageReportConstants'
 import type { DamageItem, DamageReport } from '@/lib/services/damageReportService'
 
 // ── shared styles ──────────────────────────────────────────────────────────────
-const inputCls = "w-full px-4 py-3 bg-[#282828] border border-[#3E3E3E] text-white rounded-xl focus:ring-2 focus:ring-red-600/50 focus:border-red-600 outline-none transition-all text-sm placeholder-[#6A6A6A]"
+const inputCls = "w-full px-4 py-3 bg-[#282828] border border-gray-500 text-white rounded-xl focus:ring-2 focus:ring-red-600/50 focus:border-red-600 outline-none transition-all text-sm placeholder-[#6A6A6A]"
 const labelCls = "block text-[10px] font-bold uppercase tracking-widest text-[#B3B3B3] mb-1.5"
 const selectCls = `${inputCls} cursor-pointer`
 
@@ -127,7 +127,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                         ? 'bg-red-600 text-white shadow-lg shadow-red-600/40 scale-110'
                         : isCompleted
                         ? 'bg-red-600/20 text-red-500 border border-red-600/40'
-                        : 'bg-[#282828] text-[#6A6A6A] border border-[#3E3E3E]'
+                        : 'bg-[#282828] text-[#6A6A6A] border border-gray-500'
                     }`}>
                       {isCompleted
                         ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -141,7 +141,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                   {index < steps.length - 1 && (
                     <div className="flex-shrink-0 mx-1 sm:mx-2" style={{ marginBottom: '22px' }}>
                       <div className={`h-0.5 w-6 sm:w-10 rounded-full transition-all duration-300 ${
-                        isCompleted ? 'bg-red-600' : 'bg-[#3E3E3E]'
+                        isCompleted ? 'bg-red-600' : 'bg-gray-500'
                       }`} />
                     </div>
                   )}
@@ -173,7 +173,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                 {/* Report Number — static display, same as manifest number card */}
                 <div className="sm:col-span-2">
                   <label className={labelCls}>Report Number</label>
-                  <div className="flex items-center gap-3 px-4 py-3 bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-[#1E1E1E] border border-gray-500 rounded-xl">
                     <div className="w-1 h-8 rounded-full flex-shrink-0"
                       style={{ background: 'linear-gradient(180deg, #E8192C 0%, #7f0e18 100%)' }} />
                     <div className="flex-1 min-w-0">
@@ -182,7 +182,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                         {report.report_number || '—'}
                       </p>
                     </div>
-                    <div className="flex-shrink-0 px-2 py-1 bg-yellow-500 border border-[#3E3E3E] rounded-full">
+                    <div className="flex-shrink-0 px-2 py-1 bg-yellow-500 border border-gray-500 rounded-full">
                       <span className="text-[10px] font-bold uppercase tracking-widest ">System</span>
                     </div>
                   </div>
@@ -237,7 +237,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
               </div>
 
               {/* Barcode input */}
-              <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
+              <div className="bg-[#1E1E1E] border border-gray-500 rounded-xl p-4 sm:p-5">
                 <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#B3B3B3] mb-3">
                   <Barcode className="w-3.5 h-3.5 text-red-500" /> Barcode Scanner
                 </label>
@@ -275,15 +275,15 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                 </div>
 
                 {report.items.length === 0 ? (
-                  <div className="py-10 text-center bg-[#1E1E1E] rounded-xl border-2 border-dashed border-[#3E3E3E]">
-                    <AlertCircle className="w-10 h-10 text-[#3E3E3E] mx-auto mb-3" />
+                  <div className="py-10 text-center bg-[#1E1E1E] rounded-xl border-2 border-dashed border-gray-500">
+                    <AlertCircle className="w-10 h-10 text-gray-500 mx-auto mb-3" />
                     <p className="text-[#6A6A6A] font-semibold text-sm">No items scanned yet</p>
                     <p className="text-xs text-[#6A6A6A] mt-1">Scan a barcode above to add items</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {report.items.map((item, idx) => (
-                      <div key={idx} className="group flex items-start gap-3 p-3 sm:p-4 bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl hover:border-red-600/30 hover:bg-[#282828] transition-all">
+                      <div key={idx} className="group flex items-start gap-3 p-3 sm:p-4 bg-[#1E1E1E] border border-gray-500 rounded-xl hover:border-red-600/30 hover:bg-[#282828] transition-all">
                         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0 mt-0.5"
                           style={{ background: 'linear-gradient(#E8192C 0%, #7f0e18 100%)' }}>
                           {item.item_number}
@@ -311,7 +311,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                                   <Save className="w-3 h-3" /> Save
                                 </button>
                                 <button onClick={handleCancelEditBarcode}
-                                  className="flex-1 px-3 py-1.5 border border-[#3E3E3E] text-[#B3B3B3] rounded-full text-xs font-semibold hover:border-white hover:text-white transition-colors flex items-center justify-center gap-1">
+                                  className="flex-1 px-3 py-1.5 border border-gray-500 text-[#B3B3B3] rounded-full text-xs font-semibold hover:border-white hover:text-white transition-colors flex items-center justify-center gap-1">
                                   <X className="w-3 h-3" /> Cancel
                                 </button>
                               </div>
@@ -356,7 +356,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
 
               <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
                 {report.items.map((item, idx) => (
-                  <div key={idx} className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
+                  <div key={idx} className="bg-[#1E1E1E] border border-gray-500 rounded-xl p-4 sm:p-5">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0"
                         style={{ background: 'linear-gradient(#E8192C 0%, #7f0e18 100%)' }}>
@@ -369,7 +369,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
 
                     <div className="space-y-3">
                       {/* Barcode display */}
-                      <div className="flex items-center justify-between p-3 bg-[#282828] rounded-lg border border-[#3E3E3E]">
+                      <div className="flex items-center justify-between p-3 bg-[#282828] rounded-lg border border-gray-500">
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Serial / Barcode</p>
                           <p className="text-sm  font-semibold text-white break-all">{item.barcode || '—'}</p>
@@ -410,13 +410,13 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                           <input type="file" accept="image/*"
                             onChange={(e) => { if (e.target.files?.[0]) handleLocalPhotoUpload(idx, e.target.files[0]) }}
                             disabled={uploadingItemIndex === idx}
-                            className="flex-1 text-xs text-[#B3B3B3] bg-[#282828] border border-[#3E3E3E] rounded-xl px-3 py-2.5
+                            className="flex-1 text-xs text-[#B3B3B3] bg-[#282828] border border-gray-500 rounded-xl px-3 py-2.5
                               file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0
                               file:text-xs file:font-bold file:bg-red-600 file:text-white
                               hover:file:bg-red-500 transition-all cursor-pointer" />
                           {item.photo_url && (
                             <a href={item.photo_url} target="_blank" rel="noopener noreferrer"
-                              className="w-full sm:w-auto px-4 py-2 bg-[#282828] border border-[#3E3E3E] text-white rounded-full text-xs font-bold hover:border-white transition-all text-center flex-shrink-0">
+                              className="w-full sm:w-auto px-4 py-2 bg-[#282828] border border-gray-500 text-white rounded-full text-xs font-bold hover:border-white transition-all text-center flex-shrink-0">
                               View Photo
                             </a>
                           )}
@@ -488,7 +488,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
               </div>
 
               {/* Summary card — same table style as manifest review */}
-              <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
+              <div className="bg-[#1E1E1E] border border-gray-500 rounded-xl p-4 sm:p-5">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-4">Report Summary</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-4">
                   {[
@@ -518,7 +518,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs min-w-[320px]">
                           <thead>
-                            <tr className="border-b border-[#3E3E3E] text-[#6A6A6A] uppercase tracking-widest text-[10px]">
+                            <tr className="border-b border-gray-500 text-[#6A6A6A] uppercase tracking-widest text-[10px]">
                               <th className="pb-2.5 text-left font-bold w-8">#</th>
                               <th className="pb-2.5 text-left font-bold">Description</th>
                               <th className="pb-2.5 text-left font-bold hidden sm:table-cell">Barcode</th>

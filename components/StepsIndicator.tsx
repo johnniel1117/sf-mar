@@ -39,7 +39,7 @@ export function StepsIndicator({ currentStep, isEditMode }: StepsIndicatorProps)
                     ? 'bg-[#E8192C] text-white shadow-lg shadow-[#E8192C]/40 scale-110'
                     : isCompleted
                     ? 'bg-[#E8192C]/20 text-[#E8192C] border border-[#E8192C]/40'
-                    : 'bg-[#282828] text-[#6A6A6A] border border-[#3E3E3E]'
+                    : 'bg-[#282828] text-[#6A6A6A] border border-gray-500'
                   }
                 `}>
                   {isCompleted
@@ -70,7 +70,7 @@ export function StepsIndicator({ currentStep, isEditMode }: StepsIndicatorProps)
                 >
                   <div className={`
                     h-0.5 w-6 sm:w-10 rounded-full transition-all duration-300
-                    ${isCompleted ? 'bg-[#E8192C]' : 'bg-[#3E3E3E]'}
+                    ${isCompleted ? 'bg-[#E8192C]' : 'bg-gray-500'}
                   `} />
                 </div>
               )}

@@ -143,7 +143,7 @@ function ReportSidebar({
                   <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-red-500' : ''}`} />
                   {!isCollapsed && <span>{label}</span>}
                   {isCollapsed && (
-                    <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#282828] border border-[#3E3E3E] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-xs text-white z-50 shadow-xl">
+                    <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#282828] border border-gray-500 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-xs text-white z-50 shadow-xl">
                       {label}
                     </div>
                   )}
@@ -531,7 +531,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
         <div className="flex-1" />
 
         {activeTab === 'create' && report.report_number && (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-[#3E3E3E] rounded-full">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-gray-500 rounded-full">
             <span className="text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A]">No.</span>
             <span className="text-xs font-black text-white tabular-nums">{report.report_number}</span>
           </div>
@@ -637,7 +637,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
       {showMaterialModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onTouchMove={(e) => e.preventDefault()}>
-          <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#1E1E1E] border border-gray-500 rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -654,7 +654,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-[#282828] p-3 rounded-lg border border-[#3E3E3E]">
+              <div className="bg-[#282828] p-3 rounded-lg border border-gray-500">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-[#6A6A6A] mb-1">Scanned Barcode</p>
@@ -673,7 +673,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
                   onChange={(e) => setNewMaterialDescription(e.target.value)}
                   placeholder="Enter material description..."
                   rows={3}
-                  className="w-full px-3 py-2 bg-[#282828] border border-[#3E3E3E] rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-none text-white placeholder-[#6A6A6A]"
+                  className="w-full px-3 py-2 bg-[#282828] border border-gray-500 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-none text-white placeholder-[#6A6A6A]"
                   autoFocus
                 />
               </div>
@@ -685,7 +685,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
                   value={newMaterialCategory}
                   onChange={(e) => setNewMaterialCategory(e.target.value)}
                   placeholder="E.G., TV, WASHING MACHINE"
-                  className="w-full px-3 py-2 bg-[#282828] border border-[#3E3E3E] rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-white placeholder-[#6A6A6A]"
+                  className="w-full px-3 py-2 bg-[#282828] border border-gray-500 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-white placeholder-[#6A6A6A]"
                 />
               </div>
 
@@ -759,7 +759,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
           }`} />
           <span className="text-sm font-semibold text-white">{toast.message}</span>
           <button onClick={() => setToast(prev => ({ ...prev, show: false }))}
-            className="ml-1 p-0.5 rounded-full hover:bg-[#3E3E3E] transition-colors">
+            className="ml-1 p-0.5 rounded-full hover:bg-gray-500 transition-colors">
             <X className="w-3 h-3 text-[#6A6A6A]" />
           </button>
         </div>

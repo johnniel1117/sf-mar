@@ -34,7 +34,7 @@ function FilterDropdown({ selectedMonth, onMonthChange, months }: {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="h-9 px-3 sm:px-4 border border-[#282828] text-[11px] font-bold uppercase tracking-widest text-[#6A6A6A] hover:border-[#3E3E3E] hover:text-[#B3B3B3] transition-all flex items-center gap-1.5 whitespace-nowrap"
+        className="h-9 px-3 sm:px-4 border border-[#282828] text-[11px] font-bold uppercase tracking-widest text-[#6A6A6A] hover:border-gray-500 hover:text-[#B3B3B3] transition-all flex items-center gap-1.5 whitespace-nowrap"
       >
         <Calendar className="w-3 h-3 text-[#E8192C] flex-shrink-0" />
         <span className="hidden sm:inline">{selectedMonth}</span>
@@ -96,14 +96,14 @@ function ManifestRow({
           <p className="text-[15px] font-black text-[#B3B3B3] truncate group-hover:text-white transition-colors leading-snug">
             {manifestId}
           </p>
-          <p className="text-[12px] text-[#3E3E3E] mt-0.5 truncate group-hover:text-[#6A6A6A] transition-colors">
+          <p className="text-[12px] text-gray-500 mt-0.5 truncate group-hover:text-[#6A6A6A] transition-colors">
             {manifest.driver_name || 'No driver'}
             {manifest.plate_no ? ` · ${manifest.plate_no}` : ''}
           </p>
         </div>
 
         {/* Date */}
-        <span className="hidden sm:block text-[11px] font-bold text-[#3E3E3E] group-hover:text-[#6A6A6A] transition-colors flex-shrink-0 w-28 text-right tabular-nums">
+        <span className="hidden sm:block text-[11px] font-bold text-gray-500 group-hover:text-[#6A6A6A] transition-colors flex-shrink-0 w-28 text-right tabular-nums">
           {manifestDate}
         </span>
 
@@ -113,7 +113,7 @@ function ManifestRow({
         </span>
 
         {/* Docs */}
-        <span className="hidden sm:block flex-shrink-0 text-[11px] font-bold text-[#3E3E3E] w-10 text-center tabular-nums uppercase tracking-widest">
+        <span className="hidden sm:block flex-shrink-0 text-[11px] font-bold text-gray-500 w-10 text-center tabular-nums uppercase tracking-widest">
           {totalDocs}d
         </span>
 
@@ -156,7 +156,7 @@ function ManifestRow({
               {/* Table header */}
               <div className="grid grid-cols-4 border-b border-[#1a1a1a] py-3">
                 {['#', 'Ship To', 'DN / TRA', 'Qty'].map(h => (
-                  <span key={h} className="text-[10px] uppercase tracking-widest font-bold text-[#3E3E3E]">{h}</span>
+                  <span key={h} className="text-[10px] uppercase tracking-widest font-bold text-gray-500">{h}</span>
                 ))}
               </div>
               <div className="divide-y divide-[#1a1a1a]">
@@ -208,7 +208,7 @@ function DetailItem({ icon, label, value, mono, highlight }: {
 }) {
   return (
     <div>
-      <div className="flex items-center gap-1.5 text-[#3E3E3E] mb-1.5">
+      <div className="flex items-center gap-1.5 text-gray-500 mb-1.5">
         <span className="text-[#E8192C]">{icon}</span>
         <span className="text-[10px] uppercase tracking-widest font-bold">{label}</span>
       </div>
@@ -418,7 +418,7 @@ export function SavedManifestsTab({
             <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-black text-white leading-[0.93] tracking-tight">
               {savedManifests.length} manifest{savedManifests.length !== 1 ? 's' : ''}
             </h2>
-            <p className="text-[12px] text-[#3E3E3E] mt-2">SF Express · Cebu Warehouse</p>
+            <p className="text-[12px] text-gray-500 mt-2">SF Express · Cebu Warehouse</p>
           </div>
 
           <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
@@ -444,18 +444,18 @@ export function SavedManifestsTab({
         {/* Search + Filter */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#3E3E3E]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
             <input
               type="text"
               placeholder="Search manifests…"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-              className="w-full h-9 pl-9 pr-8 bg-transparent border border-[#282828] text-[13px] text-white placeholder-[#3E3E3E] focus:outline-none focus:border-[#6A6A6A] transition-colors"
+              className="w-full h-9 pl-9 pr-8 bg-transparent border border-[#282828] text-[13px] text-white placeholder-gray-500 focus:outline-none focus:border-[#6A6A6A] transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={() => { setSearchQuery(''); setCurrentPage(1) }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3E3E3E] hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -469,7 +469,7 @@ export function SavedManifestsTab({
         </div>
 
         {(searchQuery || selectedMonth !== 'All Months') && (
-          <p className="text-[11px] font-bold text-[#3E3E3E] uppercase tracking-widest mt-3">
+          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-3">
             {filteredManifests.length} result{filteredManifests.length !== 1 ? 's' : ''}
           </p>
         )}
@@ -477,7 +477,7 @@ export function SavedManifestsTab({
 
       {/* ── Column headers ── */}
       {filteredManifests.length > 0 && (
-        <div className="flex items-center gap-3 sm:gap-5 px-5 sm:px-8 py-3 border-b border-[#1a1a1a] flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#3E3E3E]">
+        <div className="flex items-center gap-3 sm:gap-5 px-5 sm:px-8 py-3 border-b border-[#1a1a1a] flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-gray-500">
           <span className="hidden sm:block w-5">No.</span>
           <span className="flex-1">Title</span>
           <button
@@ -501,7 +501,7 @@ export function SavedManifestsTab({
           <div className="flex flex-col items-center justify-center py-20 text-center px-8 gap-4">
             <FileText className="w-8 h-8 text-[#282828]" />
             <div>
-              <p className="font-black text-[#3E3E3E] text-base">No manifests yet</p>
+              <p className="font-black text-gray-500 text-base">No manifests yet</p>
               <p className="text-[12px] text-[#282828] mt-1 max-w-xs">Create your first trip manifest to see it here</p>
             </div>
           </div>
@@ -509,7 +509,7 @@ export function SavedManifestsTab({
           <div className="flex flex-col items-center justify-center py-20 text-center px-8 gap-4">
             <Search className="w-8 h-8 text-[#282828]" />
             <div>
-              <p className="font-black text-[#3E3E3E] text-base">No results found</p>
+              <p className="font-black text-gray-500 text-base">No results found</p>
               <p className="text-[12px] text-[#282828] mt-1">Try adjusting your search or filter</p>
             </div>
           </div>
@@ -534,7 +534,7 @@ export function SavedManifestsTab({
       {/* ── Pagination ── */}
       {totalPages > 1 && (
         <div className="flex-shrink-0 px-5 sm:px-8 py-4 border-t border-[#1a1a1a] flex items-center justify-between gap-3">
-          <p className="text-[11px] font-bold text-[#3E3E3E] uppercase tracking-widest tabular-nums">
+          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest tabular-nums">
             <span className="text-white">{currentPage}</span> / {totalPages}
           </p>
           <div className="flex items-center gap-1.5">
