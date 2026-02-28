@@ -133,7 +133,7 @@ function ReportSidebar({
                     w-full flex items-center gap-3 px-3 py-3 rounded-lg font-semibold text-sm
                     transition-all duration-150 relative group
                     ${isCollapsed ? 'justify-center' : ''}
-                    ${isActive ? 'bg-red-600/15 text-white' : 'text-[#B3B3B3] hover:bg-[#282828] hover:text-white'}
+                    ${isActive ? 'bg-red-600/15 text-white' : 'text-[#D0D0D0] hover:bg-[#282828] hover:text-white'}
                   `}
                   title={isCollapsed ? label : undefined}
                 >
@@ -143,7 +143,7 @@ function ReportSidebar({
                   <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-red-500' : ''}`} />
                   {!isCollapsed && <span>{label}</span>}
                   {isCollapsed && (
-                    <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#282828] border border-gray-500 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-xs text-white z-50 shadow-xl">
+                    <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#282828] border border-[#3E3E3E] px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-xs text-white z-50 shadow-xl">
                       {label}
                     </div>
                   )}
@@ -155,13 +155,13 @@ function ReportSidebar({
         <div className="flex-shrink-0 border-t border-[#282828] p-2">
           <button
             onClick={onToggleCollapse}
-            className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-lg hover:bg-[#282828] transition-colors text-[#6A6A6A] hover:text-white"
+            className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-lg hover:bg-[#282828] transition-colors text-[#9A9A9A] hover:text-white"
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
           {!isCollapsed && (
-            <p className="text-[10px] text-[#6A6A6A] text-center pb-1 pt-0.5">v1.0.0</p>
+            <p className="text-[10px] text-[#9A9A9A] text-center pb-1 pt-0.5">v1.0.0</p>
           )}
         </div>
       </aside>
@@ -506,11 +506,11 @@ export default function DamageReportForm({ role }: { role?: string }) {
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="lg:hidden p-2 hover:bg-[#282828] rounded-full transition-colors flex-shrink-0"
         >
-          <Menu className="w-5 h-5 text-[#B3B3B3]" />
+          <Menu className="w-5 h-5 text-[#D0D0D0]" />
         </button>
 
         <Link href="/" className="p-2 rounded-full hover:bg-[#282828] transition-colors flex-shrink-0" title="Home">
-          <Home className="w-4 h-4 text-[#6A6A6A] hover:text-[#B3B3B3] transition-colors" />
+          <Home className="w-4 h-4 text-[#9A9A9A] hover:text-[#D0D0D0] transition-colors" />
         </Link>
 
         <div className="w-px h-5 bg-[#282828] flex-shrink-0 hidden sm:block" />
@@ -531,8 +531,8 @@ export default function DamageReportForm({ role }: { role?: string }) {
         <div className="flex-1" />
 
         {activeTab === 'create' && report.report_number && (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-gray-500 rounded-full">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A]">No.</span>
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-[#3E3E3E] rounded-full">
+            <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">No.</span>
             <span className="text-xs font-black text-white tabular-nums">{report.report_number}</span>
           </div>
         )}
@@ -637,35 +637,35 @@ export default function DamageReportForm({ role }: { role?: string }) {
       {showMaterialModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onTouchMove={(e) => e.preventDefault()}>
-          <div className="bg-[#1E1E1E] border border-gray-500 rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <AlertCircle className="w-5 h-5 text-red-500" />
                   Material Not Found
                 </h3>
-                <p className="text-sm text-[#B3B3B3] mt-1">
+                <p className="text-sm text-[#D0D0D0] mt-1">
                   Please enter material description for the scanned barcode
                 </p>
               </div>
               <button onClick={handleCancelMaterial} className="p-1 hover:bg-[#282828] rounded-lg transition-colors">
-                <X className="w-5 h-5 text-[#6A6A6A]" />
+                <X className="w-5 h-5 text-[#9A9A9A]" />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-[#282828] p-3 rounded-lg border border-gray-500">
+              <div className="bg-[#282828] p-3 rounded-lg border border-[#3E3E3E]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-[#6A6A6A] mb-1">Scanned Barcode</p>
+                    <p className="text-xs font-semibold text-[#9A9A9A] mb-1">Scanned Barcode</p>
                     <p className="text-sm font-bold text-white break-all">{pendingBarcode}</p>
                   </div>
-                  <Barcode className="w-5 h-5 text-[#6A6A6A] flex-shrink-0" />
+                  <Barcode className="w-5 h-5 text-[#9A9A9A] flex-shrink-0" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#B3B3B3] mb-2">
+                <label className="block text-sm font-medium text-[#D0D0D0] mb-2">
                   Material Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -673,19 +673,19 @@ export default function DamageReportForm({ role }: { role?: string }) {
                   onChange={(e) => setNewMaterialDescription(e.target.value)}
                   placeholder="Enter material description..."
                   rows={3}
-                  className="w-full px-3 py-2 bg-[#282828] border border-gray-500 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-none text-white placeholder-[#6A6A6A]"
+                  className="w-full px-3 py-2 bg-[#282828] border border-[#3E3E3E] rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-none text-white placeholder-[#6A6A6A]"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#B3B3B3] mb-2">Category</label>
+                <label className="block text-sm font-medium text-[#D0D0D0] mb-2">Category</label>
                 <input
                   type="text"
                   value={newMaterialCategory}
                   onChange={(e) => setNewMaterialCategory(e.target.value)}
                   placeholder="E.G., TV, WASHING MACHINE"
-                  className="w-full px-3 py-2 bg-[#282828] border border-gray-500 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-white placeholder-[#6A6A6A]"
+                  className="w-full px-3 py-2 bg-[#282828] border border-[#3E3E3E] rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-white placeholder-[#6A6A6A]"
                 />
               </div>
 
@@ -699,7 +699,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
 
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#282828]">
               <button onClick={handleCancelMaterial}
-                className="px-4 py-2 text-[#B3B3B3] hover:bg-[#282828] rounded-lg font-medium transition-colors"
+                className="px-4 py-2 text-[#D0D0D0] hover:bg-[#282828] rounded-lg font-medium transition-colors"
                 disabled={isSavingMaterial}>
                 Cancel
               </button>
@@ -759,8 +759,8 @@ export default function DamageReportForm({ role }: { role?: string }) {
           }`} />
           <span className="text-sm font-semibold text-white">{toast.message}</span>
           <button onClick={() => setToast(prev => ({ ...prev, show: false }))}
-            className="ml-1 p-0.5 rounded-full hover:bg-gray-500 transition-colors">
-            <X className="w-3 h-3 text-[#6A6A6A]" />
+            className="ml-1 p-0.5 rounded-full hover:bg-[#3E3E3E] transition-colors">
+            <X className="w-3 h-3 text-[#9A9A9A]" />
           </button>
         </div>
       )}

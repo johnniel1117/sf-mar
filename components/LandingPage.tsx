@@ -109,9 +109,9 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
 
   return (
     <div className="space-y-7">
-      {/* Sparkline — px heights, % won't work inside flex */}
+      {/* Sparkline */}
       <div>
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-3">Qty · last 6 months</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A] mb-3">Qty · last 6 months</p>
         <div className="flex items-end gap-1.5" style={{ height: 80 }}>
           {monthlyData.map((d, i) => {
             const BAR_MAX = 60
@@ -139,7 +139,7 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
                 />
                 <span
                   className="text-[9px] font-bold"
-                  style={{ color: isCurrent ? '#F5A623' : isPrev ? '#8a6820' : '#3E3E3E' }}
+                  style={{ color: isCurrent ? '#F5A623' : isPrev ? '#8a6820' : '#6A6A6A' }}
                 >
                   {d.label}
                 </span>
@@ -152,7 +152,7 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
       {/* Divider stats */}
       <div className="divide-y divide-[#1a1a1a]">
         <div className="flex items-baseline justify-between pb-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">
             {MONTH_LABELS[new Date().getMonth()]} qty
           </span>
           <div className="text-right">
@@ -166,23 +166,23 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
           </div>
         </div>
         <div className="flex items-baseline justify-between py-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500">Trips</span>
+          <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">Trips</span>
           <p className="text-2xl font-black text-white tabular-nums">{animCurrentTrips}</p>
         </div>
         <div className="flex items-baseline justify-between py-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500">All-time qty</span>
+          <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">All-time qty</span>
           <p className="text-2xl font-black text-white tabular-nums">{animTotalAllTime.toLocaleString()}</p>
         </div>
         <div className="flex items-baseline justify-between pt-4">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500">Manifests</span>
+          <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">Manifests</span>
           <p className="text-2xl font-black text-white tabular-nums">{animManifests}</p>
         </div>
       </div>
 
-      {/* Full analytics — amber accent */}
+      {/* Full analytics */}
       <button
         onClick={onExpand}
-        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-gray-500 hover:text-[#F5A623] transition-colors group"
+        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#9A9A9A] hover:text-[#F5A623] transition-colors group"
       >
         Full analytics
         <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -233,7 +233,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
         onCancel={() => setShowSignOutModal(false)}
       />
 
-      {/* ── Analytics modal — bigger, scrollable ── */}
+      {/* ── Analytics modal ── */}
       {showAnalyticsModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
@@ -247,7 +247,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
           >
             <button
               onClick={() => setShowAnalyticsModal(false)}
-              className="absolute -top-3 -right-3 z-20 w-9 h-9 rounded-full bg-[#1E1E1E] border border-gray-500 flex items-center justify-center text-[#B3B3B3] hover:text-white hover:bg-[#282828] transition-all shadow-xl"
+              className="absolute -top-3 -right-3 z-20 w-9 h-9 rounded-full bg-[#1E1E1E] border border-[#5A5A5A] flex items-center justify-center text-[#9A9A9A] hover:text-white hover:bg-[#282828] transition-all shadow-xl"
             >
               <X className="w-4 h-4" />
             </button>
@@ -258,13 +258,14 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
         </div>
       )}
 
-      {/* ── Background (preserved exactly) ── */}
+      {/* ── Background ── */}
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <LogoGridBackground />
       </div>
       <div className="fixed inset-0 bg-gradient-to-br from-black/5 via-black/95 to-black pointer-events-none" />
       <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-black/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-black/15 rounded-full blur-[100px] pointer-events-none" />
+
       {/* ── Foreground ── */}
       <div className="relative z-10 h-full flex flex-col">
 
@@ -274,11 +275,11 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
             <div className="flex items-center gap-3">
               <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
               <div className="w-px h-4 bg-[#282828]" />
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#6A6A6A]">Dashboard</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A]">Dashboard</span>
             </div>
 
             <div className="flex items-center gap-4 sm:gap-5">
-              <span className="hidden sm:block text-[11px]  text-gray-500 tabular-nums">{time}</span>
+              <span className="hidden sm:block text-[11px] text-[#9A9A9A] tabular-nums">{time}</span>
 
               <div className="flex items-center gap-2.5">
                 <div
@@ -289,7 +290,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                 </div>
                 <div className="hidden sm:block">
                   <p className="text-[12px] font-semibold text-white leading-none">{displayName}</p>
-                  {role && <p className="text-[10px] text-[#6A6A6A] capitalize mt-0.5">{role}</p>}
+                  {role && <p className="text-[10px] text-[#9A9A9A] capitalize mt-0.5">{role}</p>}
                 </div>
               </div>
 
@@ -297,7 +298,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               <button
                 onClick={() => setShowSignOutModal(true)}
-                className="flex items-center gap-1.5 text-[11px] font-bold text-[#6A6A6A] hover:text-white transition-colors uppercase tracking-widest"
+                className="flex items-center gap-1.5 text-[11px] font-bold text-[#9A9A9A] hover:text-white transition-colors uppercase tracking-widest"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Sign out</span>
@@ -317,14 +318,14 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-3">{today}</p>
                   <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-black text-white leading-[0.93] tracking-tight">
                     {greeting},<br />
-                    <span className="text-gray-500">{displayName}.</span>
+                    <span className="text-[#9A9A9A]">{displayName}.</span>
                   </h1>
                 </div>
 
                 {/* Stats strip */}
                 <div className="flex items-center gap-8 sm:gap-10">
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 mb-1.5">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-1.5">
                       {now.toLocaleString('en-US', { month: 'short' })} trips
                     </p>
                     <p className="text-5xl font-black text-white tabular-nums leading-none">
@@ -333,7 +334,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   </div>
                   <div className="w-px h-14 bg-[#1a1a1a]" />
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 mb-1.5">Units out</p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-1.5">Units out</p>
                     <p className="text-5xl font-black text-white tabular-nums leading-none">
                       {animQty >= 1000
                         ? `${(animQty / 1000).toFixed(1)}k`
@@ -343,12 +344,11 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   {manifests.length > 0 && (
                     <>
                       <div className="w-px h-14 bg-[#1a1a1a]" />
-                      {/* Analytics button — amber accent, visible on all screen sizes */}
                       <button
                         onClick={() => setShowAnalyticsModal(true)}
                         className="flex flex-col items-start gap-2 group"
                       >
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 group-hover:text-[#F5A623] transition-colors">Analytics</p>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] group-hover:text-[#F5A623] transition-colors">Analytics</p>
                         <div className="flex items-center gap-1.5 text-white group-hover:text-[#F5A623] transition-colors">
                           <TrendingUp className="w-10 h-10" />
                           <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -365,39 +365,39 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               {/* LEFT — services */}
               <div className="py-10 sm:py-12 lg:pr-12">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-7">Services</p>
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-7">Services</p>
 
                 <div className="divide-y divide-[#1a1a1a]">
                   {SERVICES.map(({ href, label, desc, icon: Icon, index }) => (
                     <Link key={href} href={href} className="group block">
                       <div className="flex items-center gap-5 sm:gap-6 py-5 sm:py-6 transition-all duration-200 group-hover:pl-1.5">
-                        <span className="text-[11px]  font-bold  text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+                        <span className="text-[11px] font-bold text-[#5A5A5A] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
                           {index}
                         </span>
                         <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border bg-red-600 border-[#232323] bg-[#161616] group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6 transition-all duration-200">
                           <Icon className="w-4 h-4 text-white group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[15px] font-black text-[#B3B3B3] group-hover:text-white transition-colors leading-snug">
+                          <p className="text-[15px] font-black text-[#D0D0D0] group-hover:text-white transition-colors leading-snug">
                             {label}
                           </p>
-                          <p className="text-[12px] text-gray-500 mt-0.5 group-hover:text-[#6A6A6A] transition-colors">
+                          <p className="text-[12px] text-[#9A9A9A] mt-0.5 group-hover:text-[#9A9A9A] transition-colors">
                             {desc}
                           </p>
                         </div>
-                        <ArrowUpRight className="w-4 h-4 text-[#282828] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0" />
+                        <ArrowUpRight className="w-4 h-4 text-[#5A5A5A] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0" />
                       </div>
                     </Link>
                   ))}
                 </div>
 
-                {/* Quick jumps — amber accent on hover */}
+                {/* Quick jumps */}
                 <div className="mt-9 pt-7 border-t border-[#1a1a1a]">
-                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-4">Quick jump</p>
+                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-4">Quick jump</p>
                   <div className="flex flex-wrap gap-2">
                     {QUICK_JUMPS.map(({ href, label }) => (
                       <Link key={href} href={href}>
-                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#232323] text-[11px] font-semibold text-[#484848] hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 cursor-pointer">
+                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#3A3A3A] text-[11px] font-semibold text-[#7A7A7A] hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 cursor-pointer">
                           <ChevronRight className="w-3 h-3" />
                           {label}
                         </span>
@@ -409,16 +409,15 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               {/* RIGHT — analytics sidebar */}
               <div className="hidden lg:block py-10 sm:py-12 pl-12">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-7">Outbound</p>
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-7">Outbound</p>
                 {manifests.length === 0 ? (
                   <div className="space-y-3 py-2">
-                    <TrendingUp className="w-5 h-5 text-[#282828]" />
-                    <p className="text-sm font-bold text-gray-500">No data yet</p>
-                    <p className="text-[12px] text-[#282828] leading-relaxed max-w-[200px]">
+                    <TrendingUp className="w-5 h-5 text-[#5A5A5A]" />
+                    <p className="text-sm font-bold text-[#9A9A9A]">No data yet</p>
+                    <p className="text-[12px] text-[#5A5A5A] leading-relaxed max-w-[200px]">
                       Create your first trip manifest to see outbound analytics.
                     </p>
                     <Link href="/trip-manifest">
-                      {/* amber accent */}
                       <span className="text-[11px] font-bold text-[#F5A623] uppercase tracking-widest hover:underline cursor-pointer">
                         Get started →
                       </span>
@@ -432,8 +431,8 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
             {/* Footer */}
             <div className="border-t border-[#1a1a1a] py-5 flex items-center justify-between">
-              <p className="text-[11px] text-[#282828] ">SF Express · Cebu Warehouse</p>
-              <p className="text-[11px] text-[#282828] ">{new Date().getFullYear()}</p>
+              <p className="text-[11px] text-[#5A5A5A]">SF Express · Cebu Warehouse</p>
+              <p className="text-[11px] text-[#5A5A5A]">{new Date().getFullYear()}</p>
             </div>
           </div>
         </div>

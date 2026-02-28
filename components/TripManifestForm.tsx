@@ -313,7 +313,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="lg:hidden p-2 hover:bg-[#0a0a0a] rounded-full transition-colors flex-shrink-0"
         >
-          <Menu className="w-4 h-4 text-gray-500" />
+          <Menu className="w-4 h-4 text-[#9A9A9A]" />
         </button>
 
         {/* Home */}
@@ -322,7 +322,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
           className="p-2 rounded-full hover:bg-[#0a0a0a] transition-colors flex-shrink-0"
           title="Home"
         >
-          <Home className="w-4 h-4 text-gray-500 hover:text-white transition-colors" />
+          <Home className="w-4 h-4 text-[#9A9A9A] hover:text-white transition-colors" />
         </Link>
 
         <div className="w-px h-4 bg-[#1a1a1a] flex-shrink-0 hidden sm:block" />
@@ -332,10 +332,10 @@ export default function TripManifestForm({ role }: { role?: string }) {
           <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
           <div className="w-px h-4 bg-[#1a1a1a] hidden sm:block" />
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#6A6A6A]  hidden sm:block">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A]  hidden sm:block">
               Trip Manifest
             </p>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#6A6A6A]  sm:hidden">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A]  sm:hidden">
               Manifest
             </p>
           </div>
@@ -349,7 +349,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
           {/* Manifest number pill */}
           {activeTab === 'create' && manifest.manifest_number && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-[#1a1a1a] rounded-full flex-shrink-0">
-              <span className="text-[10px]  uppercase tracking-[0.15em] text-gray-500">No.</span>
+              <span className="text-[10px]  uppercase tracking-[0.15em] text-[#9A9A9A]">No.</span>
               <span className="text-[11px] font-black text-white tabular-nums ">{manifest.manifest_number}</span>
             </div>
           )}
@@ -368,7 +368,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px]  font-bold uppercase tracking-widest transition-all duration-150 ${
               activeTab === 'analytics'
                 ? 'border-[#F5A623]/30 text-[#F5A623] bg-[#F5A623]/5'
-                : 'border-[#1a1a1a] text-gray-500 hover:border-gray-500 hover:text-white'
+                : 'border-[#1a1a1a] text-[#9A9A9A] hover:border-[#3E3E3E] hover:text-white'
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5" />
@@ -448,13 +448,13 @@ export default function TripManifestForm({ role }: { role?: string }) {
                       <h4 className="text-2xl sm:text-3xl font-black text-white mb-3 tracking-tight">
                         Nothing to analyze
                       </h4>
-                      <p className="text-sm  text-gray-500 max-w-sm mb-8 leading-relaxed">
+                      <p className="text-sm  text-[#9A9A9A] max-w-sm mb-8 leading-relaxed">
                         Save trip manifests to see trends, top destinations, trucker performance, and more.
                       </p>
                       {!isViewer && (
                         <button
                           onClick={() => setActiveTab('create')}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#1a1a1a] text-[10px]  font-bold uppercase tracking-widest text-gray-500 hover:border-gray-500 hover:text-white transition-all"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#1a1a1a] text-[10px]  font-bold uppercase tracking-widest text-[#9A9A9A] hover:border-[#3E3E3E] hover:text-white transition-all"
                         >
                           Create First Manifest
                           <ArrowUpRight className="w-3.5 h-3.5" />
@@ -520,7 +520,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
             onClick={() => setToast(prev => ({ ...prev, show: false }))}
             className="ml-1 p-0.5 rounded-full hover:bg-[#1a1a1a] transition-colors"
           >
-            <X className="w-3 h-3 text-gray-500" />
+            <X className="w-3 h-3 text-[#9A9A9A]" />
           </button>
         </div>
       )}

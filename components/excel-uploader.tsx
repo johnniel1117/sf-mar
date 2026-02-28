@@ -429,11 +429,11 @@ export default function ExcelUploader() {
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="lg:hidden p-2 hover:bg-[#0a0a0a] rounded-full transition-colors flex-shrink-0"
         >
-          <Menu className="w-4 h-4 text-gray-500" />
+          <Menu className="w-4 h-4 text-[#9A9A9A]" />
         </button>
 
         <Link href="/" className="p-2 rounded-full hover:bg-[#0a0a0a] transition-colors flex-shrink-0" title="Home">
-          <Home className="w-4 h-4 text-gray-500 hover:text-white transition-colors" />
+          <Home className="w-4 h-4 text-[#9A9A9A] hover:text-white transition-colors" />
         </Link>
 
         <div className="w-px h-4 bg-[#1a1a1a] flex-shrink-0 hidden sm:block" />
@@ -441,15 +441,15 @@ export default function ExcelUploader() {
         <div className="flex items-center gap-3 flex-shrink-0">
           <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
           <div className="w-px h-4 bg-[#1a1a1a] hidden sm:block" />
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#6A6A6A] hidden sm:block">Serial List</p>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#6A6A6A] sm:hidden">Upload</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A] hidden sm:block">Serial List</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A] sm:hidden">Upload</p>
         </div>
 
         <div className="flex-1" />
 
         {uploadedFiles.length > 0 && (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-[#1a1a1a] rounded-full flex-shrink-0">
-            <span className="text-[10px] uppercase tracking-[0.15em] text-gray-500">Files</span>
+            <span className="text-[10px] uppercase tracking-[0.15em] text-[#9A9A9A]">Files</span>
             <span className="text-[11px] font-black text-white tabular-nums">{uploadedFiles.length}</span>
           </div>
         )}
@@ -468,7 +468,7 @@ export default function ExcelUploader() {
             }`} />
             <p className="text-[11px] font-bold uppercase tracking-widest text-white flex-1">{n.message}</p>
             <button onClick={() => removeNotification(n.id)} className="p-0.5 hover:bg-[#1a1a1a] rounded-full transition-colors">
-              <X className="w-3 h-3 text-gray-500" />
+              <X className="w-3 h-3 text-[#9A9A9A]" />
             </button>
           </div>
         ))}
@@ -516,20 +516,20 @@ export default function ExcelUploader() {
               `}>
                 {/* Index */}
                 <span className={`
-                  text-[11px] font-bold w-5 flex-shrink-0 transition-colors text-[#282828] group-hover:text-[#E8192C]
+                  text-[11px] font-bold w-5 flex-shrink-0 transition-colors text-[#5A5A5A] group-hover:text-[#E8192C]
                   ${sidebarCollapsed ? 'lg:hidden' : ''}
                 `}>↑</span>
 
-                <Upload className={`w-4 h-4 flex-shrink-0 text-gray-500 group-hover:text-[#E8192C] transition-colors`} strokeWidth={1.5} />
+                <Upload className={`w-4 h-4 flex-shrink-0 text-[#9A9A9A] group-hover:text-[#E8192C] transition-colors`} strokeWidth={1.5} />
 
                 {/* Index below icon on desktop collapsed */}
                 {sidebarCollapsed && (
-                  <span className="hidden lg:block text-[10px] font-bold tracking-widest text-[#282828] group-hover:text-[#E8192C] transition-colors">↑</span>
+                  <span className="hidden lg:block text-[10px] font-bold tracking-widest text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors">↑</span>
                 )}
 
                 {/* Label — always visible, hidden on desktop collapsed */}
                 <span className={`
-                  text-[13px] font-black text-gray-500 group-hover:text-white transition-colors
+                  text-[13px] font-black text-[#9A9A9A] group-hover:text-white transition-colors
                   ${sidebarCollapsed ? 'lg:hidden' : ''}
                 `}>Upload Files</span>
 
@@ -577,17 +577,17 @@ export default function ExcelUploader() {
                     <span className={`
                       text-[11px] font-bold w-5 flex-shrink-0 transition-colors
                       ${sidebarCollapsed ? 'lg:hidden' : ''}
-                      ${isActive ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'}
+                      ${isActive ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'}
                     `}>{index}</span>
 
                     <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                      isActive ? 'text-[#E8192C]' : 'text-gray-500 group-hover:text-white'
+                      isActive ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-white'
                     }`} strokeWidth={1.5} />
 
                     {/* Index below icon — desktop collapsed only */}
                     {sidebarCollapsed && (
                       <span className={`hidden lg:block text-[10px] font-bold tracking-widest transition-colors ${
-                        isActive ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'
+                        isActive ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
                       }`}>{index}</span>
                     )}
 
@@ -595,7 +595,7 @@ export default function ExcelUploader() {
                     <span className={`
                       text-[13px] font-black leading-snug transition-colors
                       ${sidebarCollapsed ? 'lg:hidden' : ''}
-                      ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-white'}
+                      ${isActive ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'}
                     `}>{label}</span>
 
                     {/* Desktop collapsed tooltip */}
@@ -619,18 +619,18 @@ export default function ExcelUploader() {
                   `}
                 >
                   <span className={`
-                    text-[11px] font-bold w-5 flex-shrink-0 transition-colors text-[#282828] group-hover:text-[#E8192C]
+                    text-[11px] font-bold w-5 flex-shrink-0 transition-colors text-[#5A5A5A] group-hover:text-[#E8192C]
                     ${sidebarCollapsed ? 'lg:hidden' : ''}
                   `}>×</span>
 
-                  <X className="w-4 h-4 flex-shrink-0 text-[#282828] group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
+                  <X className="w-4 h-4 flex-shrink-0 text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
 
                   {sidebarCollapsed && (
-                    <span className="hidden lg:block text-[10px] font-bold tracking-widest text-[#282828] group-hover:text-[#E8192C] transition-colors">×</span>
+                    <span className="hidden lg:block text-[10px] font-bold tracking-widest text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors">×</span>
                   )}
 
                   <span className={`
-                    text-[13px] font-black text-[#282828] group-hover:text-[#E8192C] transition-colors
+                    text-[13px] font-black text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors
                     ${sidebarCollapsed ? 'lg:hidden' : ''}
                   `}>Clear All</span>
 
@@ -648,7 +648,7 @@ export default function ExcelUploader() {
           <div className="flex-shrink-0 border-t border-[#1a1a1a] p-3">
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full hover:bg-[#0a0a0a] transition-colors text-[#282828] hover:text-white"
+              className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full hover:bg-[#0a0a0a] transition-colors text-[#5A5A5A] hover:text-white"
               title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -672,7 +672,7 @@ export default function ExcelUploader() {
                 <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-black text-white tracking-tight leading-[0.93]">
                   Upload Files
                 </h2>
-                <p className="text-[11px] text-gray-500 uppercase tracking-widest mt-1.5">
+                <p className="text-[11px] text-[#9A9A9A] uppercase tracking-widest mt-1.5">
                   SF Express · Cebu Warehouse
                 </p>
               </div>
@@ -689,15 +689,15 @@ export default function ExcelUploader() {
                       <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-5 border transition-all duration-300 ${
                         isDragging ? 'border-[#E8192C]/40 bg-[#E8192C]/10' : 'border-[#1a1a1a] bg-transparent'
                       }`}>
-                        <Upload className={`w-6 h-6 transition-colors duration-300 ${isDragging ? 'text-[#E8192C]' : 'text-[#282828]'}`} />
+                        <Upload className={`w-6 h-6 transition-colors duration-300 ${isDragging ? 'text-[#E8192C]' : 'text-[#5A5A5A]'}`} />
                       </div>
                       <p className={`text-base font-black mb-1 tracking-tight transition-colors duration-300 ${isDragging ? 'text-[#E8192C]' : 'text-white'}`}>
                         {isDragging ? 'Drop files here' : 'Drop files or click to upload'}
                       </p>
-                      <p className="text-[11px] text-gray-500 mb-5">Haier barcode Excel files</p>
+                      <p className="text-[11px] text-[#9A9A9A] mb-5">Haier barcode Excel files</p>
                       <div className="flex items-center gap-2">
                         {['.xlsx', '.xls', '.csv'].map(ext => (
-                          <span key={ext} className="px-3 py-1 border border-[#1a1a1a] text-gray-500 rounded-full text-[10px] font-bold">{ext}</span>
+                          <span key={ext} className="px-3 py-1 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold">{ext}</span>
                         ))}
                       </div>
                     </div>
@@ -727,12 +727,12 @@ export default function ExcelUploader() {
                   className="w-full flex items-center justify-between px-6 sm:px-8 py-5 hover:bg-[#0a0a0a] transition-colors group"
                 >
                   <div className="flex items-center gap-4">
-                    <span className="text-[11px] font-bold text-[#282828] w-5 group-hover:text-[#E8192C] transition-colors">↓</span>
-                    <FileSpreadsheet className="w-4 h-4 text-gray-500 group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
-                    <span className="text-[13px] font-black text-gray-500 group-hover:text-white transition-colors">Uploaded Files</span>
-                    <span className="px-2 py-0.5 border border-[#1a1a1a] text-gray-500 rounded-full text-[10px] font-bold">{uploadedFiles.length}</span>
+                    <span className="text-[11px] font-bold text-[#5A5A5A] w-5 group-hover:text-[#E8192C] transition-colors">↓</span>
+                    <FileSpreadsheet className="w-4 h-4 text-[#9A9A9A] group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
+                    <span className="text-[13px] font-black text-[#9A9A9A] group-hover:text-white transition-colors">Uploaded Files</span>
+                    <span className="px-2 py-0.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold">{uploadedFiles.length}</span>
                   </div>
-                  <ArrowUpRight className={`w-4 h-4 text-[#282828] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 ${showFilesList ? 'rotate-90' : 'translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0'}`} />
+                  <ArrowUpRight className={`w-4 h-4 text-[#5A5A5A] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 ${showFilesList ? 'rotate-90' : 'translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0'}`} />
                 </button>
 
                 {showFilesList && (
@@ -745,20 +745,20 @@ export default function ExcelUploader() {
                         }`}
                       >
                         <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${
-                          selectedFileId === file.id ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'
+                          selectedFileId === file.id ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
                         }`}>
                           {selectedFileId === file.id ? '→' : '·'}
                         </span>
                         <div className="flex-1 min-w-0">
                           <p className={`text-[13px] font-black truncate transition-colors ${
-                            selectedFileId === file.id ? 'text-white' : 'text-gray-500 group-hover:text-white'
+                            selectedFileId === file.id ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'
                           }`}>{file.name}</p>
-                          <p className="text-[10px] text-[#282828] mt-0.5">{file.dnNo} · {file.data.length} items</p>
+                          <p className="text-[10px] text-[#5A5A5A] mt-0.5">{file.dnNo} · {file.data.length} items</p>
                         </div>
                         {selectedFileId === file.id && <CheckCircle2 className="w-3.5 h-3.5 text-[#E8192C] flex-shrink-0" />}
                         <button
                           onClick={e => { e.stopPropagation(); handleDeleteFile(file.id) }}
-                          className="p-1 text-[#282828] hover:text-[#E8192C] transition-colors flex-shrink-0"
+                          className="p-1 text-[#5A5A5A] hover:text-[#E8192C] transition-colors flex-shrink-0"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -778,7 +778,7 @@ export default function ExcelUploader() {
                     {tabs.map(({ id, label, index, icon: Icon }) => (
                       <button key={id} onClick={() => setActiveTab(id)}
                         className={`flex-1 flex items-center justify-center gap-2.5 px-3 py-4 text-[10px] uppercase tracking-[0.15em] font-bold transition-all duration-150 relative border-r border-[#1a1a1a] last:border-r-0 ${
-                          activeTab === id ? 'text-white bg-[#0a0a0a]' : 'text-[#282828] hover:text-gray-500 hover:bg-[#0a0a0a]/50'
+                          activeTab === id ? 'text-white bg-[#0a0a0a]' : 'text-[#5A5A5A] hover:text-[#9A9A9A] hover:bg-[#0a0a0a]/50'
                         }`}
                       >
                         <Icon className={`w-3.5 h-3.5 ${activeTab === id ? 'text-[#E8192C]' : ''}`} strokeWidth={1.5} />
@@ -792,7 +792,7 @@ export default function ExcelUploader() {
                 <div className="p-6 sm:p-8">
                   <div className="flex gap-3 mb-6">
                     <div className="relative flex-1 max-w-sm">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#282828]" />
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A5A5A]" />
                       <input
                         type="text"
                         placeholder="Search DN, serial, material…"
@@ -803,7 +803,7 @@ export default function ExcelUploader() {
                     </div>
                     <div className="flex gap-2">
                       {searchQuery && (
-                        <button onClick={() => setSearchQuery("")} className="px-3 py-2.5 border border-[#1a1a1a] text-gray-500 rounded-full text-[10px] font-bold uppercase tracking-widest hover:border-gray-500 hover:text-white transition-all">
+                        <button onClick={() => setSearchQuery("")} className="px-3 py-2.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all">
                           Clear
                         </button>
                       )}
@@ -821,7 +821,7 @@ export default function ExcelUploader() {
                     <>
                       <div className="flex items-baseline justify-between mb-5">
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-1">
+                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-1">
                             {selectedFileId ? `Viewing: ${uploadedFiles.find(f => f.id === selectedFileId)?.name}` : 'All files combined'}
                           </p>
                           <h3 className="text-lg font-black text-white tracking-tight">Consolidated Materials</h3>
@@ -835,20 +835,20 @@ export default function ExcelUploader() {
                           <thead>
                             <tr className="border-b border-[#1a1a1a]">
                               {["#","Material Code","Material Description","Category","Qty.","Ship Name","Remarks"].map(h => (
-                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em] text-[#282828]">{h}</th>
+                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em] text-[#5A5A5A]">{h}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#1a1a1a]">
                             {filterGroupedDataBySearch(groupedData).filter(r => r.materialCode && r.materialDescription).map((row, idx) => (
                               <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`} style={{ animationDelay: `${idx * 0.02}s` }}>
-                                <td className="px-4 py-3.5 text-[11px] text-[#282828] group-hover:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</td>
+                                <td className="px-4 py-3.5 text-[11px] text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</td>
                                 <td className="px-4 py-3.5 text-sm font-black text-white">{row.materialCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-black text-[#B3B3B3] group-hover:text-white transition-colors">{row.materialDescription}</td>
-                                <td className="px-4 py-3.5"><span className="text-[10px] font-bold text-gray-500">{row.category}</span></td>
+                                <td className="px-4 py-3.5 text-sm font-black text-[#D0D0D0] group-hover:text-white transition-colors">{row.materialDescription}</td>
+                                <td className="px-4 py-3.5"><span className="text-[10px] font-bold text-[#9A9A9A]">{row.category}</span></td>
                                 <td className="px-4 py-3.5 text-sm font-black text-[#E8192C] tabular-nums">{row.qty}</td>
-                                <td className="px-4 py-3.5 text-[11px] text-gray-500">{row.shipName || '—'}</td>
-                                <td className="px-4 py-3.5 text-[10px] text-[#282828]">{row.remarks}</td>
+                                <td className="px-4 py-3.5 text-[11px] text-[#9A9A9A]">{row.shipName || '—'}</td>
+                                <td className="px-4 py-3.5 text-[10px] text-[#5A5A5A]">{row.remarks}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -862,7 +862,7 @@ export default function ExcelUploader() {
                     <>
                       <div className="flex items-baseline justify-between mb-5">
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-1">All serial numbers combined</p>
+                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-1">All serial numbers combined</p>
                           <h3 className="text-lg font-black text-white tracking-tight">Bulking Serial List</h3>
                         </div>
                         <span className="text-[10px] font-black text-white tabular-nums">
@@ -874,22 +874,22 @@ export default function ExcelUploader() {
                           <thead>
                             <tr className="border-b border-[#1a1a1a]">
                               {["#","DN No","Location","Bin Code","Material Code","Material Desc","Barcode","Ship To Name","Ship To Address"].map(h => (
-                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em] text-[#282828]">{h}</th>
+                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em] text-[#5A5A5A]">{h}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#1a1a1a]">
                             {filterSerialDataBySearch(serialListData).filter(r => r.materialCode && r.barcode).map((row, idx) => (
                               <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`} style={{ animationDelay: `${idx * 0.02}s` }}>
-                                <td className="px-4 py-3.5 text-[11px] text-[#282828] group-hover:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</td>
+                                <td className="px-4 py-3.5 text-[11px] text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</td>
                                 <td className="px-4 py-3.5 text-sm font-black text-white">{row.dnNo}</td>
-                                <td className="px-4 py-3.5 text-[11px] text-gray-500">{row.location}</td>
-                                <td className="px-4 py-3.5 text-[11px] text-gray-500">{row.binCode}</td>
+                                <td className="px-4 py-3.5 text-[11px] text-[#9A9A9A]">{row.location}</td>
+                                <td className="px-4 py-3.5 text-[11px] text-[#9A9A9A]">{row.binCode}</td>
                                 <td className="px-4 py-3.5 text-sm font-black text-white">{row.materialCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-black text-[#B3B3B3] group-hover:text-white transition-colors">{row.materialDesc}</td>
+                                <td className="px-4 py-3.5 text-sm font-black text-[#D0D0D0] group-hover:text-white transition-colors">{row.materialDesc}</td>
                                 <td className="px-4 py-3.5 text-sm font-black text-[#E8192C]">{row.barcode}</td>
-                                <td className="px-4 py-3.5 text-[11px] text-gray-500">{row.shipToName}</td>
-                                <td className="px-4 py-3.5 text-[10px] text-[#282828]">{row.shipToAddress}</td>
+                                <td className="px-4 py-3.5 text-[11px] text-[#9A9A9A]">{row.shipToName}</td>
+                                <td className="px-4 py-3.5 text-[10px] text-[#5A5A5A]">{row.shipToAddress}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -902,16 +902,16 @@ export default function ExcelUploader() {
                   {activeTab === "individualDN" && (
                     <>
                       <div className="mb-6">
-                        <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-1">Download per-DN or all at once</p>
+                        <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-1">Download per-DN or all at once</p>
                         <h3 className="text-lg font-black text-white tracking-tight">Individual DN Downloads</h3>
                       </div>
                       <div className="divide-y divide-[#1a1a1a]">
                         <div className="flex items-center gap-5 py-5 group transition-all duration-200 hover:pl-1.5">
-                          <span className="text-[11px] font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">↓</span>
-                          <Layers className="w-4 h-4 text-gray-500 group-hover:text-[#E8192C] transition-colors flex-shrink-0" strokeWidth={1.5} />
+                          <span className="text-[11px] font-bold text-[#5A5A5A] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">↓</span>
+                          <Layers className="w-4 h-4 text-[#9A9A9A] group-hover:text-[#E8192C] transition-colors flex-shrink-0" strokeWidth={1.5} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-black text-[#B3B3B3] group-hover:text-white transition-colors">Download All DN Serial Lists</p>
-                            <p className="text-[10px] text-[#282828] mt-0.5">{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available</p>
+                            <p className="text-[13px] font-black text-[#D0D0D0] group-hover:text-white transition-colors">Download All DN Serial Lists</p>
+                            <p className="text-[10px] text-[#5A5A5A] mt-0.5">{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available</p>
                           </div>
                           <button onClick={() => { setIsDownloadingAllDN(true); setShowDownloadModal(true) }}
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20 flex-shrink-0">
@@ -921,14 +921,14 @@ export default function ExcelUploader() {
 
                         {filterDNsBySearch(uploadedFiles).map((file, idx) => (
                           <div key={file.id} className="flex items-center gap-5 py-5 group transition-all duration-200 hover:pl-1.5">
-                            <span className="text-[11px] font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
-                            <FileSpreadsheet className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors flex-shrink-0" strokeWidth={1.5} />
+                            <span className="text-[11px] font-bold text-[#5A5A5A] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
+                            <FileSpreadsheet className="w-4 h-4 text-[#9A9A9A] group-hover:text-white transition-colors flex-shrink-0" strokeWidth={1.5} />
                             <div className="flex-1 min-w-0">
-                              <p className="text-[13px] font-black text-[#B3B3B3] group-hover:text-white transition-colors truncate">{file.dnNo}</p>
-                              <p className="text-[10px] text-[#282828] mt-0.5 truncate">{file.name}</p>
+                              <p className="text-[13px] font-black text-[#D0D0D0] group-hover:text-white transition-colors truncate">{file.dnNo}</p>
+                              <p className="text-[10px] text-[#5A5A5A] mt-0.5 truncate">{file.name}</p>
                             </div>
                             <button onClick={() => { setSelectedDownloadFile(file); setIsDownloadingAllDN(false); setShowDownloadModal(true) }}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#1a1a1a] text-[#6A6A6A] text-[10px] font-bold uppercase tracking-widest hover:border-gray-500 hover:text-white transition-all flex-shrink-0">
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#1a1a1a] text-[#9A9A9A] text-[10px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all flex-shrink-0">
                               <Download className="w-3 h-3" />
                               <span className="hidden sm:inline">Download</span>
                             </button>
@@ -971,15 +971,15 @@ export default function ExcelUploader() {
                   <button key={opt.type} onClick={() => setDownloadType(opt.type as 'pdf' | 'excel')}
                     className={`w-full flex items-center gap-5 px-7 py-4 transition-all duration-200 group text-left ${active ? 'pl-8' : 'hover:pl-8'}`}
                   >
-                    <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'}`}>{opt.index}</span>
+                    <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'}`}>{opt.index}</span>
                     <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200 ${active ? 'border-[#E8192C]/20 bg-[#E8192C]/8' : 'border-[#1a1a1a] group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6'}`}>
-                      <opt.icon className={`w-4 h-4 transition-colors ${active ? 'text-[#E8192C]' : 'text-gray-500 group-hover:text-[#E8192C]'}`} strokeWidth={1.5} />
+                      <opt.icon className={`w-4 h-4 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-[#E8192C]'}`} strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-[13px] font-black leading-snug transition-colors ${active ? 'text-white' : 'text-gray-500 group-hover:text-white'}`}>{opt.label}</p>
-                      <p className={`text-[11px] mt-0.5 transition-colors ${active ? 'text-[#6A6A6A]' : 'text-[#282828] group-hover:text-gray-500'}`}>{opt.desc}</p>
+                      <p className={`text-[13px] font-black leading-snug transition-colors ${active ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'}`}>{opt.label}</p>
+                      <p className={`text-[11px] mt-0.5 transition-colors ${active ? 'text-[#9A9A9A]' : 'text-[#5A5A5A] group-hover:text-[#9A9A9A]'}`}>{opt.desc}</p>
                     </div>
-                    <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0 ${active ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'}`} />
+                    <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0 ${active ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'}`} />
                   </button>
                 )
               })}
@@ -987,7 +987,7 @@ export default function ExcelUploader() {
 
             <div className="flex gap-3 px-7 py-5 border-t border-[#1a1a1a]">
               <button onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}
-                className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#6A6A6A] rounded-full text-[10px] font-bold uppercase tracking-widest hover:border-gray-500 hover:text-white transition-all">
+                className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all">
                 Cancel
               </button>
               <button onClick={handleDownloadConfirm}
@@ -1002,7 +1002,7 @@ export default function ExcelUploader() {
       {/* Scroll to top */}
       {showScrollTop && (
         <button onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 rounded-full border border-[#1a1a1a] text-gray-500 hover:text-white hover:border-gray-500 transition-all bg-black shadow-2xl">
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full border border-[#1a1a1a] text-[#9A9A9A] hover:text-white hover:border-[#3E3E3E] transition-all bg-black shadow-2xl">
           <ArrowUp className="w-4 h-4" />
         </button>
       )}

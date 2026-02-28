@@ -100,14 +100,14 @@ export function ManifestTabs({
                   <span className={`
                     text-[11px] font-bold w-5 flex-shrink-0 transition-colors
                     ${isCollapsed ? 'lg:hidden' : ''}
-                    ${isActive ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'}
+                    ${isActive ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'}
                   `}>
                     {index}
                   </span>
 
                   <Icon
                     className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                      isActive ? 'text-[#E8192C]' : 'text-gray-500 group-hover:text-white'
+                      isActive ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-white'
                     }`}
                     strokeWidth={1.5}
                   />
@@ -115,7 +115,7 @@ export function ManifestTabs({
                   {/* Index below icon — desktop collapsed only */}
                   {isCollapsed && (
                     <span className={`hidden lg:block text-[10px] font-bold tracking-widest transition-colors ${
-                      isActive ? 'text-[#E8192C]' : 'text-[#282828] group-hover:text-[#E8192C]'
+                      isActive ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
                     }`}>
                       {index}
                     </span>
@@ -125,7 +125,7 @@ export function ManifestTabs({
                   <span className={`
                     text-[13px] font-black leading-snug transition-colors
                     ${isCollapsed ? 'lg:hidden' : ''}
-                    ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-white'}
+                    ${isActive ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'}
                   `}>
                     {label}
                   </span>
@@ -153,7 +153,7 @@ export function ManifestTabs({
         <div className="flex-shrink-0 border-t border-[#1a1a1a] p-3">
           <button
             onClick={onToggleCollapse}
-            className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full hover:bg-[#0a0a0a] transition-colors text-[#282828] hover:text-white"
+            className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full hover:bg-[#0a0a0a] transition-colors text-[#5A5A5A] hover:text-white"
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isCollapsed

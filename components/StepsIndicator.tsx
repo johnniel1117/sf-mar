@@ -39,7 +39,7 @@ export function StepsIndicator({ currentStep, isEditMode }: StepsIndicatorProps)
                     ? 'bg-[#E8192C] text-white shadow-lg shadow-[#E8192C]/40 scale-110'
                     : isCompleted
                     ? 'bg-[#E8192C]/20 text-[#E8192C] border border-[#E8192C]/40'
-                    : 'bg-[#282828] text-[#6A6A6A] border border-gray-500'
+                    : 'bg-[#282828] text-[#9A9A9A] border border-[#3E3E3E]'
                   }
                 `}>
                   {isCompleted
@@ -51,13 +51,13 @@ export function StepsIndicator({ currentStep, isEditMode }: StepsIndicatorProps)
                 {/* Label */}
                 <p className={`
                   text-[10px] sm:text-xs font-bold mt-1.5 text-center leading-tight
-                  ${isActive ? 'text-white' : isCompleted ? 'text-[#E8192C]' : 'text-[#6A6A6A]'}
+                  ${isActive ? 'text-white' : isCompleted ? 'text-[#E8192C]' : 'text-[#9A9A9A]'}
                 `}>
                   {step.title}
                 </p>
 
                 {/* Description — desktop only */}
-                <p className="hidden lg:block text-[9px] text-[#6A6A6A] mt-0.5 text-center max-w-[72px] leading-tight">
+                <p className="hidden lg:block text-[9px] text-[#9A9A9A] mt-0.5 text-center max-w-[72px] leading-tight">
                   {step.description}
                 </p>
               </div>
@@ -70,7 +70,7 @@ export function StepsIndicator({ currentStep, isEditMode }: StepsIndicatorProps)
                 >
                   <div className={`
                     h-0.5 w-6 sm:w-10 rounded-full transition-all duration-300
-                    ${isCompleted ? 'bg-[#E8192C]' : 'bg-gray-500'}
+                    ${isCompleted ? 'bg-[#E8192C]' : 'bg-[#3E3E3E]'}
                   `} />
                 </div>
               )}
@@ -85,7 +85,7 @@ export function StepsIndicator({ currentStep, isEditMode }: StepsIndicatorProps)
           <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
           <div>
             <p className="text-xs font-bold text-blue-400">Edit Mode</p>
-            <p className="text-[10px] text-[#6A6A6A] mt-0.5">You are editing an existing report</p>
+            <p className="text-[10px] text-[#9A9A9A] mt-0.5">You are editing an existing report</p>
           </div>
         </div>
       )}

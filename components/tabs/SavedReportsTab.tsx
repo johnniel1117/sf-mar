@@ -33,7 +33,7 @@ function ReportAvatar({ seed }: { seed: string }) {
 function DetailChip({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A] mb-0.5">{label}</p>
+      <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-0.5">{label}</p>
       <p className="text-xs sm:text-sm font-semibold text-white truncate">{value}</p>
     </div>
   )
@@ -62,7 +62,7 @@ function ReportRow({
       >
         {/* Row number — desktop only */}
         <div className="hidden sm:flex flex-shrink-0 w-7 items-center justify-center">
-          <span className="text-sm text-[#6A6A6A] tabular-nums group-hover:hidden">{index + 1}</span>
+          <span className="text-sm text-[#9A9A9A] tabular-nums group-hover:hidden">{index + 1}</span>
           <Play className="w-4 h-4 text-white hidden group-hover:block fill-white" />
         </div>
 
@@ -73,28 +73,28 @@ function ReportRow({
           <p className="font-semibold text-white text-sm truncate group-hover:text-[#E8192C] transition-colors leading-tight">
             {reportId}
           </p>
-          <p className="text-xs text-[#B3B3B3] truncate mt-0.5">
+          <p className="text-xs text-[#D0D0D0] truncate mt-0.5">
             {report.driver_name || 'No driver'}
             {report.plate_no ? ` · ${report.plate_no}` : ''}
           </p>
         </div>
 
         {/* Date — hidden on mobile */}
-        <span className="hidden sm:block text-xs text-[#B3B3B3] flex-shrink-0 w-24 text-right">{reportDate}</span>
+        <span className="hidden sm:block text-xs text-[#D0D0D0] flex-shrink-0 w-24 text-right">{reportDate}</span>
 
         {/* Item count */}
-        <span className="flex-shrink-0 text-xs font-bold tabular-nums text-[#B3B3B3] group-hover:text-white transition-colors w-8 text-right">
+        <span className="flex-shrink-0 text-xs font-bold tabular-nums text-[#D0D0D0] group-hover:text-white transition-colors w-8 text-right">
           {totalItems}
         </span>
 
         {/* Chevron */}
-        <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90 text-[#E8192C]' : 'text-[#6A6A6A] group-hover:text-[#B3B3B3]'}`} />
+        <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90 text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-[#D0D0D0]'}`} />
 
         {/* Delete — always visible on mobile, hover on desktop */}
 {!isViewer && (
   <button
     onClick={(e) => { e.stopPropagation(); onDelete() }}
-    className="flex-shrink-0 p-1.5 rounded-full text-[#6A6A6A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 transition-all duration-150 sm:opacity-0 sm:group-hover:opacity-100"
+    className="flex-shrink-0 p-1.5 rounded-full text-[#9A9A9A] hover:text-[#E8192C] hover:bg-[#E8192C]/10 transition-all duration-150 sm:opacity-0 sm:group-hover:opacity-100"
     title="Delete"
   >
     <Trash2 className="w-3.5 h-3.5" />
@@ -121,7 +121,7 @@ function ReportRow({
             <div className="mb-4 sm:mb-5 rounded-lg overflow-hidden border border-[#282828]">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-[#1E1E1E] text-[#6A6A6A] uppercase tracking-widest">
+                  <tr className="bg-[#1E1E1E] text-[#9A9A9A] uppercase tracking-widest">
                     <th className="text-left px-3 py-2.5 font-bold">#</th>
                     <th className="text-left px-3 py-2.5 font-bold">Description</th>
                     <th className="text-left px-3 py-2.5 font-bold hidden sm:table-cell">Damage Type</th>
@@ -131,16 +131,16 @@ function ReportRow({
                 <tbody>
                   {reportItems.map((item: any, idx: number) => (
                     <tr key={idx} className="border-t border-[#282828] hover:bg-[#1E1E1E] transition-colors group/row">
-                      <td className="px-3 py-2.5 text-[#6A6A6A]">{idx + 1}</td>
+                      <td className="px-3 py-2.5 text-[#9A9A9A]">{idx + 1}</td>
                       <td className="px-3 py-2.5 text-white font-medium truncate max-w-[120px] sm:max-w-none group-hover/row:text-[#E8192C] transition-colors">
                         {item.material_description || '—'}
                       </td>
-                      <td className="px-3 py-2.5 text-[#B3B3B3] hidden sm:table-cell">{item.damage_type || '—'}</td>
+                      <td className="px-3 py-2.5 text-[#D0D0D0] hidden sm:table-cell">{item.damage_type || '—'}</td>
                       <td className="px-3 py-2.5 text-right">
                         {item.photo_url
                           ? <a href={item.photo_url} target="_blank" rel="noopener noreferrer"
                               className="text-[#E8192C] hover:underline font-bold">View</a>
-                          : <span className="text-[#6A6A6A]">—</span>
+                          : <span className="text-[#9A9A9A]">—</span>
                         }
                       </td>
                     </tr>
@@ -208,9 +208,9 @@ export const SavedReportsTab: React.FC<SavedReportsTabProps> = ({
             <FileText className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
           </div>
           <div>
-            <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#B3B3B3] mb-0.5">View</p>
+            <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#D0D0D0] mb-0.5">View</p>
             <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Saved Reports</h3>
-            <p className="text-xs text-[#B3B3B3] mt-0.5">
+            <p className="text-xs text-[#D0D0D0] mt-0.5">
               SF Express · {savedReports.length} report{savedReports.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -218,29 +218,29 @@ export const SavedReportsTab: React.FC<SavedReportsTabProps> = ({
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#6A6A6A]" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9A9A9A]" />
           <input
             type="text"
             placeholder="Search reports…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-10 pl-10 pr-8 bg-gray-500 rounded-full text-sm text-white placeholder-[#6A6A6A] focus:outline-none focus:ring-2 focus:ring-[#E8192C]/50 transition-all"
+            className="w-full h-10 pl-10 pr-8 bg-[#3E3E3E] rounded-full text-sm text-white placeholder-[#6A6A6A] focus:outline-none focus:ring-2 focus:ring-[#E8192C]/50 transition-all"
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#B3B3B3] hover:text-white transition-colors">
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#D0D0D0] hover:text-white transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
         {searchQuery && (
-          <p className="text-xs text-[#B3B3B3] mt-2">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-[#D0D0D0] mt-2">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</p>
         )}
       </div>
 
       {/* ── Column headers ── */}
       {filtered.length > 0 && (
-        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 border-b border-[#282828] flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A]">
+        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 border-b border-[#282828] flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#9A9A9A]">
           <span className="hidden sm:block w-7 text-center">#</span>
           <span className="w-9 sm:w-10" />
           <span className="flex-1">Report</span>
@@ -260,15 +260,15 @@ export const SavedReportsTab: React.FC<SavedReportsTabProps> = ({
               <FileText className="w-7 h-7 sm:w-9 sm:h-9 text-white" />
             </div>
             <p className="font-black text-white text-base sm:text-lg">No reports yet</p>
-            <p className="text-sm text-[#B3B3B3] mt-1 max-w-xs">Create your first damage report to see it here</p>
+            <p className="text-sm text-[#D0D0D0] mt-1 max-w-xs">Create your first damage report to see it here</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center px-6">
             <div className="w-16 h-16 rounded-full bg-[#282828] flex items-center justify-center mb-4">
-              <Search className="w-7 h-7 text-[#6A6A6A]" />
+              <Search className="w-7 h-7 text-[#9A9A9A]" />
             </div>
             <p className="font-black text-white">No results found</p>
-            <p className="text-sm text-[#B3B3B3] mt-1">Try a different search</p>
+            <p className="text-sm text-[#D0D0D0] mt-1">Try a different search</p>
           </div>
         ) : (
           filtered.map((report, idx) => (

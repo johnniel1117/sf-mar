@@ -40,7 +40,7 @@ function MetaChip({ icon, label, value, highlight }: {
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex items-center gap-1 text-[#6A6A6A]">
+      <div className="flex items-center gap-1 text-[#9A9A9A]">
         <span className="text-[#E8192C]">{icon}</span>
         <span className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold">{label}</span>
       </div>
@@ -53,7 +53,7 @@ function MetaChip({ icon, label, value, highlight }: {
 
 // ── Damage type badge ─────────────────────────────────────────────────────────
 function DamageBadge({ type }: { type: string }) {
-  if (!type) return <span className="text-[#6A6A6A] text-xs">Not specified</span>
+  if (!type) return <span className="text-[#9A9A9A] text-xs">Not specified</span>
   return (
     <span className="inline-block px-2.5 py-1 bg-[#E8192C]/15 border border-[#E8192C]/30 text-[#E8192C] rounded-full text-[10px] font-bold uppercase tracking-widest">
       {type}
@@ -107,7 +107,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
           <div className="flex justify-end mb-4">
             <button
               onClick={onClose}
-              className="p-2 rounded-full bg-[#282828] hover:bg-gray-500 text-[#B3B3B3] hover:text-white transition-all duration-150 hover:scale-105 active:scale-100"
+              className="p-2 rounded-full bg-[#282828] hover:bg-[#3E3E3E] text-[#D0D0D0] hover:text-white transition-all duration-150 hover:scale-105 active:scale-100"
             >
               <X className="w-4 h-4" />
             </button>
@@ -117,11 +117,11 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
           <div className="flex items-end gap-4 sm:gap-5">
             <ReportAvatar seed={reportId} size="lg" />
             <div className="flex-1 min-w-0 pb-1">
-              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#B3B3B3] mb-1">Damage Report</p>
+              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#D0D0D0] mb-1">Damage Report</p>
               <h2 className="text-xl sm:text-3xl font-black text-white leading-none tracking-tight truncate mb-1">
                 {reportId}
               </h2>
-              <p className="text-xs sm:text-sm text-[#B3B3B3]">{reportDate}</p>
+              <p className="text-xs sm:text-sm text-[#D0D0D0]">{reportDate}</p>
             </div>
           </div>
 
@@ -129,20 +129,20 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
           <div className="flex items-center gap-3 mt-4 flex-wrap">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-[#E8192C]" />
-              <span className="text-xs text-[#B3B3B3] font-medium">
+              <span className="text-xs text-[#D0D0D0] font-medium">
                 <span className="text-white font-bold">{totalItems}</span> item{totalItems !== 1 ? 's' : ''}
               </span>
             </div>
             {report.driver_name && (
               <>
-                <span className="text-[#6A6A6A] text-xs">·</span>
-                <span className="text-xs text-[#B3B3B3] font-medium">{report.driver_name}</span>
+                <span className="text-[#9A9A9A] text-xs">·</span>
+                <span className="text-xs text-[#D0D0D0] font-medium">{report.driver_name}</span>
               </>
             )}
             {report.plate_no && (
               <>
-                <span className="text-[#6A6A6A] text-xs">·</span>
-                <span className="text-xs text-[#B3B3B3] font-medium">{report.plate_no}</span>
+                <span className="text-[#9A9A9A] text-xs">·</span>
+                <span className="text-xs text-[#D0D0D0] font-medium">{report.plate_no}</span>
               </>
             )}
           </div>
@@ -169,7 +169,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
 
           {/* ── Trip / shipment info ── */}
           <div className="px-5 sm:px-6 py-5 border-b border-[#282828]">
-            <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A] mb-4">
+            <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-4">
               <Truck className="w-3.5 h-3.5 text-[#E8192C]" /> Shipment Details
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-4">
@@ -186,15 +186,15 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
           {/* ── Damaged items tracklist ── */}
           <div className="px-5 sm:px-6 py-5 border-b border-[#282828]">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A]">
+              <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">
                 <ClipboardList className="w-3.5 h-3.5 text-[#E8192C]" /> Damaged Items
               </h3>
-              <span className="text-xs text-[#6A6A6A]">{totalItems} item{totalItems !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-[#9A9A9A]">{totalItems} item{totalItems !== 1 ? 's' : ''}</span>
             </div>
 
             {/* Column headers */}
             {totalItems > 0 && (
-              <div className="flex items-center gap-3 px-3 pb-2 border-b border-[#282828] text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-1">
+              <div className="flex items-center gap-3 px-3 pb-2 border-b border-[#282828] text-[10px] font-bold uppercase tracking-widest text-[#9A9A9A] mb-1">
                 <span className="w-6 text-center">#</span>
                 <span className="w-8" />
                 <span className="flex-1">Description</span>
@@ -203,9 +203,9 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
             )}
 
             {totalItems === 0 ? (
-              <div className="py-10 text-center bg-[#1E1E1E] rounded-xl border-2 border-dashed border-gray-500">
-                <ClipboardList className="w-10 h-10 text-gray-500 mx-auto mb-3" />
-                <p className="text-[#6A6A6A] font-semibold text-sm">No items recorded</p>
+              <div className="py-10 text-center bg-[#1E1E1E] rounded-xl border-2 border-dashed border-[#3E3E3E]">
+                <ClipboardList className="w-10 h-10 text-[#9A9A9A] mx-auto mb-3" />
+                <p className="text-[#9A9A9A] font-semibold text-sm">No items recorded</p>
               </div>
             ) : (
               <div className="space-y-0.5">
@@ -216,7 +216,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                   >
                     {/* Track number → play icon on hover */}
                     <div className="w-6 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs text-[#6A6A6A] tabular-nums group-hover:hidden">{idx + 1}</span>
+                      <span className="text-xs text-[#9A9A9A] tabular-nums group-hover:hidden">{idx + 1}</span>
                       <Play className="w-3.5 h-3.5 text-white hidden group-hover:block fill-white" />
                     </div>
 
@@ -233,7 +233,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                       <p className="text-sm font-semibold text-white truncate group-hover:text-[#E8192C] transition-colors">
                         {item.material_description || 'Unknown Item'}
                       </p>
-                      <p className="text-[10px] text-[#6A6A6A]  truncate">
+                      <p className="text-[10px] text-[#9A9A9A]  truncate">
                         {item.barcode || item.material_code || '—'}
                       </p>
                     </div>
@@ -251,12 +251,12 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
           {/* ── Expanded item details (damage description + photo) ── */}
           {items.some((i: any) => i.damage_description || i.photo_url || i.damage_type) && (
             <div className="px-5 sm:px-6 py-5 border-b border-[#282828]">
-              <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A] mb-4">
+              <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-4">
                 <Info className="w-3.5 h-3.5 text-[#E8192C]" /> Item Details
               </h3>
               <div className="space-y-3">
                 {items.map((item: any, idx: number) => (
-                  <div key={idx} className="bg-[#1E1E1E] border border-[#282828] rounded-xl p-4 hover:border-gray-500 transition-colors">
+                  <div key={idx} className="bg-[#1E1E1E] border border-[#282828] rounded-xl p-4 hover:border-[#3E3E3E] transition-colors">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
@@ -271,19 +271,19 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
 
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Barcode / Serial</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#9A9A9A] mb-0.5">Barcode / Serial</p>
                         <p className="text-xs  text-white">{item.barcode || '—'}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-0.5">Material Code</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#9A9A9A] mb-0.5">Material Code</p>
                         <p className="text-xs  text-white">{item.material_code || '—'}</p>
                       </div>
                     </div>
 
                     {item.damage_description && (
                       <div className="mb-3">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-1">Description</p>
-                        <p className="text-xs text-[#B3B3B3] leading-relaxed bg-[#282828] rounded-lg px-3 py-2.5 border border-gray-500">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#9A9A9A] mb-1">Description</p>
+                        <p className="text-xs text-[#D0D0D0] leading-relaxed bg-[#282828] rounded-lg px-3 py-2.5 border border-[#3E3E3E]">
                           {item.damage_description}
                         </p>
                       </div>
@@ -294,7 +294,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                         href={item.photo_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-3 py-2 bg-[#282828] border border-gray-500 text-white rounded-full text-xs font-bold hover:border-white transition-all hover:scale-105 active:scale-100"
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-[#282828] border border-[#3E3E3E] text-white rounded-full text-xs font-bold hover:border-white transition-all hover:scale-105 active:scale-100"
                       >
                         <Camera className="w-3.5 h-3.5 text-[#E8192C]" /> View Photo
                       </a>
@@ -308,10 +308,10 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
           {/* ── Narrative findings ── */}
           {report.narrative_findings && (
             <div className="px-5 sm:px-6 py-5 border-b border-[#282828]">
-              <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A] mb-3">
+              <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-3">
                 <Info className="w-3.5 h-3.5 text-[#E8192C]" /> Narrative Findings
               </h3>
-              <p className="text-sm text-[#B3B3B3] leading-relaxed bg-[#1E1E1E] rounded-xl px-4 py-3 border border-[#282828]">
+              <p className="text-sm text-[#D0D0D0] leading-relaxed bg-[#1E1E1E] rounded-xl px-4 py-3 border border-[#282828]">
                 {report.narrative_findings}
               </p>
             </div>
@@ -319,7 +319,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
 
           {/* ── Personnel ── */}
           <div className="px-5 sm:px-6 py-5">
-            <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#6A6A6A] mb-4">
+            <h3 className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-4">
               <Users className="w-3.5 h-3.5 text-[#E8192C]" /> Personnel
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -328,10 +328,10 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                 { role: 'Noted By',    name: report.noted_by,    sub: 'Security Guard' },
                 { role: 'Acknowledged By', name: report.acknowledged_by, sub: 'Supervisor' },
               ].map(({ role, name, sub }) => (
-                <div key={role} className="bg-[#1E1E1E] border border-[#282828] rounded-xl p-4 hover:border-gray-500 transition-colors">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#6A6A6A] mb-1">{role}</p>
+                <div key={role} className="bg-[#1E1E1E] border border-[#282828] rounded-xl p-4 hover:border-[#3E3E3E] transition-colors">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#9A9A9A] mb-1">{role}</p>
                   <p className="text-sm font-bold text-white">{name || '—'}</p>
-                  <p className="text-[10px] text-[#6A6A6A] mt-1">{sub}</p>
+                  <p className="text-[10px] text-[#9A9A9A] mt-1">{sub}</p>
                 </div>
               ))}
             </div>

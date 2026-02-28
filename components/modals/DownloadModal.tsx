@@ -22,18 +22,18 @@ export function DownloadModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#1E1E1E] border border-gray-500 rounded-2xl shadow-2xl w-full max-w-sm p-6"
+        className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-2xl shadow-2xl w-full max-w-sm p-6"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-base font-black text-white">Download Report</h3>
-            <p className="text-xs text-[#6A6A6A] mt-0.5">Choose your export format</p>
+            <p className="text-xs text-[#9A9A9A] mt-0.5">Choose your export format</p>
           </div>
           {/* <button
             onClick={onClose}
-            className="p-2 rounded-full bg-[#282828] hover:bg-gray-500 text-[#B3B3B3] hover:text-white transition-all hover:scale-105 active:scale-100"
+            className="p-2 rounded-full bg-[#282828] hover:bg-[#3E3E3E] text-[#D0D0D0] hover:text-white transition-all hover:scale-105 active:scale-100"
           >
             <X className="w-4 h-4" />
           </button> */}
@@ -53,7 +53,7 @@ export function DownloadModal({
                 className={`w-full flex items-center gap-4 p-4 border rounded-xl transition-all duration-150 text-left ${
                   active
                     ? 'border-[#E8192C]/50 bg-[#E8192C]/8'
-                    : 'border-gray-500 hover:border-[#E8192C]/30 hover:bg-[#282828]'
+                    : 'border-[#3E3E3E] hover:border-[#E8192C]/30 hover:bg-[#282828]'
                 }`}
               >
                 {/* Radio dot */}
@@ -62,10 +62,10 @@ export function DownloadModal({
                 }`}>
                   {active && <div className="w-2.5 h-2.5 rounded-full bg-[#E8192C]" />}
                 </div>
-                <opt.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-[#E8192C]' : 'text-[#6A6A6A]'}`} />
+                <opt.icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-[#E8192C]' : 'text-[#9A9A9A]'}`} />
                 <div>
                   <p className="text-sm font-bold text-white">{opt.label}</p>
-                  <p className="text-xs text-[#6A6A6A]">{opt.desc}</p>
+                  <p className="text-xs text-[#9A9A9A]">{opt.desc}</p>
                 </div>
               </button>
             )
@@ -76,7 +76,7 @@ export function DownloadModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-gray-500 text-[#B3B3B3] rounded-full text-sm font-semibold hover:border-white hover:text-white transition-all"
+            className="flex-1 px-4 py-2.5 border border-[#3E3E3E] text-[#D0D0D0] rounded-full text-sm font-semibold hover:border-white hover:text-white transition-all"
           >
             Cancel
           </button>

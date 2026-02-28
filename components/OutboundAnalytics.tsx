@@ -36,7 +36,7 @@ function calcDelta(curr: number, prev: number): number | null {
 // ── Delta badge ───────────────────────────────────────────────────────────────
 
 function DeltaBadge({ value }: { value: number | null }) {
-  if (value === null) return <span className="text-[10px] text-gray-500 font-bold">—</span>
+  if (value === null) return <span className="text-[10px] text-[#9A9A9A] font-bold">—</span>
   const pos = value >= 0
   return (
     <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold tabular-nums ${pos ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -67,7 +67,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
       </div>
 
       {allZero ? (
-        <div className="h-[220px] flex items-center justify-center text-gray-500 text-xs font-bold uppercase tracking-widest">
+        <div className="h-[220px] flex items-center justify-center text-[#9A9A9A] text-xs font-bold uppercase tracking-widest">
           No data for the last 6 months
         </div>
       ) : (
@@ -109,15 +109,15 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                     <div className="bg-black border border-[#282828] px-4 py-3 shadow-2xl text-center min-w-[140px]">
                       <p className="text-white font-black text-base tabular-nums">
                         {val.toLocaleString()}
-                        <span className="text-[#6A6A6A] text-xs ml-2 font-normal">{metricUnit[activeMetric]}</span>
+                        <span className="text-[#9A9A9A] text-xs ml-2 font-normal">{metricUnit[activeMetric]}</span>
                       </p>
                       {delta !== null && (
                         <div className="flex items-center justify-center gap-1.5 mt-1.5">
                           <DeltaBadge value={delta} />
-                          <span className="text-[#6A6A6A] text-[10px]">vs prev</span>
+                          <span className="text-[#9A9A9A] text-[10px]">vs prev</span>
                         </div>
                       )}
-                      <p className="text-gray-500 text-[10px] mt-1 uppercase tracking-widest font-bold">{d.label} {d.year}</p>
+                      <p className="text-[#9A9A9A] text-[10px] mt-1 uppercase tracking-widest font-bold">{d.label} {d.year}</p>
                     </div>
                   </div>
                 )}
@@ -137,7 +137,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
 
                 {/* Label */}
                 <span className={`text-[9px] font-bold leading-none pt-1.5 ${
-                  isCurr ? 'text-[#F5A623]' : isPrev ? 'text-[#8a6820]' : isHovered ? 'text-[#B3B3B3]' : 'text-gray-500'
+                  isCurr ? 'text-[#F5A623]' : isPrev ? 'text-[#8a6820]' : isHovered ? 'text-[#D0D0D0]' : 'text-[#9A9A9A]'
                 }`}>
                   {d.label}
                 </span>
@@ -177,15 +177,15 @@ function TopDestinations({ manifests }: { manifests: TripManifest[] }) {
         <div key={dest.name} className="group py-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4 min-w-0">
-              <span className="text-[11px]  font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+              <span className="text-[11px]  font-bold text-[#5A5A5A] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
                 {String(i + 1).padStart(2, '0')}
               </span>
-              <span className="text-[15px] font-black text-[#B3B3B3] truncate group-hover:text-white transition-colors">
+              <span className="text-[15px] font-black text-[#D0D0D0] truncate group-hover:text-white transition-colors">
                 {dest.name}
               </span>
             </div>
             <div className="flex items-center gap-5 flex-shrink-0 ml-4">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500 hidden sm:block">{dest.docs} doc{dest.docs !== 1 ? 's' : ''}</span>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] hidden sm:block">{dest.docs} doc{dest.docs !== 1 ? 's' : ''}</span>
               <span className="text-2xl font-black text-white tabular-nums">{dest.qty.toLocaleString()}</span>
             </div>
           </div>
@@ -249,11 +249,11 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
     <div className="space-y-10">
       {/* Trucking companies */}
       <div>
-        <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-6">Trucking companies</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-6">Trucking companies</p>
         <div className="divide-y divide-[#1a1a1a]">
           {truckers.map((t, i) => (
             <div key={t.name} className="group flex items-center gap-5 sm:gap-6 py-5 sm:py-6 transition-all duration-200 hover:pl-1.5">
-              <span className="text-[11px]  font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+              <span className="text-[11px]  font-bold text-[#5A5A5A] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
                 {String(i + 1).padStart(2, '0')}
               </span>
               <div
@@ -263,8 +263,8 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
                 {t.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[15px] font-black text-[#B3B3B3] group-hover:text-white transition-colors truncate">{t.name}</p>
-                <p className="text-[12px] text-gray-500 mt-0.5 group-hover:text-[#6A6A6A] transition-colors hidden sm:block">{t.qty.toLocaleString()} units</p>
+                <p className="text-[15px] font-black text-[#D0D0D0] group-hover:text-white transition-colors truncate">{t.name}</p>
+                <p className="text-[12px] text-[#9A9A9A] mt-0.5 group-hover:text-[#9A9A9A] transition-colors hidden sm:block">{t.qty.toLocaleString()} units</p>
               </div>
               <p className="text-2xl font-black text-white tabular-nums flex-shrink-0">{t.trips}</p>
             </div>
@@ -275,12 +275,12 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
       {/* Top drivers */}
       {drivers.length > 0 && (
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-6">Top drivers</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-6">Top drivers</p>
           <div className="divide-y divide-[#1a1a1a]">
             {drivers.map(([name, trips], i) => (
               <div key={name} className="flex items-center justify-between py-4">
-                <span className={`text-[13px] font-semibold ${i === 0 ? 'text-white' : 'text-[#B3B3B3]'}`}>{name}</span>
-                <span className="text-[13px] font-black text-[#6A6A6A] tabular-nums">{trips} trip{trips !== 1 ? 's' : ''}</span>
+                <span className={`text-[13px] font-semibold ${i === 0 ? 'text-white' : 'text-[#D0D0D0]'}`}>{name}</span>
+                <span className="text-[13px] font-black text-[#9A9A9A] tabular-nums">{trips} trip{trips !== 1 ? 's' : ''}</span>
               </div>
             ))}
           </div>
@@ -290,7 +290,7 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
       {/* Truck types */}
       {truckTypes.length > 0 && (
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-4">Truck types</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-4">Truck types</p>
           <div className="flex flex-wrap gap-2">
             {truckTypes.map(([type, count], i) => (
               <span
@@ -302,7 +302,7 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
                 }`}
               >
                 {type}
-                <span className="font-black text-gray-500">×{count}</span>
+                <span className="font-black text-[#9A9A9A]">×{count}</span>
               </span>
             ))}
           </div>
@@ -339,17 +339,17 @@ function RecentActivity({ manifests }: { manifests: TripManifest[] }) {
             <div className="flex items-center gap-5 min-w-0">
               <div className="w-1.5 h-1.5 rounded-full bg-[#282828] group-hover:bg-[#E8192C] transition-colors flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-[13px] font-black text-[#B3B3B3] truncate group-hover:text-white transition-colors">
+                <p className="text-[13px] font-black text-[#D0D0D0] truncate group-hover:text-white transition-colors">
                   {m.manifest_number || m.id?.slice(0, 8) || '—'}
                 </p>
-                <p className="text-[11px] text-gray-500 mt-0.5 truncate group-hover:text-[#6A6A6A] transition-colors">
+                <p className="text-[11px] text-[#9A9A9A] mt-0.5 truncate group-hover:text-[#9A9A9A] transition-colors">
                   {m.driver_name || 'No driver'}{m.trucker ? ` · ${m.trucker}` : ''}
                 </p>
               </div>
             </div>
             <div className="text-right flex-shrink-0">
               <p className="text-2xl font-black text-white tabular-nums">{qty.toLocaleString()}</p>
-              <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500">{date}</p>
+              <p className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">{date}</p>
             </div>
           </div>
         )
@@ -363,8 +363,8 @@ function RecentActivity({ manifests }: { manifests: TripManifest[] }) {
 function EmptyState({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-      <TrendingUp className="w-5 h-5 text-[#282828]" />
-      <p className="text-sm font-bold text-gray-500">{label}</p>
+      <TrendingUp className="w-5 h-5 text-[#5A5A5A]" />
+      <p className="text-sm font-bold text-[#9A9A9A]">{label}</p>
     </div>
   )
 }
@@ -417,7 +417,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
             </h2>
           </div>
           <div className="text-right hidden sm:block">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-gray-500 mb-1.5">All-time units</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-1.5">All-time units</p>
             <p className="text-5xl font-black text-white tabular-nums leading-none">{totalAllTime.toLocaleString()}</p>
           </div>
         </div>
@@ -433,12 +433,12 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
               }`}
             >
               <p className={`text-[10px] uppercase tracking-widest font-bold mb-2 transition-colors ${
-                activeMetric === key ? 'text-[#E8192C]' : 'text-gray-500 group-hover:text-[#6A6A6A]'
+                activeMetric === key ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-[#9A9A9A]'
               }`}>{label}</p>
               <p className="text-xl sm:text-2xl font-black text-white tabular-nums leading-none">{value}</p>
               <div className="flex items-center gap-1.5 mt-2">
                 <DeltaBadge value={delta} />
-                {delta !== null && <span className="text-[10px] text-gray-500">MoM</span>}
+                {delta !== null && <span className="text-[10px] text-[#9A9A9A]">MoM</span>}
               </div>
             </button>
           ))}
@@ -454,7 +454,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
             className={`py-4 mr-7 text-[11px] font-bold uppercase tracking-[0.2em] border-b-2 transition-all duration-150 -mb-px ${
               activeTab === key
                 ? 'border-[#E8192C] text-white'
-                : 'border-transparent text-gray-500 hover:text-[#B3B3B3]'
+                : 'border-transparent text-[#9A9A9A] hover:text-[#D0D0D0]'
             }`}
           >
             {label}
@@ -471,7 +471,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
 
             {/* Bar chart */}
             <div>
-              <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-6">
+              <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-6">
                 Last 6 months — {METRICS.find(m => m.key === activeMetric)?.label}
               </p>
               <BarGraph data={monthlyData} activeMetric={activeMetric} />
@@ -487,7 +487,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
                   { label: 'Total docs',     value: totalDocs.toLocaleString(),      icon: <FileText  className="w-3.5 h-3.5" /> },
                 ].map(({ label, value, icon }) => (
                   <div key={label} className="px-5 py-6 first:pl-0 last:pr-0">
-                    <div className="flex items-center gap-1.5 text-gray-500 mb-2">
+                    <div className="flex items-center gap-1.5 text-[#9A9A9A] mb-2">
                       {icon}
                       <span className="text-[9px] uppercase tracking-widest font-bold">{label}</span>
                     </div>
@@ -499,12 +499,12 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
 
             {/* Monthly breakdown table */}
             <div>
-              <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-5">Monthly breakdown</p>
+              <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-5">Monthly breakdown</p>
               <div className="border-t border-[#1a1a1a]">
                 {/* Table header */}
                 <div className="grid grid-cols-5 border-b border-[#1a1a1a] pb-3 pt-4">
                   {['Month', 'Qty', 'Trips', 'Docs', 'Avg/trip'].map(h => (
-                    <span key={h} className="text-[10px] uppercase tracking-widest font-bold text-gray-500">{h}</span>
+                    <span key={h} className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">{h}</span>
                   ))}
                 </div>
 
@@ -520,7 +520,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
                         key={d.label}
                         className={`grid grid-cols-5 py-4 transition-colors ${isCurr ? 'bg-[#E8192C]/4' : 'hover:bg-[#0a0a0a]'}`}
                       >
-                        <span className={`text-[13px] font-black ${isCurr ? 'text-[#E8192C]' : 'text-[#B3B3B3]'}`}>
+                        <span className={`text-[13px] font-black ${isCurr ? 'text-[#E8192C]' : 'text-[#D0D0D0]'}`}>
                           {d.label}
                           {isCurr && <span className="ml-2 text-[9px] text-[#E8192C]/50 font-bold uppercase tracking-widest">now</span>}
                         </span>
@@ -532,9 +532,9 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
                             </span>
                           )}
                         </span>
-                        <span className="text-[13px] text-[#6A6A6A] tabular-nums">{d.totalTrips}</span>
-                        <span className="text-[13px] text-[#6A6A6A] tabular-nums">{d.totalDocs}</span>
-                        <span className="text-[13px] text-gray-500 tabular-nums">{avg || '—'}</span>
+                        <span className="text-[13px] text-[#9A9A9A] tabular-nums">{d.totalTrips}</span>
+                        <span className="text-[13px] text-[#9A9A9A] tabular-nums">{d.totalDocs}</span>
+                        <span className="text-[13px] text-[#9A9A9A] tabular-nums">{avg || '—'}</span>
                       </div>
                     )
                   })}
@@ -546,7 +546,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
 
         {activeTab === 'destinations' && (
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-2">Top destinations</p>
+            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-2">Top destinations</p>
             <TopDestinations manifests={manifests} />
           </div>
         )}
@@ -555,7 +555,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
 
         {activeTab === 'activity' && (
           <div>
-            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 mb-2">Recent manifests</p>
+            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] mb-2">Recent manifests</p>
             <RecentActivity manifests={manifests} />
           </div>
         )}
@@ -614,10 +614,10 @@ export function OutboundQuickCard({ manifests, onClick }: { manifests: TripManif
 
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-gray-500 group-hover:text-[#F5A623] transition-colors mb-1">Outbound</p>
-          <p className="text-xs text-gray-500">Analytics</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A] group-hover:text-[#F5A623] transition-colors mb-1">Outbound</p>
+          <p className="text-xs text-[#9A9A9A]">Analytics</p>
         </div>
-        <ArrowUpRight className="w-4 h-4 text-[#282828] group-hover:text-[#F5A623] transition-colors" />
+        <ArrowUpRight className="w-4 h-4 text-[#5A5A5A] group-hover:text-[#F5A623] transition-colors" />
       </div>
     </button>
   )

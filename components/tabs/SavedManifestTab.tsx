@@ -34,7 +34,7 @@ function FilterDropdown({ selectedMonth, onMonthChange, months }: {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="h-9 px-3 sm:px-4 border border-[#282828] text-[11px] font-bold uppercase tracking-widest text-[#6A6A6A] hover:border-gray-500 hover:text-[#B3B3B3] transition-all flex items-center gap-1.5 whitespace-nowrap"
+        className="h-9 px-3 sm:px-4 border border-[#282828] text-[11px] font-bold uppercase tracking-widest text-[#9A9A9A] hover:border-[#3E3E3E] hover:text-[#D0D0D0] transition-all flex items-center gap-1.5 whitespace-nowrap"
       >
         <Calendar className="w-3 h-3 text-[#E8192C] flex-shrink-0" />
         <span className="hidden sm:inline">{selectedMonth}</span>
@@ -50,7 +50,7 @@ function FilterDropdown({ selectedMonth, onMonthChange, months }: {
               className={`w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-widest transition-colors ${
                 selectedMonth === month
                   ? 'text-[#E8192C] bg-[#E8192C]/6'
-                  : 'text-[#6A6A6A] hover:bg-[#0a0a0a] hover:text-[#B3B3B3]'
+                  : 'text-[#9A9A9A] hover:bg-[#0a0a0a] hover:text-[#D0D0D0]'
               }`}
             >
               {month}
@@ -87,46 +87,46 @@ function ManifestRow({
         onClick={onToggle}
       >
         {/* Index */}
-        <span className="hidden sm:block text-[11px]  font-bold text-[#282828] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+        <span className="hidden sm:block text-[11px]  font-bold text-[#5A5A5A] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
           {String(index + 1).padStart(2, '0')}
         </span>
 
         {/* Title + subtitle */}
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-black text-[#B3B3B3] truncate group-hover:text-white transition-colors leading-snug">
+          <p className="text-[15px] font-black text-[#D0D0D0] truncate group-hover:text-white transition-colors leading-snug">
             {manifestId}
           </p>
-          <p className="text-[12px] text-gray-500 mt-0.5 truncate group-hover:text-[#6A6A6A] transition-colors">
+          <p className="text-[12px] text-[#9A9A9A] mt-0.5 truncate group-hover:text-[#9A9A9A] transition-colors">
             {manifest.driver_name || 'No driver'}
             {manifest.plate_no ? ` · ${manifest.plate_no}` : ''}
           </p>
         </div>
 
         {/* Date */}
-        <span className="hidden sm:block text-[11px] font-bold text-gray-500 group-hover:text-[#6A6A6A] transition-colors flex-shrink-0 w-28 text-right tabular-nums">
+        <span className="hidden sm:block text-[11px] font-bold text-[#9A9A9A] group-hover:text-[#9A9A9A] transition-colors flex-shrink-0 w-28 text-right tabular-nums">
           {manifestDate}
         </span>
 
         {/* Qty */}
-        <span className="flex-shrink-0 text-2xl font-black text-[#B3B3B3] group-hover:text-white transition-colors tabular-nums w-12 text-right leading-none">
+        <span className="flex-shrink-0 text-2xl font-black text-[#D0D0D0] group-hover:text-white transition-colors tabular-nums w-12 text-right leading-none">
           {totalQty}
         </span>
 
         {/* Docs */}
-        <span className="hidden sm:block flex-shrink-0 text-[11px] font-bold text-gray-500 w-10 text-center tabular-nums uppercase tracking-widest">
+        <span className="hidden sm:block flex-shrink-0 text-[11px] font-bold text-[#9A9A9A] w-10 text-center tabular-nums uppercase tracking-widest">
           {totalDocs}d
         </span>
 
         {/* Chevron */}
         <ChevronRight
-          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90 text-[#E8192C]' : 'text-[#282828] group-hover:text-[#B3B3B3]'}`}
+          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90 text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#D0D0D0]'}`}
         />
 
         {/* Delete */}
         {!isViewer && (
           <button
             onClick={(e) => { e.stopPropagation(); onDelete() }}
-            className="flex-shrink-0 p-1.5 text-[#282828] hover:text-[#E8192C] transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+            className="flex-shrink-0 p-1.5 text-[#5A5A5A] hover:text-[#E8192C] transition-colors sm:opacity-0 sm:group-hover:opacity-100"
             title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -156,15 +156,15 @@ function ManifestRow({
               {/* Table header */}
               <div className="grid grid-cols-4 border-b border-[#1a1a1a] py-3">
                 {['#', 'Ship To', 'DN / TRA', 'Qty'].map(h => (
-                  <span key={h} className="text-[10px] uppercase tracking-widest font-bold text-gray-500">{h}</span>
+                  <span key={h} className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">{h}</span>
                 ))}
               </div>
               <div className="divide-y divide-[#1a1a1a]">
                 {manifest.items!.map((item, idx) => (
                   <div key={idx} className="grid grid-cols-4 py-3.5 group/row hover:pl-1 transition-all duration-150">
-                    <span className="text-[11px]  font-bold text-[#282828] group-hover/row:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
-                    <span className="text-[13px] font-semibold text-[#B3B3B3] truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1">{item.ship_to_name || '—'}</span>
-                    <span className="text-[13px]  text-[#6A6A6A] truncate hidden sm:block">{item.document_number || '—'}</span>
+                    <span className="text-[11px]  font-bold text-[#5A5A5A] group-hover/row:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
+                    <span className="text-[13px] font-semibold text-[#D0D0D0] truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1">{item.ship_to_name || '—'}</span>
+                    <span className="text-[13px]  text-[#9A9A9A] truncate hidden sm:block">{item.document_number || '—'}</span>
                     <span className="text-[13px] font-black text-white tabular-nums text-right sm:text-left">{item.total_quantity ?? 0}</span>
                   </div>
                 ))}
@@ -183,14 +183,14 @@ function ManifestRow({
             {!isViewer && (
               <button
                 onClick={onEdit}
-                className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#282828] text-[#B3B3B3] text-[11px] font-bold uppercase tracking-widest hover:border-[#B3B3B3] hover:text-white transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#282828] text-[#D0D0D0] text-[11px] font-bold uppercase tracking-widest hover:border-[#B3B3B3] hover:text-white transition-all"
               >
                 <Edit className="w-3.5 h-3.5" /> Edit
               </button>
             )}
             <button
               onClick={onDownload}
-              className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#282828] text-[#B3B3B3] text-[11px] font-bold uppercase tracking-widest hover:border-[#B3B3B3] hover:text-white transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#282828] text-[#D0D0D0] text-[11px] font-bold uppercase tracking-widest hover:border-[#B3B3B3] hover:text-white transition-all"
             >
               <Download className="w-3.5 h-3.5 text-[#E8192C]" /> Download
             </button>
@@ -208,7 +208,7 @@ function DetailItem({ icon, label, value, mono, highlight }: {
 }) {
   return (
     <div>
-      <div className="flex items-center gap-1.5 text-gray-500 mb-1.5">
+      <div className="flex items-center gap-1.5 text-[#9A9A9A] mb-1.5">
         <span className="text-[#E8192C]">{icon}</span>
         <span className="text-[10px] uppercase tracking-widest font-bold">{label}</span>
       </div>
@@ -418,14 +418,14 @@ export function SavedManifestsTab({
             <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-black text-white leading-[0.93] tracking-tight">
               {savedManifests.length} manifest{savedManifests.length !== 1 ? 's' : ''}
             </h2>
-            <p className="text-[12px] text-gray-500 mt-2">SF Express · Cebu Warehouse</p>
+            <p className="text-[12px] text-[#9A9A9A] mt-2">SF Express · Cebu Warehouse</p>
           </div>
 
           <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
             <button
               onClick={handleDownloadMonitoring}
               disabled={filteredManifests.length === 0}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-[#282828] text-[#B3B3B3] text-[11px] font-bold uppercase tracking-widest hover:border-[#B3B3B3] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-[#282828] text-[#D0D0D0] text-[11px] font-bold uppercase tracking-widest hover:border-[#B3B3B3] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <BarChart2 className="w-3.5 h-3.5 text-[#E8192C]" />
               Monitoring
@@ -444,18 +444,18 @@ export function SavedManifestsTab({
         {/* Search + Filter */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9A9A9A]" />
             <input
               type="text"
               placeholder="Search manifests…"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-              className="w-full h-9 pl-9 pr-8 bg-transparent border border-[#282828] text-[13px] text-white placeholder-gray-500 focus:outline-none focus:border-[#6A6A6A] transition-colors"
+              className="w-full h-9 pl-9 pr-8 bg-transparent border border-[#282828] text-[13px] text-white placeholder-[#3E3E3E] focus:outline-none focus:border-[#6A6A6A] transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={() => { setSearchQuery(''); setCurrentPage(1) }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9A9A9A] hover:text-white transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -469,7 +469,7 @@ export function SavedManifestsTab({
         </div>
 
         {(searchQuery || selectedMonth !== 'All Months') && (
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-3">
+          <p className="text-[11px] font-bold text-[#9A9A9A] uppercase tracking-widest mt-3">
             {filteredManifests.length} result{filteredManifests.length !== 1 ? 's' : ''}
           </p>
         )}
@@ -477,12 +477,12 @@ export function SavedManifestsTab({
 
       {/* ── Column headers ── */}
       {filteredManifests.length > 0 && (
-        <div className="flex items-center gap-3 sm:gap-5 px-5 sm:px-8 py-3 border-b border-[#1a1a1a] flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+        <div className="flex items-center gap-3 sm:gap-5 px-5 sm:px-8 py-3 border-b border-[#1a1a1a] flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#9A9A9A]">
           <span className="hidden sm:block w-5">No.</span>
           <span className="flex-1">Title</span>
           <button
             onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
-            className="hidden sm:flex items-center justify-end gap-1 w-28 hover:text-[#B3B3B3] transition-colors cursor-pointer"
+            className="hidden sm:flex items-center justify-end gap-1 w-28 hover:text-[#D0D0D0] transition-colors cursor-pointer"
             title={sortDir === 'desc' ? 'Newest first' : 'Oldest first'}
           >
             Date
@@ -499,18 +499,18 @@ export function SavedManifestsTab({
       <div className="flex-1 overflow-y-auto min-h-0">
         {savedManifests.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-8 gap-4">
-            <FileText className="w-8 h-8 text-[#282828]" />
+            <FileText className="w-8 h-8 text-[#5A5A5A]" />
             <div>
-              <p className="font-black text-gray-500 text-base">No manifests yet</p>
-              <p className="text-[12px] text-[#282828] mt-1 max-w-xs">Create your first trip manifest to see it here</p>
+              <p className="font-black text-[#9A9A9A] text-base">No manifests yet</p>
+              <p className="text-[12px] text-[#5A5A5A] mt-1 max-w-xs">Create your first trip manifest to see it here</p>
             </div>
           </div>
         ) : filteredManifests.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-8 gap-4">
-            <Search className="w-8 h-8 text-[#282828]" />
+            <Search className="w-8 h-8 text-[#5A5A5A]" />
             <div>
-              <p className="font-black text-gray-500 text-base">No results found</p>
-              <p className="text-[12px] text-[#282828] mt-1">Try adjusting your search or filter</p>
+              <p className="font-black text-[#9A9A9A] text-base">No results found</p>
+              <p className="text-[12px] text-[#5A5A5A] mt-1">Try adjusting your search or filter</p>
             </div>
           </div>
         ) : (
@@ -534,14 +534,14 @@ export function SavedManifestsTab({
       {/* ── Pagination ── */}
       {totalPages > 1 && (
         <div className="flex-shrink-0 px-5 sm:px-8 py-4 border-t border-[#1a1a1a] flex items-center justify-between gap-3">
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest tabular-nums">
+          <p className="text-[11px] font-bold text-[#9A9A9A] uppercase tracking-widest tabular-nums">
             <span className="text-white">{currentPage}</span> / {totalPages}
           </p>
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1.5 border border-[#282828] text-[11px] font-bold uppercase tracking-widest text-[#6A6A6A] hover:border-[#6A6A6A] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="px-3 py-1.5 border border-[#282828] text-[11px] font-bold uppercase tracking-widest text-[#9A9A9A] hover:border-[#6A6A6A] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >‹ Prev</button>
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(p => Math.abs(p - currentPage) <= 1)
@@ -552,14 +552,14 @@ export function SavedManifestsTab({
                   className={`w-8 h-8 text-[11px] font-black uppercase tracking-widest transition-all ${
                     currentPage === page
                       ? 'bg-[#E8192C] text-white border border-[#E8192C]'
-                      : 'border border-[#282828] text-[#6A6A6A] hover:border-[#6A6A6A] hover:text-white'
+                      : 'border border-[#282828] text-[#9A9A9A] hover:border-[#6A6A6A] hover:text-white'
                   }`}
                 >{page}</button>
               ))}
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1.5 border border-[#282828] text-[11px] font-bold uppercase tracking-widest text-[#6A6A6A] hover:border-[#6A6A6A] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="px-3 py-1.5 border border-[#282828] text-[11px] font-bold uppercase tracking-widest text-[#9A9A9A] hover:border-[#6A6A6A] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >Next ›</button>
           </div>
         </div>

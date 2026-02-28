@@ -59,7 +59,7 @@ export function ConfirmationModal({
           </h2>
 
           {/* Message */}
-          <p className="text-[12px]  text-gray-500 leading-relaxed">
+          <p className="text-[12px]  text-[#9A9A9A] leading-relaxed">
             {message}
           </p>
 
@@ -76,7 +76,7 @@ export function ConfirmationModal({
         <div className="flex gap-3 px-7 py-5">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 border border-[#1a1a1a] text-[#6A6A6A] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-gray-500 hover:text-white transition-all"
+            className="flex-1 py-2.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
           >
             {cancelText}
           </button>
