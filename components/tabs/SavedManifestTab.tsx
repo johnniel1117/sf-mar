@@ -413,8 +413,18 @@ export function SavedManifestsTab({
 
         {/* Title + actions */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-5 mb-7">
+          
           <div>
-            <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-[#F5A623] mb-3">Trip manifests</p>
+
+            <div className="flex items-center gap-2.5 mb-3">
+              {/* Live indicator */}
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E8192C] opacity-50" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E8192C]" />
+              </span>
+              <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-[#F5A623]">Trip Manifest</p>
+            </div>
+            
             <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-black text-white leading-[0.93] tracking-tight">
               {savedManifests.length} manifest{savedManifests.length !== 1 ? 's' : ''}
             </h2>
