@@ -87,7 +87,7 @@ function ManifestRow({
         onClick={onToggle}
       >
         {/* Index */}
-        <span className="hidden sm:block text-[11px]  font-bold text-[#5A5A5A] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+        <span className="hidden sm:block text-[11px] font-bold text-[#777777] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
           {String(index + 1).padStart(2, '0')}
         </span>
 
@@ -119,14 +119,14 @@ function ManifestRow({
 
         {/* Chevron */}
         <ChevronRight
-          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90 text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#D0D0D0]'}`}
+          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90 text-[#E8192C]' : 'text-[#777777] group-hover:text-[#D0D0D0]'}`}
         />
 
         {/* Delete */}
         {!isViewer && (
           <button
             onClick={(e) => { e.stopPropagation(); onDelete() }}
-            className="flex-shrink-0 p-1.5 text-[#5A5A5A] hover:text-[#E8192C] transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+            className="flex-shrink-0 p-1.5 text-[#777777] hover:text-[#E8192C] transition-colors sm:opacity-0 sm:group-hover:opacity-100"
             title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -139,7 +139,7 @@ function ManifestRow({
         <div className="border-t border-[#1a1a1a] px-5 sm:px-8 py-6 sm:py-8">
 
           {/* Detail grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5 mb-7 sm:mb-8">
+          {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5 mb-7 sm:mb-8">
             <DetailItem icon={<Calendar className="w-3.5 h-3.5" />} label="Date"       value={manifestDate}                  />
             <DetailItem icon={<User     className="w-3.5 h-3.5" />} label="Driver"     value={manifest.driver_name || '—'}   />
             <DetailItem icon={<Hash     className="w-3.5 h-3.5" />} label="Plate"      value={manifest.plate_no    || '—'}   mono />
@@ -148,7 +148,7 @@ function ManifestRow({
             <DetailItem icon={<Clock    className="w-3.5 h-3.5" />} label="Start"      value={manifest.time_start  || '—'}   />
             <DetailItem icon={<Clock    className="w-3.5 h-3.5" />} label="End"        value={manifest.time_end    || '—'}   />
             <DetailItem icon={<Package  className="w-3.5 h-3.5" />} label="Total qty"  value={String(totalQty)}               highlight />
-          </div>
+          </div> */}
 
           {/* Items table */}
           {(manifest.items?.length ?? 0) > 0 && (
@@ -162,9 +162,9 @@ function ManifestRow({
               <div className="divide-y divide-[#1a1a1a]">
                 {manifest.items!.map((item, idx) => (
                   <div key={idx} className="grid grid-cols-4 py-3.5 group/row hover:pl-1 transition-all duration-150">
-                    <span className="text-[11px]  font-bold text-[#5A5A5A] group-hover/row:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
+                    <span className="text-[11px] font-bold text-[#777777] group-hover/row:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
                     <span className="text-[13px] font-semibold text-[#D0D0D0] truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1">{item.ship_to_name || '—'}</span>
-                    <span className="text-[13px]  text-[#9A9A9A] truncate hidden sm:block">{item.document_number || '—'}</span>
+                    <span className="text-[13px] text-[#9A9A9A] truncate hidden sm:block">{item.document_number || '—'}</span>
                     <span className="text-[13px] font-black text-white tabular-nums text-right sm:text-left">{item.total_quantity ?? 0}</span>
                   </div>
                 ))}
@@ -450,7 +450,7 @@ export function SavedManifestsTab({
               placeholder="Search manifests…"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-              className="w-full h-9 pl-9 pr-8 bg-transparent border border-[#282828] text-[13px] text-white placeholder-[#3E3E3E] focus:outline-none focus:border-[#6A6A6A] transition-colors"
+              className="w-full h-9 pl-9 pr-8 bg-transparent border border-[#282828] text-[13px] text-white placeholder-[#555555] focus:outline-none focus:border-[#6A6A6A] transition-colors"
             />
             {searchQuery && (
               <button
@@ -499,18 +499,18 @@ export function SavedManifestsTab({
       <div className="flex-1 overflow-y-auto min-h-0">
         {savedManifests.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-8 gap-4">
-            <FileText className="w-8 h-8 text-[#5A5A5A]" />
+            <FileText className="w-8 h-8 text-[#777777]" />
             <div>
               <p className="font-black text-[#9A9A9A] text-base">No manifests yet</p>
-              <p className="text-[12px] text-[#5A5A5A] mt-1 max-w-xs">Create your first trip manifest to see it here</p>
+              <p className="text-[12px] text-[#666666] mt-1 max-w-xs">Create your first trip manifest to see it here</p>
             </div>
           </div>
         ) : filteredManifests.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-8 gap-4">
-            <Search className="w-8 h-8 text-[#5A5A5A]" />
+            <Search className="w-8 h-8 text-[#777777]" />
             <div>
               <p className="font-black text-[#9A9A9A] text-base">No results found</p>
-              <p className="text-[12px] text-[#5A5A5A] mt-1">Try adjusting your search or filter</p>
+              <p className="text-[12px] text-[#666666] mt-1">Try adjusting your search or filter</p>
             </div>
           </div>
         ) : (

@@ -115,20 +115,24 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
   const metricUnit: Record<Metric, string> = { totalQty: 'units', totalTrips: 'trips', totalDocs: 'docs' }
   const allZero = values.every(v => v === 0)
 
+  const CHART_H = 280  // fixed pixel height of the bar area
+  const LABEL_H = 28   // height reserved for labels below
+
   if (allZero) {
     return (
-      <div className="h-[200px] flex items-center justify-center">
+      <div className="flex items-center justify-center" style={{ height: CHART_H + LABEL_H }}>
         <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-[#666]">No data for the last 6 months</p>
       </div>
     )
   }
 
   return (
-    <div ref={ref} className="relative w-full select-none">
-      {/* Y-axis gridlines */}
-      <div className="absolute left-0 right-0 flex flex-col justify-between pointer-events-none" style={{ top: 0, bottom: 28 }}>
+    <div ref={ref} className="relative w-full select-none" style={{ height: CHART_H + LABEL_H }}>
+      
+      {/* Y-axis gridlines — inside the bar area only */}
+      <div className="absolute left-0 right-0 pointer-events-none" style={{ top: 0, height: CHART_H }}>
         {[100, 75, 50, 25].map(p => (
-          <div key={p} className="relative w-full">
+          <div key={p} className="absolute w-full" style={{ bottom: `${p}%` }}>
             <div className="w-full border-t border-[#111]" />
             <span className="absolute right-0 top-0 -translate-y-full pb-1 text-[9px] font-mono text-[#666] leading-none">
               {Math.round((p / 100) * max).toLocaleString()}
@@ -137,16 +141,17 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
         ))}
       </div>
 
-      <div className="flex items-end gap-2 sm:gap-3 w-full" style={{ height: 'clamp(180px, 30vh, 240px)', paddingBottom: 28 }}>
+      {/* Bars row */}
+      <div className="absolute left-0 right-0 flex gap-2 sm:gap-3" style={{ top: 0, height: CHART_H }}>
         {data.map((d, i) => {
-          const val       = d[activeMetric]
-          const hPct      = max > 0 ? (val / max) * 100 : 0
-          const displayH  = mounted ? Math.max(hPct, val > 0 ? 4 : 0) : 0
+          const val      = d[activeMetric]
+          const hPct     = max > 0 ? (val / max) * 100 : 0
+          const barH     = mounted ? Math.max(hPct, val > 0 ? 2 : 0) : 0
           const isHovered = hovered === i
-          const isCurr    = i === data.length - 1
-          const isPrev    = i === data.length - 2
-          const prevVal   = i > 0 ? data[i - 1][activeMetric] : null
-          const delta     = prevVal !== null ? calcDelta(val, prevVal) : null
+          const isCurr   = i === data.length - 1
+          const isPrev   = i === data.length - 2
+          const prevVal  = i > 0 ? data[i - 1][activeMetric] : null
+          const delta    = prevVal !== null ? calcDelta(val, prevVal) : null
 
           let barBg = 'rgba(255,255,255,0.05)'
           if (isCurr) barBg = 'linear-gradient(180deg, #E8192C 0%, #c8140e 60%, #F5A623 100%)'
@@ -156,7 +161,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
           return (
             <div
               key={d.label}
-              className="flex-1 flex flex-col items-center justify-end gap-0 cursor-default relative group/bar"
+              className="relative flex-1 h-full cursor-default"
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
             >
@@ -164,7 +169,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
               {isHovered && val > 0 && (
                 <div
                   className="absolute z-40 pointer-events-none"
-                  style={{ bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)' }}
+                  style={{ bottom: `calc(${barH}% + 12px)`, left: '50%', transform: 'translateX(-50%)' }}
                 >
                   <div
                     className="relative px-4 py-3 text-center"
@@ -175,7 +180,6 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                       boxShadow: '0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)',
                     }}
                   >
-                    {/* Pointer */}
                     <div
                       className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-2.5 h-2.5 rotate-45"
                       style={{ background: '#222', borderRight: '1px solid #222', borderBottom: '1px solid #222' }}
@@ -195,12 +199,12 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                 </div>
               )}
 
-              {/* Bar */}
+              {/* Bar — anchored to bottom */}
               <div
-                className="w-full relative overflow-hidden"
+                className="absolute bottom-0 left-0 right-0 overflow-hidden"
                 style={{
-                  height: `${displayH}%`,
-                  minHeight: val > 0 && mounted ? '6px' : '0px',
+                  height: `${barH}%`,
+                  minHeight: val > 0 && mounted ? '4px' : '0px',
                   background: barBg,
                   transition: 'height 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: `${i * 60}ms`,
@@ -211,7 +215,6 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                     : 'none',
                 }}
               >
-                {/* Shimmer on current bar */}
                 {isCurr && (
                   <div
                     className="absolute inset-0 opacity-30"
@@ -222,15 +225,24 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                   />
                 )}
               </div>
+            </div>
+          )
+        })}
+      </div>
 
-              {/* Label */}
-              <div className="pt-2.5 flex flex-col items-center gap-0.5">
-                <span className={`text-[9px] font-mono font-bold leading-none ${
-                  isCurr ? 'text-[#E8192C]' : isPrev ? 'text-[#6a5010]' : isHovered ? 'text-[#888]' : 'text-[#666]'
-                }`}>
-                  {d.label}
-                </span>
-              </div>
+      {/* Labels row */}
+      <div className="absolute left-0 right-0 flex gap-2 sm:gap-3" style={{ top: CHART_H, height: LABEL_H }}>
+        {data.map((d, i) => {
+          const isCurr = i === data.length - 1
+          const isPrev = i === data.length - 2
+          const isHov  = hovered === i
+          return (
+            <div key={d.label} className="flex-1 flex items-center justify-center pt-2">
+              <span className={`text-[9px] font-mono font-bold leading-none ${
+                isCurr ? 'text-[#E8192C]' : isPrev ? 'text-[#6a5010]' : isHov ? 'text-[#888]' : 'text-[#666]'
+              }`}>
+                {d.label}
+              </span>
             </div>
           )
         })}
@@ -728,7 +740,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
       </div>
 
       {/* ── Content ── */}
-      <div className="px-6 sm:px-8 py-8 overflow-y-auto" style={{ maxHeight: 540 }}>
+      <div className="px-6 sm:px-8 py-8 overflow-y-auto flex-1">
 
         {activeTab === 'overview' && (
           <div className="space-y-12">
