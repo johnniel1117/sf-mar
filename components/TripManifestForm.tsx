@@ -5,7 +5,7 @@ import {
   Download, Barcode, Plus, X, AlertCircle, Save, FileText,
   CheckCircle2, Trash2, ChevronRight, ChevronLeft, Truck,
   ClipboardList, Eye, Info, Clock, FileSpreadsheet, Home, Menu, TrendingUp,
-  BarChart2, ArrowUpRight
+  BarChart2, ArrowUpRight, Package
 } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
@@ -89,7 +89,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
   const [editingManifestId, setEditingManifestId] = useState<string | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
   const [showManualEntryModal, setShowManualEntryModal] = useState(false)
-  const [pendingDocument, setPendingDocument] = useState<{ documentNumber: string; quantity: number } | null>(null)
+  const [pendingDocument, setPendingDocument] = useState<{ documentNumber: string; quantity: number; cbm?: number } | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
@@ -152,7 +152,37 @@ export default function TripManifestForm({ role }: { role?: string }) {
     if (currentStep === 2 && barcodeInputRef.current) barcodeInputRef.current.focus()
   }, [currentStep])
 
-  const searchDocument = async (documentNumber: string): Promise<Array<{ documentNumber: string; shipToName: string; quantity: number }> | null> => {
+  // Helper function to get CBM from material code (you may need to import this mapping)
+  const getCBMFromMatcode = (code: string): number | null => {
+    if (!code) return null
+    // This should be imported from your category-mapping or defined here
+    // For now, returning null as placeholder - you'll need to add your actual mapping
+    return null
+  }
+
+  // Add this useEffect to check CBM data on mount
+useEffect(() => {
+  const checkCBMData = async () => {
+    try {
+      const response = await fetch('/api/debug/cbm-check')
+      const data = await response.json()
+      console.log('CBM Data Check:', data)
+      
+      if (data.recordsWithCBM === 0) {
+        console.warn('No records with CBM found in database!')
+      } else {
+        console.log(`Found ${data.recordsWithCBM} records with CBM`)
+        console.log('Sample with CBM:', data.samples.find((s: any) => s.total_cbm > 0))
+      }
+    } catch (error) {
+      console.error('Failed to check CBM data:', error)
+    }
+  }
+  
+  checkCBMData()
+}, [])
+
+  const searchDocument = async (documentNumber: string): Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number }> | null> => {
     if (!documentNumber || documentNumber.length < 1) return null
     try {
       const response = await fetch(`/api/documents/search?query=${encodeURIComponent(documentNumber)}`)
@@ -171,6 +201,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
       document_number: pendingDocument.documentNumber,
       ship_to_name: shipToName,
       total_quantity: pendingDocument.quantity,
+      total_cbm: pendingDocument.cbm || 0,
     }
     setManifest({ ...manifest, items: [...manifest.items, newItem] })
     showToast(`Document ${pendingDocument.documentNumber} added`, 'success')
@@ -192,7 +223,11 @@ export default function TripManifestForm({ role }: { role?: string }) {
         } else {
           const normalizedShipTo = (doc.ship_to_name || '').trim().toLowerCase()
           if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
-            setPendingDocument({ documentNumber: doc.document_number, quantity: doc.total_quantity || 0 })
+            setPendingDocument({ 
+              documentNumber: doc.document_number, 
+              quantity: doc.total_quantity || 0,
+              cbm: doc.total_cbm || 0 
+            })
             setShowManualEntryModal(true)
             setBarcodeInput('')
           } else {
@@ -203,9 +238,10 @@ export default function TripManifestForm({ role }: { role?: string }) {
                 document_number: doc.document_number,
                 ship_to_name: doc.ship_to_name || 'N/A',
                 total_quantity: doc.total_quantity || 0,
+                total_cbm: doc.total_cbm || 0,
               }],
             })
-            showToast(`Document ${doc.document_number} added`, 'success')
+            showToast(`Document ${doc.document_number} added (CBM: ${(doc.total_cbm || 0).toFixed(4)})`, 'success')
             setBarcodeInput('')
           }
         }
@@ -302,6 +338,9 @@ export default function TripManifestForm({ role }: { role?: string }) {
     )
   }
 
+  // Calculate grand total CBM for current manifest
+  const grandTotalCBM = manifest.items.reduce((sum, item) => sum + (item.total_cbm || 0), 0)
+
   return (
     <div className="h-screen flex flex-col bg-black overflow-hidden">
 
@@ -332,10 +371,10 @@ export default function TripManifestForm({ role }: { role?: string }) {
           <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
           <div className="w-px h-4 bg-[#1a1a1a] hidden sm:block" />
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A]  hidden sm:block">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A] hidden sm:block">
               Trip Manifest
             </p>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A]  sm:hidden">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#9A9A9A] sm:hidden">
               Manifest
             </p>
           </div>
@@ -346,11 +385,21 @@ export default function TripManifestForm({ role }: { role?: string }) {
         {/* Right side chips */}
         <div className="flex items-center gap-2 sm:gap-3">
 
+          {/* CBM Total Pill - NEW */}
+          {activeTab === 'create' && manifest.items.length > 0 && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
+                 style={{ border: '1px solid rgba(245,166,35,0.2)', background: 'rgba(245,166,35,0.05)' }}>
+              <Package className="w-3.5 h-3.5 text-[#F5A623]" />
+              <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#F5A623]">Total CBM</span>
+              <span className="text-[11px] font-black text-white tabular-nums">{grandTotalCBM.toFixed(4)}</span>
+            </div>
+          )}
+
           {/* Manifest number pill */}
           {activeTab === 'create' && manifest.manifest_number && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-[#1a1a1a] rounded-full flex-shrink-0">
-              <span className="text-[10px]  uppercase tracking-[0.15em] text-[#9A9A9A]">No.</span>
-              <span className="text-[11px] font-black text-white tabular-nums ">{manifest.manifest_number}</span>
+              <span className="text-[10px] uppercase tracking-[0.15em] text-[#9A9A9A]">No.</span>
+              <span className="text-[11px] font-black text-white tabular-nums">{manifest.manifest_number}</span>
             </div>
           )}
 
@@ -358,14 +407,14 @@ export default function TripManifestForm({ role }: { role?: string }) {
           {isEditMode && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 border border-blue-500/20 rounded-full flex-shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-              <span className="text-[10px]  font-bold uppercase tracking-widest text-blue-400">Editing</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">Editing</span>
             </div>
           )}
 
           {/* Analytics button — amber accent, matches landing */}
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px]  font-bold uppercase tracking-widest transition-all duration-150 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all duration-150 ${
               activeTab === 'analytics'
                 ? 'border-[#F5A623]/30 text-[#F5A623] bg-[#F5A623]/5'
                 : 'border-[#1a1a1a] text-[#9A9A9A] hover:border-[#3E3E3E] hover:text-white'
@@ -422,6 +471,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
                 addDocumentWithManualShipTo={addDocumentWithManualShipTo}
                 searchDocument={searchDocument}
                 showToast={showToast}
+                grandTotalCBM={grandTotalCBM} 
               />
             )}
 
@@ -444,17 +494,17 @@ export default function TripManifestForm({ role }: { role?: string }) {
                   {savedManifests.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center px-4 py-16">
                       <TrendingUp className="w-10 h-10 text-[#1a1a1a] mx-auto mb-5" />
-                      <p className="text-[10px]  uppercase tracking-[0.25em] text-[#F5A623] mb-3">No data yet</p>
+                      <p className="text-[10px] uppercase tracking-[0.25em] text-[#F5A623] mb-3">No data yet</p>
                       <h4 className="text-2xl sm:text-3xl font-black text-white mb-3 tracking-tight">
                         Nothing to analyze
                       </h4>
-                      <p className="text-sm  text-[#9A9A9A] max-w-sm mb-8 leading-relaxed">
+                      <p className="text-sm text-[#9A9A9A] max-w-sm mb-8 leading-relaxed">
                         Save trip manifests to see trends, top destinations, trucker performance, and more.
                       </p>
                       {!isViewer && (
                         <button
                           onClick={() => setActiveTab('create')}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#1a1a1a] text-[10px]  font-bold uppercase tracking-widest text-[#9A9A9A] hover:border-[#3E3E3E] hover:text-white transition-all"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#1a1a1a] text-[10px] font-bold uppercase tracking-widest text-[#9A9A9A] hover:border-[#3E3E3E] hover:text-white transition-all"
                         >
                           Create First Manifest
                           <ArrowUpRight className="w-3.5 h-3.5" />
@@ -515,7 +565,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
             : toast.type === 'error'  ? 'bg-[#E8192C]'
             : 'bg-blue-500'
           }`} />
-          <span className="text-[11px]  font-bold uppercase tracking-widest text-white">{toast.message}</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-white">{toast.message}</span>
           <button
             onClick={() => setToast(prev => ({ ...prev, show: false }))}
             className="ml-1 p-0.5 rounded-full hover:bg-[#1a1a1a] transition-colors"

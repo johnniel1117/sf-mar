@@ -18,9 +18,10 @@ export async function GET(request: NextRequest) {
     const searchText = query.trim().toUpperCase()
 
     // Search for documents that CONTAIN the search text
+    // Include total_cbm in the select query
     const { data, error } = await supabase
       .from('excel_uploads')
-      .select('document_number, ship_to_name, total_quantity')
+      .select('document_number, ship_to_name, total_quantity, total_cbm, serial_data')
       .ilike('document_number', `%${searchText}%`)
       .limit(20)
     
@@ -33,13 +34,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ results: [] })
     }
 
-    // Map to expected format
-    const results = data.map(doc => ({
-      documentNumber: doc.document_number,
-      shipToName: doc.ship_to_name || 'N/A',
-      quantity: doc.total_quantity || 0
-    }))
+    // Map to expected format with CBM calculation
+    const results = data.map(doc => {
+      // Calculate CBM if available
+      let totalCbm = doc.total_cbm || 0
+      
+      // If total_cbm is not set but serial_data exists, calculate it
+      if (!totalCbm && doc.serial_data && Array.isArray(doc.serial_data)) {
+        totalCbm = doc.serial_data.reduce((sum: number, item: any) => {
+          const itemCbm = item.cbm || 0
+          const itemQty = item.quantity || 1
+          return sum + (itemCbm * itemQty)
+        }, 0)
+      }
+
+      return {
+        documentNumber: doc.document_number,
+        shipToName: doc.ship_to_name || 'N/A',
+        quantity: doc.total_quantity || 0,
+        cbm: totalCbm // Add CBM to the result
+      }
+    })
     
+    console.log('Search results with CBM:', results.filter(r => r.cbm > 0))
     return NextResponse.json({ results })
   } catch (error) {
     console.error('Unexpected error:', error)

@@ -74,42 +74,57 @@ export function useTripManifest() {
   }, [loadManifests])
 
   const lookupDocument = useCallback(async (documentNumber: string): Promise<DocumentLookupResult | null> => {
-    try {
-      // Use maybeSingle() instead of single() to avoid errors when no record is found
-      const { data, error } = await supabase
-        .from('excel_uploads')
-        .select('*') // Select all columns first to debug
-        .eq('document_number', documentNumber.trim())
-        .maybeSingle()
+  try {
+    console.log('Looking up document:', documentNumber)
+    
+    // First, try exact match
+    const { data, error } = await supabase
+      .from('excel_uploads')
+      .select('document_number, ship_to_name, total_quantity, total_cbm, serial_data')
+      .eq('document_number', documentNumber.trim())
+      .maybeSingle()
 
-      if (error) {
-        console.error('Supabase error:', error)
-        return null
-      }
-
-      if (!data) {
-        console.log('Document not found:', documentNumber)
-        return null
-      }
-
-      // Log the data structure to see actual column names
-      console.log('Document found - Column structure:', Object.keys(data))
-      console.log('Document data:', data)
-
-      // Map the actual column names from your database
-      // Adjust these based on the console.log output
-      return {
-        document_number: data.document_number || data.doc_number || data.barcode || documentNumber,
-        ship_to_name: data.ship_to_name || data.ship_to || data.customer_name || data.customer || 'N/A',
-        total_quantity: data.total_quantity || data.quantity || data.qty || 0
-      }
-    } catch (error) {
-      console.error('Error looking up document:', error)
+    if (error) {
+      console.error('Supabase error:', error)
       return null
     }
-  }, [])
 
-  // Add this debug function to check your table structure
+    if (!data) {
+      console.log('Document not found:', documentNumber)
+      return null
+    }
+
+    console.log('Document found - Raw data:', data)
+
+    // Calculate total CBM
+    let totalCbm = data.total_cbm || 0
+    
+    // If total_cbm is not set but serial_data exists, calculate it
+    if (!totalCbm && data.serial_data && Array.isArray(data.serial_data)) {
+      totalCbm = data.serial_data.reduce((sum: number, item: any) => {
+        const itemCbm = item.cbm || 0
+        const itemQty = item.quantity || 1
+        return sum + (itemCbm * itemQty)
+      }, 0)
+      console.log('Calculated CBM from serial_data:', totalCbm)
+    }
+
+    const result = {
+      document_number: data.document_number,
+      ship_to_name: data.ship_to_name || 'N/A',
+      total_quantity: data.total_quantity || 1,
+      total_cbm: totalCbm,
+    }
+    
+    console.log('Returning lookup result:', result)
+    return result
+  } catch (error) {
+    console.error('Error looking up document:', error)
+    return null
+  }
+}, [])
+
+  // Debug function to check table structure
   const checkTableStructure = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -125,6 +140,15 @@ export function useTripManifest() {
       if (data && data.length > 0) {
         console.log('Excel uploads table columns:', Object.keys(data[0]))
         console.log('Sample row:', data[0])
+        
+        // Check if there's a document with CBM data
+        const { data: cbmData } = await supabase
+          .from('excel_uploads')
+          .select('document_number, total_cbm, serial_data')
+          .not('total_cbm', 'is', null)
+          .limit(5)
+        
+        console.log('Documents with CBM:', cbmData)
       } else {
         console.log('Excel uploads table is empty')
       }
@@ -140,6 +164,6 @@ export function useTripManifest() {
     saveManifest,
     deleteManifest,
     lookupDocument,
-    checkTableStructure, // Export this for debugging
+    checkTableStructure,
   }
 }

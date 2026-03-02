@@ -50,21 +50,22 @@ interface CreateManifestTabProps {
   saveManifest: () => void
   showManualEntryModal: boolean
   setShowManualEntryModal: (show: boolean) => void
-  pendingDocument: { documentNumber: string; quantity: number } | null
-  setPendingDocument: (doc: { documentNumber: string; quantity: number } | null) => void
+  pendingDocument: { documentNumber: string; quantity: number; cbm?: number } | null
+  setPendingDocument: (doc: { documentNumber: string; quantity: number; cbm?: number } | null) => void
   addDocumentWithManualShipTo: (shipToName: string) => void
-  searchDocument: (documentNumber: string) => Promise<Array<{ documentNumber: string; shipToName: string; quantity: number }> | null>
+  searchDocument: (documentNumber: string) => Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number }> | null>
   showToast?: (message: string, type: 'success' | 'error' | 'info') => void
+  grandTotalCBM?: number // Added this prop
 }
 
 // ── Manual entry modal ────────────────────────────────────────────────────────
 
 interface ManualEntryModalProps {
   isOpen: boolean; onClose: () => void; onSave: (shipToName: string) => void
-  documentNumber: string; quantity: number
+  documentNumber: string; quantity: number; cbm?: number
 }
 
-function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }: ManualEntryModalProps) {
+function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, cbm }: ManualEntryModalProps) {
   const [shipToName, setShipToName] = useState('')
   useEffect(() => { if (isOpen) setShipToName('') }, [isOpen])
 
@@ -108,6 +109,12 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity }:
               <p className="text-sm font-black tabular-nums" style={{ color: C.accent }}>{quantity}</p>
             </div>
           </div>
+          {cbm != null && cbm > 0 && (
+            <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
+              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textMuted }}>CBM</p>
+              <p className="text-sm font-black tabular-nums" style={{ color: C.amber }}>{cbm.toFixed(4)}</p>
+            </div>
+          )}
         </div>
 
         {/* Input */}
@@ -188,8 +195,9 @@ export function CreateManifestTab({
   canProceedToStep2, canProceedToStep3, resetForm, saveManifest,
   showManualEntryModal, setShowManualEntryModal, pendingDocument,
   setPendingDocument, addDocumentWithManualShipTo, searchDocument, showToast,
+  grandTotalCBM = 0, // Default to 0 if not provided
 }: CreateManifestTabProps) {
-  const [searchResults, setSearchResults] = useState<Array<{ documentNumber: string; shipToName: string; quantity: number }> | null>(null)
+  const [searchResults, setSearchResults] = useState<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number }> | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
@@ -253,7 +261,7 @@ export function CreateManifestTab({
     }
   }
 
-  const selectDocument = async (doc: { documentNumber: string; shipToName: string; quantity: number }) => {
+  const selectDocument = async (doc: { documentNumber: string; shipToName: string; quantity: number; cbm?: number }) => {
     const exists = manifest.items.some(item => item.document_number === doc.documentNumber)
     if (exists) {
       if (showToast) showToast(`Document ${doc.documentNumber} already added`, 'error')
@@ -261,7 +269,11 @@ export function CreateManifestTab({
     }
     const normalizedShipTo = (doc.shipToName || '').trim().toLowerCase()
     if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
-      setPendingDocument({ documentNumber: doc.documentNumber, quantity: doc.quantity })
+      setPendingDocument({ 
+        documentNumber: doc.documentNumber, 
+        quantity: doc.quantity,
+        cbm: doc.cbm 
+      })
       setShowManualEntryModal(true)
       setSearchResults(null); setBarcodeInput('')
       requestAnimationFrame(() => { if (barcodeInputRef.current) barcodeInputRef.current.focus() })
@@ -272,12 +284,26 @@ export function CreateManifestTab({
       document_number: doc.documentNumber,
       ship_to_name: doc.shipToName,
       total_quantity: doc.quantity,
-      total_cbm: (doc as any).total_cbm ?? undefined,
+      total_cbm: doc.cbm ?? 0,
     }
     setManifest({ ...manifest, items: [...manifest.items, newItem] })
-    if (showToast) showToast(`Document ${doc.documentNumber} added`, 'success')
+    if (showToast) showToast(`Document ${doc.documentNumber} added (CBM: ${(doc.cbm || 0).toFixed(4)})`, 'success')
     setSearchResults(null); setBarcodeInput('')
     requestAnimationFrame(() => { if (barcodeInputRef.current) barcodeInputRef.current.focus() })
+  }
+
+  const handleAddDocumentWithManualShipTo = (shipToName: string) => {
+    if (!pendingDocument) return
+    const newItem: ManifestItem = {
+      item_number: manifest.items.length + 1,
+      document_number: pendingDocument.documentNumber,
+      ship_to_name: shipToName,
+      total_quantity: pendingDocument.quantity,
+      total_cbm: pendingDocument.cbm ?? 0,
+    }
+    setManifest({ ...manifest, items: [...manifest.items, newItem] })
+    if (showToast) showToast(`Document ${pendingDocument.documentNumber} added manually`, 'success')
+    setPendingDocument(null)
   }
 
   const getDuration = () => {
@@ -316,9 +342,10 @@ export function CreateManifestTab({
       <ManualEntryModal
         isOpen={showManualEntryModal}
         onClose={() => { setShowManualEntryModal(false); setPendingDocument(null) }}
-        onSave={addDocumentWithManualShipTo}
+        onSave={handleAddDocumentWithManualShipTo}
         documentNumber={pendingDocument?.documentNumber || ''}
         quantity={pendingDocument?.quantity || 0}
+        cbm={pendingDocument?.cbm}
       />
 
       {/* Outer card */}
@@ -327,7 +354,7 @@ export function CreateManifestTab({
         {/* ── Header ── */}
         <div className="px-5 sm:px-8 pt-8 pb-7" style={{ borderBottom: `1px solid ${C.border}` }}>
 
-          {/* Title row */}
+          {/* Title row with CBM pill */}
           <div className="flex items-start justify-between mb-7 sm:mb-8">
             <div>
               <div className="flex items-center gap-2.5 mb-3">
@@ -346,13 +373,16 @@ export function CreateManifestTab({
                 SF Express · Cebu Warehouse
               </p>
             </div>
-            {/* Step counter */}
-            <div className="flex items-baseline gap-1 flex-shrink-0">
-              <p className="text-3xl sm:text-4xl font-black tabular-nums leading-none" style={{ color: C.textPrimary }}>
-                {String(currentStep).padStart(2, '0')}
-              </p>
-              <span className="text-lg font-black leading-none" style={{ color: C.textGhost }}>/03</span>
-            </div>
+            
+            {/* CBM Total Pill - NEW */}
+            {grandTotalCBM > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
+                   style={{ border: '1px solid rgba(245,166,35,0.2)', background: 'rgba(245,166,35,0.05)' }}>
+                <Package className="w-3.5 h-3.5 text-[#F5A623]" />
+                <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#F5A623]">Total CBM</span>
+                <span className="text-[12px] font-black text-white tabular-nums">{grandTotalCBM.toFixed(4)}</span>
+              </div>
+            )}
           </div>
 
           {/* Step indicators */}
@@ -531,8 +561,8 @@ export function CreateManifestTab({
                             <span className="font-black text-sm truncate transition-colors" style={{ color: C.textSilver }}>{result.documentNumber}</span>
                           </div>
                           <div className="flex items-baseline gap-3 flex-shrink-0">
-                            {(result as any).total_cbm != null && (result as any).total_cbm > 0 && (
-                              <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{((result as any).total_cbm as number).toFixed(4)} CBM</span>
+                            {result.cbm != null && result.cbm > 0 && (
+                              <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{result.cbm.toFixed(4)} CBM</span>
                             )}
                             <span className="text-[10px] font-bold" style={{ color: C.accent }}>×{result.quantity}</span>
                           </div>
