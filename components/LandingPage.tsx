@@ -318,7 +318,9 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-3">{today}</p>
                   <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-black text-white leading-[0.93] tracking-tight">
                     {greeting},<br />
-                    <span className="text-[#9A9A9A]">{displayName}.</span>
+                    <span className=" italic text-[#9A9A9A]">
+  {displayName}.
+</span>
                   </h1>
                 </div>
 
