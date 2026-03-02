@@ -955,10 +955,10 @@ export default function ExcelUploader() {
             )}
 
             {/* Footer */}
-            <div className="py-5 flex items-center justify-between" style={{ borderTop: `1px solid ${C.divider}` }}>
+            {/* <div className="py-5 flex items-center justify-between" style={{ borderTop: `1px solid ${C.divider}` }}>
               <p className="text-[11px]" style={{ color: C.divider }}>SF Express · Cebu Warehouse</p>
               <p className="text-[11px]" style={{ color: C.divider }}>{new Date().getFullYear()}</p>
-            </div>
+            </div> */}
           </div>
         </main>
       </div>

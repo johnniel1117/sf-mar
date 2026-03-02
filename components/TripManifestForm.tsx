@@ -394,7 +394,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
 
         <main className="flex-1 overflow-y-auto min-h-0 min-w-0 bg-black">
           {/* Subtle red ambient glow — same as landing */}
-          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#E8192C]/3 rounded-full blur-[120px] z-0" />
+          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#5E5C5C]/20 rounded-full blur-[120px] z-0" />
 
           <div className="relative z-10 p-5 sm:p-8 lg:p-10 h-full">
             {activeTab === 'create' && !isViewer && (
