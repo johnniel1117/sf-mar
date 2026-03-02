@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import * as XLSX from "xlsx-js-style"
 import { MATCODE_CATEGORY_MAP, getCategoryFromBinCode } from '../components/CategoryMapping'
+import { MATCODE_CBM_MAP } from '../lib/category-mapping'
 import {
   Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2,
   Layers, AlertCircle, ArrowUp, Search, Home, Menu,
@@ -35,6 +36,7 @@ interface MaterialData {
   materialDescription: string
   category: string
   qty: number
+  cbm: number | null
   remarks: string
   shipName: string
 }
@@ -75,6 +77,26 @@ interface Notification {
   message: string
 }
 
+const getCBMFromMatcode = (code: string): number | null => {
+  if (!code) return null
+  return MATCODE_CBM_MAP[code] ?? MATCODE_CBM_MAP[code.toUpperCase()] ?? null
+}
+
+const totalCBM = (data: MaterialData[]): number =>
+  data.reduce((sum, r) => {
+    if (r.cbm == null) return sum
+    return sum + r.cbm * r.qty
+  }, 0)
+
+// CBM from serial rows (each serial row = 1 unit)
+const totalCBMFromSerials = (serials: SerialData[]): number =>
+  serials.reduce((sum, r) => {
+    const cbm = getCBMFromMatcode(r.materialCode)
+    return cbm != null ? sum + cbm : sum
+  }, 0)
+
+
+
 export default function ExcelUploader() {
   const [groupedData, setGroupedData]         = useState<MaterialData[]>([])
   const [serialListData, setSerialListData]   = useState<SerialData[]>([])
@@ -94,7 +116,6 @@ export default function ExcelUploader() {
   const [showScrollTop, setShowScrollTop]     = useState(false)
   const [searchQuery, setSearchQuery]         = useState("")
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
-  // ── FIX: closed by default on mobile ─────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen]         = useState(false)
   const [mounted, setMounted]                 = useState(false)
 
@@ -193,7 +214,15 @@ export default function ExcelUploader() {
       const key = `${materialCode}|${materialDesc}`
       if (!seenMaterials.has(key)) {
         seenMaterials.add(key)
-        materialData.push({ materialCode, materialDescription: materialDesc, category: MATCODE_CATEGORY_MAP[materialCode] || "Others", qty: 0, remarks: traNo, shipName: "" })
+        materialData.push({
+          materialCode,
+          materialDescription: materialDesc,
+          category: MATCODE_CATEGORY_MAP[materialCode] || "Others",
+          qty: 0,
+          cbm: getCBMFromMatcode(materialCode),
+          remarks: traNo,
+          shipName: ""
+        })
       }
       const matItem = materialData.find(m => m.materialCode === materialCode && m.materialDescription === materialDesc)
       if (matItem) matItem.qty += 1
@@ -294,7 +323,15 @@ export default function ExcelUploader() {
             if (!materialCode) continue
             const qtyIdx = headers.findIndex(h => h.includes("qty") || h.includes("quantity"))
             const qty = qtyIdx >= 0 ? parseInt(String(row[qtyIdx] || "1"), 10) || 1 : 1
-            fileData.push({ materialCode, materialDescription, category: MATCODE_CATEGORY_MAP[materialCode] || "Others", qty, remarks: dnNo, shipName })
+            fileData.push({
+              materialCode,
+              materialDescription,
+              category: MATCODE_CATEGORY_MAP[materialCode] || "Others",
+              qty,
+              cbm: getCBMFromMatcode(materialCode),
+              remarks: dnNo,
+              shipName
+            })
             serialData.push({ dnNo: dnNoIdx >= 0 ? String(row[dnNoIdx] || dnNo) : dnNo, orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "", factoryCode: factoryCodeIdx >= 0 ? String(row[factoryCodeIdx] || "") : "", location: locationIdx >= 0 ? String(row[locationIdx] || "") : "", binCode: barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : "", materialCode, materialDesc: materialDescription, barcode: barCode, materialType: materialTypeIdx >= 0 ? String(row[materialTypeIdx] || "") : "", productStatus: productStatusIdx >= 0 ? String(row[productStatusIdx] || "") : "", shipTo: shipToIdx >= 0 ? String(row[shipToIdx] || "") : "", shipToName: shipName, shipToAddress: shipToAddressIdx >= 0 ? String(row[shipToAddressIdx] || "") : "", soldTo: soldToIdx >= 0 ? String(row[soldToIdx] || "") : "", soldToName: soldToNameIdx >= 0 ? String(row[soldToNameIdx] || "") : "", scanBy: scanByIdx >= 0 ? String(row[scanByIdx] || "") : "", scanTime: scanTimeIdx >= 0 ? String(row[scanTimeIdx] || "") : "" })
           }
         }
@@ -343,7 +380,17 @@ export default function ExcelUploader() {
 
   const handleDownloadExcel = () => {
     const ws = activeTab === "consolidated"
-      ? XLSX.utils.json_to_sheet(groupedData.map(r => ({ "Material Code": r.materialCode, "Material Description": r.materialDescription, Category: r.category, "Qty.": r.qty, UM: "-", ShipName: r.shipName, Remarks: r.remarks })))
+      ? XLSX.utils.json_to_sheet(groupedData.map(r => ({
+          "Material Code": r.materialCode,
+          "Material Description": r.materialDescription,
+          Category: r.category,
+          "Qty.": r.qty,
+          "CBM (unit)": r.cbm ?? "",
+          "Total CBM": r.cbm != null ? +(r.cbm * r.qty).toFixed(4) : "",
+          UM: "-",
+          ShipName: r.shipName,
+          Remarks: r.remarks
+        })))
       : XLSX.utils.json_to_sheet(serialListData.map(r => ({ "DN No": r.dnNo, Location: r.location, "Bin Code": r.binCode, "Material Code": r.materialCode, "Material Desc": r.materialDesc, Barcode: r.barcode, "Ship To Name": r.shipToName, "Ship To Address": r.shipToAddress })))
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, activeTab === "consolidated" ? "Consolidated" : "Serial List")
@@ -367,9 +414,11 @@ export default function ExcelUploader() {
   }
 
   const handleDownloadPDF = () => {
+    const visibleData = filterGroupedDataBySearch(groupedData).filter(r => r.materialCode && r.materialDescription)
+    const grandTotalCBM = totalCBM(visibleData)
     const printWindow = window.open("", "", "width=1200,height=800")
     if (!printWindow) return
-    const htmlContent = `<!DOCTYPE html><html><head><title>${activeTab === "consolidated" ? "Consolidated Materials Report" : "Bulking Serial List Report"}</title><style>@page{size:landscape;margin:15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:20px}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:15px}.logo img{height:45px;width:auto}.date{text-align:right;font-size:11px;color:#000;line-height:1.6}.date strong{font-weight:bold;font-size:12px}h1{color:#000;margin:15px 0 20px;font-size:22px;font-weight:bold;text-align:center}table{width:100%;border-collapse:collapse;margin-top:15px;font-size:10px;background:#fff;border:2px solid #000}th,td{border:1.5px solid #000;padding:10px 8px;text-align:center;word-wrap:break-word;color:#000}th{background:linear-gradient(180deg,#E8E8E8 0%,#D3D3D3 100%);font-weight:bold;font-size:11px;text-transform:uppercase;padding:12px 8px}tbody tr:nth-child(even){background:#F9F9F9}@media print{body{margin:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:landscape;margin:15mm}}</style></head><body><div class="header"><div class="logo"><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF EXPRESS Logo"/></div><div class="date"><strong>Date Printed:</strong><br/>${formatDate()}</div></div><h1>${activeTab === "consolidated" ? "Consolidated Materials Report" : "Bulking Serial List Report"}</h1>${activeTab === "consolidated" ? `<table><thead><tr><th>MATERIAL CODE</th><th>MATERIAL DESCRIPTION</th><th>CATEGORY</th><th>QTY.</th><th>UM</th><th>SHIP NAME</th><th>REMARKS</th></tr></thead><tbody>${groupedData.filter(r => r.materialCode && r.materialDescription).map(r => `<tr><td style="font-weight:bold">${r.materialCode}</td><td>${r.materialDescription}</td><td>${r.category}</td><td style="font-weight:bold">${r.qty}</td><td>-</td><td>${r.shipName}</td><td>${r.remarks}</td></tr>`).join("")}</tbody></table>` : `<table><thead><tr><th>DN NO</th><th>LOCATION</th><th>BIN CODE</th><th>MATERIAL CODE</th><th>MATERIAL DESC</th><th>SERIAL NUMBER</th><th>SHIP TO NAME</th><th>SHIP TO ADDRESS</th></tr></thead><tbody>${serialListData.filter(r => r.materialCode && r.barcode).map(r => `<tr><td>${r.dnNo}</td><td>${r.location}</td><td>${r.binCode}</td><td style="font-weight:bold">${r.materialCode}</td><td>${r.materialDesc}</td><td style="font-weight:bold">${r.barcode}</td><td>${r.shipToName}</td><td>${r.shipToAddress}</td></tr>`).join("")}</tbody></table>`}</body></html>`
+    const htmlContent = `<!DOCTYPE html><html><head><title>${activeTab === "consolidated" ? "Consolidated Materials Report" : "Bulking Serial List Report"}</title><style>@page{size:landscape;margin:15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:20px}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:15px}.logo img{height:45px;width:auto}.date{text-align:right;font-size:11px;color:#000;line-height:1.6}.date strong{font-weight:bold;font-size:12px}h1{color:#000;margin:15px 0 20px;font-size:22px;font-weight:bold;text-align:center}table{width:100%;border-collapse:collapse;margin-top:15px;font-size:10px;background:#fff;border:2px solid #000}th,td{border:1.5px solid #000;padding:10px 8px;text-align:center;word-wrap:break-word;color:#000}th{background:linear-gradient(180deg,#E8E8E8 0%,#D3D3D3 100%);font-weight:bold;font-size:11px;text-transform:uppercase;padding:12px 8px}tbody tr:nth-child(even){background:#F9F9F9}.total-row{background:#f0f0f0!important;font-weight:bold}@media print{body{margin:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:landscape;margin:15mm}}</style></head><body><div class="header"><div class="logo"><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF EXPRESS Logo"/></div><div class="date"><strong>Date Printed:</strong><br/>${formatDate()}</div></div><h1>${activeTab === "consolidated" ? "Consolidated Materials Report" : "Bulking Serial List Report"}</h1>${activeTab === "consolidated" ? `<table><thead><tr><th>MATERIAL CODE</th><th>MATERIAL DESCRIPTION</th><th>CATEGORY</th><th>QTY.</th><th>CBM (UNIT)</th><th>TOTAL CBM</th><th>UM</th><th>SHIP NAME</th><th>REMARKS</th></tr></thead><tbody>${visibleData.map(r => `<tr><td style="font-weight:bold">${r.materialCode}</td><td>${r.materialDescription}</td><td>${r.category}</td><td style="font-weight:bold">${r.qty}</td><td>${r.cbm != null ? r.cbm : '—'}</td><td style="font-weight:bold">${r.cbm != null ? (r.cbm * r.qty).toFixed(4) : '—'}</td><td>-</td><td>${r.shipName}</td><td>${r.remarks}</td></tr>`).join("")}<tr class="total-row"><td colspan="5" style="text-align:right;padding-right:12px">GRAND TOTAL CBM</td><td>${grandTotalCBM.toFixed(4)}</td><td colspan="3"></td></tr></tbody></table>` : `<table><thead><tr><th>DN NO</th><th>LOCATION</th><th>BIN CODE</th><th>MATERIAL CODE</th><th>MATERIAL DESC</th><th>SERIAL NUMBER</th><th>SHIP TO NAME</th><th>SHIP TO ADDRESS</th></tr></thead><tbody>${serialListData.filter(r => r.materialCode && r.barcode).map(r => `<tr><td>${r.dnNo}</td><td>${r.location}</td><td>${r.binCode}</td><td style="font-weight:bold">${r.materialCode}</td><td>${r.materialDesc}</td><td style="font-weight:bold">${r.barcode}</td><td>${r.shipToName}</td><td>${r.shipToAddress}</td></tr>`).join("")}</tbody></table>`}</body></html>`
     printWindow.document.write(htmlContent)
     printWindow.document.close()
     setTimeout(() => printWindow.print(), 250)
@@ -383,7 +432,8 @@ export default function ExcelUploader() {
       const shipToAddress = file.serialData[0]?.shipToAddress || ""
       const pageBreakClass = index < uploadedFiles.length - 1 ? "page-break" : ""
       const totalQty = file.serialData.filter(r => r.materialCode && r.barcode).length
-      return `<div class="${pageBreakClass}"><div class="header-section"><div class="logo-section"><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height:60px;width:auto"/><div style="font-size:9px;line-height:1.4;margin-top:5px"><strong>SF Express Warehouse</strong><br/>UPPER TINGUB, MANDAUE, CEBU</div></div><div class="title-section"><div class="dealer-copy">DEALER'S COPY</div><div style="margin-top:8px;text-align:right">${generateBarcodeSVG(file.dnNo)}</div></div></div><div class="document-header"><div class="doc-number">ORDER NO: ${file.dnNo}</div></div><div class="info-row"><div class="info-label">Client</div><div class="info-value">HAIER PHILIPPINES INC.</div></div><div class="info-row"><div class="info-label">Date</div><div class="info-value">${formatDateShort()}</div></div><div class="info-row"><div class="info-label">Customer</div><div class="info-value">${shipToName}</div></div><div class="info-row"><div class="info-label">Address</div><div class="info-value">${shipToAddress}</div></div><table class="data-table"><thead><tr><th style="width:40px">NO.</th><th style="width:120px">CATEGORY</th><th style="width:280px">MATERIAL DESCRIPTION</th><th style="width:200px">SERIAL NUMBER</th><th style="width:100px">REMARKS</th></tr></thead><tbody>${file.serialData.filter(r => r.materialCode && r.barcode).map((r, idx) => `<tr><td style="text-align:center">${idx + 1}</td><td style="text-align:center">${getCategoryFromBinCode(r.barcode).toUpperCase()}</td><td style="text-align:center">${r.materialDesc || r.materialCode}</td><td style="text-align:center;font-weight:bold">${r.barcode}</td><td></td></tr>`).join("")}</tbody></table><div class="footer-info"><div><strong>TOTAL QTY: ${totalQty}</strong></div></div></div>`
+      const totalCbm = totalCBMFromSerials(file.serialData.filter(r => r.materialCode && r.barcode))
+      return `<div class="${pageBreakClass}"><div class="header-section"><div class="logo-section"><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height:60px;width:auto"/><div style="font-size:9px;line-height:1.4;margin-top:5px"><strong>SF Express Warehouse</strong><br/>UPPER TINGUB, MANDAUE, CEBU</div></div><div class="title-section"><div class="dealer-copy">DEALER'S COPY</div><div style="margin-top:8px;text-align:right">${generateBarcodeSVG(file.dnNo)}</div></div></div><div class="document-header"><div class="doc-number">ORDER NO: ${file.dnNo}</div></div><div class="info-row"><div class="info-label">Client</div><div class="info-value">HAIER PHILIPPINES INC.</div></div><div class="info-row"><div class="info-label">Date</div><div class="info-value">${formatDateShort()}</div></div><div class="info-row"><div class="info-label">Customer</div><div class="info-value">${shipToName}</div></div><div class="info-row"><div class="info-label">Address</div><div class="info-value">${shipToAddress}</div></div><table class="data-table"><thead><tr><th style="width:40px">NO.</th><th style="width:120px">CATEGORY</th><th style="width:250px">MATERIAL DESCRIPTION</th><th style="width:180px">SERIAL NUMBER</th><th style="width:70px">CBM</th><th style="width:100px">REMARKS</th></tr></thead><tbody>${file.serialData.filter(r => r.materialCode && r.barcode).map((r, idx) => `<tr><td style="text-align:center">${idx + 1}</td><td style="text-align:center">${getCategoryFromBinCode(r.barcode).toUpperCase()}</td><td style="text-align:center">${r.materialDesc || r.materialCode}</td><td style="text-align:center;font-weight:bold">${r.barcode}</td><td style="text-align:center">${getCBMFromMatcode(r.materialCode) != null ? getCBMFromMatcode(r.materialCode) : '—'}</td><td></td></tr>`).join("")}</tbody></table><div class="footer-info" style="display:flex;gap:24px;"><div><strong>TOTAL QTY: ${totalQty}</strong></div><div><strong>TOTAL CBM: ${totalCbm.toFixed(4)}</strong></div></div></div>`
     }).join("")
     const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</title><style>@page{size:portrait;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:15px;font-size:11px}.page-break{page-break-after:always;margin-bottom:20px;margin-right:10px}.header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #000}.title-section{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start}.dealer-copy{font-size:15px;font-weight:bold;letter-spacing:1px;margin-right:10px;text-align:right;color:#FF2C2C}.document-header{text-align:center;margin:15px 0;font-size:20px;font-weight:bold}.doc-number{font-size:20px;font-weight:bold}.info-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px}.info-label{font-weight:bold;width:80px}.data-table{width:100%;border-collapse:collapse;margin:15px 0;border:2px solid #000}.data-table th{border:1px solid #000;padding:8px 6px;font-weight:bold;font-size:10px;text-align:center;background:#fff}.data-table td{border:1px solid #000;padding:6px;font-size:10px}.footer-info{margin:10px 0;font-size:11px}@media print{body{margin:0;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:portrait;margin:10mm}}</style></head><body>${allDNContent}</body></html>`
     printWindow.document.write(htmlContent)
@@ -397,7 +447,8 @@ export default function ExcelUploader() {
     const shipToName = file.serialData[0]?.shipToName || "N/A"
     const shipToAddress = file.serialData[0]?.shipToAddress || ""
     const totalQuantity = file.serialData.filter(r => r.materialCode && r.barcode).length
-    const htmlContent = `<!DOCTYPE html><html><head><title>${file.dnNo} - Serial List</title><style>@page{size:portrait;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:15px;font-size:11px}.header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #000}.dealer-copy{font-size:18px;font-weight:bold;letter-spacing:1px}.document-header{text-align:center;margin:15px 0}.doc-number{font-size:20px;font-weight:bold}.info-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px}.info-label{font-weight:bold;width:80px}.data-table{width:100%;border-collapse:collapse;margin:15px 0;border:2px solid #000}.data-table th{border:1px solid #000;padding:8px 6px;font-weight:bold;font-size:10px;text-align:center;background:#e8e8e8}.data-table td{border:1px solid #000;padding:6px;font-size:10px}.footer-info{margin:10px 0;font-size:11px}.separator{text-align:center;margin:15px 0;font-size:10px}@media print{body{margin:0;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:portrait;margin:10mm}}</style></head><body><div class="header-section"><div><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height:60px;width:auto"/><div style="font-size:9px;line-height:1.4;margin-top:5px"><strong>SF Express Warehouse</strong><br/>TINGUB, MANDAUE, CEBU</div></div><div style="text-align:right"><div class="dealer-copy">DEALER'S COPY</div><div style="margin-top:8px">${generateBarcodeSVG(file.dnNo)}</div><div style="font-size:10px;margin-top:4px">${formatDateShort()}</div></div></div><div class="document-header"><div class="doc-number">Doc # : ${file.dnNo}</div></div><div class="info-row"><div class="info-label">Client</div><div>HAIER PHILIPPINES INC.</div></div><div class="info-row"><div class="info-label">Date</div><div>${formatDateShort()}</div></div><div class="info-row"><div class="info-label">Customer</div><div>${shipToName}</div></div><div class="info-row"><div class="info-label">Address</div><div>${shipToAddress}</div></div><table class="data-table"><thead><tr><th style="width:40px">#</th><th style="width:120px">CATEGORY</th><th style="width:280px">MATERIAL DESCRIPTION</th><th style="width:200px">SERIAL NUMBER</th><th style="width:100px">REMARKS</th></tr></thead><tbody>${file.serialData.filter(r => r.materialCode && r.barcode).map((r, idx) => `<tr><td style="text-align:center">${idx + 1}</td><td style="text-align:center">${getCategoryFromBinCode(r.barcode).toUpperCase()}</td><td style="text-align:center">${r.materialDesc || r.materialCode}</td><td style="text-align:center;font-weight:bold">${r.barcode}</td><td></td></tr>`).join("")}</tbody></table><div class="footer-info"><strong>TOTAL QTY: ${totalQuantity}</strong></div><div class="separator">********** Nothing Follows **********</div></body></html>`
+    const totalCbmInd = totalCBMFromSerials(file.serialData.filter(r => r.materialCode && r.barcode))
+    const htmlContent = `<!DOCTYPE html><html><head><title>${file.dnNo} - Serial List</title><style>@page{size:portrait;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:15px;font-size:11px}.header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #000}.dealer-copy{font-size:18px;font-weight:bold;letter-spacing:1px}.document-header{text-align:center;margin:15px 0}.doc-number{font-size:20px;font-weight:bold}.info-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px}.info-label{font-weight:bold;width:80px}.data-table{width:100%;border-collapse:collapse;margin:15px 0;border:2px solid #000}.data-table th{border:1px solid #000;padding:8px 6px;font-weight:bold;font-size:10px;text-align:center;background:#e8e8e8}.data-table td{border:1px solid #000;padding:6px;font-size:10px}.footer-info{margin:10px 0;font-size:11px}.separator{text-align:center;margin:15px 0;font-size:10px}@media print{body{margin:0;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:portrait;margin:10mm}}</style></head><body><div class="header-section"><div><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height:60px;width:auto"/><div style="font-size:9px;line-height:1.4;margin-top:5px"><strong>SF Express Warehouse</strong><br/>TINGUB, MANDAUE, CEBU</div></div><div style="text-align:right"><div class="dealer-copy">DEALER'S COPY</div><div style="margin-top:8px">${generateBarcodeSVG(file.dnNo)}</div><div style="font-size:10px;margin-top:4px">${formatDateShort()}</div></div></div><div class="document-header"><div class="doc-number">Doc # : ${file.dnNo}</div></div><div class="info-row"><div class="info-label">Client</div><div>HAIER PHILIPPINES INC.</div></div><div class="info-row"><div class="info-label">Date</div><div>${formatDateShort()}</div></div><div class="info-row"><div class="info-label">Customer</div><div>${shipToName}</div></div><div class="info-row"><div class="info-label">Address</div><div>${shipToAddress}</div></div><table class="data-table"><thead><tr><th style="width:35px">#</th><th style="width:110px">CATEGORY</th><th style="width:240px">MATERIAL DESCRIPTION</th><th style="width:180px">SERIAL NUMBER</th><th style="width:60px">CBM</th><th style="width:80px">REMARKS</th></tr></thead><tbody>${file.serialData.filter(r => r.materialCode && r.barcode).map((r, idx) => `<tr><td style="text-align:center">${idx + 1}</td><td style="text-align:center">${getCategoryFromBinCode(r.barcode).toUpperCase()}</td><td style="text-align:center">${r.materialDesc || r.materialCode}</td><td style="text-align:center;font-weight:bold">${r.barcode}</td><td style="text-align:center">${getCBMFromMatcode(r.materialCode) != null ? getCBMFromMatcode(r.materialCode) : '—'}</td><td></td></tr>`).join("")}</tbody></table><div class="footer-info" style="display:flex;gap:24px;"><div><strong>TOTAL QTY: ${totalQuantity}</strong></div><div><strong>TOTAL CBM: ${totalCbmInd.toFixed(4)}</strong></div></div><div class="separator">********** Nothing Follows **********</div></body></html>`
     printWindow.document.write(htmlContent)
     printWindow.document.close()
     setTimeout(() => printWindow.print(), 250)
@@ -439,11 +490,18 @@ export default function ExcelUploader() {
     { id: "individualDN" as TabType, label: "Individual DN", index: "03", icon: Download       },
   ]
 
-  // ── Shared sidebar item helpers ──────────────────────────────────────────────
   const sidebarItemBase = `w-full flex items-center transition-all duration-200 relative group`
   const sidebarRowCls = sidebarCollapsed
     ? `${sidebarItemBase} flex-row gap-4 px-5 py-5 lg:flex-col lg:justify-center lg:gap-1.5 lg:px-0 lg:py-4`
     : `${sidebarItemBase} flex-row gap-4 px-5 py-5`
+
+  const visibleGrouped = filterGroupedDataBySearch(groupedData).filter(r => r.materialCode && r.materialDescription)
+  const grandTotal = totalCBM(visibleGrouped)
+
+  // Per-DN CBM + grand total across all DNs
+  const filteredDNs = filterDNsBySearch(uploadedFiles)
+  const allDNsTotalCBM = filteredDNs.reduce((sum, f) =>
+    sum + totalCBMFromSerials(f.serialData.filter(r => r.materialCode && r.barcode)), 0)
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: C.bg }}>
@@ -536,7 +594,6 @@ export default function ExcelUploader() {
             transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
           }}
         >
-
           <style>{`
             @media (min-width: 1024px) {
               .sidebar-aside { transform: translateX(0) !important; position: sticky !important; top: 73px; width: ${sidebarCollapsed ? '60px' : '240px'} !important; flex-shrink: 0; }
@@ -546,26 +603,21 @@ export default function ExcelUploader() {
           <nav className="flex-1 py-5 overflow-y-auto overflow-x-hidden">
             <div style={{ borderBottom: `1px solid ${C.border}` }}>
 
-              {/* Upload */}
               <label htmlFor="file-upload"
                 className={`${sidebarRowCls} cursor-pointer hover:pl-7 ${sidebarCollapsed ? 'lg:hover:pl-0' : ''}`}
                 style={{ borderBottom: `1px solid ${C.border}` }}
               >
-                <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`}
-                  style={{ color: C.textGhost }}>↑</span>
+                <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>↑</span>
                 <Upload className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
                 {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest transition-colors" style={{ color: C.textGhost }}>↑</span>}
                 <span className={`text-[13px] font-black transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textSub }}>Upload Files</span>
                 {sidebarCollapsed && (
                   <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
-                    style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>
-                    Upload Files
-                  </div>
+                    style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>Upload Files</div>
                 )}
                 <input id="file-upload" type="file" accept=".xlsx,.xls,.csv" multiple onChange={handleFileUpload} className="hidden" />
               </label>
 
-              {/* Tabs */}
               {tabs.map(({ id, label, index, icon: Icon }) => {
                 const isActive = activeTab === id && (groupedData.length > 0 || serialListData.length > 0)
                 return (
@@ -576,59 +628,39 @@ export default function ExcelUploader() {
                   >
                     {isActive && <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-px h-8 ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ background: C.accent }} />}
                     {isActive && sidebarCollapsed && <span className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 h-px w-6" style={{ background: C.accent }} />}
-
-                    <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`}
-                      style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>
-
+                    <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>
                     <Icon className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: isActive ? C.accent : C.textSub }} strokeWidth={1.5} />
-
-                    {sidebarCollapsed && (
-                      <span className="hidden lg:block text-[10px] font-bold tracking-widest transition-colors" style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>
-                    )}
-
-                    <span className={`text-[13px] font-black leading-snug transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`}
-                      style={{ color: isActive ? C.textPrimary : C.textSub }}>{label}</span>
-
+                    {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest transition-colors" style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>}
+                    <span className={`text-[13px] font-black leading-snug transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: isActive ? C.textPrimary : C.textSub }}>{label}</span>
                     {sidebarCollapsed && (
                       <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
-                        style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>
-                        {label}
-                      </div>
+                        style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>{label}</div>
                     )}
                   </button>
                 )
               })}
 
-              {/* Clear all */}
               {uploadedFiles.length > 0 && (
-                <button
-                  onClick={() => { handleClear(); setSidebarOpen(false) }}
-                  className={`${sidebarRowCls} hover:pl-7 ${sidebarCollapsed ? 'lg:hover:pl-0' : ''}`}
-                >
+                <button onClick={() => { handleClear(); setSidebarOpen(false) }} className={`${sidebarRowCls} hover:pl-7 ${sidebarCollapsed ? 'lg:hover:pl-0' : ''}`}>
                   <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>×</span>
                   <X className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textGhost }} strokeWidth={1.5} />
                   {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest" style={{ color: C.textGhost }}>×</span>}
                   <span className={`text-[13px] font-black transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>Clear All</span>
                   {sidebarCollapsed && (
                     <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
-                      style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>
-                      Clear All
-                    </div>
+                      style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>Clear All</div>
                   )}
                 </button>
               )}
             </div>
           </nav>
 
-          {/* Collapse toggle */}
           <div className="flex-shrink-0 p-3" style={{ borderTop: `1px solid ${C.border}` }}>
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full transition-colors"
               style={{ color: C.textGhost }}
               onMouseEnter={e => { e.currentTarget.style.background = C.surface; e.currentTarget.style.color = C.textPrimary }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textGhost }}
-            >
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textGhost }}>
               {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
             </button>
             {!sidebarCollapsed && <p className="text-[10px] text-center pt-1" style={{ color: C.textGhost }}>v1.0.0</p>}
@@ -654,23 +686,16 @@ export default function ExcelUploader() {
                 <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-black tracking-tight leading-[0.93]" style={{ color: C.textPrimary }}>Upload Files</h2>
                 <p className="text-[11px] uppercase tracking-widest mt-1.5" style={{ color: C.textMuted }}>SF Express · Cebu Warehouse</p>
               </div>
-
               <div className="p-6 sm:p-8">
                 <label htmlFor="file-upload-main"
                   onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
                   className={`relative block cursor-pointer transition-all duration-300 ${isDragging ? 'scale-[1.01]' : ''}`}
                 >
                   <div className="border border-dashed rounded-xl transition-all duration-300"
-                    style={{
-                      borderColor: isDragging ? 'rgba(232,25,44,0.5)' : C.border,
-                      background: isDragging ? 'rgba(232,25,44,0.04)' : 'transparent',
-                    }}>
+                    style={{ borderColor: isDragging ? 'rgba(232,25,44,0.5)' : C.border, background: isDragging ? 'rgba(232,25,44,0.04)' : 'transparent' }}>
                     <div className="flex flex-col items-center justify-center py-14 px-6">
                       <div className="w-14 h-14 rounded-full flex items-center justify-center mb-5 transition-all duration-300"
-                        style={{
-                          border: `1px solid ${isDragging ? 'rgba(232,25,44,0.4)' : C.border}`,
-                          background: isDragging ? 'rgba(232,25,44,0.1)' : 'transparent',
-                        }}>
+                        style={{ border: `1px solid ${isDragging ? 'rgba(232,25,44,0.4)' : C.border}`, background: isDragging ? 'rgba(232,25,44,0.1)' : 'transparent' }}>
                         <Upload className="w-6 h-6 transition-colors duration-300" style={{ color: isDragging ? C.accent : C.textGhost }} />
                       </div>
                       <p className="text-base font-black mb-1 tracking-tight transition-colors duration-300" style={{ color: isDragging ? C.accent : C.textPrimary }}>
@@ -686,7 +711,6 @@ export default function ExcelUploader() {
                   </div>
                   <input id="file-upload-main" type="file" accept=".xlsx,.xls,.csv" multiple onChange={handleFileUpload} className="hidden" />
                 </label>
-
                 {isLoading && (
                   <div className="mt-5 flex items-center gap-4 p-4 rounded-xl" style={{ border: `1px solid ${C.border}` }}>
                     <div className="w-4 h-4 rounded-full border animate-spin flex-shrink-0" style={{ borderColor: C.border, borderTopColor: C.accent }} />
@@ -704,12 +728,10 @@ export default function ExcelUploader() {
             {/* Uploaded files list */}
             {uploadedFiles.length > 0 && (
               <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
-                <button
-                  onClick={() => setShowFilesList(!showFilesList)}
+                <button onClick={() => setShowFilesList(!showFilesList)}
                   className="w-full flex items-center justify-between px-6 sm:px-8 py-5 transition-colors group"
                   onMouseEnter={e => (e.currentTarget.style.background = C.surface)}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <div className="flex items-center gap-4">
                     <span className="text-[11px] font-bold w-5 transition-colors" style={{ color: C.textGhost }}>↓</span>
                     <FileSpreadsheet className="w-4 h-4 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
@@ -718,28 +740,19 @@ export default function ExcelUploader() {
                   </div>
                   <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 ${showFilesList ? 'rotate-90' : ''}`} style={{ color: C.textGhost }} />
                 </button>
-
                 {showFilesList && (
                   <div className="max-h-72 overflow-y-auto" style={{ borderTop: `1px solid ${C.border}` }}>
                     {uploadedFiles.map((file) => (
-                      <div key={file.id}
-                        onClick={() => handleSelectFile(file.id)}
+                      <div key={file.id} onClick={() => handleSelectFile(file.id)}
                         className="flex items-center gap-4 px-6 sm:px-8 py-4 cursor-pointer transition-all duration-200 group"
-                        style={{
-                          borderBottom: `1px solid ${C.divider}`,
-                          background: selectedFileId === file.id ? C.surface : 'transparent',
-                          paddingLeft: selectedFileId === file.id ? '2.25rem' : undefined,
-                        }}
+                        style={{ borderBottom: `1px solid ${C.divider}`, background: selectedFileId === file.id ? C.surface : 'transparent', paddingLeft: selectedFileId === file.id ? '2.25rem' : undefined }}
                         onMouseEnter={e => { if (selectedFileId !== file.id) e.currentTarget.style.paddingLeft = '2.25rem' }}
-                        onMouseLeave={e => { if (selectedFileId !== file.id) e.currentTarget.style.paddingLeft = '1.5rem' }}
-                      >
-                        <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors"
-                          style={{ color: selectedFileId === file.id ? C.accent : C.textGhost }}>
+                        onMouseLeave={e => { if (selectedFileId !== file.id) e.currentTarget.style.paddingLeft = '1.5rem' }}>
+                        <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors" style={{ color: selectedFileId === file.id ? C.accent : C.textGhost }}>
                           {selectedFileId === file.id ? '→' : '·'}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-black truncate transition-colors"
-                            style={{ color: selectedFileId === file.id ? C.textPrimary : C.textSub }}>{file.name}</p>
+                          <p className="text-[13px] font-black truncate transition-colors" style={{ color: selectedFileId === file.id ? C.textPrimary : C.textSub }}>{file.name}</p>
                           <p className="text-[10px] mt-0.5" style={{ color: C.textGhost }}>{file.dnNo} · {file.data.length} items</p>
                         </div>
                         {selectedFileId === file.id && <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.accent }} />}
@@ -765,12 +778,7 @@ export default function ExcelUploader() {
                   {tabs.map(({ id, label, index, icon: Icon }) => (
                     <button key={id} onClick={() => setActiveTab(id)}
                       className="flex-1 flex items-center justify-center gap-2.5 px-3 py-4 text-[10px] uppercase tracking-[0.15em] font-bold transition-all duration-150 relative"
-                      style={{
-                        borderRight: `1px solid ${C.border}`,
-                        color: activeTab === id ? C.textPrimary : C.textGhost,
-                        background: activeTab === id ? C.surface : 'transparent',
-                      }}
-                    >
+                      style={{ borderRight: `1px solid ${C.border}`, color: activeTab === id ? C.textPrimary : C.textGhost, background: activeTab === id ? C.surface : 'transparent' }}>
                       <Icon className="w-3.5 h-3.5" style={{ color: activeTab === id ? C.accent : C.textGhost }} strokeWidth={1.5} />
                       <span className="hidden sm:inline">{label}</span>
                       {activeTab === id && <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: C.accent }} />}
@@ -783,20 +791,12 @@ export default function ExcelUploader() {
                   <div className="flex gap-3 mb-6">
                     <div className="relative flex-1 max-w-sm">
                       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: C.textGhost }} />
-                      <input
-                        type="text"
-                        placeholder="Search DN, serial, material…"
-                        value={searchQuery}
+                      <input type="text" placeholder="Search DN, serial, material…" value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl text-[11px] outline-none transition-all"
-                        style={{
-                          background: C.surface,
-                          border: `1px solid ${C.border}`,
-                          color: C.textSilver,
-                        }}
+                        style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textSilver }}
                         onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
-                        onBlur={e => (e.currentTarget.style.borderColor = C.border)}
-                      />
+                        onBlur={e => (e.currentTarget.style.borderColor = C.border)} />
                     </div>
                     <div className="flex gap-2">
                       {searchQuery && (
@@ -818,7 +818,7 @@ export default function ExcelUploader() {
                     </div>
                   </div>
 
-                  {/* Consolidated */}
+                  {/* ── Consolidated ── */}
                   {activeTab === "consolidated" && (
                     <>
                       <div className="flex items-baseline justify-between mb-5">
@@ -828,21 +828,27 @@ export default function ExcelUploader() {
                           </p>
                           <h3 className="text-lg font-black tracking-tight" style={{ color: C.textPrimary }}>Consolidated Materials</h3>
                         </div>
-                        <span className="text-[10px] font-black tabular-nums" style={{ color: C.textPrimary }}>
-                          <span style={{ color: C.accent }}>{filterGroupedDataBySearch(groupedData).length}</span> items
-                        </span>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ border: `1px solid rgba(245,166,35,0.2)`, background: 'rgba(245,166,35,0.05)' }}>
+                            <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.amber }}>Total CBM</span>
+                            <span className="text-[12px] font-black tabular-nums" style={{ color: C.amber }}>{grandTotal.toFixed(4)}</span>
+                          </div>
+                          <span className="text-[10px] font-black tabular-nums" style={{ color: C.textPrimary }}>
+                            <span style={{ color: C.accent }}>{visibleGrouped.length}</span> items
+                          </span>
+                        </div>
                       </div>
                       <div className="overflow-x-auto rounded-xl" style={{ border: `1px solid ${C.border}` }}>
                         <table className="w-full">
                           <thead>
                             <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                              {["#","Material Code","Material Description","Category","Qty.","Ship Name","Remarks"].map(h => (
+                              {["#","Material Code","Material Description","Category","Qty.","CBM","Total CBM","Ship Name","Remarks"].map(h => (
                                 <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textGhost }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
-                            {filterGroupedDataBySearch(groupedData).filter(r => r.materialCode && r.materialDescription).map((row, idx) => (
+                            {visibleGrouped.map((row, idx) => (
                               <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`}
                                 style={{ borderBottom: `1px solid ${C.divider}`, animationDelay: `${idx * 0.02}s` }}>
                                 <td className="px-4 py-3.5 text-[11px] transition-colors" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</td>
@@ -850,17 +856,30 @@ export default function ExcelUploader() {
                                 <td className="px-4 py-3.5 text-sm font-black transition-colors" style={{ color: C.textSilver }}>{row.materialDescription}</td>
                                 <td className="px-4 py-3.5"><span className="text-[10px] font-bold" style={{ color: C.textSub }}>{row.category}</span></td>
                                 <td className="px-4 py-3.5 text-sm font-black tabular-nums" style={{ color: C.accent }}>{row.qty}</td>
+                                <td className="px-4 py-3.5 text-[11px] tabular-nums" style={{ color: C.textSub }}>
+                                  {row.cbm != null ? row.cbm : <span style={{ color: C.textGhost }}>—</span>}
+                                </td>
+                                <td className="px-4 py-3.5 text-[11px] font-bold tabular-nums" style={{ color: row.cbm != null ? C.amber : C.textGhost }}>
+                                  {row.cbm != null ? (row.cbm * row.qty).toFixed(4) : '—'}
+                                </td>
                                 <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.shipName || '—'}</td>
                                 <td className="px-4 py-3.5 text-[10px]" style={{ color: C.textMuted }}>{row.remarks}</td>
                               </tr>
                             ))}
+                            {visibleGrouped.length > 0 && (
+                              <tr style={{ borderTop: `1px solid ${C.border}`, background: C.surface }}>
+                                <td colSpan={6} className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest" style={{ color: C.textGhost }}>Grand Total CBM</td>
+                                <td className="px-4 py-3 text-[12px] font-black tabular-nums" style={{ color: C.amber }}>{grandTotal.toFixed(4)}</td>
+                                <td colSpan={2} />
+                              </tr>
+                            )}
                           </tbody>
                         </table>
                       </div>
                     </>
                   )}
 
-                  {/* Serial list */}
+                  {/* ── Serial List ── */}
                   {activeTab === "serialList" && (
                     <>
                       <div className="flex items-baseline justify-between mb-5">
@@ -902,17 +921,26 @@ export default function ExcelUploader() {
                     </>
                   )}
 
-                  {/* Individual DN */}
+                  {/* ── Individual DN ── */}
                   {activeTab === "individualDN" && (
                     <>
-                      <div className="mb-6">
-                        <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>Download per-DN or all at once</p>
-                        <h3 className="text-lg font-black tracking-tight" style={{ color: C.textPrimary }}>Individual DN Downloads</h3>
+                      <div className="flex items-start justify-between mb-6">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>Download per-DN or all at once</p>
+                          <h3 className="text-lg font-black tracking-tight" style={{ color: C.textPrimary }}>Individual DN Downloads</h3>
+                        </div>
+                        {/* Grand total CBM across all DNs */}
+                        {filteredDNs.length > 0 && (
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0" style={{ border: `1px solid rgba(245,166,35,0.2)`, background: 'rgba(245,166,35,0.05)' }}>
+                            <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.amber }}>Total CBM</span>
+                            <span className="text-[12px] font-black tabular-nums" style={{ color: C.amber }}>{allDNsTotalCBM.toFixed(4)}</span>
+                          </div>
+                        )}
                       </div>
+
                       <div style={{ borderTop: `1px solid ${C.border}` }}>
                         {/* Download all row */}
-                        <div className="flex items-center gap-5 py-5 group transition-all duration-200 cursor-pointer"
-                          style={{ borderBottom: `1px solid ${C.divider}` }}>
+                        <div className="flex items-center gap-5 py-5 group transition-all duration-200 cursor-pointer" style={{ borderBottom: `1px solid ${C.divider}` }}>
                           <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors" style={{ color: C.textGhost }}>↓</span>
                           <Layers className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
                           <div className="flex-1 min-w-0">
@@ -928,25 +956,56 @@ export default function ExcelUploader() {
                           </button>
                         </div>
 
-                        {filterDNsBySearch(uploadedFiles).map((file, idx) => (
-                          <div key={file.id} className="flex items-center gap-5 py-5 group transition-all duration-200"
-                            style={{ borderBottom: `1px solid ${C.divider}` }}>
-                            <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</span>
-                            <FileSpreadsheet className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[13px] font-black truncate transition-colors" style={{ color: C.textSilver }}>{file.dnNo}</p>
-                              <p className="text-[10px] mt-0.5 truncate" style={{ color: C.textGhost }}>{file.name}</p>
+                        {/* Per-DN rows */}
+                        {filteredDNs.map((file, idx) => {
+                          const dnCBM = totalCBMFromSerials(file.serialData.filter(r => r.materialCode && r.barcode))
+                          const dnQty = file.serialData.filter(r => r.materialCode && r.barcode).length
+                          return (
+                            <div key={file.id} className="flex items-center gap-5 py-4 group transition-all duration-200" style={{ borderBottom: `1px solid ${C.divider}` }}>
+                              <span className="text-[11px] font-bold w-5 flex-shrink-0" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</span>
+                              <FileSpreadsheet className="w-4 h-4 flex-shrink-0" style={{ color: C.textSub }} strokeWidth={1.5} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-black truncate" style={{ color: C.textSilver }}>{file.dnNo}</p>
+                                <div className="flex items-center gap-3 mt-0.5">
+                                  <p className="text-[10px]" style={{ color: C.textGhost }}>{file.name}</p>
+                                  <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
+                                  <span className="text-[10px] font-bold tabular-nums" style={{ color: C.textMuted }}>{dnQty} pcs</span>
+                                  {dnCBM > 0 && (
+                                    <>
+                                      <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
+                                      <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{dnCBM.toFixed(4)} CBM</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <button onClick={() => { setSelectedDownloadFile(file); setIsDownloadingAllDN(false); setShowDownloadModal(true) }}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0"
+                                style={{ border: `1px solid ${C.border}`, color: C.textSub }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
+                                <Download className="w-3 h-3" />
+                                <span className="hidden sm:inline">Download</span>
+                              </button>
                             </div>
-                            <button onClick={() => { setSelectedDownloadFile(file); setIsDownloadingAllDN(false); setShowDownloadModal(true) }}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0"
-                              style={{ border: `1px solid ${C.border}`, color: C.textSub }}
-                              onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
-                              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
-                              <Download className="w-3 h-3" />
-                              <span className="hidden sm:inline">Download</span>
-                            </button>
+                          )
+                        })}
+
+                        {/* Grand total footer row */}
+                        {filteredDNs.length > 1 && (
+                          <div className="flex items-center gap-5 py-4" style={{ borderTop: `1px solid ${C.border}`, background: C.surface }}>
+                            <span className="w-5 flex-shrink-0" />
+                            <span className="w-4 flex-shrink-0" />
+                            <div className="flex-1 flex items-center gap-3">
+                              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.textGhost }}>Grand Total</span>
+                              <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
+                              <span className="text-[11px] font-black tabular-nums" style={{ color: C.textMuted }}>
+                                {filteredDNs.reduce((s, f) => s + f.serialData.filter(r => r.materialCode && r.barcode).length, 0)} pcs
+                              </span>
+                              <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
+                              <span className="text-[12px] font-black tabular-nums" style={{ color: C.amber }}>{allDNsTotalCBM.toFixed(4)} CBM</span>
+                            </div>
                           </div>
-                        ))}
+                        )}
                       </div>
                     </>
                   )}
@@ -954,30 +1013,21 @@ export default function ExcelUploader() {
               </div>
             )}
 
-            {/* Footer */}
-            {/* <div className="py-5 flex items-center justify-between" style={{ borderTop: `1px solid ${C.divider}` }}>
-              <p className="text-[11px]" style={{ color: C.divider }}>SF Express · Cebu Warehouse</p>
-              <p className="text-[11px]" style={{ color: C.divider }}>{new Date().getFullYear()}</p>
-            </div> */}
           </div>
         </main>
       </div>
 
       {/* ── Download modal ── */}
       {showDownloadModal && (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}
-          onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}
-        >
+          onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}>
           <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}
             style={{ background: C.bg, border: `1px solid ${C.border}` }}>
-
             <div className="px-7 pt-7 pb-5" style={{ borderBottom: `1px solid ${C.border}` }}>
               <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1.5" style={{ color: C.amber }}>Export</p>
               <h3 className="text-xl font-black tracking-tight leading-none" style={{ color: C.textPrimary }}>Download Format</h3>
             </div>
-
             <div>
               {[
                 { type: 'excel', label: 'Excel (.xlsx)', index: '01', desc: 'Editable spreadsheet', icon: FileSpreadsheet },
@@ -987,13 +1037,9 @@ export default function ExcelUploader() {
                 return (
                   <button key={opt.type} onClick={() => setDownloadType(opt.type as 'pdf' | 'excel')}
                     className="w-full flex items-center gap-5 px-7 py-4 transition-all duration-200 text-left"
-                    style={{
-                      borderBottom: `1px solid ${C.border}`,
-                      paddingLeft: active ? '2rem' : undefined,
-                    }}
+                    style={{ borderBottom: `1px solid ${C.border}`, paddingLeft: active ? '2rem' : undefined }}
                     onMouseEnter={e => { if (!active) e.currentTarget.style.paddingLeft = '2rem' }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.paddingLeft = '1.75rem' }}
-                  >
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.paddingLeft = '1.75rem' }}>
                     <span className="text-[11px] font-bold w-5 flex-shrink-0" style={{ color: active ? C.accent : C.textGhost }}>{opt.index}</span>
                     <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg transition-all duration-200"
                       style={{ border: `1px solid ${active ? 'rgba(232,25,44,0.2)' : C.border}`, background: active ? 'rgba(232,25,44,0.08)' : 'transparent' }}>
@@ -1008,7 +1054,6 @@ export default function ExcelUploader() {
                 )
               })}
             </div>
-
             <div className="flex gap-3 px-7 py-5" style={{ borderTop: `1px solid ${C.border}` }}>
               <button onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}
                 className="flex-1 px-4 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all"
