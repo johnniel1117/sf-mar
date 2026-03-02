@@ -351,8 +351,8 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                         className="flex flex-col items-start gap-2 group"
                       >
                         <p className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] group-hover:text-[#F5A623] transition-colors">Analytics</p>
-                        <div className="flex items-center gap-1.5 text-white group-hover:text-[#F5A623] transition-colors">
-                          <TrendingUp className="w-10 h-10" />
+                        <div className="flex items-center gap-1.5 text-[#F5A623] group-hover:text-[#F5A623] transition-colors">
+                          <TrendingUp className=" w-10 h-10" />
                           <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                       </button>
