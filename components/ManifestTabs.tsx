@@ -107,7 +107,7 @@ export function ManifestTabs({
 
                   <Icon
                     className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                      isActive ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-white'
+                      isActive ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'
                     }`}
                     strokeWidth={1.5}
                   />
@@ -115,7 +115,7 @@ export function ManifestTabs({
                   {/* Index below icon — desktop collapsed only */}
                   {isCollapsed && (
                     <span className={`hidden lg:block text-[10px] font-bold tracking-widest transition-colors ${
-                      isActive ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
+                      isActive ? 'text-yellow-500' : 'text-[#5A5A5A] group-hover:text-white'
                     }`}>
                       {index}
                     </span>
