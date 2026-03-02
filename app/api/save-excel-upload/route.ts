@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { error } from 'console'
 import { NextRequest, NextResponse } from 'next/server'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -17,6 +18,7 @@ interface MaterialData {
   qty: number
   remarks: string
   shipName: string
+  cbm?: number
 }
 
 interface SerialData {
@@ -64,6 +66,12 @@ export async function POST(request: NextRequest) {
     // Calculate total quantity from material data
     const totalQty = payload.data.reduce((sum, item) => sum + (item.qty || 0), 0)
 
+    // Calculate total CBM from material data
+    const totalCbm = payload.data.reduce((sum, item) => {
+      const itemCbm = (item.cbm || 0) * (item.qty || 0)
+      return sum + itemCbm
+    }, 0)
+
     // Determine document_number: use traNo if available, otherwise dnNo
     const documentNumber = payload.traNo || payload.dnNo
 
@@ -79,7 +87,7 @@ export async function POST(request: NextRequest) {
       ? payload.serialData[0].shipToName 
       : null
 
-    // Check if document_number already exists (get all matching rows)
+    // Check if document_number already exists
     const { data: existingUploads, error: checkError } = await supabase
       .from('excel_uploads')
       .select('id, file_name, created_at, document_number')
@@ -93,62 +101,73 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (existingUploads && existingUploads.length > 0) {
-      console.log(`Duplicate found - document_number already exists: ${documentNumber} (${existingUploads.length} existing records)`)
-      return NextResponse.json(
-        { 
-          error: `Document ${documentNumber} has already been uploaded`,
-          duplicate: true,
-          existingUpload: {
-            id: existingUploads[0].id,
-            fileName: existingUploads[0].file_name,
-            createdAt: existingUploads[0].created_at,
-            documentNumber: existingUploads[0].document_number
-          },
-          duplicateCount: existingUploads.length
-        },
-        { status: 409 } // 409 Conflict status code
-      )
-    }
-
     // Prepare data for Supabase
     const uploadRecord = {
       file_name: payload.fileName,
       document_number: documentNumber,
       ship_to_name: shipToName,
       total_quantity: totalQty,
+      total_cbm: totalCbm,
       material_data: payload.data,
       serial_data: payload.serialData,
       shape_names: payload.data.map(d => d.materialDescription).filter(Boolean),
-      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
 
-    console.log("Saving to Supabase:", {
-      ...uploadRecord,
-      material_data: `[${uploadRecord.material_data.length} items]`,
-      serial_data: `[${uploadRecord.serial_data.length} items]`
-    })
+    let result
+    let action = 'inserted'
 
-    // Insert into Supabase
-    const { data, error } = await supabase
-      .from('excel_uploads')
-      .insert([uploadRecord])
-      .select()
+    if (existingUploads && existingUploads.length > 0) {
+      // Update existing record
+      console.log(`Updating existing document: ${documentNumber} (ID: ${existingUploads[0].id})`)
+      
+      const { data, error: updateError } = await supabase
+        .from('excel_uploads')
+        .update(uploadRecord)
+        .eq('id', existingUploads[0].id)
+        .select()
 
-    if (error) {
-      console.error("Supabase error:", error)
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      )
+      if (updateError) {
+        console.error("Supabase update error:", error)
+        return NextResponse.json(
+          { error: updateError.message },
+          { status: 400 }
+        )
+      }
+
+      result = data
+      action = 'updated'
+    } else {
+      // Insert new record
+      console.log("Saving new document to Supabase:", {
+        ...uploadRecord,
+        material_data: `[${uploadRecord.material_data.length} items]`,
+        serial_data: `[${uploadRecord.serial_data.length} items]`
+      })
+
+      const { data, error: insertError } = await supabase
+        .from('excel_uploads')
+        .insert([uploadRecord])
+        .select()
+
+      if (insertError) {
+        console.error("Supabase insert error:", insertError)
+        return NextResponse.json(
+          { error: insertError.message },
+          { status: 400 }
+        )
+      }
+
+      result = data
     }
 
-    console.log("Successfully saved:", data)
+    console.log(`Successfully ${action}:`, result)
 
     return NextResponse.json({
       success: true,
-      message: 'Data saved successfully',
-      data: data[0],
+      message: `Data ${action} successfully`,
+      action: action,
+      data: result[0],
     })
   } catch (error) {
     console.error("API error:", error)

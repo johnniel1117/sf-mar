@@ -197,6 +197,8 @@ export function CreateManifestTab({
 
   const totalDocuments = manifest.items.length
   const totalQuantity = manifest.items.reduce((sum, item) => sum + item.total_quantity, 0)
+  const totalCbm = manifest.items.reduce((sum, item) => sum + (item.total_cbm ?? 0), 0)
+  const hasCbm = manifest.items.some(item => item.total_cbm != null && item.total_cbm > 0)
 
   useEffect(() => {
     isMountedRef.current = true
@@ -270,6 +272,7 @@ export function CreateManifestTab({
       document_number: doc.documentNumber,
       ship_to_name: doc.shipToName,
       total_quantity: doc.quantity,
+      total_cbm: (doc as any).total_cbm ?? undefined,
     }
     setManifest({ ...manifest, items: [...manifest.items, newItem] })
     if (showToast) showToast(`Document ${doc.documentNumber} added`, 'success')
@@ -527,7 +530,12 @@ export function CreateManifestTab({
                             <span className="text-[10px]" style={{ color: C.textMuted }}>{String(idx + 1).padStart(2, '0')}</span>
                             <span className="font-black text-sm truncate transition-colors" style={{ color: C.textSilver }}>{result.documentNumber}</span>
                           </div>
-                          <span className="text-[10px] font-bold flex-shrink-0" style={{ color: C.accent }}>×{result.quantity}</span>
+                          <div className="flex items-baseline gap-3 flex-shrink-0">
+                            {(result as any).total_cbm != null && (result as any).total_cbm > 0 && (
+                              <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{((result as any).total_cbm as number).toFixed(4)} CBM</span>
+                            )}
+                            <span className="text-[10px] font-bold" style={{ color: C.accent }}>×{result.quantity}</span>
+                          </div>
                         </div>
                         <p className="text-[11px] mt-0.5 pl-6 truncate" style={{ color: C.textMuted }}>{result.shipToName}</p>
                       </button>
@@ -553,11 +561,18 @@ export function CreateManifestTab({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <SectionLabel icon={Package}>Scanned ({totalDocuments})</SectionLabel>
-                  {totalQuantity > 0 && (
-                    <span className="text-[10px]" style={{ color: C.textMuted }}>
-                      Total: <span className="font-black tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
-                    </span>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {hasCbm && (
+                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                        CBM: <span className="font-black tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                      </span>
+                    )}
+                    {totalQuantity > 0 && (
+                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                        Total: <span className="font-black tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {manifest.items.length === 0 ? (
@@ -578,7 +593,12 @@ export function CreateManifestTab({
                           <p className="font-black text-sm truncate transition-colors group-hover:text-white" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
                           <p className="text-[11px] mt-0.5 truncate" style={{ color: C.textMuted }}>{item.document_number}</p>
                         </div>
-                        <span className="text-sm font-black tabular-nums flex-shrink-0" style={{ color: C.accent }}>×{item.total_quantity}</span>
+                        <div className="flex items-baseline gap-2 flex-shrink-0">
+                          {item.total_cbm != null && item.total_cbm > 0 && (
+                            <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{item.total_cbm.toFixed(4)}</span>
+                          )}
+                          <span className="text-sm font-black tabular-nums" style={{ color: C.accent }}>×{item.total_quantity}</span>
+                        </div>
                         <button onClick={() => removeItem(idx)} className="p-1.5 flex-shrink-0 touch-manipulation transition-colors" style={{ color: C.textGhost }}
                           onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
                           onMouseLeave={e => (e.currentTarget.style.color = C.textGhost)}>
@@ -619,23 +639,31 @@ export function CreateManifestTab({
               <div className="p-4 sm:p-6" style={{ border: `1px solid ${C.border}` }}>
                 <div className="flex items-center justify-between mb-4">
                   <SectionLabel icon={Package}>Documents ({totalDocuments})</SectionLabel>
-                  <span className="text-[10px]" style={{ color: C.textMuted }}>
-                    Total Qty: <span className="font-black tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
-                  </span>
+                  <div className="flex items-center gap-4">
+                    {hasCbm && (
+                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                        Total CBM: <span className="font-black tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                      </span>
+                    )}
+                    <span className="text-[10px]" style={{ color: C.textMuted }}>
+                      Total Qty: <span className="font-black tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
+                    </span>
+                  </div>
                 </div>
 
                 {/* Header row */}
-                <div className="grid grid-cols-[1.5rem_1fr_auto] sm:grid-cols-[1.5rem_1fr_auto_auto] gap-x-3 pb-2.5 text-[10px] uppercase tracking-widest font-bold"
+                <div className={`grid gap-x-3 pb-2.5 text-[10px] uppercase tracking-widest font-bold ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto]'}`}
                   style={{ color: C.textGhost, borderBottom: `1px solid ${C.border}` }}>
                   <span>#</span>
                   <span>Ship To</span>
                   <span className="hidden sm:block">DN / TRA</span>
+                  {hasCbm && <span className="text-right" style={{ color: C.amber }}>CBM</span>}
                   <span className="text-right">Qty</span>
                 </div>
 
                 {manifest.items.map((item) => (
                   <div key={item.item_number}
-                    className="grid grid-cols-[1.5rem_1fr_auto] sm:grid-cols-[1.5rem_1fr_auto_auto] gap-x-3 py-3.5 items-center group/row hover:pl-1 transition-all duration-150"
+                    className={`grid gap-x-3 py-3.5 items-center group/row hover:pl-1 transition-all duration-150 ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto]'}`}
                     style={{ borderBottom: `1px solid ${C.divider}` }}>
                     <span className="text-[11px] font-bold group-hover/row:text-[#E8192C] transition-colors" style={{ color: C.textGhost }}>
                       {String(item.item_number).padStart(2, '0')}
@@ -645,9 +673,26 @@ export function CreateManifestTab({
                       <p className="sm:hidden text-[11px] mt-0.5 truncate" style={{ color: C.textMuted }}>{item.document_number}</p>
                     </div>
                     <span className="text-[11px] hidden sm:block" style={{ color: C.textMuted }}>{item.document_number}</span>
+                    {hasCbm && (
+                      <span className="text-[11px] font-bold tabular-nums text-right" style={{ color: item.total_cbm != null && item.total_cbm > 0 ? C.amber : C.textGhost }}>
+                        {item.total_cbm != null && item.total_cbm > 0 ? item.total_cbm.toFixed(4) : '—'}
+                      </span>
+                    )}
                     <span className="text-sm font-black tabular-nums text-right" style={{ color: C.accent }}>×{item.total_quantity}</span>
                   </div>
                 ))}
+
+                {/* Grand total footer */}
+                {hasCbm && manifest.items.length > 0 && (
+                  <div className={`grid gap-x-3 py-3 items-center ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto]'}`}
+                    style={{ borderTop: `1px solid ${C.border}`, background: '#0a0a0a' }}>
+                    <span />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-right col-span-2 hidden sm:block" style={{ color: C.textGhost }}>Grand Total</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest col-span-1 sm:hidden" style={{ color: C.textGhost }}>Total</span>
+                    <span className="text-[12px] font-black tabular-nums text-right" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                    <span className="text-sm font-black tabular-nums text-right" style={{ color: C.accent }}>×{totalQuantity}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -5,6 +5,7 @@ export interface ManifestItem {
   document_number: string
   ship_to_name: string
   total_quantity: number
+  total_cbm: number
 }
 
 export interface TripManifest {

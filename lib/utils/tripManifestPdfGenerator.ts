@@ -7,6 +7,8 @@ export class TripManifestPDFGenerator {
 
     const items = manifestData.items || []
     const totalQty = items.reduce((sum, item) => sum + item.total_quantity, 0)
+    const totalCbm = items.reduce((sum, item) => sum + (item.total_cbm ?? 0), 0)
+    const hasCbm = items.some(item => item.total_cbm != null && item.total_cbm > 0)
 
     const formatDateShort = (dateStr?: string) => {
       if (!dateStr) return '—'
@@ -42,6 +44,9 @@ export class TripManifestPDFGenerator {
       }
     }
 
+    const cbmCol = (val?: number | null) =>
+      val != null && val > 0 ? val.toFixed(4) : '—'
+
     const itemsHtml = items
       .map(
         (item, idx) => `
@@ -50,6 +55,7 @@ export class TripManifestPDFGenerator {
         <td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px;">${item.ship_to_name}</td>
         <td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px; font-weight: bold;">${item.document_number}</td>
         <td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px;">${item.total_quantity}</td>
+        ${hasCbm ? `<td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px;">${cbmCol(item.total_cbm)}</td>` : ''}
         <td style="text-align: center; padding: 8px; border: 1px solid #000; font-size: 10px;"></td>
       </tr>
     `
@@ -120,7 +126,6 @@ export class TripManifestPDFGenerator {
             text-align: right;
           }
 
-          /* ── Doc title row ── */
           .doc-title-row {
             display: flex;
             align-items: center;
@@ -184,7 +189,6 @@ export class TripManifestPDFGenerator {
           }
           
           .data-table thead {
-           
             border: 1px solid #000;
           }
           
@@ -282,9 +286,9 @@ export class TripManifestPDFGenerator {
               </div>
             </div>
             <div class="title-section">
-  <div style="font-size: 9px; font-weight: bold; text-align: center; margin-bottom: 4px; letter-spacing: 0.05em;">MANIFEST NO.</div>
-  <div class="manifest-number">${manifestData.manifest_number}</div>
-</div>
+              <div style="font-size: 9px; font-weight: bold; text-align: center; margin-bottom: 4px; letter-spacing: 0.05em;">MANIFEST NO.</div>
+              <div class="manifest-number">${manifestData.manifest_number}</div>
+            </div>
           </div>
 
           <!-- Title -->
@@ -330,25 +334,27 @@ export class TripManifestPDFGenerator {
             <thead>
               <tr>
                 <th style="width: 40px;">NO.</th>
-                <th style="width: 280px;">SHIP TO NAME</th>
+                <th style="width: ${hasCbm ? '240px' : '280px'};">SHIP TO NAME</th>
                 <th style="width: 150px;">DN/TRA NO.</th>
-                <th style="width: 80px;">QTY</th>
+                <th style="width: 70px;">QTY</th>
+                ${hasCbm ? '<th style="width: 80px;">CBM</th>' : ''}
                 <th style="width: 100px;">REMARKS</th>
               </tr>
             </thead>
             <tbody>
               ${itemsHtml}
-              <tr style="font-weight: bold; ">
-                <td colspan="3" style="text-align: right; padding: 8px;">TOTAL</td>
-                <td style="text-align: center; padding: 8px;">${totalQty}</td>
-                <td></td>
+              <tr style="font-weight: bold;">
+                <td colspan="3" style="text-align: right; padding: 8px; border: 1px solid #000;">TOTAL</td>
+                <td style="text-align: center; padding: 8px; border: 1px solid #000;">${totalQty}</td>
+                ${hasCbm ? `<td style="text-align: center; padding: 8px; border: 1px solid #000;">${totalCbm.toFixed(4)}</td>` : ''}
+                <td style="border: 1px solid #000;"></td>
               </tr>
             </tbody>
           </table>
 
           <!-- Summary line -->
           <div class="footer-summary">
-            TOTAL DOCUMENTS: ${items.length}  |  TOTAL QUANTITY: ${totalQty}
+            TOTAL DOCUMENTS: ${items.length}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL QUANTITY: ${totalQty}${hasCbm ? `&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL CBM: ${totalCbm.toFixed(4)}` : ''}
           </div>
 
           <!-- Signatures -->
