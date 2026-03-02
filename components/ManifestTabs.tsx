@@ -112,7 +112,7 @@ export function ManifestTabs({
                     strokeWidth={1.5}
                   />
 
-                  {/* Index below icon — desktop collapsed only */}
+                  {/* Index below icon —desktop collapsed only */}
                   {isCollapsed && (
                     <span className={`hidden lg:block text-[10px] font-bold tracking-widest transition-colors ${
                       isActive ? 'text-yellow-500' : 'text-[#5A5A5A] group-hover:text-white'
