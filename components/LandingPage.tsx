@@ -15,12 +15,12 @@ import type { TripManifest } from '@/lib/services/tripManifestService'
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
 function useGreeting() {
-  const [greeting, setGreeting] = useState('Good day')
+  const [greeting, setGreeting] = useState('GOOD DAY')
   useEffect(() => {
     const h = new Date().getHours()
-    if (h >= 5 && h < 12) setGreeting('Good morning')
-    else if (h >= 12 && h < 18) setGreeting('Good afternoon')
-    else setGreeting('Good evening')
+    if (h >= 5 && h < 12) setGreeting('GOOD MORNING')
+    else if (h >= 12 && h < 18) setGreeting('GOOD AFTERNOON')
+    else setGreeting('GOOD EVENING')
   }, [])
   return greeting
 }
