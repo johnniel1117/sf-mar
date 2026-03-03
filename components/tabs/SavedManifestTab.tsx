@@ -232,15 +232,27 @@ export function SavedManifestsTab({
   const [sortDir,       setSortDir]       = useState<'desc' | 'asc'>('desc')
   const itemsPerPage = 10
 
-  const sortedManifests = useMemo(() =>
-    [...savedManifests].sort((a, b) => {
-      const aTime = new Date(a.manifest_date || '').getTime()
-      const bTime = new Date(b.manifest_date || '').getTime()
-      if (!isNaN(aTime) && !isNaN(bTime)) return sortDir === 'desc' ? bTime - aTime : aTime - bTime
-      if (!isNaN(bTime)) return 1
-      if (!isNaN(aTime)) return -1
-      return 0
-    }), [savedManifests, sortDir])
+  const sortedManifests = useMemo(() => {
+  const parseDate = (val: string | undefined | null): number => {
+    if (!val) return -Infinity
+    const mdy = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+    if (mdy) return new Date(+mdy[3], +mdy[1] - 1, +mdy[2]).getTime()
+    const t = new Date(val).getTime()
+    return isNaN(t) ? -Infinity : t
+  }
+
+  return [...savedManifests].sort((a, b) => {
+    const aTime = parseDate(a.manifest_date || a.created_at)
+    const bTime = parseDate(b.manifest_date || b.created_at)
+
+    if (aTime !== bTime) return sortDir === 'desc' ? bTime - aTime : aTime - bTime
+
+    // Tiebreaker: sort by manifest number
+    const aNum = a.manifest_number ?? ''
+    const bNum = b.manifest_number ?? ''
+    return sortDir === 'desc' ? bNum.localeCompare(aNum) : aNum.localeCompare(bNum)
+  })
+}, [savedManifests, sortDir])
 
   const filteredManifests = useMemo(() =>
     sortedManifests.filter((manifest) => {
