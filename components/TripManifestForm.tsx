@@ -161,26 +161,26 @@ export default function TripManifestForm({ role }: { role?: string }) {
   }
 
   // Add this useEffect to check CBM data on mount
-useEffect(() => {
-  const checkCBMData = async () => {
-    try {
-      const response = await fetch('/api/debug/cbm-check')
-      const data = await response.json()
-      console.log('CBM Data Check:', data)
+// useEffect(() => {
+//   const checkCBMData = async () => {
+//     try {
+//       const response = await fetch('/api/debug/cbm-check')
+//       const data = await response.json()
+//       console.log('CBM Data Check:', data)
       
-      if (data.recordsWithCBM === 0) {
-        console.warn('No records with CBM found in database!')
-      } else {
-        console.log(`Found ${data.recordsWithCBM} records with CBM`)
-        console.log('Sample with CBM:', data.samples.find((s: any) => s.total_cbm > 0))
-      }
-    } catch (error) {
-      console.error('Failed to check CBM data:', error)
-    }
-  }
+//       if (data.recordsWithCBM === 0) {
+//         console.warn('No records with CBM found in database!')
+//       } else {
+//         console.log(`Found ${data.recordsWithCBM} records with CBM`)
+//         console.log('Sample with CBM:', data.samples.find((s: any) => s.total_cbm > 0))
+//       }
+//     } catch (error) {
+//       console.error('Failed to check CBM data:', error)
+//     }
+//   }
   
-  checkCBMData()
-}, [])
+//   checkCBMData()
+// }, [])
 
   const searchDocument = async (documentNumber: string): Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number }> | null> => {
     if (!documentNumber || documentNumber.length < 1) return null
