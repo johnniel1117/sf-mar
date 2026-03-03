@@ -662,7 +662,7 @@ export function SavedManifestsTab({
                   onClick={() => setCurrentPage(page)}
                   className={`w-8 h-8 text-[11px] font-[#0D1117] uppercase tracking-widest transition-all ${
                     currentPage === page
-                      ? `bg-[#58A6FF] text-white border border-[#58A6FF]`
+                      ? `bg-yellow-600 text-white  `
                       : 'border border-[#282828] text-[#9A9A9A] hover:border-[#6A6A6A] hover:text-white'
                   }`}
                 >{page}</button>
