@@ -362,7 +362,7 @@ export class TripManifestPDFGenerator {
             <div class="signature-box">
               <div class="signature-label">Checked by (Signature Over Printed Name):</div>
               <div class="signature-line-container">
-                <div class="signature-name">IRIC RANILI</div>
+                <div class="signature-name">IRIC RANILI/WEHLRONE ANTHONY TERAJES</div>
                 <div class="signature-line"></div>
                 <div class="signature-position">Warehouse Checker</div>
               </div>
