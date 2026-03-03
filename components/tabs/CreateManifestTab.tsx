@@ -32,7 +32,7 @@ const C = {
   inputBg:      '#0D1117',
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
-  inputFocus:   '#1F6FEB',
+  inputFocus:   '#C9D1D9',
 }
 
 interface CreateManifestTabProps {

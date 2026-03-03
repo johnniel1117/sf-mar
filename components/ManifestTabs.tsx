@@ -2,6 +2,33 @@
 
 import { ClipboardList, FileText, BarChart2, ChevronRight, ChevronLeft } from 'lucide-react'
 
+// Design tokens (match SavedManifestTab)
+const C = {
+  bg:           '#0D1117',
+  surface:      '#161B22',
+  surfaceHover: '#21262D',
+  border:       '#30363D',
+  borderHover:  '#8B949E',
+  divider:      '#21262D',
+
+  accent:       '#E8192C',
+  accentHover:  '#FF1F30',
+  accentGlow:   'rgba(232,25,44,0.25)',
+
+  amber:        '#F5A623',
+
+  textPrimary:  '#C9D1D9',
+  textSilver:   '#B1BAC4',
+  textSub:      '#8B949E',
+  textMuted:    '#6E7681',
+  textGhost:    '#484F58',
+
+  inputBg:      '#0D1117',
+  inputBorder:  '#30363D',
+  inputText:    '#C9D1D9',
+  inputFocus:   '#1F6FEB',
+}
+
 type Tab = 'create' | 'saved' | 'analytics'
 
 interface ManifestTabsProps {
@@ -39,11 +66,14 @@ export function ManifestTabs({
         aria-hidden="true"
         onClick={onClose}
         className={`
-          fixed inset-0 top-[73px] bg-[#0D1117]/70 backdrop-blur-md z-40
+          fixed inset-0 top-[73px] backdrop-blur-md z-40
           lg:hidden
           transition-opacity duration-300
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
         `}
+        style={{
+          backgroundColor: `${C.bg}/70`,
+        }}
       />
 
       {/* Sidebar
@@ -52,18 +82,22 @@ export function ManifestTabs({
       */}
       <aside
         className={`
-          fixed left-0 top-[73px] bg-[#0D1117] border-r border-[#1a1a1a] flex flex-col z-50
+          fixed left-0 top-[73px] border-r flex flex-col z-50
           transition-all duration-300 ease-in-out
           w-60
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:sticky lg:top-[73px]
           ${isCollapsed ? 'lg:w-[60px]' : 'lg:w-60'}
         `}
-        style={{ height: 'calc(100dvh - 73px)' }}
+        style={{
+          backgroundColor: C.bg,
+          borderRightColor: C.divider,
+          height: 'calc(100dvh - 73px)',
+        }}
       >
         {/* Nav Items */}
-        <nav className="flex-1 py-5 overflow-y-auto overflow-x-hidden">
-          <div className="divide-y divide-[#1a1a1a]">
+        <nav className="flex-1 py-5 overflow-y-auto overflow-x-hidden" style={{borderBottomColor: C.divider}}>
+          <div style={{borderBottomColor: C.divider}}>
             {tabs.map(({ id, label, index, icon: Icon }) => {
               const isActive = activeTab === id
               return (
@@ -86,47 +120,64 @@ export function ManifestTabs({
                   {/* Active left bar — always on mobile, hidden on desktop collapsed */}
                   {isActive && (
                     <span className={`
-                      absolute left-0 top-1/2 -translate-y-1/2 w-px h-8 bg-[#E8192C]
+                      absolute left-0 top-1/2 -translate-y-1/2 w-px h-8
                       ${isCollapsed ? 'lg:hidden' : ''}
-                    `} />
+                    `} style={{backgroundColor: C.accent}} />
                   )}
 
                   {/* Active top bar — desktop collapsed only */}
                   {isActive && isCollapsed && (
-                    <span className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 h-px w-6 bg-[#E8192C]" />
+                    <span className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 h-px w-6" style={{backgroundColor: C.accent}} />
                   )}
 
                   {/* Index number — always on mobile, hidden on desktop when collapsed */}
                   <span className={`
                     text-[11px] font-bold w-5 flex-shrink-0 transition-colors
                     ${isCollapsed ? 'lg:hidden' : ''}
-                    ${isActive ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'}
-                  `}>
+                  `}
+                  style={{
+                    color: isActive ? C.accent : C.textMuted,
+                  }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = C.accent }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = C.textMuted }}
+                  >
                     {index}
                   </span>
 
                   <Icon
-                    className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                      isActive ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'
-                    }`}
+                    className={`w-4 h-4 flex-shrink-0 transition-colors`}
                     strokeWidth={1.5}
+                    style={{
+                      color: isActive ? C.textPrimary : C.textSub,
+                    }}
+                    onMouseEnter={(e) => { if (!isActive) (e.currentTarget as SVGElement).style.color = C.textPrimary }}
+                    onMouseLeave={(e) => { if (!isActive) (e.currentTarget as SVGElement).style.color = C.textSub }}
                   />
 
                   {/* Index below icon —desktop collapsed only */}
                   {isCollapsed && (
-                    <span className={`hidden lg:block text-[10px] font-bold tracking-widest transition-colors ${
-                      isActive ? 'text-yellow-500' : 'text-[#5A5A5A] group-hover:text-white'
-                    }`}>
+                    <span className={`hidden lg:block text-[10px] font-bold tracking-widest transition-colors`}
+                    style={{
+                      color: isActive ? C.amber : C.textMuted,
+                    }}
+                    onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = C.textPrimary }}
+                    onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = C.textMuted }}
+                    >
                       {index}
                     </span>
                   )}
 
                   {/* Label — always visible; hidden on desktop when collapsed */}
                   <span className={`
-                    text-[13px] font-[#0D1117] leading-snug transition-colors
+                    text-[13px] leading-snug transition-colors
                     ${isCollapsed ? 'lg:hidden' : ''}
-                    ${isActive ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'}
-                  `}>
+                  `}
+                  style={{
+                    color: isActive ? C.textPrimary : C.textSub,
+                  }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = C.textPrimary }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = C.textSub }}
+                  >
                     {label}
                   </span>
 
@@ -135,11 +186,17 @@ export function ManifestTabs({
                     <div className="
                       hidden lg:block
                       absolute left-14 top-1/2 -translate-y-1/2
-                      bg-[#0D1117] border border-[#1a1a1a]
                       px-3 py-1.5 rounded-lg whitespace-nowrap
                       opacity-0 group-hover:opacity-100 transition-opacity
-                      pointer-events-none text-[11px] text-white z-50 shadow-2xl
-                    ">
+                      pointer-events-none text-[11px] z-50 shadow-2xl
+                    "
+                    style={{
+                      backgroundColor: C.surface,
+                      borderColor: C.divider,
+                      borderWidth: '1px',
+                      color: C.textPrimary,
+                    }}
+                    >
                       {label}
                     </div>
                   )}
