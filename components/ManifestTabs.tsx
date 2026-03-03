@@ -39,7 +39,7 @@ export function ManifestTabs({
         aria-hidden="true"
         onClick={onClose}
         className={`
-          fixed inset-0 top-[73px] bg-black/70 backdrop-blur-md z-40
+          fixed inset-0 top-[73px] bg-[#0D1117]/70 backdrop-blur-md z-40
           lg:hidden
           transition-opacity duration-300
           ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
@@ -52,7 +52,7 @@ export function ManifestTabs({
       */}
       <aside
         className={`
-          fixed left-0 top-[73px] bg-black border-r border-[#1a1a1a] flex flex-col z-50
+          fixed left-0 top-[73px] bg-[#0D1117] border-r border-[#1a1a1a] flex flex-col z-50
           transition-all duration-300 ease-in-out
           w-60
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -123,7 +123,7 @@ export function ManifestTabs({
 
                   {/* Label — always visible; hidden on desktop when collapsed */}
                   <span className={`
-                    text-[13px] font-black leading-snug transition-colors
+                    text-[13px] font-[#0D1117] leading-snug transition-colors
                     ${isCollapsed ? 'lg:hidden' : ''}
                     ${isActive ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'}
                   `}>
@@ -135,7 +135,7 @@ export function ManifestTabs({
                     <div className="
                       hidden lg:block
                       absolute left-14 top-1/2 -translate-y-1/2
-                      bg-black border border-[#1a1a1a]
+                      bg-[#0D1117] border border-[#1a1a1a]
                       px-3 py-1.5 rounded-lg whitespace-nowrap
                       opacity-0 group-hover:opacity-100 transition-opacity
                       pointer-events-none text-[11px] text-white z-50 shadow-2xl

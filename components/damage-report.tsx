@@ -109,7 +109,7 @@ function ReportSidebar({
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm lg:hidden z-40" onClick={onClose} />
+        <div className="fixed inset-0 bg-[#0D1117]/60 backdrop-blur-sm lg:hidden z-40" onClick={onClose} />
       )}
       <aside
         className={`
@@ -521,10 +521,10 @@ export default function DamageReportForm({ role }: { role?: string }) {
           </div>
           <div className="hidden sm:block">
             <p className="text-[9px] uppercase tracking-widest font-bold text-white leading-none mb-0.5">SF Express</p>
-            <h1 className="text-white text-sm font-black leading-none">Damage Report</h1>
+            <h1 className="text-white text-sm font-[#0D1117] leading-none">Damage Report</h1>
           </div>
           <div className="sm:hidden">
-            <h1 className="text-white text-sm font-black">Damage Report</h1>
+            <h1 className="text-white text-sm font-[#0D1117]">Damage Report</h1>
           </div>
         </div>
 
@@ -533,7 +533,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
         {activeTab === 'create' && report.report_number && (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#1E1E1E] border border-[#3E3E3E] rounded-full">
             <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">No.</span>
-            <span className="text-xs font-black text-white tabular-nums">{report.report_number}</span>
+            <span className="text-xs font-[#0D1117] text-white tabular-nums">{report.report_number}</span>
           </div>
         )}
 
@@ -546,7 +546,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
       </nav>
 
       {/* ── Below-nav row ── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden bg-black/35">
+      <div className="flex flex-1 min-h-0 overflow-hidden bg-[#0D1117]/35">
         <ReportSidebar
           activeTab={activeTab}
           onTabChange={(tab) => {
@@ -635,7 +635,7 @@ export default function DamageReportForm({ role }: { role?: string }) {
 
       {/* ── Material Not Found Modal ── */}
       {showMaterialModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0D1117]/60 backdrop-blur-sm"
           onTouchMove={(e) => e.preventDefault()}>
           <div className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between mb-4">

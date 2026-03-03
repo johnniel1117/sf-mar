@@ -10,25 +10,29 @@ import React from 'react'
 
 // ── Design tokens (matching SavedManifestsTab exactly) ────────────────────────
 const C = {
-  bg:           '#000000',
-  surface:      '#0a0a0a',
-  surfaceHover: '#0a0a0a',
-  border:       '#1a1a1a',
-  borderHover:  '#3E3E3E',
-  divider:      '#1a1a1a',
+  bg:           '#0D1117',
+  surface:      '#161B22',
+  surfaceHover: '#21262D',
+  border:       '#30363D',
+  borderHover:  '#8B949E',
+  divider:      '#21262D',
+
   accent:       '#E8192C',
   accentHover:  '#FF1F30',
-  accentGlow:   'rgba(232,25,44,0.15)',
+  accentGlow:   'rgba(232,25,44,0.25)',
+
   amber:        '#F5A623',
-  textPrimary:  '#FFFFFF',
-  textSilver:   '#D0D0D0',
-  textSub:      '#9A9A9A',
-  textMuted:    '#9A9A9A',
-  textGhost:    '#777777',
-  inputBg:      'transparent',
-  inputBorder:  '#282828',
-  inputText:    '#D0D0D0',
-  inputFocus:   '#6A6A6A',
+
+  textPrimary:  '#C9D1D9',
+  textSilver:   '#B1BAC4',
+  textSub:      '#8B949E',
+  textMuted:    '#6E7681',
+  textGhost:    '#484F58',
+
+  inputBg:      '#0D1117',
+  inputBorder:  '#30363D',
+  inputText:    '#C9D1D9',
+  inputFocus:   '#1F6FEB',
 }
 
 interface CreateManifestTabProps {
@@ -88,7 +92,7 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
               <AlertCircle className="w-4 h-4" style={{ color: C.accent }} />
             </div>
             <div>
-              <h3 className="text-sm font-black tracking-tight" style={{ color: C.textPrimary }}>Ship-To Name Required</h3>
+              <h3 className="text-sm font-[#0D1117] tracking-tight" style={{ color: C.textPrimary }}>Ship-To Name Required</h3>
               <p className="text-[11px] uppercase tracking-widest mt-0.5" style={{ color: C.textMuted }}>Document not found in system</p>
             </div>
           </div>
@@ -102,17 +106,17 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textMuted }}>Document No.</p>
-              <p className="text-sm font-black tabular-nums" style={{ color: C.textSilver }}>{documentNumber}</p>
+              <p className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{documentNumber}</p>
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textMuted }}>Quantity</p>
-              <p className="text-sm font-black tabular-nums" style={{ color: C.accent }}>{quantity}</p>
+              <p className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.accent }}>{quantity}</p>
             </div>
           </div>
           {cbm != null && cbm > 0 && (
             <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
               <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textMuted }}>CBM</p>
-              <p className="text-sm font-black tabular-nums" style={{ color: C.amber }}>{cbm.toFixed(4)}</p>
+              <p className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{cbm.toFixed(4)}</p>
             </div>
           )}
         </div>
@@ -141,7 +145,7 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
             Cancel
           </button>
           <button onClick={handleSave} disabled={!shipToName.trim()}
-            className="flex-1 px-4 py-3 font-black text-xs uppercase tracking-widest transition-all"
+            className="flex-1 px-4 py-3 font-[#0D1117] text-xs uppercase tracking-widest transition-all"
             style={{ background: shipToName.trim() ? C.accent : C.textGhost, color: '#fff', cursor: shipToName.trim() ? 'pointer' : 'not-allowed' }}>
             Save & Add
           </button>
@@ -183,7 +187,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function FieldValue({ children }: { children: React.ReactNode }) {
-  return <p className="font-black text-sm truncate" style={{ color: C.textSilver }}>{children}</p>
+  return <p className="font-[#0D1117] text-sm truncate" style={{ color: C.textSilver }}>{children}</p>
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -366,7 +370,7 @@ export function CreateManifestTab({
                   {isEditMode ? 'Editing manifest' : 'New manifest'}
                 </p>
               </div>
-              <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-black leading-[0.93] tracking-tight" style={{ color: C.textPrimary }}>
+              <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-[#0D1117] leading-[0.93] tracking-tight" style={{ color: C.textPrimary }}>
                 {isEditMode ? 'Edit Manifest' : 'Create Manifest'}
               </h2>
               <p className="text-[12px] mt-2" style={{ color: C.textSub }}>
@@ -380,7 +384,7 @@ export function CreateManifestTab({
                    style={{ border: '1px solid rgba(245,166,35,0.2)', background: 'rgba(245,166,35,0.05)' }}>
                 <Package className="w-3.5 h-3.5 text-[#F5A623]" />
                 <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#F5A623]">Total CBM</span>
-                <span className="text-[12px] font-black text-white tabular-nums">{grandTotalCBM.toFixed(4)}</span>
+                <span className="text-[12px] font-[#0D1117] text-white tabular-nums">{grandTotalCBM.toFixed(4)}</span>
               </div>
             )}
           </div>
@@ -439,7 +443,7 @@ export function CreateManifestTab({
                     <div className="w-0.5 h-9 flex-shrink-0" style={{ background: 'rgba(232,25,44,0.6)' }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] uppercase tracking-[0.2em] mb-0.5" style={{ color: C.textMuted }}>Auto-generated</p>
-                      <p className="text-lg sm:text-2xl font-black tracking-wider tabular-nums truncate leading-none" style={{ color: C.textPrimary }}>
+                      <p className="text-lg sm:text-2xl font-[#0D1117] tracking-wider tabular-nums truncate leading-none" style={{ color: C.textPrimary }}>
                         {manifest.manifest_number || '—'}
                       </p>
                     </div>
@@ -558,7 +562,7 @@ export function CreateManifestTab({
                         <div className="flex items-baseline justify-between gap-2">
                           <div className="flex items-baseline gap-2 min-w-0">
                             <span className="text-[10px]" style={{ color: C.textMuted }}>{String(idx + 1).padStart(2, '0')}</span>
-                            <span className="font-black text-sm truncate transition-colors" style={{ color: C.textSilver }}>{result.documentNumber}</span>
+                            <span className="font-[#0D1117] text-sm truncate transition-colors" style={{ color: C.textSilver }}>{result.documentNumber}</span>
                           </div>
                           <div className="flex items-baseline gap-3 flex-shrink-0">
                             {result.cbm != null && result.cbm > 0 && (
@@ -578,7 +582,7 @@ export function CreateManifestTab({
                   <div className="mt-3 p-4 flex items-start gap-3" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: C.accent }} />
                     <div>
-                      <p className="font-black text-xs uppercase tracking-widest" style={{ color: C.textSilver }}>Not Found</p>
+                      <p className="font-[#0D1117] text-xs uppercase tracking-widest" style={{ color: C.textSilver }}>Not Found</p>
                       <p className="text-[11px] mt-1" style={{ color: C.textMuted }}>
                         Press Enter to add <span className="font-bold" style={{ color: C.textSilver }}>"{barcodeInput}"</span> manually
                       </p>
@@ -594,12 +598,12 @@ export function CreateManifestTab({
                   <div className="flex items-center gap-3">
                     {hasCbm && (
                       <span className="text-[10px]" style={{ color: C.textMuted }}>
-                        CBM: <span className="font-black tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                        CBM: <span className="font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
                       </span>
                     )}
                     {totalQuantity > 0 && (
                       <span className="text-[10px]" style={{ color: C.textMuted }}>
-                        Total: <span className="font-black tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
+                        Total: <span className="font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
                       </span>
                     )}
                   </div>
@@ -608,7 +612,7 @@ export function CreateManifestTab({
                 {manifest.items.length === 0 ? (
                   <div className="py-12 text-center" style={{ border: `1px dashed ${C.border}` }}>
                     <Package className="w-7 h-7 mx-auto mb-2.5" style={{ color: C.textGhost }} />
-                    <p className="font-black text-xs uppercase tracking-widest" style={{ color: C.textMuted }}>No documents yet</p>
+                    <p className="font-[#0D1117] text-xs uppercase tracking-widest" style={{ color: C.textMuted }}>No documents yet</p>
                     <p className="text-[11px] mt-1" style={{ color: C.textGhost }}>Scan or type a DN/TRA above</p>
                   </div>
                 ) : (
@@ -620,14 +624,14 @@ export function CreateManifestTab({
                           {String(item.item_number).padStart(2, '0')}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="font-black text-sm truncate transition-colors group-hover:text-white" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
+                          <p className="font-[#0D1117] text-sm truncate transition-colors group-hover:text-white" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
                           <p className="text-[11px] mt-0.5 truncate" style={{ color: C.textMuted }}>{item.document_number}</p>
                         </div>
                         <div className="flex items-baseline gap-2 flex-shrink-0">
                           {item.total_cbm != null && item.total_cbm > 0 && (
                             <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{item.total_cbm.toFixed(4)}</span>
                           )}
-                          <span className="text-sm font-black tabular-nums" style={{ color: C.accent }}>×{item.total_quantity}</span>
+                          <span className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.accent }}>×{item.total_quantity}</span>
                         </div>
                         <button onClick={() => removeItem(idx)} className="p-1.5 flex-shrink-0 touch-manipulation transition-colors" style={{ color: C.textGhost }}
                           onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
@@ -659,7 +663,7 @@ export function CreateManifestTab({
                   <Field label="Time End"><FieldValue>{formatTime12hr(manifest.time_end)}</FieldValue></Field>
                   {manifest.time_start && manifest.time_end && (
                     <Field label="Duration">
-                      <p className="font-black text-sm tabular-nums" style={{ color: C.amber }}>{getDuration()}</p>
+                      <p className="font-[#0D1117] text-sm tabular-nums" style={{ color: C.amber }}>{getDuration()}</p>
                     </Field>
                   )}
                 </div>
@@ -672,11 +676,11 @@ export function CreateManifestTab({
                   <div className="flex items-center gap-4">
                     {hasCbm && (
                       <span className="text-[10px]" style={{ color: C.textMuted }}>
-                        Total CBM: <span className="font-black tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                        Total CBM: <span className="font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
                       </span>
                     )}
                     <span className="text-[10px]" style={{ color: C.textMuted }}>
-                      Total Qty: <span className="font-black tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
+                      Total Qty: <span className="font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
                     </span>
                   </div>
                 </div>
@@ -699,7 +703,7 @@ export function CreateManifestTab({
                       {String(item.item_number).padStart(2, '0')}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-black text-sm truncate group-hover/row:text-white transition-colors" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
+                      <p className="font-[#0D1117] text-sm truncate group-hover/row:text-white transition-colors" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
                       <p className="sm:hidden text-[11px] mt-0.5 truncate" style={{ color: C.textMuted }}>{item.document_number}</p>
                     </div>
                     <span className="text-[11px] hidden sm:block" style={{ color: C.textMuted }}>{item.document_number}</span>
@@ -708,7 +712,7 @@ export function CreateManifestTab({
                         {item.total_cbm != null && item.total_cbm > 0 ? item.total_cbm.toFixed(4) : '—'}
                       </span>
                     )}
-                    <span className="text-sm font-black tabular-nums text-right" style={{ color: C.accent }}>×{item.total_quantity}</span>
+                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: C.accent }}>×{item.total_quantity}</span>
                   </div>
                 ))}
 
@@ -719,8 +723,8 @@ export function CreateManifestTab({
                     <span />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-right col-span-2 hidden sm:block" style={{ color: C.textGhost }}>Grand Total</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest col-span-1 sm:hidden" style={{ color: C.textGhost }}>Total</span>
-                    <span className="text-[12px] font-black tabular-nums text-right" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
-                    <span className="text-sm font-black tabular-nums text-right" style={{ color: C.accent }}>×{totalQuantity}</span>
+                    <span className="text-[12px] font-[#0D1117] tabular-nums text-right" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: C.accent }}>×{totalQuantity}</span>
                   </div>
                 )}
               </div>
@@ -752,7 +756,7 @@ export function CreateManifestTab({
                   setCurrentStep((currentStep + 1) as 1 | 2 | 3)
                 }}
                 disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
-                className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-black text-xs uppercase tracking-widest transition-all duration-150"
+                className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-[#0D1117] text-xs uppercase tracking-widest transition-all duration-150"
                 style={{
                   background: C.accent,
                   color: '#fff',
@@ -771,7 +775,7 @@ export function CreateManifestTab({
                   <span className="hidden sm:inline">Clear</span>
                 </button>
                 <button onClick={saveManifest} disabled={isLoading}
-                  className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-black text-xs uppercase tracking-widest transition-all duration-150"
+                  className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-[#0D1117] text-xs uppercase tracking-widest transition-all duration-150"
                   style={{
                     background: isEditMode ? '#2563eb' : C.accent,
                     color: '#fff',

@@ -30,11 +30,11 @@ export function ConfirmationModal({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#0D1117]/80 backdrop-blur-md"
       onClick={onCancel}
     >
       <div
-        className="bg-black border border-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+        className="bg-[#0D1117] border border-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -54,7 +54,7 @@ export function ConfirmationModal({
           </p>
 
           {/* Title */}
-          <h2 className="text-xl font-black text-white tracking-tight leading-none mb-3">
+          <h2 className="text-xl font-[#0D1117] text-white tracking-tight leading-none mb-3">
             {title}
           </h2>
 
@@ -82,7 +82,7 @@ export function ConfirmationModal({
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
+            className="flex-1 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-[#0D1117] uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
           >
             {confirmText}
           </button>

@@ -106,7 +106,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
               <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#D0D0D0] mb-0.5">
                 {isEditMode ? 'Editing' : 'New'}
               </p>
-              <h2 className="text-lg sm:text-xl font-black text-white leading-tight">
+              <h2 className="text-lg sm:text-xl font-[#0D1117] text-white leading-tight">
                 {isEditMode ? 'Edit Report' : 'Create Report'}
               </h2>
               <p className="text-xs text-[#D0D0D0] mt-0.5">SF Express Warehouse</p>
@@ -163,7 +163,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                   <Truck className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-black text-white">Vehicle & Shipment Information</h3>
+                  <h3 className="text-sm sm:text-base font-[#0D1117] text-white">Vehicle & Shipment Information</h3>
                   <p className="text-xs text-[#D0D0D0]">Enter truck and delivery details</p>
                 </div>
               </div>
@@ -178,7 +178,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                       style={{ background: 'linear-gradient(180deg, #E8192C 0%, #7f0e18 100%)' }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[9px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-0.5">Auto-generated</p>
-                      <p className="text-base sm:text-lg font-black text-white tracking-wider tabular-nums truncate">
+                      <p className="text-base sm:text-lg font-[#0D1117] text-white tracking-wider tabular-nums truncate">
                         {report.report_number || '—'}
                       </p>
                     </div>
@@ -231,7 +231,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                   <Barcode className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-black text-white">Scan Damaged Items</h3>
+                  <h3 className="text-sm sm:text-base font-[#0D1117] text-white">Scan Damaged Items</h3>
                   <p className="text-xs text-[#D0D0D0]">Scan barcodes to add items to the report</p>
                 </div>
               </div>
@@ -284,7 +284,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                   <div className="space-y-2">
                     {report.items.map((item, idx) => (
                       <div key={idx} className="group flex items-start gap-3 p-3 sm:p-4 bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl hover:border-red-600/30 hover:bg-[#282828] transition-all">
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0 mt-0.5"
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-[#0D1117] text-xs text-white flex-shrink-0 mt-0.5"
                           style={{ background: 'linear-gradient(#E8192C 0%, #7f0e18 100%)' }}>
                           {item.item_number}
                         </div>
@@ -349,7 +349,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                   <ClipboardList className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-black text-white">Damage Details</h3>
+                  <h3 className="text-sm sm:text-base font-[#0D1117] text-white">Damage Details</h3>
                   <p className="text-xs text-[#D0D0D0]">Provide information for each damaged item</p>
                 </div>
               </div>
@@ -358,7 +358,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                 {report.items.map((item, idx) => (
                   <div key={idx} className="bg-[#1E1E1E] border border-[#3E3E3E] rounded-xl p-4 sm:p-5">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0"
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-[#0D1117] text-xs text-white flex-shrink-0"
                         style={{ background: 'linear-gradient(#E8192C 0%, #7f0e18 100%)' }}>
                         {item.item_number}
                       </div>
@@ -444,7 +444,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                   <Users className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-black text-white">Review & Finalize</h3>
+                  <h3 className="text-sm sm:text-base font-[#0D1117] text-white">Review & Finalize</h3>
                   <p className="text-xs text-[#D0D0D0]">Add final notes and personnel signatures</p>
                 </div>
               </div>
@@ -533,7 +533,7 @@ export const CreateReportTab: React.FC<CreateReportTabProps> = ({
                                   {item.material_description || '—'}
                                 </td>
                                 <td className="py-2.5 text-[#D0D0D0]  hidden sm:table-cell">{item.barcode}</td>
-                                <td className="py-2.5 text-right font-black text-red-500">{item.damage_type || '—'}</td>
+                                <td className="py-2.5 text-right font-[#0D1117] text-red-500">{item.damage_type || '—'}</td>
                               </tr>
                             ))}
                           </tbody>

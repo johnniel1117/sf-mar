@@ -342,10 +342,10 @@ export default function TripManifestForm({ role }: { role?: string }) {
   const grandTotalCBM = manifest.items.reduce((sum, item) => sum + (item.total_cbm || 0), 0)
 
   return (
-    <div className="h-screen flex flex-col bg-black overflow-hidden">
+    <div className="h-screen flex flex-col bg-[#0D1117] overflow-hidden">
 
       {/* ── Top Navigation Bar — landing page style ── */}
-      <nav className="relative flex-shrink-0 h-[73px] border-b border-[#1a1a1a] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4 bg-black">
+      <nav className="relative flex-shrink-0 h-[73px] border-b border-[#1a1a1a] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4 bg-[#0D1117]">
 
         {/* Mobile hamburger */}
         <button
@@ -388,10 +388,10 @@ export default function TripManifestForm({ role }: { role?: string }) {
           {/* CBM Total Pill - NEW */}
           {activeTab === 'create' && manifest.items.length > 0 && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
-                 style={{ border: '1px solid rgba(245,166,35,0.2)', background: 'rgba(245,166,35,0.05)' }}>
-              <Package className="w-3.5 h-3.5 text-[#F5A623]" />
-              <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#F5A623]">Total CBM</span>
-              <span className="text-[11px] font-black text-white tabular-nums">{grandTotalCBM.toFixed(4)}</span>
+                 style={{ border: '1px solid rgba(88,166,255,0.2)', background: 'rgba(88,166,255,0.05)' }}>
+              <Package className="w-3.5 h-3.5 text-[#58A6FF]" />
+              <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#58A6FF]">Total CBM</span>
+              <span className="text-[11px] font-[#0D1117] text-white tabular-nums">{grandTotalCBM.toFixed(4)}</span>
             </div>
           )}
 
@@ -399,7 +399,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
           {activeTab === 'create' && manifest.manifest_number && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-[#1a1a1a] rounded-full flex-shrink-0">
               <span className="text-[10px] uppercase tracking-[0.15em] text-[#9A9A9A]">No.</span>
-              <span className="text-[11px] font-black text-white tabular-nums">{manifest.manifest_number}</span>
+              <span className="text-[11px] font-[#0D1117] text-white tabular-nums">{manifest.manifest_number}</span>
             </div>
           )}
 
@@ -416,7 +416,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
             onClick={() => setActiveTab('analytics')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all duration-150 ${
               activeTab === 'analytics'
-                ? 'border-[#F5A623]/30 text-[#F5A623] bg-[#F5A623]/5'
+                ? 'border-[#58A6FF]/30 text-[#58A6FF] bg-[#58A6FF]/5'
                 : 'border-[#1a1a1a] text-[#9A9A9A] hover:border-[#3E3E3E] hover:text-white'
             }`}
           >
@@ -441,7 +441,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        <main className="flex-1 overflow-y-auto min-h-0 min-w-0 bg-black">
+        <main className="flex-1 overflow-y-auto min-h-0 min-w-0 bg-[#0D1117]">
           {/* Subtle red ambient glow — same as landing */}
           <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] bg-[#5E5C5C]/20 rounded-full blur-[120px] z-0" />
 
@@ -494,8 +494,8 @@ export default function TripManifestForm({ role }: { role?: string }) {
                   {savedManifests.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center px-4 py-16">
                       <TrendingUp className="w-10 h-10 text-[#1a1a1a] mx-auto mb-5" />
-                      <p className="text-[10px] uppercase tracking-[0.25em] text-[#F5A623] mb-3">No data yet</p>
-                      <h4 className="text-2xl sm:text-3xl font-black text-white mb-3 tracking-tight">
+                      <p className="text-[10px] uppercase tracking-[0.25em] text-[#58A6FF] mb-3">No data yet</p>
+                      <h4 className="text-2xl sm:text-3xl font-[#0D1117] text-white mb-3 tracking-tight">
                         Nothing to analyze
                       </h4>
                       <p className="text-sm text-[#9A9A9A] max-w-sm mb-8 leading-relaxed">
@@ -555,14 +555,14 @@ export default function TripManifestForm({ role }: { role?: string }) {
 
       {/* ── Toast — landing-style ── */}
       {toast.show && (
-        <div className={`fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] border bg-black ${
+        <div className={`fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] border bg-[#0D1117] ${
           toast.type === 'success' ? 'border-green-500/20'
-          : toast.type === 'error'  ? 'border-[#E8192C]/20'
+          : toast.type === 'error'  ? 'border-[#58A6FF]/20'
           : 'border-blue-500/20'
         }`}>
           <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
             toast.type === 'success' ? 'bg-green-500'
-            : toast.type === 'error'  ? 'bg-[#E8192C]'
+            : toast.type === 'error'  ? 'bg-[#58A6FF]'
             : 'bg-blue-500'
           }`} />
           <span className="text-[11px] font-bold uppercase tracking-widest text-white">{toast.message}</span>

@@ -44,7 +44,7 @@ function MetaChip({ icon, label, value, highlight }: {
         <span className="text-[#E8192C]">{icon}</span>
         <span className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold">{label}</span>
       </div>
-      <p className={`text-xs sm:text-sm font-semibold truncate ${highlight ? 'text-[#E8192C] font-black' : 'text-white'}`}>
+      <p className={`text-xs sm:text-sm font-semibold truncate ${highlight ? 'text-[#E8192C] font-[#0D1117]' : 'text-white'}`}>
         {value}
       </p>
     </div>
@@ -92,7 +92,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#0D1117]/70 backdrop-blur-sm"
       onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
     >
       {/* Sheet — slides up on mobile, centred modal on sm+ */}
@@ -118,7 +118,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
             <ReportAvatar seed={reportId} size="lg" />
             <div className="flex-1 min-w-0 pb-1">
               <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#D0D0D0] mb-1">Damage Report</p>
-              <h2 className="text-xl sm:text-3xl font-black text-white leading-none tracking-tight truncate mb-1">
+              <h2 className="text-xl sm:text-3xl font-[#0D1117] text-white leading-none tracking-tight truncate mb-1">
                 {reportId}
               </h2>
               <p className="text-xs sm:text-sm text-[#D0D0D0]">{reportDate}</p>
@@ -151,7 +151,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
           <div className="flex items-center gap-3 mt-5">
             <button
               onClick={() => { onEdit(report); onClose() }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-yellow-500 text-black text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/30"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-yellow-500 text-[#0D1117] text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all duration-150 shadow-lg shadow-[#E8192C]/30"
             >
               <Edit className="w-4 h-4" /> Edit
             </button>
@@ -225,7 +225,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                       className="w-8 h-8 rounded flex-shrink-0 flex items-center justify-center shadow-md"
                       style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}
                     >
-                      <span className="text-[10px] font-black text-white">{idx + 1}</span>
+                      <span className="text-[10px] font-[#0D1117] text-white">{idx + 1}</span>
                     </div>
 
                     {/* Description + barcode */}
@@ -258,7 +258,7 @@ export function ViewReportModal({ isOpen, report, onClose, onEdit, onDownload }:
                 {items.map((item: any, idx: number) => (
                   <div key={idx} className="bg-[#1E1E1E] border border-[#282828] rounded-xl p-4 hover:border-[#3E3E3E] transition-colors">
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white flex-shrink-0"
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-[#0D1117] text-white flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}>
                         {idx + 1}
                       </div>

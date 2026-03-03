@@ -153,7 +153,7 @@ function ReportRow({
           {/* Action buttons */}
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <button onClick={onView}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-yellow-500 text-black text-xs sm:text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all shadow-lg shadow-[#E8192C]/30">
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-yellow-500 text-[#0D1117] text-xs sm:text-sm font-bold hover:bg-yellow-600 hover:scale-105 active:scale-100 transition-all shadow-lg shadow-[#E8192C]/30">
               <Eye className="w-3.5 h-3.5" /> View
             </button>
             {!isViewer && (
@@ -209,7 +209,7 @@ export const SavedReportsTab: React.FC<SavedReportsTabProps> = ({
           </div>
           <div>
             <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#D0D0D0] mb-0.5">View</p>
-            <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Saved Reports</h3>
+            <h3 className="text-lg sm:text-xl font-[#0D1117] text-white leading-tight">Saved Reports</h3>
             <p className="text-xs text-[#D0D0D0] mt-0.5">
               SF Express · {savedReports.length} report{savedReports.length !== 1 ? 's' : ''}
             </p>
@@ -259,7 +259,7 @@ export const SavedReportsTab: React.FC<SavedReportsTabProps> = ({
               style={{ background: 'linear-gradient(135deg, #E8192C 0%, #7f0e18 100%)' }}>
               <FileText className="w-7 h-7 sm:w-9 sm:h-9 text-white" />
             </div>
-            <p className="font-black text-white text-base sm:text-lg">No reports yet</p>
+            <p className="font-[#0D1117] text-white text-base sm:text-lg">No reports yet</p>
             <p className="text-sm text-[#D0D0D0] mt-1 max-w-xs">Create your first damage report to see it here</p>
           </div>
         ) : filtered.length === 0 ? (
@@ -267,7 +267,7 @@ export const SavedReportsTab: React.FC<SavedReportsTabProps> = ({
             <div className="w-16 h-16 rounded-full bg-[#282828] flex items-center justify-center mb-4">
               <Search className="w-7 h-7 text-[#9A9A9A]" />
             </div>
-            <p className="font-black text-white">No results found</p>
+            <p className="font-[#0D1117] text-white">No results found</p>
             <p className="text-sm text-[#D0D0D0] mt-1">Try a different search</p>
           </div>
         ) : (

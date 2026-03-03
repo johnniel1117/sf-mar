@@ -83,7 +83,7 @@ export const MaterialMappingsTab: React.FC<MaterialMappingsTabProps> = ({
 
       {/* Edit Material Modal */}
       {isEditing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-[#0D1117] bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h4 className="text-lg font-bold text-gray-900 mb-4">
               {editingMaterial?.id ? 'Edit Material' : 'Add New Material'}

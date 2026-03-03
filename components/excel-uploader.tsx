@@ -539,7 +539,7 @@ export default function ExcelUploader() {
         {uploadedFiles.length > 0 && (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0" style={{ border: `1px solid ${C.border}` }}>
             <span className="text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textMuted }}>Files</span>
-            <span className="text-[11px] font-black tabular-nums" style={{ color: C.textPrimary }}>{uploadedFiles.length}</span>
+            <span className="text-[11px] font-[#0D1117] tabular-nums" style={{ color: C.textPrimary }}>{uploadedFiles.length}</span>
           </div>
         )}
       </nav>
@@ -610,7 +610,7 @@ export default function ExcelUploader() {
                 <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>↑</span>
                 <Upload className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
                 {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest transition-colors" style={{ color: C.textGhost }}>↑</span>}
-                <span className={`text-[13px] font-black transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textSub }}>Upload Files</span>
+                <span className={`text-[13px] font-[#0D1117] transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textSub }}>Upload Files</span>
                 {sidebarCollapsed && (
                   <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
                     style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>Upload Files</div>
@@ -631,7 +631,7 @@ export default function ExcelUploader() {
                     <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>
                     <Icon className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: isActive ? C.accent : C.textSub }} strokeWidth={1.5} />
                     {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest transition-colors" style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>}
-                    <span className={`text-[13px] font-black leading-snug transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: isActive ? C.textPrimary : C.textSub }}>{label}</span>
+                    <span className={`text-[13px] font-[#0D1117] leading-snug transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: isActive ? C.textPrimary : C.textSub }}>{label}</span>
                     {sidebarCollapsed && (
                       <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
                         style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>{label}</div>
@@ -645,7 +645,7 @@ export default function ExcelUploader() {
                   <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>×</span>
                   <X className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textGhost }} strokeWidth={1.5} />
                   {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest" style={{ color: C.textGhost }}>×</span>}
-                  <span className={`text-[13px] font-black transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>Clear All</span>
+                  <span className={`text-[13px] font-[#0D1117] transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>Clear All</span>
                   {sidebarCollapsed && (
                     <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
                       style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>Clear All</div>
@@ -683,7 +683,7 @@ export default function ExcelUploader() {
                   </span>
                   <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.amber }}>Haier Barcode Excel</p>
                 </div>
-                <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-black tracking-tight leading-[0.93]" style={{ color: C.textPrimary }}>Upload Files</h2>
+                <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-[#0D1117] tracking-tight leading-[0.93]" style={{ color: C.textPrimary }}>Upload Files</h2>
                 <p className="text-[11px] uppercase tracking-widest mt-1.5" style={{ color: C.textMuted }}>SF Express · Cebu Warehouse</p>
               </div>
               <div className="p-6 sm:p-8">
@@ -698,7 +698,7 @@ export default function ExcelUploader() {
                         style={{ border: `1px solid ${isDragging ? 'rgba(232,25,44,0.4)' : C.border}`, background: isDragging ? 'rgba(232,25,44,0.1)' : 'transparent' }}>
                         <Upload className="w-6 h-6 transition-colors duration-300" style={{ color: isDragging ? C.accent : C.textGhost }} />
                       </div>
-                      <p className="text-base font-black mb-1 tracking-tight transition-colors duration-300" style={{ color: isDragging ? C.accent : C.textPrimary }}>
+                      <p className="text-base font-[#0D1117] mb-1 tracking-tight transition-colors duration-300" style={{ color: isDragging ? C.accent : C.textPrimary }}>
                         {isDragging ? 'Drop files here' : 'Drop files or click to upload'}
                       </p>
                       <p className="text-[11px] mb-5" style={{ color: C.textMuted }}>Haier barcode Excel files</p>
@@ -735,7 +735,7 @@ export default function ExcelUploader() {
                   <div className="flex items-center gap-4">
                     <span className="text-[11px] font-bold w-5 transition-colors" style={{ color: C.textGhost }}>↓</span>
                     <FileSpreadsheet className="w-4 h-4 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
-                    <span className="text-[13px] font-black transition-colors" style={{ color: C.textSub }}>Uploaded Files</span>
+                    <span className="text-[13px] font-[#0D1117] transition-colors" style={{ color: C.textSub }}>Uploaded Files</span>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ border: `1px solid ${C.border}`, color: C.textMuted }}>{uploadedFiles.length}</span>
                   </div>
                   <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 ${showFilesList ? 'rotate-90' : ''}`} style={{ color: C.textGhost }} />
@@ -752,7 +752,7 @@ export default function ExcelUploader() {
                           {selectedFileId === file.id ? '→' : '·'}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-black truncate transition-colors" style={{ color: selectedFileId === file.id ? C.textPrimary : C.textSub }}>{file.name}</p>
+                          <p className="text-[13px] font-[#0D1117] truncate transition-colors" style={{ color: selectedFileId === file.id ? C.textPrimary : C.textSub }}>{file.name}</p>
                           <p className="text-[10px] mt-0.5" style={{ color: C.textGhost }}>{file.dnNo} · {file.data.length} items</p>
                         </div>
                         {selectedFileId === file.id && <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.accent }} />}
@@ -809,7 +809,7 @@ export default function ExcelUploader() {
                         </button>
                       )}
                       <button onClick={() => setShowDownloadModal(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[10px] font-[#0D1117] uppercase tracking-widest transition-all"
                         style={{ background: C.accent, color: '#fff', boxShadow: `0 8px 24px ${C.accentGlow}` }}
                         onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
                         onMouseLeave={e => (e.currentTarget.style.background = C.accent)}>
@@ -826,14 +826,14 @@ export default function ExcelUploader() {
                           <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>
                             {selectedFileId ? `Viewing: ${uploadedFiles.find(f => f.id === selectedFileId)?.name}` : 'All files combined'}
                           </p>
-                          <h3 className="text-lg font-black tracking-tight" style={{ color: C.textPrimary }}>Consolidated Materials</h3>
+                          <h3 className="text-lg font-[#0D1117] tracking-tight" style={{ color: C.textPrimary }}>Consolidated Materials</h3>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ border: `1px solid rgba(245,166,35,0.2)`, background: 'rgba(245,166,35,0.05)' }}>
                             <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.amber }}>Total CBM</span>
-                            <span className="text-[12px] font-black tabular-nums" style={{ color: C.amber }}>{grandTotal.toFixed(4)}</span>
+                            <span className="text-[12px] font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{grandTotal.toFixed(4)}</span>
                           </div>
-                          <span className="text-[10px] font-black tabular-nums" style={{ color: C.textPrimary }}>
+                          <span className="text-[10px] font-[#0D1117] tabular-nums" style={{ color: C.textPrimary }}>
                             <span style={{ color: C.accent }}>{visibleGrouped.length}</span> items
                           </span>
                         </div>
@@ -852,10 +852,10 @@ export default function ExcelUploader() {
                               <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`}
                                 style={{ borderBottom: `1px solid ${C.divider}`, animationDelay: `${idx * 0.02}s` }}>
                                 <td className="px-4 py-3.5 text-[11px] transition-colors" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</td>
-                                <td className="px-4 py-3.5 text-sm font-black" style={{ color: C.textPrimary }}>{row.materialCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-black transition-colors" style={{ color: C.textSilver }}>{row.materialDescription}</td>
+                                <td className="px-4 py-3.5 text-sm font-[#0D1117]" style={{ color: C.textPrimary }}>{row.materialCode}</td>
+                                <td className="px-4 py-3.5 text-sm font-[#0D1117] transition-colors" style={{ color: C.textSilver }}>{row.materialDescription}</td>
                                 <td className="px-4 py-3.5"><span className="text-[10px] font-bold" style={{ color: C.textSub }}>{row.category}</span></td>
-                                <td className="px-4 py-3.5 text-sm font-black tabular-nums" style={{ color: C.accent }}>{row.qty}</td>
+                                <td className="px-4 py-3.5 text-sm font-[#0D1117] tabular-nums" style={{ color: C.accent }}>{row.qty}</td>
                                 <td className="px-4 py-3.5 text-[11px] tabular-nums" style={{ color: C.textSub }}>
                                   {row.cbm != null ? row.cbm : <span style={{ color: C.textGhost }}>—</span>}
                                 </td>
@@ -869,7 +869,7 @@ export default function ExcelUploader() {
                             {visibleGrouped.length > 0 && (
                               <tr style={{ borderTop: `1px solid ${C.border}`, background: C.surface }}>
                                 <td colSpan={6} className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest" style={{ color: C.textGhost }}>Grand Total CBM</td>
-                                <td className="px-4 py-3 text-[12px] font-black tabular-nums" style={{ color: C.amber }}>{grandTotal.toFixed(4)}</td>
+                                <td className="px-4 py-3 text-[12px] font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{grandTotal.toFixed(4)}</td>
                                 <td colSpan={2} />
                               </tr>
                             )}
@@ -885,9 +885,9 @@ export default function ExcelUploader() {
                       <div className="flex items-baseline justify-between mb-5">
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>All serial numbers combined</p>
-                          <h3 className="text-lg font-black tracking-tight" style={{ color: C.textPrimary }}>Bulking Serial List</h3>
+                          <h3 className="text-lg font-[#0D1117] tracking-tight" style={{ color: C.textPrimary }}>Bulking Serial List</h3>
                         </div>
-                        <span className="text-[10px] font-black tabular-nums" style={{ color: C.textPrimary }}>
+                        <span className="text-[10px] font-[#0D1117] tabular-nums" style={{ color: C.textPrimary }}>
                           <span style={{ color: C.accent }}>{filterSerialDataBySearch(serialListData).length}</span> rows
                         </span>
                       </div>
@@ -905,12 +905,12 @@ export default function ExcelUploader() {
                               <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`}
                                 style={{ borderBottom: `1px solid ${C.divider}`, animationDelay: `${idx * 0.02}s` }}>
                                 <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</td>
-                                <td className="px-4 py-3.5 text-sm font-black" style={{ color: C.textPrimary }}>{row.dnNo}</td>
+                                <td className="px-4 py-3.5 text-sm font-[#0D1117]" style={{ color: C.textPrimary }}>{row.dnNo}</td>
                                 <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.location}</td>
                                 <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.binCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-black" style={{ color: C.textPrimary }}>{row.materialCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-black transition-colors" style={{ color: C.textSilver }}>{row.materialDesc}</td>
-                                <td className="px-4 py-3.5 text-sm font-black" style={{ color: C.accent }}>{row.barcode}</td>
+                                <td className="px-4 py-3.5 text-sm font-[#0D1117]" style={{ color: C.textPrimary }}>{row.materialCode}</td>
+                                <td className="px-4 py-3.5 text-sm font-[#0D1117] transition-colors" style={{ color: C.textSilver }}>{row.materialDesc}</td>
+                                <td className="px-4 py-3.5 text-sm font-[#0D1117]" style={{ color: C.accent }}>{row.barcode}</td>
                                 <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.shipToName}</td>
                                 <td className="px-4 py-3.5 text-[10px]" style={{ color: C.textMuted }}>{row.shipToAddress}</td>
                               </tr>
@@ -927,13 +927,13 @@ export default function ExcelUploader() {
                       <div className="flex items-start justify-between mb-6">
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>Download per-DN or all at once</p>
-                          <h3 className="text-lg font-black tracking-tight" style={{ color: C.textPrimary }}>Individual DN Downloads</h3>
+                          <h3 className="text-lg font-[#0D1117] tracking-tight" style={{ color: C.textPrimary }}>Individual DN Downloads</h3>
                         </div>
                         {/* Grand total CBM across all DNs */}
                         {filteredDNs.length > 0 && (
                           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0" style={{ border: `1px solid rgba(245,166,35,0.2)`, background: 'rgba(245,166,35,0.05)' }}>
                             <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.amber }}>Total CBM</span>
-                            <span className="text-[12px] font-black tabular-nums" style={{ color: C.amber }}>{allDNsTotalCBM.toFixed(4)}</span>
+                            <span className="text-[12px] font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{allDNsTotalCBM.toFixed(4)}</span>
                           </div>
                         )}
                       </div>
@@ -944,11 +944,11 @@ export default function ExcelUploader() {
                           <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors" style={{ color: C.textGhost }}>↓</span>
                           <Layers className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-black transition-colors" style={{ color: C.textSilver }}>Download All DN Serial Lists</p>
+                            <p className="text-[13px] font-[#0D1117] transition-colors" style={{ color: C.textSilver }}>Download All DN Serial Lists</p>
                             <p className="text-[10px] mt-0.5" style={{ color: C.textGhost }}>{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available</p>
                           </div>
                           <button onClick={() => { setIsDownloadingAllDN(true); setShowDownloadModal(true) }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex-shrink-0"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-[#0D1117] uppercase tracking-widest transition-all flex-shrink-0"
                             style={{ background: C.accent, color: '#fff', boxShadow: `0 6px 20px ${C.accentGlow}` }}
                             onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
                             onMouseLeave={e => (e.currentTarget.style.background = C.accent)}>
@@ -965,7 +965,7 @@ export default function ExcelUploader() {
                               <span className="text-[11px] font-bold w-5 flex-shrink-0" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</span>
                               <FileSpreadsheet className="w-4 h-4 flex-shrink-0" style={{ color: C.textSub }} strokeWidth={1.5} />
                               <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-black truncate" style={{ color: C.textSilver }}>{file.dnNo}</p>
+                                <p className="text-[13px] font-[#0D1117] truncate" style={{ color: C.textSilver }}>{file.dnNo}</p>
                                 <div className="flex items-center gap-3 mt-0.5">
                                   <p className="text-[10px]" style={{ color: C.textGhost }}>{file.name}</p>
                                   <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
@@ -998,11 +998,11 @@ export default function ExcelUploader() {
                             <div className="flex-1 flex items-center gap-3">
                               <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.textGhost }}>Grand Total</span>
                               <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
-                              <span className="text-[11px] font-black tabular-nums" style={{ color: C.textMuted }}>
+                              <span className="text-[11px] font-[#0D1117] tabular-nums" style={{ color: C.textMuted }}>
                                 {filteredDNs.reduce((s, f) => s + f.serialData.filter(r => r.materialCode && r.barcode).length, 0)} pcs
                               </span>
                               <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
-                              <span className="text-[12px] font-black tabular-nums" style={{ color: C.amber }}>{allDNsTotalCBM.toFixed(4)} CBM</span>
+                              <span className="text-[12px] font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{allDNsTotalCBM.toFixed(4)} CBM</span>
                             </div>
                           </div>
                         )}
@@ -1026,7 +1026,7 @@ export default function ExcelUploader() {
             style={{ background: C.bg, border: `1px solid ${C.border}` }}>
             <div className="px-7 pt-7 pb-5" style={{ borderBottom: `1px solid ${C.border}` }}>
               <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1.5" style={{ color: C.amber }}>Export</p>
-              <h3 className="text-xl font-black tracking-tight leading-none" style={{ color: C.textPrimary }}>Download Format</h3>
+              <h3 className="text-xl font-[#0D1117] tracking-tight leading-none" style={{ color: C.textPrimary }}>Download Format</h3>
             </div>
             <div>
               {[
@@ -1046,7 +1046,7 @@ export default function ExcelUploader() {
                       <opt.icon className="w-4 h-4" style={{ color: active ? C.accent : C.textSub }} strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-black leading-snug" style={{ color: active ? C.textPrimary : C.textSub }}>{opt.label}</p>
+                      <p className="text-[13px] font-[#0D1117] leading-snug" style={{ color: active ? C.textPrimary : C.textSub }}>{opt.label}</p>
                       <p className="text-[11px] mt-0.5" style={{ color: active ? C.textSub : C.textGhost }}>{opt.desc}</p>
                     </div>
                     <ArrowUpRight className="w-4 h-4 flex-shrink-0" style={{ color: active ? C.accent : C.textGhost }} />
@@ -1063,7 +1063,7 @@ export default function ExcelUploader() {
                 Cancel
               </button>
               <button onClick={handleDownloadConfirm}
-                className="flex-1 px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all"
+                className="flex-1 px-4 py-2.5 rounded-full text-[10px] font-[#0D1117] uppercase tracking-widest transition-all"
                 style={{ background: C.accent, color: '#fff', boxShadow: `0 8px 24px ${C.accentGlow}` }}
                 onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
                 onMouseLeave={e => (e.currentTarget.style.background = C.accent)}>

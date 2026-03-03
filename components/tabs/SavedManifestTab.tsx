@@ -9,6 +9,34 @@ import {
 import type { TripManifest } from '@/lib/services/tripManifestService'
 import * as XLSX from 'xlsx-js-style'
 
+// design tokens (match CreateManifestTab)
+const C = {
+  bg:           '#0D1117',
+  surface:      '#161B22',
+  surfaceHover: '#21262D',
+  border:       '#30363D',
+  borderHover:  '#8B949E',
+  divider:      '#21262D',
+
+  accent:       '#E8192C',
+  accentHover:  '#FF1F30',
+  accentGlow:   'rgba(232,25,44,0.25)',
+
+  amber:        '#F5A623',
+
+  textPrimary:  '#C9D1D9',
+  textSilver:   '#B1BAC4',
+  textSub:      '#8B949E',
+  textMuted:    '#6E7681',
+  textGhost:    '#484F58',
+
+  inputBg:      '#0D1117',
+  inputBorder:  '#30363D',
+  inputText:    '#C9D1D9',
+  inputFocus:   '#1F6FEB',
+}
+
+
 const MONTHS = [
   'All Months','January','February','March','April','May','June',
   'July','August','September','October','November','December',
@@ -37,15 +65,15 @@ function FilterDropdown({ selectedMonth, onMonthChange, months }: {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="h-9 px-3 sm:px-4 border border-[#282828] text-[11px] font-bold uppercase tracking-widest text-[#9A9A9A] hover:border-[#3E3E3E] hover:text-[#D0D0D0] transition-all flex items-center gap-1.5 whitespace-nowrap"
+        className="h-9 px-3 sm:px-4 text-[11px] font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 whitespace-nowrap" style={{border: `1px solid ${C.border}`, color: C.textSub}}
       >
-        <Calendar className="w-3 h-3 text-[#E8192C] flex-shrink-0" />
+        <Calendar className="w-3 h-3 flex-shrink-0" style={{color: C.accent}} />
         <span className="hidden sm:inline">{selectedMonth}</span>
         <span className="sm:hidden">{selectedMonth === 'All Months' ? 'Month' : selectedMonth.slice(0, 3)}</span>
         <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div className="absolute right-0 mt-1 w-44 bg-black border border-[#282828] shadow-2xl z-50 max-h-60 overflow-y-auto py-1">
+        <div className="absolute right-0 mt-1 w-44 bg-[#0D1117] shadow-2xl z-50 max-h-60 overflow-y-auto py-1" style={{background: C.bg, borderColor: C.border}}>
           {months.map((month) => (
             <button
               key={month}
@@ -53,7 +81,7 @@ function FilterDropdown({ selectedMonth, onMonthChange, months }: {
               className={`w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-widest transition-colors ${
                 selectedMonth === month
                   ? 'text-[#E8192C] bg-[#E8192C]/6'
-                  : 'text-[#9A9A9A] hover:bg-[#0a0a0a] hover:text-[#D0D0D0]'
+                  : 'text-[#B1BAC4] hover:bg-[#21262D] hover:text-[#C9D1D9]'
               }`}
             >
               {month}
@@ -82,7 +110,10 @@ function ManifestRow({
     : '—'
 
   return (
-    <div className={`group border-b border-[#1a1a1a] last:border-b-0 transition-colors duration-150 ${expanded ? 'bg-[#0a0a0a]' : 'hover:bg-[#0a0a0a]'}`}>
+    <div
+      className={`group border-b transition-colors duration-150 ${expanded ? 'bg-[#21262D]' : 'hover:bg-[#21262D]'}`}
+      style={{ borderColor: C.divider }}
+    >
 
       {/* ── Collapsed Row ── */}
       <div
@@ -90,46 +121,51 @@ function ManifestRow({
         onClick={onToggle}
       >
         {/* Index */}
-        <span className="hidden sm:block text-[11px] font-bold text-[#777777] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+        <span className="hidden sm:block text-[11px] font-bold w-5 flex-shrink-0 transition-colors" style={{color: C.textMuted}}>
           {String(index + 1).padStart(2, '0')}
         </span>
 
         {/* Title + subtitle */}
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-black text-[#D0D0D0] truncate group-hover:text-white transition-colors leading-snug">
+          <p className="text-[15px] font-[#0D1117] truncate group-hover:text-white transition-colors leading-snug" style={{color: C.textPrimary}}>
             {manifestId}
           </p>
-          <p className="text-[12px] text-[#9A9A9A] mt-0.5 truncate group-hover:text-[#9A9A9A] transition-colors">
+          <p className="text-[12px] mt-0.5 truncate transition-colors" style={{color: C.textSilver}}>
             {manifest.driver_name || 'No driver'}
             {manifest.plate_no ? ` · ${manifest.plate_no}` : ''}
           </p>
         </div>
 
         {/* Date */}
-        <span className="hidden sm:block text-[11px] font-bold text-[#9A9A9A] group-hover:text-[#9A9A9A] transition-colors flex-shrink-0 w-28 text-right tabular-nums">
+        <span className="hidden sm:block text-[11px] font-bold transition-colors flex-shrink-0 w-28 text-right tabular-nums" style={{color: C.textSilver}}>
           {manifestDate}
         </span>
 
         {/* Qty */}
-        <span className="flex-shrink-0 text-2xl font-black text-[#D0D0D0] group-hover:text-white transition-colors tabular-nums w-12 text-right leading-none">
+        <span className="flex-shrink-0 text-2xl font-[#0D1117] group-hover:text-white transition-colors tabular-nums w-12 text-right leading-none" style={{color: C.textPrimary}}>
           {totalQty}
         </span>
 
         {/* Docs */}
-        <span className="hidden sm:block flex-shrink-0 text-[11px] font-bold text-[#9A9A9A] w-10 text-center tabular-nums uppercase tracking-widest">
+        <span className="hidden sm:block flex-shrink-0 text-[11px] font-bold w-10 text-center tabular-nums uppercase tracking-widest" style={{color: C.textSilver}}>
           {totalDocs}d
         </span>
 
         {/* Chevron */}
         <ChevronRight
-          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90 text-[#E8192C]' : 'text-[#777777] group-hover:text-[#D0D0D0]'}`}
+            className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90' : 'text-[#6E7681] group-hover:text-[#C9D1D9]'}`}
+            style={{color: expanded ? C.accent : undefined}}
         />
 
         {/* Delete */}
         {!isViewer && (
           <button
             onClick={(e) => { e.stopPropagation(); onDelete() }}
-            className="flex-shrink-0 p-1.5 text-[#777777] hover:text-[#E8192C] transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+            className="flex-shrink-0 p-1.5 transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+            style={{color: '#6E7681'}}
+            onMouseEnter={(e) => { e.currentTarget.style.color = C.accent }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#6E7681' }}
+            style={{color: C.textMuted}}
             title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -139,24 +175,24 @@ function ManifestRow({
 
       {/* ── Expanded Panel ── */}
       {expanded && (
-        <div className="border-t border-[#1a1a1a] px-5 sm:px-8 py-6 sm:py-8">
+        <div className="px-5 sm:px-8 py-6 sm:py-8" style={{borderTop: `1px solid ${C.divider}`}}>
 
           {/* Items table */}
           {(manifest.items?.length ?? 0) > 0 && (
-            <div className="mb-7 sm:mb-8 border-t border-[#1a1a1a]">
+            <div className="mb-7 sm:mb-8" style={{borderTop: `1px solid ${C.divider}`}}>
               {/* Table header */}
-              <div className="grid grid-cols-4 border-b border-[#1a1a1a] py-3">
+              <div className="grid grid-cols-4 border-b py-3" style={{borderColor: C.divider}}>
                 {['#', 'Ship To', 'DN / TRA', 'Qty'].map(h => (
-                  <span key={h} className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">{h}</span>
+                  <span key={h} className="text-[10px] uppercase tracking-widest font-bold" style={{color: C.textSilver}}>{h}</span>
                 ))}
               </div>
-              <div className="divide-y divide-[#1a1a1a]">
+              <div className="divide-y" style={{borderColor: C.divider}}>
                 {manifest.items!.map((item, idx) => (
                   <div key={idx} className="grid grid-cols-4 py-3.5 group/row hover:pl-1 transition-all duration-150">
-                    <span className="text-[11px] font-bold text-[#777777] group-hover/row:text-[#E8192C] transition-colors">{String(idx + 1).padStart(2, '0')}</span>
-                    <span className="text-[13px] font-semibold text-[#D0D0D0] truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1">{item.ship_to_name || '—'}</span>
-                    <span className="text-[13px] text-[#9A9A9A] truncate hidden sm:block">{stripLeadingZeros(item.document_number)}</span>
-                    <span className="text-[13px] font-black text-white tabular-nums text-right sm:text-left">{item.total_quantity ?? 0}</span>
+              <span className="text-[11px] font-bold group-hover/row:text-[#58A6FF] transition-colors" style={{color: C.textMuted}}>{String(idx + 1).padStart(2, '0')}</span>
+                    <span className="text-[13px] font-semibold truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1" style={{color: C.textPrimary}}>{item.ship_to_name || '—'}</span>
+                    <span className="text-[13px] truncate hidden sm:block" style={{color: C.textSilver}}>{stripLeadingZeros(item.document_number)}</span>
+                    <span className="text-[13px] font-[#0D1117] text-white tabular-nums text-right sm:text-left">{item.total_quantity ?? 0}</span>
                   </div>
                 ))}
               </div>
@@ -167,23 +203,28 @@ function ManifestRow({
           <div className="flex flex-wrap gap-3 items-center pt-2">
             <button
               onClick={onView}
-              className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#F5A623]/40 text-[#F5A623] text-[11px] font-bold uppercase tracking-widest hover:bg-[#F5A623]/5 hover:border-[#F5A623] transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 border text-[11px] font-bold uppercase tracking-widest transition-all"
+              style={{border: `1px solid ${C.amber}40`, color: C.amber}}
+              onMouseEnter={(e) => { e.currentTarget.style.background = C.amber + '05'; e.currentTarget.style.borderColor = C.amber }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.amber + '40' }}
             >
               <Eye className="w-3.5 h-3.5" /> View
             </button>
             {!isViewer && (
               <button
                 onClick={onEdit}
-                className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#282828] text-[#D0D0D0] text-[11px] font-bold uppercase tracking-widest hover:border-[#B3B3B3] hover:text-white transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all"
+                style={{border: `1px solid ${C.border}`, color: C.textPrimary}}
               >
                 <Edit className="w-3.5 h-3.5" /> Edit
               </button>
             )}
             <button
               onClick={onDownload}
-              className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#282828] text-[#D0D0D0] text-[11px] font-bold uppercase tracking-widest hover:border-[#B3B3B3] hover:text-white transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all"
+              style={{border: `1px solid ${C.border}`, color: C.textPrimary}}
             >
-              <Download className="w-3.5 h-3.5 text-[#E8192C]" /> Download
+              <Download className="w-3.5 h-3.5" style={{color: C.accent}} /> Download
             </button>
           </div>
         </div>
@@ -199,11 +240,11 @@ function DetailItem({ icon, label, value, mono, highlight }: {
 }) {
   return (
     <div>
-      <div className="flex items-center gap-1.5 text-[#9A9A9A] mb-1.5">
-        <span className="text-[#E8192C]">{icon}</span>
+      <div className="flex items-center gap-1.5 mb-1.5" style={{color: C.textSilver}}>
+        <span style={{color: C.accent}}>{icon}</span>
         <span className="text-[10px] uppercase tracking-widest font-bold">{label}</span>
       </div>
-      <p className={`text-sm truncate ${mono ? '' : 'font-black'} ${highlight ? 'text-[#F5A623]' : 'text-white'}`}>
+      <p className={`text-sm truncate ${mono ? '' : 'font-[#0D1117]'}`} style={{color: highlight ? C.amber : 'white'}}>
         {value}
       </p>
     </div>
@@ -465,40 +506,43 @@ export function SavedManifestsTab({
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="bg-black border rounded-2xl border-[#1a1a1a] overflow-hidden flex flex-col h-full">
+    <div className="border rounded-2xl overflow-hidden flex flex-col h-full" style={{background: C.bg, borderColor: C.divider}}>
 
       {/* ── Header ── */}
-      <div className="px-5 sm:px-8 pt-8 pb-7 border-b border-[#1a1a1a] flex-shrink-0">
+      <div className="px-5 sm:px-8 pt-8 pb-7 flex-shrink-0" style={{borderBottom: `1px solid ${C.divider}`}}>
 
         {/* Title + actions */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-5 mb-7">
           <div>
             <div className="flex items-center gap-2.5 mb-3">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E8192C] opacity-50" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E8192C]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{background: C.accent}} />
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{background: C.accent}} />
               </span>
-              <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-[#F5A623]">Trip Manifest</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{color: C.amber}}>Trip Manifest</p>
             </div>
-            <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-black text-white leading-[0.93] tracking-tight">
+            <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-[#0D1117] text-white leading-[0.93] tracking-tight" style={{ color: C.textPrimary }}>
               {savedManifests.length} manifest{savedManifests.length !== 1 ? 's' : ''}
             </h2>
-            <p className="text-[12px] text-[#9A9A9A] mt-2">SF Express · Cebu Warehouse</p>
+            <p className="text-[12px] mt-2" style={{color: C.textSilver}}>SF Express · Cebu Warehouse</p>
           </div>
 
           <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
             <button
               onClick={handleDownloadMonitoring}
               disabled={filteredManifests.length === 0}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-[#282828] text-[#D0D0D0] text-[11px] font-bold uppercase tracking-widest hover:border-[#B3B3B3] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed" style={{border: `1px solid ${C.border}`, color: C.textPrimary}}
             >
-              <BarChart2 className="w-3.5 h-3.5 text-[#E8192C]" />
+              <BarChart2 className="w-3.5 h-3.5" style={{color: C.accent}} />
               Monitoring
             </button>
             <button
               onClick={handleExportAll}
               disabled={filteredManifests.length === 0}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-[#F5A623]/40 text-[#F5A623] text-[11px] font-bold uppercase tracking-widest hover:border-[#F5A623] hover:bg-[#F5A623]/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 border text-[11px] font-bold uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{border: `1px solid ${C.amber}40`, color: C.amber}}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.amber; e.currentTarget.style.background = C.amber + '05' }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.amber + '40'; e.currentTarget.style.background = 'transparent' }}
             >
               <Download className="w-3.5 h-3.5" />
               Export All
@@ -509,18 +553,20 @@ export function SavedManifestsTab({
         {/* Search + Filter */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9A9A9A]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{color: C.textSilver}} />
             <input
               type="text"
               placeholder="Search manifests…"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-              className="w-full h-9 pl-9 pr-8 bg-transparent border border-[#282828] text-[13px] text-white placeholder-[#555555] focus:outline-none focus:border-[#6A6A6A] transition-colors"
+              className="w-full h-9 pl-9 pr-8 bg-transparent text-[13px] text-white focus:outline-none transition-colors" style={{border: `1px solid ${C.border}`, color: C.inputText}}
+              onFocus={e => e.currentTarget.style.borderColor = C.inputFocus}
+              onBlur={e => e.currentTarget.style.borderColor = C.border}
             />
             {searchQuery && (
               <button
                 onClick={() => { setSearchQuery(''); setCurrentPage(1) }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9A9A9A] hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-white transition-colors" style={{color: C.textSilver}}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -534,7 +580,7 @@ export function SavedManifestsTab({
         </div>
 
         {(searchQuery || selectedMonth !== 'All Months') && (
-          <p className="text-[11px] font-bold text-[#9A9A9A] uppercase tracking-widest mt-3">
+          <p className="text-[11px] font-bold uppercase tracking-widest mt-3" style={{color: C.textSilver}}>
             {filteredManifests.length} result{filteredManifests.length !== 1 ? 's' : ''}
           </p>
         )}
@@ -542,16 +588,16 @@ export function SavedManifestsTab({
 
       {/* ── Column headers ── */}
       {filteredManifests.length > 0 && (
-        <div className="flex items-center gap-3 sm:gap-5 px-5 sm:px-8 py-3 border-b border-[#1a1a1a] flex-shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#9A9A9A]">
+        <div className="flex items-center gap-3 sm:gap-5 px-5 sm:px-8 py-3 flex-shrink-0 text-[10px] font-bold uppercase tracking-widest" style={{borderBottom: `1px solid ${C.divider}`, color: C.textSilver}}>
           <span className="hidden sm:block w-5">No.</span>
           <span className="flex-1">Title</span>
           <button
             onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
-            className="hidden sm:flex items-center justify-end gap-1 w-28 hover:text-[#D0D0D0] transition-colors cursor-pointer"
+            className="hidden sm:flex items-center justify-end gap-1 w-28 hover:text-white transition-colors cursor-pointer" style={{color: C.textSilver}}
             title={sortDir === 'desc' ? 'Newest first' : 'Oldest first'}
           >
             Date
-            <span className="text-[#E8192C]">{sortDir === 'desc' ? '↓' : '↑'}</span>
+            <span style={{color: C.accent}}>{sortDir === 'desc' ? '↓' : '↑'}</span>
           </button>
           <span className="w-12 text-right">Qty</span>
           <span className="hidden sm:block w-10 text-center">Docs</span>
@@ -564,17 +610,17 @@ export function SavedManifestsTab({
       <div className="flex-1 overflow-y-auto min-h-0">
         {savedManifests.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-8 gap-4">
-            <FileText className="w-8 h-8 text-[#777777]" />
+            <FileText className="w-8 h-8" style={{color: C.textMuted}} />
             <div>
-              <p className="font-black text-[#9A9A9A] text-base">No manifests yet</p>
+              <p className="font-[#0D1117] text-base" style={{color: C.textSilver}}>No manifests yet</p>
               <p className="text-[12px] text-[#666666] mt-1 max-w-xs">Create your first trip manifest to see it here</p>
             </div>
           </div>
         ) : filteredManifests.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-8 gap-4">
-            <Search className="w-8 h-8 text-[#777777]" />
+            <Search className="w-8 h-8" style={{color: C.textMuted}} />
             <div>
-              <p className="font-black text-[#9A9A9A] text-base">No results found</p>
+              <p className="font-[#0D1117] text-base" style={{color: C.textSilver}}>No results found</p>
               <p className="text-[12px] text-[#666666] mt-1">Try adjusting your search or filter</p>
             </div>
           </div>
@@ -598,7 +644,7 @@ export function SavedManifestsTab({
 
       {/* ── Pagination ── */}
       {totalPages > 1 && (
-        <div className="flex-shrink-0 px-5 sm:px-8 py-4 border-t border-[#1a1a1a] flex items-center justify-between gap-3">
+        <div className="flex-shrink-0 px-5 sm:px-8 py-4 flex items-center justify-between gap-3" style={{borderTop: `1px solid ${C.divider}`}}>
           <p className="text-[11px] font-bold text-[#9A9A9A] uppercase tracking-widest tabular-nums">
             <span className="text-white">{currentPage}</span> / {totalPages}
           </p>
@@ -614,9 +660,9 @@ export function SavedManifestsTab({
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 text-[11px] font-black uppercase tracking-widest transition-all ${
+                  className={`w-8 h-8 text-[11px] font-[#0D1117] uppercase tracking-widest transition-all ${
                     currentPage === page
-                      ? 'bg-[#E8192C] text-white border border-[#E8192C]'
+                      ? `bg-[#58A6FF] text-white border border-[#58A6FF]`
                       : 'border border-[#282828] text-[#9A9A9A] hover:border-[#6A6A6A] hover:text-white'
                   }`}
                 >{page}</button>

@@ -28,11 +28,11 @@ export function DownloadModal({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#0D1117]/80 backdrop-blur-md"
       onClick={onClose}
     >
       <div
-        className="bg-black border border-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+        className="bg-[#0D1117] border border-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -41,7 +41,7 @@ export function DownloadModal({
             <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1.5">
               Export
             </p>
-            <h3 className="text-xl font-black text-white tracking-tight leading-none">
+            <h3 className="text-xl font-[#0D1117] text-white tracking-tight leading-none">
               Download Manifest
             </h3>
           </div>
@@ -79,7 +79,7 @@ export function DownloadModal({
                   <Icon className={`w-4 h-4 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-[#E8192C]'}`} strokeWidth={1.5} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] font-black leading-snug transition-colors ${
+                  <p className={`text-[13px] font-[#0D1117] leading-snug transition-colors ${
                     active ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'
                   }`}>
                     {opt.label}
@@ -108,7 +108,7 @@ export function DownloadModal({
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
+            className="flex-1 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-[#0D1117] uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
           >
             Download
           </button>

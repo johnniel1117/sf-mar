@@ -18,7 +18,7 @@ export function DownloadModal({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#0D1117]/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -28,7 +28,7 @@ export function DownloadModal({
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-base font-black text-white">Download Report</h3>
+            <h3 className="text-base font-[#0D1117] text-white">Download Report</h3>
             <p className="text-xs text-[#9A9A9A] mt-0.5">Choose your export format</p>
           </div>
           {/* <button

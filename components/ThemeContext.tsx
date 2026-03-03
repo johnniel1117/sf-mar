@@ -49,7 +49,7 @@ export const useTheme = () => useContext(ThemeContext)
 export function t(isDark: boolean) {
   return {
     // Page / shell — warm mid-tone, not white, not cream
-    pageBg:    isDark ? 'bg-black'     : 'bg-[#e8e4df]',
+    pageBg:    isDark ? 'bg-[#0D1117]'     : 'bg-[#e8e4df]',
     pageBgRaw: isDark ? '#000000'      : '#e8e4df',
 
     // Surfaces — lighter than page so cards lift off the background
@@ -73,31 +73,31 @@ export function t(isDark: boolean) {
     inputText:        isDark ? 'text-white'            : 'text-[#1c1917]',
     inputPlaceholder: isDark ? 'placeholder-[#282828]': 'placeholder-[#9e9890]',
     inputFocus:       isDark
-      ? 'focus:ring-[#E8192C]/40 focus:border-[#E8192C]/60'
-      : 'focus:ring-[#E8192C]/30 focus:border-[#E8192C]/60',
+      ? 'focus:ring-[#58A6FF]/40 focus:border-[#58A6FF]/60'
+      : 'focus:ring-[#58A6FF]/30 focus:border-[#58A6FF]/60',
 
     // Nav / sidebar — same as surface so they feel part of the shell
-    navBg:     isDark ? 'bg-black' : 'bg-[#f2f0ed]',
-    sidebarBg: isDark ? 'bg-black' : 'bg-[#f2f0ed]',
+    navBg:     isDark ? 'bg-[#0D1117]' : 'bg-[#f2f0ed]',
+    sidebarBg: isDark ? 'bg-[#0D1117]' : 'bg-[#f2f0ed]',
 
     // Sidebar item states
     sidebarActive:      isDark ? 'text-white'      : 'text-[#1c1917]',
     sidebarInactive:    isDark ? 'text-[#9A9A9A]'  : 'text-[#6b6460]',
     sidebarHoverText:   isDark ? 'hover:text-white' : 'hover:text-[#1c1917]',
-    sidebarIndexActive: isDark ? 'text-[#E8192C]'  : 'text-[#E8192C]',
+    sidebarIndexActive: isDark ? 'text-[#58A6FF]'  : 'text-[#58A6FF]',
     sidebarIndexIdle:   isDark ? 'text-[#5A5A5A]'  : 'text-[#9e9890]',
 
     // Accents
-    red:        '#E8192C',
-    redHover:   '#FF1F30',
-    amber:      '#F5A623',
+    red:        '#58A6FF',
+    redHover:   '#79C0FF',
+    amber:      '#D29922',
     amberDim:   isDark ? 'text-[#9A9A9A]' : 'text-[#6b6460]',
-    amberHover: 'hover:text-[#F5A623]',
+    amberHover: 'hover:text-[#D29922]',
 
     // Misc
-    spinner:     isDark ? 'border-[#E8192C]'              : 'border-[#E8192C]',
+    spinner:     isDark ? 'border-[#58A6FF]'              : 'border-[#58A6FF]',
     dashed:      isDark ? 'border-[#1a1a1a]'              : 'border-[#c4bfb8]',
-    tooltipBg:   isDark ? 'bg-black border-[#1a1a1a]'     : 'bg-[#f2f0ed] border-[#c4bfb8]',
+    tooltipBg:   isDark ? 'bg-[#0D1117] border-[#1a1a1a]'     : 'bg-[#f2f0ed] border-[#c4bfb8]',
     tooltipText: isDark ? 'text-white'                     : 'text-[#1c1917]',
   }
 }

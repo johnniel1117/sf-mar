@@ -36,9 +36,9 @@ export function StepsIndicator({ currentStep, isEditMode }: StepsIndicatorProps)
                   w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center
                   transition-all duration-300 flex-shrink-0
                   ${isActive
-                    ? 'bg-[#E8192C] text-white shadow-lg shadow-[#E8192C]/40 scale-110'
+                    ? 'bg-[#58A6FF] text-white shadow-lg shadow-[#58A6FF]/40 scale-110'
                     : isCompleted
-                    ? 'bg-[#E8192C]/20 text-[#E8192C] border border-[#E8192C]/40'
+                    ? 'bg-[#58A6FF]/20 text-[#58A6FF] border border-[#58A6FF]/40'
                     : 'bg-[#282828] text-[#9A9A9A] border border-[#3E3E3E]'
                   }
                 `}>

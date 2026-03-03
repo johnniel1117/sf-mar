@@ -46,13 +46,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden flex items-center justify-center">
+    <div className="min-h-screen bg-[#0D1117] relative overflow-hidden flex items-center justify-center">
 
       {/* ── Background ── */}
       <div className="absolute inset-0 opacity-30 pointer-events-none">
         <LogoGridBackground />
       </div>
-      <div className="absolute inset-0 bg-gradient-to-br from-black/10 via-black/95 to-black pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0D1117]/10 via-[#0D1117]/95 to-[#0D1117] pointer-events-none" />
 
       {/* ── Logo top-left ── */}
       <div className="absolute top-8 left-8 z-20 flex items-center gap-3">
@@ -69,7 +69,7 @@ export default function LoginPage() {
           <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-yellow-600 mb-4">
             Secure access
           </p>
-          <h1 className="text-[2.2rem] font-black text-white leading-[0.95] tracking-tight">
+          <h1 className="text-[2.2rem] font-[#0D1117] text-white leading-[0.95] tracking-tight">
             Sign in to your account
           </h1>
         </div>
@@ -136,7 +136,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full relative flex items-center justify-center gap-2.5 py-3.5 rounded-lg font-black text-[12px] uppercase tracking-[0.2em] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group"
+              className="w-full relative flex items-center justify-center gap-2.5 py-3.5 rounded-lg font-[#0D1117] text-[12px] uppercase tracking-[0.2em] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group"
               style={{
                 background: loading
                   ? '#1a1a1a'

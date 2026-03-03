@@ -156,7 +156,7 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
             {MONTH_LABELS[new Date().getMonth()]} qty
           </span>
           <div className="text-right">
-            <p className="text-2xl font-black text-white tabular-nums leading-none">{animCurrentQty.toLocaleString()}</p>
+            <p className="text-2xl font-[#0D1117] text-white tabular-nums leading-none">{animCurrentQty.toLocaleString()}</p>
             {delta !== null && (
               <div className={`flex items-center justify-end gap-0.5 mt-0.5 text-[10px] font-bold ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
                 {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
@@ -167,15 +167,15 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
         </div>
         <div className="flex items-baseline justify-between py-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">Trips</span>
-          <p className="text-2xl font-black text-white tabular-nums">{animCurrentTrips}</p>
+          <p className="text-2xl font-[#0D1117] text-white tabular-nums">{animCurrentTrips}</p>
         </div>
         <div className="flex items-baseline justify-between py-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">All-time qty</span>
-          <p className="text-2xl font-black text-white tabular-nums">{animTotalAllTime.toLocaleString()}</p>
+          <p className="text-2xl font-[#0D1117] text-white tabular-nums">{animTotalAllTime.toLocaleString()}</p>
         </div>
         <div className="flex items-baseline justify-between pt-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A]">Manifests</span>
-          <p className="text-2xl font-black text-white tabular-nums">{animManifests}</p>
+          <p className="text-2xl font-[#0D1117] text-white tabular-nums">{animManifests}</p>
         </div>
       </div>
 
@@ -222,7 +222,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
   const animQty   = useCountUp(totalQtyThisMonth,   1200, 150)
 
   return (
-    <div className="h-screen bg-black overflow-hidden relative">
+    <div className="h-screen bg-[#0D1117] overflow-hidden relative">
       <ConfirmationModal
         isOpen={showSignOutModal}
         title="Sign out"
@@ -239,7 +239,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
           onClick={() => setShowAnalyticsModal(false)}
         >
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+          <div className="absolute inset-0 bg-[#0D1117]/80 backdrop-blur-md" />
           <div
             className="relative z-10 w-full max-w-3xl"
             style={{ maxHeight: '92vh' }}
@@ -262,9 +262,9 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <LogoGridBackground />
       </div>
-      <div className="fixed inset-0 bg-gradient-to-br from-black/5 via-black/95 to-black pointer-events-none" />
-      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-black/15 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-black/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-[#0D1117]/5 via-[#0D1117]/95 to-[#0D1117] pointer-events-none" />
+      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-[#0D1117]/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#0D1117]/15 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── Foreground ── */}
       <div className="relative z-10 h-full flex flex-col">
@@ -283,7 +283,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               <div className="flex items-center gap-2.5">
                 <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black flex-shrink-0"
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-[#0D1117] flex-shrink-0"
                   style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}
                 >
                   {displayName.charAt(0).toUpperCase()}
@@ -316,7 +316,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-3">{today}</p>
-                  <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-black text-white leading-[0.93] tracking-tight">
+                  <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-[#0D1117] text-white leading-[0.93] tracking-tight">
                     {greeting},<br />
                     <span className=" italic text-[#9A9A9A]">
   {displayName}.
@@ -330,14 +330,14 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                     <p className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-1.5">
                       {now.toLocaleString('en-US', { month: 'short' })} trips
                     </p>
-                    <p className="text-5xl font-black text-white tabular-nums leading-none">
+                    <p className="text-5xl font-[#0D1117] text-white tabular-nums leading-none">
                       {String(animTrips).padStart(2, '0')}
                     </p>
                   </div>
                   <div className="w-px h-14 bg-[#1a1a1a]" />
                   <div>
                     <p className="text-[10px] uppercase tracking-widest font-bold text-[#9A9A9A] mb-1.5">Units out</p>
-                    <p className="text-5xl font-black text-white tabular-nums leading-none">
+                    <p className="text-5xl font-[#0D1117] text-white tabular-nums leading-none">
                       {animQty >= 1000
                         ? `${(animQty / 1000).toFixed(1)}k`
                         : animQty.toLocaleString()}
@@ -380,7 +380,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                           <Icon className="w-4 h-4 text-white group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[15px] font-black text-[#D0D0D0] group-hover:text-white transition-colors leading-snug">
+                          <p className="text-[15px] font-[#0D1117] text-[#D0D0D0] group-hover:text-white transition-colors leading-snug">
                             {label}
                           </p>
                           <p className="text-[12px] text-[#9A9A9A] mt-0.5 group-hover:text-[#9A9A9A] transition-colors">
