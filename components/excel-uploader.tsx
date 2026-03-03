@@ -15,20 +15,32 @@ import JsBarcode from "jsbarcode"
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
-  bg:          '#080808',
-  surface:     '#0f0f0f',
-  border:      '#1a1a1a',
-  borderHover: '#2a2a2a',
-  divider:     '#111111',
-  accent:      '#E8192C',
-  accentHover: '#FF1F30',
-  accentGlow:  'rgba(232,25,44,0.2)',
-  amber:       '#F5A623',
-  textPrimary: '#FFFFFF',
-  textSilver:  '#C0C0C0',
-  textSub:     '#888888',
-  textMuted:   '#666666',
-  textGhost:   '#3E3E3E',
+  bg:           '#0D1117',
+  surface:      '#161B22',
+  surfaceHover: '#21262D',
+  border:       '#30363D',
+  borderHover:  '#8B949E',
+  divider:      '#21262D',
+
+  accent:       '#E8192C',
+  accentHover:  '#FF1F30',
+  accentGlow:   'rgba(232,25,44,0.25)',
+
+  amber:        '#F5A623',
+
+  textPrimary:  '#C9D1D9',
+  textSilver:   '#B1BAC4',
+  textSub:      '#8B949E',
+  textMuted:    '#6E7681',
+  textGhost:    '#484F58',
+
+  inputBg:      '#0D1117',
+  inputBorder:  '#30363D',
+  inputText:    '#C9D1D9',
+  inputFocus:   '#1F6FEB',
+
+  stripeEven:   '#161B22',   // slightly lighter than bg — the "filled" stripe
+  stripeOdd:    '#0D1117',   // same as bg — the "empty" stripe
 }
 
 interface MaterialData {

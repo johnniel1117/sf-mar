@@ -34,6 +34,9 @@ const C = {
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
   inputFocus:   '#1F6FEB',
+
+  stripeEven:   '#161B22',   // slightly lighter than bg — the "filled" stripe
+  stripeOdd:    '#0D1117',   // same as bg — the "empty" stripe
 }
 
 
@@ -165,7 +168,6 @@ function ManifestRow({
             style={{color: '#6E7681'}}
             onMouseEnter={(e) => { e.currentTarget.style.color = C.accent }}
             onMouseLeave={(e) => { e.currentTarget.style.color = '#6E7681' }}
-            // style={{color: C.textMuted}}
             title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -179,20 +181,42 @@ function ManifestRow({
 
           {/* Items table */}
           {(manifest.items?.length ?? 0) > 0 && (
-            <div className="mb-7 sm:mb-8" style={{borderTop: `1px solid ${C.divider}`}}>
+            <div className="mb-7 sm:mb-8 overflow-hidden" style={{border: `1px solid ${C.divider}`}}>
               {/* Table header */}
-              <div className="grid grid-cols-4 border-b py-3" style={{borderColor: C.divider}}>
+              <div
+                className="grid grid-cols-4 py-3 px-3"
+                style={{background: '#1C2128', borderBottom: `1px solid ${C.divider}`}}
+              >
                 {['#', 'Ship To', 'DN / TRA', 'Qty'].map(h => (
                   <span key={h} className="text-[10px] uppercase tracking-widest font-bold" style={{color: C.textSilver}}>{h}</span>
                 ))}
               </div>
-              <div className="divide-y" style={{borderColor: C.divider}}>
+
+              {/* Striped rows */}
+              <div>
                 {manifest.items!.map((item, idx) => (
-                  <div key={idx} className="grid grid-cols-4 py-3.5 group/row hover:pl-1 transition-all duration-150">
-              <span className="text-[11px] font-bold group-hover/row:text-[#58A6FF] transition-colors" style={{color: C.textMuted}}>{String(idx + 1).padStart(2, '0')}</span>
-                    <span className="text-[13px] font-semibold truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1" style={{color: C.textPrimary}}>{item.ship_to_name || '—'}</span>
-                    <span className="text-[13px] truncate hidden sm:block" style={{color: C.textSilver}}>{stripLeadingZeros(item.document_number)}</span>
-                    <span className="text-[13px] font-[#0D1117] text-white tabular-nums text-right sm:text-left">{item.total_quantity ?? 0}</span>
+                  <div
+                    key={idx}
+                    className="grid grid-cols-4 py-3.5 px-3 group/row transition-colors duration-100"
+                    style={{
+                      background: idx % 2 === 0 ? C.stripeEven : C.stripeOdd,
+                      borderBottom: idx < manifest.items!.length - 1 ? `1px solid ${C.divider}` : 'none',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = C.surfaceHover }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? C.stripeEven : C.stripeOdd }}
+                  >
+                    <span className="text-[11px] font-bold group-hover/row:text-[#58A6FF] transition-colors" style={{color: C.textMuted}}>
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+                    <span className="text-[13px] font-semibold truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1" style={{color: C.textPrimary}}>
+                      {item.ship_to_name || '—'}
+                    </span>
+                    <span className="text-[13px] truncate hidden sm:block" style={{color: C.textSilver}}>
+                      {stripLeadingZeros(item.document_number)}
+                    </span>
+                    <span className="text-[13px] font-[#0D1117] text-white tabular-nums text-right sm:text-left">
+                      {item.total_quantity ?? 0}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -274,26 +298,25 @@ export function SavedManifestsTab({
   const itemsPerPage = 10
 
   const sortedManifests = useMemo(() => {
-  const parseDate = (val: string | undefined | null): number => {
-    if (!val) return -Infinity
-    const mdy = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
-    if (mdy) return new Date(+mdy[3], +mdy[1] - 1, +mdy[2]).getTime()
-    const t = new Date(val).getTime()
-    return isNaN(t) ? -Infinity : t
-  }
+    const parseDate = (val: string | undefined | null): number => {
+      if (!val) return -Infinity
+      const mdy = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+      if (mdy) return new Date(+mdy[3], +mdy[1] - 1, +mdy[2]).getTime()
+      const t = new Date(val).getTime()
+      return isNaN(t) ? -Infinity : t
+    }
 
-  return [...savedManifests].sort((a, b) => {
-    const aTime = parseDate(a.manifest_date || a.created_at)
-    const bTime = parseDate(b.manifest_date || b.created_at)
+    return [...savedManifests].sort((a, b) => {
+      const aTime = parseDate(a.manifest_date || a.created_at)
+      const bTime = parseDate(b.manifest_date || b.created_at)
 
-    if (aTime !== bTime) return sortDir === 'desc' ? bTime - aTime : aTime - bTime
+      if (aTime !== bTime) return sortDir === 'desc' ? bTime - aTime : aTime - bTime
 
-    // Tiebreaker: sort by manifest number
-    const aNum = a.manifest_number ?? ''
-    const bNum = b.manifest_number ?? ''
-    return sortDir === 'desc' ? bNum.localeCompare(aNum) : aNum.localeCompare(bNum)
-  })
-}, [savedManifests, sortDir])
+      const aNum = a.manifest_number ?? ''
+      const bNum = b.manifest_number ?? ''
+      return sortDir === 'desc' ? bNum.localeCompare(aNum) : aNum.localeCompare(bNum)
+    })
+  }, [savedManifests, sortDir])
 
   const filteredManifests = useMemo(() =>
     sortedManifests.filter((manifest) => {
@@ -328,71 +351,56 @@ export function SavedManifestsTab({
   // ── Excel exports ─────────────────────────────────────────────────────────
 
   const handleDownloadMonitoring = () => {
-  const wb = XLSX.utils.book_new()
-  const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet([])
-  let row = 0
-  const setCell = (r: number, c: number, value: any, style: any = {}, type: XLSX.CellObject['t'] = 's') => {
-    ws[XLSX.utils.encode_cell({ r, c })] = { v: value, t: type, s: style } as XLSX.CellObject
-  }
-  const toDN = (val: string | undefined) => {
-    const n = Number(val)
-    return !isNaN(n) && val !== undefined && val !== '' ? n : (val || '—')
-  }
-  const bThin   = { top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'} }
-  const bMedium = { top:{style:'medium'},bottom:{style:'medium'},left:{style:'medium'},right:{style:'medium'} }
+    const wb = XLSX.utils.book_new()
+    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet([])
+    let row = 0
+    const setCell = (r: number, c: number, value: any, style: any = {}, type: XLSX.CellObject['t'] = 's') => {
+      ws[XLSX.utils.encode_cell({ r, c })] = { v: value, t: type, s: style } as XLSX.CellObject
+    }
+    const toDN = (val: string | undefined) => {
+      const n = Number(val)
+      return !isNaN(n) && val !== undefined && val !== '' ? n : (val || '—')
+    }
+    const bThin   = { top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'} }
+    const bMedium = { top:{style:'medium'},bottom:{style:'medium'},left:{style:'medium'},right:{style:'medium'} }
 
-  setCell(row, 0, 'SF EXPRESS CEBU WAREHOUSE — TRIP MANIFEST MONITORING', {
-    font:{bold:true,sz:14,color:{rgb:'FFFFFF'}},
-    fill:{fgColor:{rgb:'DC2626'}},
-    alignment:{horizontal:'left',vertical:'center'},
-  })
-  row++
-  setCell(row, 0, `Generated: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}  |  Total Manifests: ${filteredManifests.length}`, {
-    font:{sz:10,italic:true},
-    fill:{fgColor:{rgb:'FEE2E2'}},
-    alignment:{horizontal:'left'},
-  })
-  row += 2
-
-  ;['MANIFEST NO.','DISPATCH DATE','TRUCKER','DRIVER','PLATE NO.','TRUCK TYPE','TIME START','TIME END','DN / TRA NO.','SHIP TO NAME','QTY'].forEach((h, c) =>
-    setCell(row, c, h, {
-      font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},
-      fill:{fgColor:{rgb:'1E3A5F'}},
-      alignment:{horizontal:'center',vertical:'center',wrapText:true},
-      border:bThin,
+    setCell(row, 0, 'SF EXPRESS CEBU WAREHOUSE — TRIP MANIFEST MONITORING', {
+      font:{bold:true,sz:14,color:{rgb:'FFFFFF'}},
+      fill:{fgColor:{rgb:'DC2626'}},
+      alignment:{horizontal:'left',vertical:'center'},
     })
-  )
-  row++
+    row++
+    setCell(row, 0, `Generated: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}  |  Total Manifests: ${filteredManifests.length}`, {
+      font:{sz:10,italic:true},
+      fill:{fgColor:{rgb:'FEE2E2'}},
+      alignment:{horizontal:'left'},
+    })
+    row += 2
 
-  let grandQty = 0, grandDocs = 0, globalIdx = 0
+    ;['MANIFEST NO.','DISPATCH DATE','TRUCKER','DRIVER','PLATE NO.','TRUCK TYPE','TIME START','TIME END','DN / TRA NO.','SHIP TO NAME','QTY'].forEach((h, c) =>
+      setCell(row, c, h, {
+        font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},
+        fill:{fgColor:{rgb:'1E3A5F'}},
+        alignment:{horizontal:'center',vertical:'center',wrapText:true},
+        border:bThin,
+      })
+    )
+    row++
 
-  filteredManifests.forEach((manifest) => {
-    const d = manifest.manifest_date
-      ? new Date(manifest.manifest_date).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'})
-      : '—'
-    const items = manifest.items || []
-    const fill = { fgColor:{ rgb: globalIdx % 2 === 0 ? 'F9FAFB' : 'FFFFFF' } }
-    const base   = (ex: any = {}) => ({ font:{sz:10}, fill, border:bThin, alignment:{vertical:'center',wrapText:true}, ...ex })
-    const center = (ex: any = {}) => base({ alignment:{horizontal:'center',vertical:'center'}, ...ex })
-    const bold   = (ex: any = {}) => base({ font:{sz:10,bold:true}, ...ex })
+    let grandQty = 0, grandDocs = 0, globalIdx = 0
 
-    if (items.length === 0) {
-      setCell(row, 0, manifest.manifest_number || manifest.id || '—', bold())
-      setCell(row, 1, d, center())
-      setCell(row, 2, manifest.trucker || '—', base())
-      setCell(row, 3, manifest.driver_name || '—', base())
-      setCell(row, 4, manifest.plate_no || '—', center())
-      setCell(row, 5, manifest.truck_type || '—', base())
-      setCell(row, 6, manifest.time_start || '—', center())
-      setCell(row, 7, manifest.time_end || '—', center())
-      setCell(row, 8, '—', center())
-      setCell(row, 9, 'No documents', base())
-      setCell(row, 10, 0, center(), 'n')
-      row++
-    } else {
-      items.forEach((item) => {
-        const dnVal = toDN(item.document_number)
-        setCell(row, 0, manifest.manifest_number || manifest.id || '—', bold({ alignment:{horizontal:'center',vertical:'center'} }))
+    filteredManifests.forEach((manifest) => {
+      const d = manifest.manifest_date
+        ? new Date(manifest.manifest_date).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'})
+        : '—'
+      const items = manifest.items || []
+      const fill = { fgColor:{ rgb: globalIdx % 2 === 0 ? 'F9FAFB' : 'FFFFFF' } }
+      const base   = (ex: any = {}) => ({ font:{sz:10}, fill, border:bThin, alignment:{vertical:'center',wrapText:true}, ...ex })
+      const center = (ex: any = {}) => base({ alignment:{horizontal:'center',vertical:'center'}, ...ex })
+      const bold   = (ex: any = {}) => base({ font:{sz:10,bold:true}, ...ex })
+
+      if (items.length === 0) {
+        setCell(row, 0, manifest.manifest_number || manifest.id || '—', bold())
         setCell(row, 1, d, center())
         setCell(row, 2, manifest.trucker || '—', base())
         setCell(row, 3, manifest.driver_name || '—', base())
@@ -400,33 +408,48 @@ export function SavedManifestsTab({
         setCell(row, 5, manifest.truck_type || '—', base())
         setCell(row, 6, manifest.time_start || '—', center())
         setCell(row, 7, manifest.time_end || '—', center())
-        setCell(row, 8, dnVal, bold({ alignment:{horizontal:'center',vertical:'center'} }), typeof dnVal === 'number' ? 'n' : 's')
-        setCell(row, 9, item.ship_to_name || '—', base())
-        setCell(row, 10, item.total_quantity || 0, center(), 'n')
-        grandQty += item.total_quantity || 0
-        grandDocs++
+        setCell(row, 8, '—', center())
+        setCell(row, 9, 'No documents', base())
+        setCell(row, 10, 0, center(), 'n')
         row++
-      })
+      } else {
+        items.forEach((item) => {
+          const dnVal = toDN(item.document_number)
+          setCell(row, 0, manifest.manifest_number || manifest.id || '—', bold({ alignment:{horizontal:'center',vertical:'center'} }))
+          setCell(row, 1, d, center())
+          setCell(row, 2, manifest.trucker || '—', base())
+          setCell(row, 3, manifest.driver_name || '—', base())
+          setCell(row, 4, manifest.plate_no || '—', center())
+          setCell(row, 5, manifest.truck_type || '—', base())
+          setCell(row, 6, manifest.time_start || '—', center())
+          setCell(row, 7, manifest.time_end || '—', center())
+          setCell(row, 8, dnVal, bold({ alignment:{horizontal:'center',vertical:'center'} }), typeof dnVal === 'number' ? 'n' : 's')
+          setCell(row, 9, item.ship_to_name || '—', base())
+          setCell(row, 10, item.total_quantity || 0, center(), 'n')
+          grandQty += item.total_quantity || 0
+          grandDocs++
+          row++
+        })
+      }
+      globalIdx++
+    })
+
+    row++
+    const totalStyle = {
+      font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},
+      fill:{fgColor:{rgb:'1E3A5F'}},
+      alignment:{horizontal:'center',vertical:'center'},
+      border:bMedium,
     }
-    globalIdx++
-  })
+    setCell(row, 0, `GRAND TOTAL — ${filteredManifests.length} manifests | ${grandDocs} documents`, totalStyle)
+    for (let c = 1; c <= 9; c++) setCell(row, c, '', totalStyle)
+    setCell(row, 10, grandQty, totalStyle, 'n')
 
-  row++
-  const totalStyle = {
-    font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},
-    fill:{fgColor:{rgb:'1E3A5F'}},
-    alignment:{horizontal:'center',vertical:'center'},
-    border:bMedium,
+    ws['!ref'] = `A1:K${row + 5}`
+    ws['!cols'] = [{wch:18},{wch:14},{wch:22},{wch:22},{wch:14},{wch:16},{wch:12},{wch:12},{wch:18},{wch:40},{wch:10}]
+    XLSX.utils.book_append_sheet(wb, ws, 'Monitoring')
+    XLSX.writeFile(wb, `Manifest-Monitoring-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
-  setCell(row, 0, `GRAND TOTAL — ${filteredManifests.length} manifests | ${grandDocs} documents`, totalStyle)
-  for (let c = 1; c <= 9; c++) setCell(row, c, '', totalStyle)
-  setCell(row, 10, grandQty, totalStyle, 'n')
-
-  ws['!ref'] = `A1:K${row + 5}`
-  ws['!cols'] = [{wch:18},{wch:14},{wch:22},{wch:22},{wch:14},{wch:16},{wch:12},{wch:12},{wch:18},{wch:40},{wch:10}]
-  XLSX.utils.book_append_sheet(wb, ws, 'Monitoring')
-  XLSX.writeFile(wb, `Manifest-Monitoring-${new Date().toISOString().slice(0,10)}.xlsx`)
-}
 
   const handleExportAll = () => {
     const wb = XLSX.utils.book_new()
@@ -662,7 +685,7 @@ export function SavedManifestsTab({
                   onClick={() => setCurrentPage(page)}
                   className={`w-8 h-8 text-[11px] font-[#0D1117] uppercase tracking-widest transition-all ${
                     currentPage === page
-                      ? `bg-yellow-600 text-white  `
+                      ? `bg-yellow-600 text-white`
                       : 'border border-[#282828] text-[#9A9A9A] hover:border-[#6A6A6A] hover:text-white'
                   }`}
                 >{page}</button>

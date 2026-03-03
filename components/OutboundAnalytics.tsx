@@ -8,20 +8,20 @@ import {
 } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
 
-// design tokens (GitHub theme)
+// ── Design tokens (SavedManifests theme) ─────────────────────────────────────
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
   surfaceHover: '#21262D',
   border:       '#30363D',
-  borderHover:  '#444C56',
+  borderHover:  '#8B949E',
   divider:      '#21262D',
 
-  accent:       '#58A6FF',
-  accentHover:  '#79C0FF',
-  accentGlow:   'rgba(88,166,255,0.25)',
+  accent:       '#E8192C',
+  accentHover:  '#FF1F30',
+  accentGlow:   'rgba(232,25,44,0.25)',
 
-  amber:        '#D29922',
+  amber:        '#F5A623',
 
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
@@ -32,7 +32,7 @@ const C = {
   inputBg:      '#0D1117',
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
-  inputFocus:   '#58A6FF',
+  inputFocus:   '#1F6FEB',
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -142,8 +142,8 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
   const metricUnit: Record<Metric, string> = { totalQty: 'units', totalTrips: 'trips', totalDocs: 'docs' }
   const allZero = values.every(v => v === 0)
 
-  const CHART_H = 280  // fixed pixel height of the bar area
-  const LABEL_H = 28   // height reserved for labels below
+  const CHART_H = 280
+  const LABEL_H = 28
 
   if (allZero) {
     return (
@@ -156,7 +156,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
   return (
     <div ref={ref} className="relative w-full select-none" style={{ height: CHART_H + LABEL_H }}>
       
-      {/* Y-axis gridlines — inside the bar area only */}
+      {/* Y-axis gridlines */}
       <div className="absolute left-0 right-0 pointer-events-none" style={{ top: 0, height: CHART_H }}>
         {[100, 75, 50, 25].map(p => (
           <div key={p} className="absolute w-full" style={{ bottom: `${p}%` }}>
@@ -171,19 +171,19 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
       {/* Bars row */}
       <div className="absolute left-0 right-0 flex gap-2 sm:gap-3" style={{ top: 0, height: CHART_H }}>
         {data.map((d, i) => {
-          const val      = d[activeMetric]
-          const hPct     = max > 0 ? (val / max) * 100 : 0
-          const barH     = mounted ? Math.max(hPct, val > 0 ? 2 : 0) : 0
+          const val       = d[activeMetric]
+          const hPct      = max > 0 ? (val / max) * 100 : 0
+          const barH      = mounted ? Math.max(hPct, val > 0 ? 2 : 0) : 0
           const isHovered = hovered === i
-          const isCurr   = i === data.length - 1
-          const isPrev   = i === data.length - 2
-          const prevVal  = i > 0 ? data[i - 1][activeMetric] : null
-          const delta    = prevVal !== null ? calcDelta(val, prevVal) : null
+          const isCurr    = i === data.length - 1
+          const isPrev    = i === data.length - 2
+          const prevVal   = i > 0 ? data[i - 1][activeMetric] : null
+          const delta     = prevVal !== null ? calcDelta(val, prevVal) : null
 
-          let barBg = 'rgba(255,255,255,0.05)'
-          if (isCurr) barBg = 'linear-gradient(180deg, #E8192C 0%, #c8140e 60%, #F5A623 100%)'
-          else if (isPrev) barBg = 'rgba(245,166,35,0.35)'
-          if (isHovered && !isCurr && !isPrev) barBg = 'rgba(255,255,255,0.13)'
+          let barBg = C.surfaceHover
+          if (isCurr)  barBg = `linear-gradient(180deg, ${C.accent} 0%, #c8140e 60%, ${C.amber} 100%)`
+          else if (isPrev) barBg = `rgba(245,166,35,0.35)`
+          if (isHovered && !isCurr && !isPrev) barBg = C.borderHover
 
           return (
             <div
@@ -201,17 +201,17 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                   <div
                     className="relative px-4 py-3 text-center"
                     style={{
-                      background: 'rgba(16,27,34,0.97)',
-                      border: `1px solid ${C.divider}`,
+                      background: C.surface,
+                      border: `1px solid ${C.border}`,
                       minWidth: 130,
-                      boxShadow: '0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)',
+                      boxShadow: `0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)`,
                     }}
                   >
                     <div
                       className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-2.5 h-2.5 rotate-45"
-                      style={{ background: C.divider, borderRight: `1px solid ${C.divider}`, borderBottom: `1px solid ${C.divider}` }}
+                      style={{ background: C.border, borderRight: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}
                     />
-                    <p className="text-white font-[#0D1117] text-xl tabular-nums leading-none font-mono">
+                    <p className="font-bold text-xl tabular-nums leading-none font-mono" style={{color: C.textPrimary}}>
                       {val.toLocaleString()}
                     </p>
                     <p className="text-[9px] uppercase tracking-widest font-bold mt-1" style={{color: C.textMuted}}>{metricUnit[activeMetric]}</p>
@@ -226,7 +226,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                 </div>
               )}
 
-              {/* Bar — anchored to bottom */}
+              {/* Bar */}
               <div
                 className="absolute bottom-0 left-0 right-0 overflow-hidden"
                 style={{
@@ -236,7 +236,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                   transition: 'height 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: `${i * 60}ms`,
                   boxShadow: isCurr
-                    ? '0 0 20px rgba(232,25,44,0.5), 0 0 60px rgba(232,25,44,0.15)'
+                    ? `0 0 20px ${C.accentGlow}, 0 0 60px rgba(232,25,44,0.1)`
                     : isPrev
                     ? '0 0 12px rgba(245,166,35,0.2)'
                     : 'none',
@@ -265,9 +265,12 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
           const isHov  = hovered === i
           return (
             <div key={d.label} className="flex-1 flex items-center justify-center pt-2">
-              <span className={`text-[9px] font-mono font-bold leading-none ${
-                isCurr ? 'text-[#E8192C]' : isPrev ? 'text-[#6a5010]' : isHov ? 'text-[#888]' : 'text-[#666]'
-              }`}>
+              <span
+                className="text-[9px] font-mono font-bold leading-none uppercase tracking-widest"
+                style={{
+                  color: isCurr ? C.textPrimary : isPrev ? C.amber + '80' : isHov ? C.textSub : C.textGhost,
+                }}
+              >
                 {d.label}
               </span>
             </div>
@@ -308,8 +311,7 @@ function RingChart({ data }: { data: { label: string; value: number; color: stri
     <div ref={ref} className="flex items-center gap-8">
       <div className="relative flex-shrink-0" style={{ width: SIZE, height: SIZE }}>
         <svg width={SIZE} height={SIZE} className="-rotate-90">
-          {/* Track */}
-          <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="#111" strokeWidth={STROKE} />
+          <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke={C.divider} strokeWidth={STROKE} />
           {data.map((d, i) => {
             const pct = d.value / total
             const len = pct * CIRC
@@ -336,17 +338,16 @@ function RingChart({ data }: { data: { label: string; value: number; color: stri
             )
           })}
         </svg>
-        {/* Center label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {hovered !== null ? (
             <>
-              <span className="text-white font-[#0D1117] text-base font-mono tabular-nums leading-none">{((data[hovered].value / total) * 100).toFixed(0)}%</span>
-              <span className="text-[#888] text-[8px] font-bold uppercase tracking-widest mt-0.5">{data[hovered].label.split(' ')[0]}</span>
+              <span className="font-bold text-base font-mono tabular-nums leading-none" style={{color: C.textPrimary}}>{((data[hovered].value / total) * 100).toFixed(0)}%</span>
+              <span className="text-[8px] font-bold uppercase tracking-widest mt-0.5" style={{color: C.textMuted}}>{data[hovered].label.split(' ')[0]}</span>
             </>
           ) : (
             <>
-              <span className="text-white font-[#0D1117] text-base font-mono tabular-nums leading-none">{data.length}</span>
-              <span className="text-[#888] text-[8px] font-bold uppercase tracking-widest mt-0.5">types</span>
+              <span className="font-bold text-base font-mono tabular-nums leading-none" style={{color: C.textPrimary}}>{data.length}</span>
+              <span className="text-[8px] font-bold uppercase tracking-widest mt-0.5" style={{color: C.textMuted}}>types</span>
             </>
           )}
         </div>
@@ -363,9 +364,9 @@ function RingChart({ data }: { data: { label: string; value: number; color: stri
           >
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
-              <span className="text-[11px] font-semibold text-[#888] truncate">{d.label}</span>
+              <span className="text-[11px] font-semibold truncate" style={{color: C.textSub}}>{d.label}</span>
             </div>
-            <span className="text-[11px] font-[#0D1117] text-white font-mono tabular-nums">{d.value}</span>
+            <span className="text-[11px] font-bold font-mono tabular-nums" style={{color: C.textPrimary}}>{d.value}</span>
           </div>
         ))}
       </div>
@@ -397,19 +398,18 @@ function TopDestinations({ manifests }: { manifests: TripManifest[] }) {
         const pct = (dest.qty / maxQty) * 100
         const isTop = i === 0
         return (
-          <div key={dest.name} className="group relative py-4 px-0">
-            {/* Rank + name row */}
+          <div key={dest.name} className="group relative py-4 px-0" style={{borderBottom: `1px solid ${C.divider}`}}>
             <div className="flex items-center justify-between mb-3 gap-4">
               <div className="flex items-center gap-4 min-w-0">
                 <span
-                  className="text-[11px] font-mono font-bold w-5 flex-shrink-0 transition-colors group-hover:text-[#E8192C]"
-                  style={{ color: isTop ? '#E8192C' : C.textGhost }}
+                  className="text-[11px] font-mono font-bold w-5 flex-shrink-0 transition-colors group-hover:text-white"
+                  style={{ color: isTop ? C.textPrimary : C.textGhost }}
                 >
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div className="flex items-center gap-2 min-w-0">
                   <MapPin className="w-3 h-3 flex-shrink-0 group-hover:text-white transition-colors" style={{color: C.textGhost}} />
-                  <span className="text-[14px] font-[#0D1117] group-hover:text-white transition-colors truncate leading-tight" style={{color: C.textSilver}}>
+                  <span className="text-[14px] font-semibold group-hover:text-white transition-colors truncate leading-tight" style={{color: C.textSilver}}>
                     {dest.name}
                   </span>
                 </div>
@@ -418,26 +418,26 @@ function TopDestinations({ manifests }: { manifests: TripManifest[] }) {
                 <span className="text-[10px] uppercase tracking-widest font-bold hidden sm:block" style={{color: C.textGhost}}>
                   {dest.docs} doc{dest.docs !== 1 ? 's' : ''}
                 </span>
-                <span className="text-[22px] font-[#0D1117] text-white tabular-nums font-mono leading-none">
+                <span className="text-[22px] font-bold tabular-nums font-mono leading-none" style={{color: C.textPrimary}}>
                   {dest.qty.toLocaleString()}
                 </span>
               </div>
             </div>
 
             {/* Progress track */}
-            <div className="ml-9 h-px bg-[#111] overflow-hidden">
+            <div className="ml-9 h-px overflow-hidden" style={{background: C.divider}}>
               <div
                 className="h-full origin-left"
                 style={{
                   width: `${pct}%`,
                   background: isTop
-                    ? 'linear-gradient(90deg, #E8192C, #F5A623)'
+                    ? `linear-gradient(90deg, ${C.accent}, ${C.amber})`
                     : i === 1
-                    ? 'rgba(245,166,35,0.5)'
-                    : 'rgba(255,255,255,0.1)',
+                    ? `rgba(245,166,35,0.5)`
+                    : C.border,
                   transition: 'width 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: `${i * 80}ms`,
-                  boxShadow: isTop ? '0 0 8px rgba(232,25,44,0.5)' : 'none',
+                  boxShadow: isTop ? `0 0 8px ${C.accentGlow}` : 'none',
                 }}
               />
             </div>
@@ -474,7 +474,7 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
     return [...map.entries()].sort((a, b) => b[1] - a[1])
   }, [manifests])
 
-  const TRUCK_COLORS = ['#E8192C', '#F5A623', '#3b82f6', '#8b5cf6', '#10b981']
+  const TRUCK_COLORS = [C.accent, C.amber, '#3b82f6', '#8b5cf6', '#10b981']
 
   if (!truckers.length) return <EmptyState label="No trucker data yet" />
 
@@ -488,32 +488,36 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
             <div
               key={t.name}
               className="group flex items-center gap-5 py-4 transition-all duration-200 hover:pl-1"
+              style={{borderBottom: `1px solid ${C.divider}`}}
             >
-              <span className="text-[11px] font-mono font-bold w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors"
-                style={{ color: i === 0 ? '#E8192C' : C.textGhost }}>
-                {String(i + 1).padStart(2, '0')}
+              <span
+                  className="text-[11px] font-mono font-bold w-5 flex-shrink-0 transition-colors group-hover:text-white"
+                  style={{ color: i === 0 ? C.textPrimary : C.textGhost }}
+                >
+                  {String(i + 1).padStart(2, '0')}
               </span>
 
               {/* Avatar */}
               <div
-                className="w-9 h-9 flex-shrink-0 flex items-center justify-center text-[11px] font-[#0D1117] text-white"
+                className="w-9 h-9 flex-shrink-0 flex items-center justify-center text-[11px] font-bold"
                 style={{
                   background: i === 0
-                    ? 'linear-gradient(135deg, #E8192C, #7f0e18)'
-                    : `rgba(255,255,255,0.06)`,
-                  border: i === 0 ? 'none' : '1px solid #1a1a1a',
+                    ? `linear-gradient(135deg, ${C.accent}, #7f0e18)`
+                    : C.surface,
+                  border: i === 0 ? 'none' : `1px solid ${C.border}`,
+                  color: i === 0 ? '#fff' : C.textSilver,
                 }}
               >
                 {t.name.charAt(0).toUpperCase()}
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] text-[#0D1117] group-hover:text-white transition-colors truncate" style={{color: C.textSilver}}>{t.name}</p>
-                <p className="text-[11px] font-mono mt-0.5 truncate group-hover:text-white transition-colors" style={{color: C.textMuted}}>{t.qty.toLocaleString()} units</p>
+                <p className="text-[14px] font-semibold group-hover:text-white transition-colors truncate" style={{color: C.textSilver}}>{t.name}</p>
+                <p className="text-[11px] font-mono mt-0.5 truncate" style={{color: C.textMuted}}>{t.qty.toLocaleString()} units</p>
               </div>
 
               <div className="text-right flex-shrink-0">
-                <p className="text-[22px] font-[#0D1117] text-white tabular-nums font-mono leading-none">{t.trips}</p>
+                <p className="text-[22px] font-bold tabular-nums font-mono leading-none" style={{color: C.textPrimary}}>{t.trips}</p>
                 <p className="text-[9px] uppercase tracking-widest font-bold" style={{color: C.textGhost}}>trips</p>
               </div>
             </div>
@@ -522,21 +526,21 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
       </div>
 
       {/* Grid: drivers + truck types */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-6 border-t border-[#111] pt-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-6 pt-10" style={{borderTop: `1px solid ${C.divider}`}}>
         {drivers.length > 0 && (
           <div>
             <SectionLabel>Top drivers</SectionLabel>
-            <div className="mt-6 space-y-0 divide-y divide-[#0d0d0d]">
+            <div className="mt-6 space-y-0" style={{borderTop: `1px solid ${C.divider}`}}>
               {drivers.map(([name, trips], i) => (
-                <div key={name} className="flex items-center justify-between py-3.5">
+                <div key={name} className="flex items-center justify-between py-3.5" style={{borderBottom: `1px solid ${C.divider}`}}>
                   <div className="flex items-center gap-3">
                     <div
                       className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: i === 0 ? '#E8192C' : '#222' }}
+                      style={{ background: i === 0 ? C.accent : C.border }}
                     />
-                    <span className={`text-[13px] font-semibold ${i === 0 ? 'text-white' : 'text-[#888]'}`}>{name}</span>
+                    <span className="text-[13px] font-semibold" style={{color: i === 0 ? C.textPrimary : C.textSub}}>{name}</span>
                   </div>
-                  <span className="text-[13px] font-[#0D1117] font-mono tabular-nums text-[#666]">{trips}×</span>
+                  <span className="text-[13px] font-bold font-mono tabular-nums" style={{color: C.textMuted}}>{trips}×</span>
                 </div>
               ))}
             </div>
@@ -577,7 +581,7 @@ function RecentActivity({ manifests }: { manifests: TripManifest[] }) {
   if (!recent.length) return <EmptyState label="No activity yet" />
 
   return (
-    <div className="divide-y divide-[#0d0d0d]">
+    <div style={{borderTop: `1px solid ${C.divider}`}}>
       {recent.map((m, idx) => {
         const qty  = (m.items || []).reduce((s, i) => s + (i.total_quantity || 0), 0)
         const date = m.manifest_date
@@ -588,25 +592,24 @@ function RecentActivity({ manifests }: { manifests: TripManifest[] }) {
           <div
             key={m.id}
             className="group flex items-center justify-between py-5 transition-all duration-200 hover:pl-1"
-            style={{ animationDelay: `${idx * 50}ms` }}
+            style={{ borderBottom: `1px solid ${C.divider}`, animationDelay: `${idx * 50}ms` }}
           >
             <div className="flex items-center gap-5 min-w-0">
-              {/* Status dot */}
               <div
                 className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors"
-                style={{ background: idx === 0 ? '#E8192C' : '#222' }}
+                style={{ background: idx === 0 ? C.accent : C.border }}
               />
               <div className="min-w-0">
-                <p className="text-[13px] font-[#0D1117] truncate group-hover:text-white transition-colors font-mono" style={{color: C.textSilver}}>
+                <p className="text-[13px] font-semibold truncate group-hover:text-white transition-colors font-mono" style={{color: C.textSilver}}>
                   {m.manifest_number || m.id?.slice(0, 8) || '—'}
                 </p>
-                <p className="text-[11px] mt-0.5 truncate group-hover:text-white transition-colors" style={{color: C.textMuted}}>
+                <p className="text-[11px] mt-0.5 truncate transition-colors" style={{color: C.textMuted}}>
                   {m.driver_name || 'No driver'}{m.trucker ? ` · ${m.trucker}` : ''}
                 </p>
               </div>
             </div>
             <div className="text-right flex-shrink-0 ml-4">
-              <p className="text-[22px] font-[#0D1117] text-white tabular-nums font-mono leading-none">{qty.toLocaleString()}</p>
+              <p className="text-[22px] font-bold tabular-nums font-mono leading-none" style={{color: C.textPrimary}}>{qty.toLocaleString()}</p>
               <p className="text-[9px] uppercase tracking-widest font-bold mt-0.5" style={{color: C.textGhost}}>{date}</p>
             </div>
           </div>
@@ -627,7 +630,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function EmptyState({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
-      <div className="w-8 h-8 flex items-center justify-center" style={{border: `1px solid ${C.divider}`}}>
+      <div className="w-8 h-8 flex items-center justify-center" style={{border: `1px solid ${C.border}`}}>
         <Activity className="w-4 h-4" style={{color: C.textGhost}} />
       </div>
       <p className="text-[11px] font-bold uppercase tracking-widest" style={{color: C.textMuted}}>{label}</p>
@@ -672,34 +675,33 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
     <div
       className="h-full overflow-hidden flex flex-col"
       style={{
-        background: '#080808',
-        border: '1px solid #1a1a1a',
+        background: C.bg,
+        border: `1px solid ${C.divider}`,
         borderRadius: 16,
       }}
     >
       {/* ── Header ── */}
-      <div className="px-6 sm:px-8 pt-8 pb-0">
+      <div className="px-6 sm:px-8 pt-8 pb-0" style={{borderBottom: `1px solid ${C.divider}`}}>
 
         {/* Title row */}
         <div className="flex items-start justify-between mb-8">
           <div>
             <div className="flex items-center gap-2.5 mb-3">
-              {/* Live indicator */}
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E8192C] opacity-50" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E8192C]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{background: C.accent}} />
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{background: C.accent}} />
               </span>
-              <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-[#F5A623]">Outbound analytics</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{color: C.amber}}>Outbound analytics</p>
             </div>
-            <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-[#0D1117] text-white leading-none tracking-tight">
+            <h2 className="text-[clamp(1.6rem,4vw,2.6rem)]  text-white leading-none tracking-tight">
               {manifests.length}
-              <span className="font-[#0D1117]" style={{color: C.textGhost}}> manifest{manifests.length !== 1 ? 's' : ''}</span>
+              <span className="font-normal" style={{color: C.textGhost}}> manifest{manifests.length !== 1 ? 's' : ''}</span>
             </h2>
           </div>
           <div className="text-right hidden sm:block">
             <p className="text-[9px] uppercase tracking-[0.2em] font-bold mb-2" style={{color: C.textMuted}}>All-time units</p>
             <p
-              className="font-[#0D1117] text-white tabular-nums font-mono leading-none"
+              className="font-bold text-white tabular-nums font-mono leading-none"
               style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}
             >
               <AnimatedNumber value={totalAllTime} format="compact" />
@@ -708,29 +710,30 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
         </div>
 
         {/* Metric cards */}
-        <div className="grid grid-cols-3 gap-px" style={{ background: C.divider }}>
+        <div className="grid grid-cols-3" style={{borderTop: `1px solid ${C.border}`}}>
           {METRICS.map(({ key, label, value, delta }, i) => (
             <button
               key={key}
               onClick={() => setActiveMetric(key)}
               className="text-left px-4 sm:px-5 py-5 transition-all duration-150 relative overflow-hidden group/metric"
               style={{
-                background: activeMetric === key ? C.surface : C.bg,
+                background: activeMetric === key ? C.surface : 'transparent',
+                borderRight: i < 2 ? `1px solid ${C.border}` : 'none',
               }}
             >
               {/* Active indicator line */}
               {activeMetric === key && (
                 <div
                   className="absolute top-0 left-0 right-0 h-px"
-                  style={{ background: 'linear-gradient(90deg, #E8192C, #F5A623)' }}
+                  style={{ background: `linear-gradient(90deg, ${C.accent}, ${C.amber})` }}
                 />
               )}
 
-              <p className={`text-[9px] uppercase tracking-[0.2em] font-bold mb-3 transition-colors ${
-                activeMetric === key ? 'text-[#E8192C]' : 'group-hover/metric:text-white'
-              }`} style={{color: activeMetric === key ? '#E8192C' : C.textGhost}}>{label}</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold mb-3 transition-colors" style={{color: activeMetric === key ? C.textPrimary : C.textGhost}}>
+                {label}
+              </p>
 
-              <p className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-[#0D1117] text-white tabular-nums font-mono leading-none">
+              <p className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold tabular-nums font-mono leading-none" style={{color: C.textPrimary}}>
                 <AnimatedNumber value={value} />
               </p>
 
@@ -741,29 +744,26 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
             </button>
           ))}
         </div>
-      </div>
 
-      {/* ── Tabs ── */}
-      <div
-        className="flex gap-0 px-6 sm:px-8 mt-6"
-        style={{ borderBottom: `1px solid ${C.divider}` }}
-      >
-        {TABS.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className="relative py-3.5 mr-6 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-150"
-            style={{ color: activeTab === key ? '#fff' : '#777' }}
-          >
-            {label}
-            {activeTab === key && (
-              <span
-                className="absolute bottom-0 left-0 right-0 h-px"
-                style={{ background: 'linear-gradient(90deg, #E8192C, #F5A623)' }}
-              />
-            )}
-          </button>
-        ))}
+        {/* Tabs */}
+        <div className="flex gap-0 mt-1">
+          {TABS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className="relative py-3.5 mr-6 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-150"
+              style={{ color: activeTab === key ? C.textPrimary : C.textMuted }}
+            >
+              {label}
+              {activeTab === key && (
+                <span
+                  className="absolute bottom-0 left-0 right-0 h-px"
+                  style={{ background: `linear-gradient(90deg, ${C.accent}, ${C.amber})` }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Content ── */}
@@ -785,7 +785,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
             {/* Summary stats */}
             <div
               className="grid grid-cols-2 sm:grid-cols-4"
-              style={{ borderTop: '1px solid #111', borderBottom: '1px solid #111' }}
+              style={{ borderTop: `1px solid ${C.divider}`, borderBottom: `1px solid ${C.divider}` }}
             >
               {[
                 { label: 'All-time qty',   value: totalAllTime,   icon: Package,   fmt: 'number' as const },
@@ -797,15 +797,15 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
                   key={label}
                   className="px-0 py-6 sm:px-5 sm:first:pl-0 sm:last:pr-0"
                   style={{
-                    borderRight: i < 3 ? '1px solid #111' : 'none',
+                    borderRight: i < 3 ? `1px solid ${C.divider}` : 'none',
                     paddingLeft: i === 0 ? 0 : undefined,
                   }}
                 >
                   <div className="flex items-center gap-1.5 mb-3">
-                    <Icon className="w-3 h-3 text-[#666]" />
-                    <span className="text-[9px] uppercase tracking-widest font-bold text-[#666]">{label}</span>
+                    <Icon className="w-3 h-3" style={{color: C.textGhost}} />
+                    <span className="text-[9px] uppercase tracking-widest font-bold" style={{color: C.textGhost}}>{label}</span>
                   </div>
-                  <p className="text-[clamp(1.2rem,2vw,1.6rem)] font-[#0D1117] text-white tabular-nums font-mono leading-none">
+                  <p className="text-[clamp(1.2rem,2vw,1.6rem)] font-bold tabular-nums font-mono leading-none" style={{color: C.textPrimary}}>
                     <AnimatedNumber value={value} format={fmt} />
                   </p>
                 </div>
@@ -815,11 +815,11 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
             {/* Monthly breakdown */}
             <div>
               <SectionLabel>Monthly breakdown</SectionLabel>
-              <div className="mt-5" style={{ borderTop: '1px solid #0d0d0d' }}>
+              <div className="mt-5" style={{borderTop: `1px solid ${C.divider}`}}>
                 {/* Header */}
-                <div className="grid grid-cols-5 py-3 border-b border-[#0d0d0d]">
+                <div className="grid grid-cols-5 py-3" style={{borderBottom: `1px solid ${C.divider}`}}>
                   {['Month', 'Qty', 'Trips', 'Docs', 'Avg'].map(h => (
-                    <span key={h} className="text-[9px] uppercase tracking-widest font-bold text-[#666] font-mono">{h}</span>
+                    <span key={h} className="text-[9px] uppercase tracking-widest font-bold font-mono" style={{color: C.textMuted}}>{h}</span>
                   ))}
                 </div>
                 <div>
@@ -832,17 +832,20 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
                     return (
                       <div
                         key={d.label}
-                        className="grid grid-cols-5 py-4 border-b border-[#0d0d0d] transition-colors"
-                        style={{ background: isCurr ? 'rgba(232,25,44,0.04)' : 'transparent' }}
+                        className="grid grid-cols-5 py-4 transition-colors"
+                        style={{
+                          borderBottom: `1px solid ${C.divider}`,
+                          background: isCurr ? `${C.accent}08` : 'transparent',
+                        }}
                       >
                         <span
-                          className="text-[12px] font-[#0D1117] font-mono"
-                          style={{ color: isCurr ? '#E8192C' : '#888' }}
+                          className="text-[12px] font-bold font-mono"
+                          style={{ color: isCurr ? C.textPrimary : C.textSub }}
                         >
                           {d.label}
                           {isCurr && <span className="ml-2 text-[8px] opacity-50 uppercase tracking-widest">now</span>}
                         </span>
-                        <span className="text-[12px] font-[#0D1117] text-white tabular-nums font-mono">
+                        <span className="text-[12px] font-bold tabular-nums font-mono" style={{color: C.textPrimary}}>
                           {d.totalQty.toLocaleString()}
                           {qDelta !== null && (
                             <span className={`ml-1.5 text-[9px] font-bold ${qDelta >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -850,9 +853,9 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
                             </span>
                           )}
                         </span>
-                        <span className="text-[12px] text-[#666] tabular-nums font-mono">{d.totalTrips}</span>
-                        <span className="text-[12px] text-[#666] tabular-nums font-mono">{d.totalDocs}</span>
-                        <span className="text-[12px] text-[#666] tabular-nums font-mono">{avg || '—'}</span>
+                        <span className="text-[12px] tabular-nums font-mono" style={{color: C.textSub}}>{d.totalTrips}</span>
+                        <span className="text-[12px] tabular-nums font-mono" style={{color: C.textSub}}>{d.totalDocs}</span>
+                        <span className="text-[12px] tabular-nums font-mono" style={{color: C.textSub}}>{avg || '—'}</span>
                       </div>
                     )
                   })}
@@ -902,15 +905,15 @@ export function OutboundQuickCard({ manifests, onClick }: { manifests: TripManif
       onClick={onClick}
       className="group text-left w-full p-4 sm:p-5 transition-all duration-200"
       style={{
-        border: '1px solid #1a1a1a',
-        background: '#080808',
+        border: `1px solid ${C.border}`,
+        background: C.bg,
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#282828' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1a1a1a' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.borderHover }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border }}
     >
       <div className="relative mb-4">
         {delta !== null && (
-          <div className={`absolute top-0 right-0 flex items-center gap-0.5 text-[10px] font-[#0D1117] font-mono ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
+          <div className={`absolute top-0 right-0 flex items-center gap-0.5 text-[10px] font-bold font-mono ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
             {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
             {Math.abs(delta)}%
           </div>
@@ -927,9 +930,11 @@ export function OutboundQuickCard({ manifests, onClick }: { manifests: TripManif
                 style={{
                   height: `${h}%`,
                   background: isCurrent
-                    ? 'linear-gradient(180deg, #E8192C 0%, #F5A623 100%)'
-                    : isPrev ? 'rgba(245,166,35,0.4)' : 'rgba(255,255,255,0.06)',
-                  boxShadow: isCurrent ? '0 0 14px rgba(232,25,44,0.7)' : 'none',
+                    ? `linear-gradient(180deg, ${C.accent} 0%, ${C.amber} 100%)`
+                    : isPrev
+                    ? `rgba(245,166,35,0.4)`
+                    : C.surfaceHover,
+                  boxShadow: isCurrent ? `0 0 14px ${C.accentGlow}` : 'none',
                 }}
               />
             )
@@ -939,10 +944,10 @@ export function OutboundQuickCard({ manifests, onClick }: { manifests: TripManif
 
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-bold group-hover:text-[#F5A623] transition-colors mb-1" style={{color: C.textMuted}}>Outbound</p>
-          <p className="text-[11px] text-[#666]">Analytics</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1 transition-colors group-hover:text-white" style={{color: C.textMuted}}>Outbound</p>
+          <p className="text-[11px]" style={{color: C.textGhost}}>Analytics</p>
         </div>
-        <ArrowUpRight className="w-4 h-4 text-[#666] group-hover:text-[#F5A623] transition-colors" />
+        <ArrowUpRight className="w-4 h-4 transition-colors group-hover:text-white" style={{color: C.textGhost}} />
       </div>
     </button>
   )
