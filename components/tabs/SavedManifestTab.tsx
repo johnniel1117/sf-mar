@@ -165,7 +165,7 @@ function ManifestRow({
             style={{color: '#6E7681'}}
             onMouseEnter={(e) => { e.currentTarget.style.color = C.accent }}
             onMouseLeave={(e) => { e.currentTarget.style.color = '#6E7681' }}
-            style={{color: C.textMuted}}
+            // style={{color: C.textMuted}}
             title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
