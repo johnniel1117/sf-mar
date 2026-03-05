@@ -45,7 +45,7 @@ export class TripManifestPDFGenerator {
     }
 
     const cbmCol = (val?: number | null) =>
-      val != null && val > 0 ? val.toFixed(4) : '—'
+      val != null && val > 0 ? val.toFixed(2) : '—'
 
     const itemsHtml = items
       .map(
@@ -346,7 +346,7 @@ export class TripManifestPDFGenerator {
               <tr style="font-weight: bold;">
                 <td colspan="3" style="text-align: right; padding: 8px; border: 1px solid #000;">TOTAL</td>
                 <td style="text-align: center; padding: 8px; border: 1px solid #000;">${totalQty}</td>
-                ${hasCbm ? `<td style="text-align: center; padding: 8px; border: 1px solid #000;">${totalCbm.toFixed(4)}</td>` : ''}
+                ${hasCbm ? `<td style="text-align: center; padding: 8px; border: 1px solid #000;">${totalCbm.toFixed(2)}</td>` : ''}
                 <td style="border: 1px solid #000;"></td>
               </tr>
             </tbody>
@@ -354,7 +354,7 @@ export class TripManifestPDFGenerator {
 
           <!-- Summary line -->
           <div class="footer-summary">
-            TOTAL DOCUMENTS: ${items.length}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL QUANTITY: ${totalQty}${hasCbm ? `&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL CBM: ${totalCbm.toFixed(4)}` : ''}
+            TOTAL DOCUMENTS: ${items.length}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL QUANTITY: ${totalQty}${hasCbm ? `&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL CBM: ${totalCbm.toFixed(2)}` : ''}
           </div>
 
           <!-- Signatures -->
