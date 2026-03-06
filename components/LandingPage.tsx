@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import {
   FileSpreadsheet, AlertTriangle, Truck, LogOut,
-  TrendingUp, ArrowUpRight, ArrowDownRight, ChevronRight, X,
+  TrendingUp, ArrowUpRight, ArrowDownRight, ChevronRight, X, ClipboardList,
 } from 'lucide-react'
 import { signOut } from '@/lib/actions/auth'
 import LogoGridBackground from './LogoBackground'
@@ -47,7 +47,6 @@ function useCountUp(target: number, duration = 1200, delay = 0) {
       const step = (timestamp: number) => {
         if (!startTime) startTime = timestamp
         const progress = Math.min((timestamp - startTime) / duration, 1)
-        // ease-out cubic
         const eased = 1 - Math.pow(1 - progress, 3)
         setValue(Math.floor(eased * target))
         if (progress < 1) raf = requestAnimationFrame(step)
@@ -65,15 +64,17 @@ function useCountUp(target: number, duration = 1200, delay = 0) {
 const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 const SERVICES = [
-  { href: '/excel-uploader', label: 'Serial List',   desc: 'Upload and process barcode data',     icon: FileSpreadsheet, index: '01' },
-  { href: '/trip-manifest',  label: 'Trip Manifest', desc: 'Manage shipment details',             icon: Truck,           index: '02' },
-  { href: '/damage-report',  label: 'Damage Report', desc: 'Document and track damaged products', icon: AlertTriangle,   index: '03' },
+  { href: '/excel-uploader', label: 'Serial List',   desc: 'Upload and process barcode data',          icon: FileSpreadsheet, index: '01' },
+  { href: '/trip-manifest',  label: 'Trip Manifest', desc: 'Manage shipment details',                  icon: Truck,           index: '02' },
+  { href: '/damage-report',  label: 'Damage Report', desc: 'Document and track damaged products',      icon: AlertTriangle,   index: '03' },
+  { href: '/picking-list',   label: 'Picking List',  desc: 'Generate picking lists from booking data', icon: ClipboardList,   index: '04' },
 ]
 
 const QUICK_JUMPS = [
   { href: '/excel-uploader', label: 'Upload Files' },
   { href: '/trip-manifest',  label: 'New Trip'     },
   { href: '/damage-report',  label: 'Report Issue' },
+  { href: '/picking-list',   label: 'Picking List' },
 ]
 
 // ── Sidebar analytics ─────────────────────────────────────────────────────────
@@ -95,17 +96,17 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
     })
   }, [manifests])
 
-  const maxQty   = Math.max(...monthlyData.map(d => d.qty), 1)
-  const current  = monthlyData[monthlyData.length - 1]
-  const prev     = monthlyData[monthlyData.length - 2]
-  const delta    = prev.qty === 0 ? null : Math.round(((current.qty - prev.qty) / prev.qty) * 100)
-  const positive = delta !== null && delta >= 0
+  const maxQty       = Math.max(...monthlyData.map(d => d.qty), 1)
+  const current      = monthlyData[monthlyData.length - 1]
+  const prev         = monthlyData[monthlyData.length - 2]
+  const delta        = prev.qty === 0 ? null : Math.round(((current.qty - prev.qty) / prev.qty) * 100)
+  const positive     = delta !== null && delta >= 0
   const totalAllTime = manifests.reduce((s, m) => s + (m.items || []).reduce((si, it) => si + (it.total_quantity || 0), 0), 0)
 
-  const animCurrentQty   = useCountUp(current.qty,   1000, 0)
-  const animCurrentTrips = useCountUp(current.trips, 800,  100)
-  const animTotalAllTime = useCountUp(totalAllTime,   1400, 200)
-  const animManifests    = useCountUp(manifests.length, 800, 300)
+  const animCurrentQty   = useCountUp(current.qty,      1000, 0)
+  const animCurrentTrips = useCountUp(current.trips,    800,  100)
+  const animTotalAllTime = useCountUp(totalAllTime,      1400, 200)
+  const animManifests    = useCountUp(manifests.length,  800,  300)
 
   return (
     <div className="space-y-7">
@@ -114,10 +115,10 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
         <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#6E7681] mb-3">Qty · last 6 months</p>
         <div className="flex items-end gap-1.5" style={{ height: 80 }}>
           {monthlyData.map((d, i) => {
-            const BAR_MAX = 60
+            const BAR_MAX   = 60
             const isCurrent = i === monthlyData.length - 1
             const isPrev    = i === monthlyData.length - 2
-            const hPx = Math.max(Math.round((d.qty / maxQty) * BAR_MAX), 8)
+            const hPx       = Math.max(Math.round((d.qty / maxQty) * BAR_MAX), 8)
             return (
               <div key={d.label} className="flex-1 flex flex-col items-center gap-1.5">
                 <div
@@ -218,7 +219,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
     (sum, m) => sum + (m.items || []).reduce((s, i) => s + (i.total_quantity || 0), 0), 0
   )
 
-  const animTrips = useCountUp(totalTripsThisMonth, 900, 0)
+  const animTrips = useCountUp(totalTripsThisMonth, 900,  0)
   const animQty   = useCountUp(totalQtyThisMonth,   1200, 150)
 
   return (
@@ -318,9 +319,9 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-[#F5A623] mb-3">{today}</p>
                   <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-[#0D1117] text-white leading-[0.93] tracking-tight">
                     {greeting},<br />
-                    <span className=" italic text-[#6E7681]">
-  {displayName}.
-</span>
+                    <span className="italic text-[#6E7681]">
+                      {displayName}.
+                    </span>
                   </h1>
                 </div>
 
@@ -352,7 +353,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                       >
                         <p className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681] group-hover:text-[#F5A623] transition-colors">Analytics</p>
                         <div className="flex items-center gap-1.5 text-[#F5A623] group-hover:text-[#F5A623] transition-colors">
-                          <TrendingUp className=" w-10 h-10" />
+                          <TrendingUp className="w-10 h-10" />
                           <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                       </button>
