@@ -34,6 +34,9 @@ const C = {
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
   inputFocus:   '#F5A623',
+
+  stripeEven:   '#161B22',
+  stripeOdd:    '#0D1117',
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -42,7 +45,7 @@ interface DNRefItem {
   materialCode: string
   materialDesc: string
   location: string
-  bin: string
+  division: string
   quantity: number
 }
 
@@ -72,7 +75,7 @@ interface ResolvedItem {
   customerModel: string
   materialDesc: string
   location: string
-  bin: string
+  division: string
   quantity: number
 }
 
@@ -106,6 +109,7 @@ function parseDNInfo(wb: XLSX.WorkBook): DNRefMap {
     matDesc:    idx('Material Desc'),
     orderQty:   idx('Order Qty'),
     location:   idx('Location'),
+    division:   idx('Division'),
     shipToName: idx('Ship To Name'),
   }
 
@@ -121,7 +125,7 @@ function parseDNInfo(wb: XLSX.WorkBook): DNRefMap {
       materialCode: String(r[col.matCode] ?? ''),
       materialDesc: String(r[col.matDesc] ?? ''),
       location:     String(r[col.location] ?? ''),
-      bin:          '',
+      division:     String(r[col.division] ?? ''),
       quantity:     Number(r[col.orderQty]) || 0,
     })
   }
@@ -185,7 +189,7 @@ function buildItems(dn: BookingEntry, dnInfoMap: DNRefMap): ResolvedItem[] {
       customerModel: bi.customerModel,
       materialDesc:  ri?.materialDesc ?? '',
       location:      ri?.location ?? bi.location,
-      bin:           ri?.bin ?? '',
+      division:      ri?.division ?? '',
       quantity:      bi.quantity,
     }
   })
@@ -251,7 +255,7 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
       <td>${item.materialCode}</td>
       <td>${item.customerModel || item.materialDesc || '—'}</td>
       <td class="center">${item.location || '—'}</td>
-      <td class="center">${item.bin || '—'}</td>
+      <td class="center">${item.division || '—'}</td>
       <td class="center bold">${item.quantity}</td>
     </tr>`).join('')
 
@@ -305,7 +309,7 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
           <th style="width:120px">MATERIAL CODE</th>
           <th>DESCRIPTION</th>
           <th style="width:80px">LOCATION</th>
-          <th style="width:70px">BIN</th>
+          <th style="width:70px">DIVISION</th>
           <th style="width:70px">QTY</th>
         </tr>
       </thead>
@@ -667,12 +671,12 @@ export function PickingListMaker() {
         <div className="p-5 sm:p-8 lg:p-10">
 
           {/* ── Main card ── */}
-          <div className="overflow-hidden" style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 16 }}>
+          <div className="overflow-hidden rounded-2xl" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
 
             {/* Card header */}
             <div className="px-5 sm:px-8 pt-8 pb-7" style={{ borderBottom: `1px solid ${C.border}` }}>
 
-              <div className="flex items-start justify-between mb-7 sm:mb-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-5 mb-7">
                 <div>
                   <div className="flex items-center gap-2.5 mb-3">
                     <span className="relative flex h-2 w-2">
@@ -683,15 +687,10 @@ export function PickingListMaker() {
                       Picking List Generator
                     </p>
                   </div>
-                  <h2
-                    className="text-[clamp(1.6rem,4vw,2.6rem)] leading-[0.93] tracking-tight"
-                    style={{ color: C.textPrimary }}
-                  >
+                  <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-[#0D1117] text-white leading-[0.93] tracking-tight" style={{ color: C.textPrimary }}>
                     Generate Picking Lists
                   </h2>
-                  <p className="text-[12px] mt-2" style={{ color: C.textSub }}>
-                    SF Express · Cebu Warehouse
-                  </p>
+                  <p className="text-[12px] mt-2" style={{color: C.textSilver }}>SF Express · Cebu Warehouse</p>
                 </div>
 
                 {processed && (
@@ -825,13 +824,13 @@ export function PickingListMaker() {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search DN No. or Ship To Name…"
-                        className="w-full h-9 pl-9 pr-4 bg-transparent text-[13px] focus:outline-none transition-colors"
-                        style={{ border: `1px solid ${C.border}`, color: C.inputText, background: C.inputBg }}
+                        className="w-full h-9 pl-9 pr-8 bg-transparent text-[13px] text-white focus:outline-none transition-colors"
+                        style={{ border: `1px solid ${C.border}`, color: C.inputText }}
                         onFocus={(e) => (e.currentTarget.style.borderColor = C.inputFocus)}
                         onBlur={(e)  => (e.currentTarget.style.borderColor = C.border)}
                       />
                       {search && (
-                        <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: C.textSilver }}>
+                        <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-white transition-colors" style={{ color: C.textSilver }}>
                           <X className="w-3.5 h-3.5" />
                         </button>
                       )}
@@ -850,7 +849,7 @@ export function PickingListMaker() {
                   {/* Column headers */}
                   {filtered.length > 0 && (
                     <div
-                      className="flex items-center gap-3 sm:gap-5 px-4 py-3 text-[10px] font-bold uppercase tracking-widest"
+                      className="flex items-center gap-3 sm:gap-5 px-4 py-3 text-[10px] font-bold uppercase tracking-widest flex-shrink-0"
                       style={{ borderBottom: `1px solid ${C.divider}`, color: C.textSilver }}
                     >
                       <span className="w-5 flex-shrink-0" />
@@ -858,18 +857,19 @@ export function PickingListMaker() {
                       <span className="hidden sm:block w-32 flex-shrink-0">DN No.</span>
                       <span className="w-10 text-center flex-shrink-0">Lines</span>
                       <span className="w-12 text-right flex-shrink-0">Qty</span>
-                      <span className="w-16 flex-shrink-0" />
+                      <span className="w-4" />
                     </div>
                   )}
 
                   {/* DN rows */}
                   <div>
                     {filtered.length === 0 && (
-                      <div className="py-12 text-center" style={{ border: `1px dashed ${C.border}` }}>
-                        <Search className="w-7 h-7 mx-auto mb-2.5" style={{ color: C.textGhost }} />
-                        <p className="font-bold text-xs uppercase tracking-widest" style={{ color: C.textMuted }}>
-                          No results found
-                        </p>
+                      <div className="flex flex-col items-center justify-center py-20 text-center px-8 gap-4">
+                        <Search className="w-8 h-8" style={{color: C.textMuted}} />
+                        <div>
+                          <p className="font-[#0D1117] text-base" style={{color: C.textSilver}}>No results found</p>
+                          <p className="text-[12px] text-[#666666] mt-1">Try adjusting your search</p>
+                        </div>
                       </div>
                     )}
 
@@ -882,9 +882,9 @@ export function PickingListMaker() {
                       return (
                         <div
                           key={dn.rawDN}
-                          className="group transition-colors duration-150"
+                          className="group border-b transition-colors duration-150"
                           style={{
-                            borderBottom: `1px solid ${C.divider}`,
+                            borderColor: C.divider,
                             background: isExpanded ? C.surfaceHover : 'transparent',
                           }}
                           onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.background = C.surfaceHover }}
@@ -903,14 +903,16 @@ export function PickingListMaker() {
                                 border:     `2px solid ${isSelected ? '#3b82f6' : C.border}`,
                                 background: isSelected ? '#3b82f6' : 'transparent',
                               }}
+                              onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.borderColor = C.borderHover }}
+                              onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.borderColor = C.border }}
                             >
                               {isSelected ? '✓' : ''}
                             </div>
 
-                            {/* Ship To */}
+                            {/* Ship To + DN (mobile) */}
                             <div className="flex-1 min-w-0">
                               <p
-                                className="text-[15px] font-semibold truncate leading-snug transition-colors group-hover:text-white"
+                                className="text-[15px] font-[#0D1117] truncate leading-snug transition-colors group-hover:text-white"
                                 style={{ color: C.textPrimary }}
                               >
                                 {dn.shipToName}
@@ -921,35 +923,35 @@ export function PickingListMaker() {
                             </div>
 
                             {/* DN No */}
-                            <span className="hidden sm:block text-[11px] font-bold tabular-nums w-32 flex-shrink-0" style={{ color: C.textSilver }}>
+                            <span className="hidden sm:block text-[11px] font-bold tabular-nums w-32 flex-shrink-0 transition-colors" style={{ color: C.textSilver }}>
                               {dn.dnNo}
                             </span>
 
                             {/* Lines */}
-                            <span className="w-10 text-center text-xl font-black tabular-nums flex-shrink-0" style={{ color: '#60a5fa' }}>
+                            <span className="w-10 text-center text-2xl font-[#0D1117] group-hover:text-white transition-colors tabular-nums flex-shrink-0" style={{ color: C.textPrimary }}>
                               {items.length}
                             </span>
 
                             {/* Qty */}
-                            <span className="w-12 text-right text-xl font-black tabular-nums leading-none flex-shrink-0" style={{ color: '#22c55e' }}>
+                            <span className="w-12 text-right text-2xl font-[#0D1117] group-hover:text-white transition-colors tabular-nums leading-none flex-shrink-0" style={{ color: C.textPrimary }}>
                               {totalQty}
                             </span>
 
                             {/* Chevron */}
                             <ChevronRight
-                              className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                              style={{ color: isExpanded ? C.accent : C.textGhost }}
+                              className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : 'text-[#6E7681] group-hover:text-[#C9D1D9]'}`}
+                              style={{color: isExpanded ? C.accent : undefined}}
                             />
                           </div>
 
                           {/* Expanded panel */}
                           {isExpanded && (
-                            <div className="px-4 pb-6" style={{ borderTop: `1px solid ${C.divider}` }}>
+                            <div className="px-4 pb-6 sm:px-8" style={{ borderTop: `1px solid ${C.divider}` }}>
 
                               {/* Items table */}
                               <div className="mt-5 mb-5 overflow-hidden" style={{ border: `1px solid ${C.divider}` }}>
                                 <div
-                                  className="grid grid-cols-4 py-2.5 px-3"
+                                  className="grid grid-cols-4 py-3 px-3"
                                   style={{ background: '#1C2128', borderBottom: `1px solid ${C.divider}` }}
                                 >
                                   {['Material Code', 'Description', 'Location', 'Qty'].map((h) => (
@@ -961,35 +963,35 @@ export function PickingListMaker() {
                                 {items.map((item, idx) => (
                                   <div
                                     key={idx}
-                                    className="grid grid-cols-4 py-3.5 px-3 transition-colors duration-100"
+                                    className="grid grid-cols-4 py-3.5 px-3 group/row transition-colors duration-100"
                                     style={{
-                                      background: idx % 2 === 0 ? C.surface : C.bg,
+                                      background: idx % 2 === 0 ? C.stripeEven : C.stripeOdd,
                                       borderBottom: idx < items.length - 1 ? `1px solid ${C.divider}` : 'none',
                                     }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.background = C.surfaceHover)}
-                                    onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? C.surface : C.bg)}
+                                    onMouseEnter={(e) => { e.currentTarget.style.background = C.surfaceHover }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? C.stripeEven : C.stripeOdd }}
                                   >
-                                    <span className="text-[12px] font-bold" style={{ color: C.textPrimary }}>
+                                    <span className="text-[11px] font-bold group-hover/row:text-[#58A6FF] transition-colors" style={{ color: C.textMuted }}>
                                       {item.materialCode}
                                     </span>
-                                    <span className="text-[12px] truncate" style={{ color: C.textSilver }}>
+                                    <span className="text-[13px] truncate group-hover/row:text-white transition-colors" style={{ color: C.textPrimary }}>
                                       {item.customerModel || item.materialDesc || '—'}
                                     </span>
-                                    <span className="text-[12px]" style={{ color: C.textSub }}>
+                                    <span className="text-[13px] hidden sm:block" style={{ color: C.textSilver }}>
                                       {item.location || '—'}
                                     </span>
-                                    <span className="text-[13px] font-black tabular-nums" style={{ color: C.accent }}>
-                                      ×{item.quantity}
+                                    <span className="text-[13px] font-[#0D1117] text-white tabular-nums text-right sm:text-left">
+                                      {item.quantity}
                                     </span>
                                   </div>
                                 ))}
                               </div>
 
                               {/* Row actions */}
-                              <div className="flex flex-wrap gap-3 items-center pt-1">
+                              <div className="flex flex-wrap gap-3 items-center pt-2">
                                 <button
                                   onClick={() => { if (dnInfoMap) printPickingList(dn, items, printTime) }}
-                                  className="inline-flex items-center gap-1.5 px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all"
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 border text-[11px] font-bold uppercase tracking-widest transition-all"
                                   style={{ border: `1px solid ${C.amber}40`, color: C.amber }}
                                   onMouseEnter={(e) => { e.currentTarget.style.background = `${C.amber}05`; e.currentTarget.style.borderColor = C.amber }}
                                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = `${C.amber}40` }}
@@ -1017,7 +1019,7 @@ export function PickingListMaker() {
                   {/* Unmatched warning */}
                   {unmatchedDNs.length > 0 && (
                     <div
-                      className="p-4 sm:p-5"
+                      className="p-4 sm:p-5 rounded-lg"
                       style={{ background: 'rgba(245,166,35,0.03)', border: `1px solid rgba(245,166,35,0.15)` }}
                     >
                       <div className="flex items-center gap-2 mb-3">
