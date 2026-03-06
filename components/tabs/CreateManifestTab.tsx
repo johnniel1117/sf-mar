@@ -205,6 +205,9 @@ export function CreateManifestTab({
   const [isSearching, setIsSearching] = useState(false)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
+  const [inputMode, setInputMode] = useState<'single' | 'mass'>('single') // Toggle between single and mass input
+  const [massInput, setMassInput] = useState<string>('') // Mass input textarea value
+  const [isProcessingMass, setIsProcessingMass] = useState(false) // Processing state for mass input
   const isMountedRef = useRef(true)
 
   const totalDocuments = manifest.items.length
@@ -308,6 +311,88 @@ export function CreateManifestTab({
     setManifest({ ...manifest, items: [...manifest.items, newItem] })
     if (showToast) showToast(`Document ${pendingDocument.documentNumber} added manually`, 'success')
     setPendingDocument(null)
+  }
+
+  const handleProcessMassInput = async () => {
+    if (!massInput.trim() || isProcessingMass) return
+    setIsProcessingMass(true)
+    
+    // Parse input - split by comma or newline and trim
+    const documentNumbers = massInput
+      .split(/[,\n]/)
+      .map((num) => num.trim().toUpperCase())
+      .filter((num) => num.length > 0)
+    
+    if (documentNumbers.length === 0) {
+      setIsProcessingMass(false)
+      if (showToast) showToast('No valid document numbers found', 'error')
+      return
+    }
+
+    let successCount = 0
+    let skipCount = 0
+    const failedDocuments: string[] = []
+    const newItems: ManifestItem[] = [...manifest.items]
+
+    try {
+      for (const docNumber of documentNumbers) {
+        // Check if document already exists
+        if (newItems.some((item) => item.document_number === docNumber)) {
+          skipCount++
+          continue
+        }
+
+        // Search for document
+        try {
+          const results = await searchDocument(docNumber)
+          if (results && results.length > 0) {
+            const doc = results[0]
+            const normalizedShipTo = (doc.shipToName || '').trim().toLowerCase()
+            
+            // If ship-to is N/A, we can't add it automatically (would need manual entry)
+            if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
+              failedDocuments.push(docNumber)
+              continue
+            }
+
+            // Add to manifest
+            const newItem: ManifestItem = {
+              item_number: newItems.length + 1,
+              document_number: doc.documentNumber,
+              ship_to_name: doc.shipToName,
+              total_quantity: doc.quantity,
+              total_cbm: doc.cbm ?? 0,
+            }
+            newItems.push(newItem)
+            successCount++
+          } else {
+            failedDocuments.push(docNumber)
+          }
+        } catch {
+          failedDocuments.push(docNumber)
+        }
+
+        // Small delay between requests to avoid overwhelming the API
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+
+      // Update manifest with all new items at once
+      if (successCount > 0) {
+        setManifest({ ...manifest, items: newItems })
+      }
+    } finally {
+      setIsProcessingMass(false)
+      setMassInput('')
+      
+      // Show summary toast
+      let message = `Added ${successCount} document${successCount !== 1 ? 's' : ''}`
+      if (skipCount > 0) message += `, ${skipCount} already in list`
+      if (failedDocuments.length > 0) message += `, ${failedDocuments.length} not found`
+      
+      if (showToast) {
+        showToast(message, successCount > 0 ? 'success' : 'error')
+      }
+    }
   }
 
   const getDuration = () => {
@@ -521,73 +606,173 @@ export function CreateManifestTab({
           {/* STEP 2 */}
           {currentStep === 2 && (
             <div className="space-y-5">
-              {/* Search box */}
+              {/* Search box with toggle */}
               <div className="p-4 sm:p-6" style={{ border: `1px solid ${C.border}` }}>
-                <SectionLabel icon={Search}>Document Search</SectionLabel>
-                <div className="relative mt-3 sm:mt-4">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: C.textGhost }} />
-                  <input
-                    ref={barcodeInputRef}
-                    type="text"
-                    value={barcodeInput}
-                    onChange={(e) => setBarcodeInput(e.target.value.toUpperCase())}
-                    onKeyDown={handleSearchInputKeyDown}
-                    placeholder="DN / TRA number…"
-                    disabled={scanningDocument}
-                    inputMode="search" autoComplete="off"
-                    className="w-full pl-10 pr-4 py-3 text-sm"
-                    style={inputStyle('search')}
-                    onFocus={() => setFocusedInput('search')} onBlur={() => setFocusedInput(null)}
-                  />
+                <div className="flex items-center justify-between mb-4">
+                  <SectionLabel icon={Search}>Document Search</SectionLabel>
+                  {/* Toggle between single and mass input */}
+                  <div className="flex gap-2 bg-opacity-30 rounded-lg p-1" style={{ background: 'rgba(232,25,44,0.08)' }}>
+                    <button
+                      onClick={() => { setInputMode('single'); setMassInput('') }}
+                      className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-all duration-200 rounded"
+                      style={{
+                        background: inputMode === 'single' ? C.accent : 'transparent',
+                        color: inputMode === 'single' ? '#fff' : C.textMuted,
+                      }}
+                    >
+                      Single
+                    </button>
+                    <button
+                      onClick={() => { setInputMode('mass'); setBarcodeInput(''); setSearchResults(null) }}
+                      className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-all duration-200 rounded"
+                      style={{
+                        background: inputMode === 'mass' ? C.accent : 'transparent',
+                        color: inputMode === 'mass' ? '#fff' : C.textMuted,
+                      }}
+                    >
+                      Mass Input
+                    </button>
+                  </div>
                 </div>
 
-                {/* Searching spinner */}
-                {isSearching && barcodeInput.trim().length >= 1 && (
-                  <div className="mt-3 p-3 flex items-center gap-2 text-[11px]" style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMuted }}>
-                    <div className="animate-spin rounded-full h-3.5 w-3.5 border border-t-transparent" style={{ borderColor: C.accent, borderTopColor: 'transparent' }} />
-                    Searching…
-                  </div>
-                )}
-
-                {/* Results */}
-                {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length > 0 && (
-                  <div className="mt-3 overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
-                    {searchResults.map((result, idx) => (
-                      <button key={idx} onClick={() => selectDocument(result)} type="button"
-                        className="w-full text-left px-3 py-3 transition-colors group"
-                        style={{ borderTop: idx > 0 ? `1px solid ${C.divider}` : 'none', background: 'transparent' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = C.surfaceHover)}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                      >
-                        <div className="flex items-baseline justify-between gap-2">
-                          <div className="flex items-baseline gap-2 min-w-0">
-                            <span className="text-[10px]" style={{ color: C.textMuted }}>{String(idx + 1).padStart(2, '0')}</span>
-                            <span className="font-[#0D1117] text-sm truncate transition-colors" style={{ color: C.textSilver }}>{result.documentNumber}</span>
-                          </div>
-                          <div className="flex items-baseline gap-3 flex-shrink-0">
-                            {result.cbm != null && result.cbm > 0 && (
-                              <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{result.cbm.toFixed(4)} CBM</span>
-                            )}
-                            <span className="text-[10px] font-bold" style={{ color: C.accent }}>×{result.quantity}</span>
-                          </div>
-                        </div>
-                        <p className="text-[11px] mt-0.5 pl-6 truncate" style={{ color: C.textMuted }}>{result.shipToName}</p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Not found */}
-                {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length === 0 && (
-                  <div className="mt-3 p-4 flex items-start gap-3" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: C.accent }} />
-                    <div>
-                      <p className="font-[#0D1117] text-xs uppercase tracking-widest" style={{ color: C.textSilver }}>Not Found</p>
-                      <p className="text-[11px] mt-1" style={{ color: C.textMuted }}>
-                        Press Enter to add <span className="font-bold" style={{ color: C.textSilver }}>"{barcodeInput}"</span> manually
-                      </p>
+                {/* Single input mode */}
+                {inputMode === 'single' && (
+                  <>
+                    <div className="relative mt-3 sm:mt-4">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: C.textGhost }} />
+                      <input
+                        ref={barcodeInputRef}
+                        type="text"
+                        value={barcodeInput}
+                        onChange={(e) => setBarcodeInput(e.target.value.toUpperCase())}
+                        onKeyDown={handleSearchInputKeyDown}
+                        placeholder="DN / TRA number…"
+                        disabled={scanningDocument || isProcessingMass}
+                        inputMode="search" autoComplete="off"
+                        className="w-full pl-10 pr-4 py-3 text-sm"
+                        style={inputStyle('search')}
+                        onFocus={() => setFocusedInput('search')} onBlur={() => setFocusedInput(null)}
+                      />
                     </div>
-                  </div>
+
+                    {/* Searching spinner */}
+                    {isSearching && barcodeInput.trim().length >= 1 && (
+                      <div className="mt-3 p-3 flex items-center gap-2 text-[11px]" style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMuted }}>
+                        <div className="animate-spin rounded-full h-3.5 w-3.5 border border-t-transparent" style={{ borderColor: C.accent, borderTopColor: 'transparent' }} />
+                        Searching…
+                      </div>
+                    )}
+
+                    {/* Results */}
+                    {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length > 0 && (
+                      <div className="mt-3 overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
+                        {searchResults.map((result, idx) => (
+                          <button key={idx} onClick={() => selectDocument(result)} type="button"
+                            className="w-full text-left px-3 py-3 transition-colors group"
+                            style={{ borderTop: idx > 0 ? `1px solid ${C.divider}` : 'none', background: 'transparent' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = C.surfaceHover)}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            <div className="flex items-baseline justify-between gap-2">
+                              <div className="flex items-baseline gap-2 min-w-0">
+                                <span className="text-[10px]" style={{ color: C.textMuted }}>{String(idx + 1).padStart(2, '0')}</span>
+                                <span className="font-[#0D1117] text-sm truncate transition-colors" style={{ color: C.textSilver }}>{result.documentNumber}</span>
+                              </div>
+                              <div className="flex items-baseline gap-3 flex-shrink-0">
+                                {result.cbm != null && result.cbm > 0 && (
+                                  <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{result.cbm.toFixed(4)} CBM</span>
+                                )}
+                                <span className="text-[10px] font-bold" style={{ color: C.accent }}>×{result.quantity}</span>
+                              </div>
+                            </div>
+                            <p className="text-[11px] mt-0.5 pl-6 truncate" style={{ color: C.textMuted }}>{result.shipToName}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Not found */}
+                    {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length === 0 && (
+                      <div className="mt-3 p-4 flex items-start gap-3" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: C.accent }} />
+                        <div>
+                          <p className="font-[#0D1117] text-xs uppercase tracking-widest" style={{ color: C.textSilver }}>Not Found</p>
+                          <p className="text-[11px] mt-1" style={{ color: C.textMuted }}>
+                            Press Enter to add <span className="font-bold" style={{ color: C.textSilver }}>"{barcodeInput}"</span> manually
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Mass input mode */}
+                {inputMode === 'mass' && (
+                  <>
+                    <div className="mt-3 sm:mt-4">
+                      <textarea
+                        value={massInput}
+                        onChange={(e) => setMassInput(e.target.value.toUpperCase())}
+                        placeholder="Enter DN/TRA numbers - one per line or comma-separated"
+                        disabled={isProcessingMass}
+                        className="w-full px-4 py-3 text-sm font-mono resize-none"
+                        style={{
+                          background: C.inputBg,
+                          border: `1px solid ${focusedInput === 'mass' ? C.inputFocus : C.inputBorder}`,
+                          color: C.inputText,
+                          outline: 'none',
+                          transition: 'border-color 0.15s',
+                          minHeight: '120px',
+                          maxHeight: '200px',
+                        }}
+                        onFocus={() => setFocusedInput('mass')}
+                        onBlur={() => setFocusedInput(null)}
+                      />
+                    </div>
+                    
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={handleProcessMassInput}
+                        disabled={!massInput.trim() || isProcessingMass}
+                        className="flex-1 px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all"
+                        style={{
+                          background: !massInput.trim() || isProcessingMass ? C.textGhost : C.accent,
+                          color: '#fff',
+                          cursor: !massInput.trim() || isProcessingMass ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {isProcessingMass ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-3.5 w-3.5 border border-t-transparent border-white" />
+                            Processing…
+                          </span>
+                        ) : (
+                          'Add All'
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setMassInput('')}
+                        disabled={isProcessingMass}
+                        className="px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all"
+                        style={{
+                          border: `1px solid ${C.border}`,
+                          color: isProcessingMass ? C.textGhost : C.textMuted,
+                          cursor: isProcessingMass ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        Clear
+                      </button>
+                    </div>
+
+                    {/* Info text */}
+                    <div className="mt-3 p-3 flex items-start gap-2 text-[11px]" style={{ background: 'rgba(245,166,35,0.05)', border: `1px solid rgba(245,166,35,0.2)`, borderRadius: '6px', color: C.textMuted }}>
+                      <span style={{ color: C.amber, fontWeight: 'bold', marginTop: '2px' }}>i</span>
+                      <div>
+                        <p>Separate document numbers with commas or new lines</p>
+                        <p className="mt-1">Documents with missing ship-to names will be skipped</p>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
 
