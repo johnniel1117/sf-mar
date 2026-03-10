@@ -8,6 +8,7 @@ import {
   X, ChevronRight, FileSpreadsheet,
 } from 'lucide-react'
 import Link from 'next/link'
+import { getMaterialInfoFromMatcode } from '@/lib/category-mapping'
 
 // ── Design tokens — identical to TripManifestForm / SavedManifestsTab ─────────
 const C = {
@@ -198,136 +199,107 @@ function buildItems(dn: BookingEntry, dnInfoMap: DNRefMap): ResolvedItem[] {
 // ── PDF helpers ────────────────────────────────────────────────────────────────
 
 const PDF_STYLES = `
-  @page { size: A4 portrait; margin: 10mm; }
+  @page { size: A4 portrait; margin: 15mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; color: #000; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { height: 100%; }
+  .container { width: 100%; min-height: 267mm; display: flex; flex-direction: column; }
 
-  .container { max-width: 900px; margin: 0 auto; }
+  .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .logo-section img {
+  height: 100px;
+  width: auto;
+  filter: brightness(0) saturate(100%) invert(27%) sepia(93%) saturate(500%) hue-rotate(190deg) brightness(95%);
+}
+  .doc-title { font-size: 20px; font-weight: bold; text-align: center; }
+  .print-time { font-size: 10px; text-align: right; color: #333; }
 
-  /* ── Header ── */
-  .header-section { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 10px; }
-  .logo-section { display: flex; align-items: center; gap: 15px; }
-  .logo-section img { height: 60px; width: auto; }
-  .warehouse-info { font-size: 10px; line-height: 1.3; }
-  .warehouse-info strong { font-size: 12px; }
-  .doc-number-box { text-align: right; }
-  .doc-number-label { font-size: 9px; font-weight: bold; text-align: center; margin-bottom: 4px; letter-spacing: 0.05em; }
-  .doc-number-value { font-size: 15px; font-weight: bold; color: #E8192C; border: 2px solid #E8192C; padding: 6px 14px; display: inline-block; min-width: 140px; text-align: center; }
+  .dn-info-row { display: flex; align-items: center; border: 1.5px solid #000; margin-bottom: 18px; padding: 7px 12px; }
+  .dn-label { font-weight: bold; font-size: 11px; margin-right: 6px; white-space: nowrap; }
+  .dn-value { font-weight: bold; font-size: 13px; margin-right: 24px; }
+  .dealer-label { font-weight: bold; font-size: 11px; margin-right: 6px; }
+  .dealer-value { font-size: 11px; flex: 1; }
+  .sl-badge { font-weight: bold; font-size: 11px; margin-left: auto; }
 
-  /* ── Divider title ── */
-  .doc-title-row { display: flex; align-items: center; gap: 12px; margin: 14px 0; }
-  .doc-title-line { flex: 1; border-top: 1px solid #000; }
-  .doc-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3em; white-space: nowrap; }
+  .data-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+  .data-table th { border: 1px solid #000; padding: 6px 8px; text-align: left; font-weight: bold; font-size: 11px; background: #fff; }
+  .data-table td { border: 1px solid #000; padding: 10px 8px; font-size: 11px; vertical-align: middle; }
+  .col-matcode { width: 120px; }
+  .col-location { width: 70px; text-align: center !important; }
+  .col-category { width: 110px; text-align: center !important; }
+  .col-qty { width: 60px; text-align: center !important; }
 
-  /* ── Info grid ── */
-  .info-section { margin-bottom: 16px; }
-  .info-row { display: grid; grid-template-columns: 110px 1fr 110px 1fr; gap: 8px 20px; align-items: start; margin-bottom: 6px; }
-  .info-label { font-weight: bold; font-size: 10px; padding-top: 2px; }
-  .info-value { font-size: 10px; padding: 3px 6px; min-height: 22px; border-bottom: 1px solid #ccc; }
+  .spacer { flex: 1; min-height: 0; }
 
-  /* ── Table ── */
-  .data-table { width: 100%; border-collapse: collapse; margin: 12px 0; border: 1px solid #000; }
-  .data-table th { border: 1px solid #000; padding: 7px 6px; text-align: center; font-weight: bold; font-size: 10px; background: #e8e8e8; }
-  .data-table td { border: 1px solid #000; padding: 7px 6px; font-size: 9.5px; vertical-align: middle; }
-  .data-table td.center { text-align: center; }
-  .data-table td.bold { font-weight: bold; }
-  .data-table tr.total-row td { font-weight: bold; background: #f0f0f0; }
+  .total-row { text-align: right; font-weight: bold; font-size: 11px; padding-right: 4px; margin-bottom: 40px; }
 
-  /* ── Footer summary ── */
-  .footer-summary { margin-top: 10px; font-size: 11px; font-weight: bold; text-align: right; padding: 6px 12px; }
+  .signature-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 40px; margin-bottom: 8px; }
+  .signature-box { font-size: 11px; text-align: center; }
+  .signature-space { height: 50px; }
+  .signature-line { border-top: 1.5px solid #000; }
+  .signature-label { font-weight: bold; font-size: 11px; margin-top: 6px; }
 
-  /* ── Signatures ── */
-  .signature-section { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 24px; }
-  .signature-box { font-size: 10px; text-align: center; }
-  .signature-space { height: 70px; }
-  .signature-line { border-top: 1px solid #000; }
-  .signature-label { font-weight: bold; font-size: 11px; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
-
-  /* ── Print time ── */
-  .print-time { font-size: 9px; color: #555; text-align: right; }
+  .page-number { font-size: 10px; text-align: right; color: #333; margin-top: 6px; }
+  
+  @media print {
+    html, body { height: auto !important; margin: 0 !important; }
+    div:last-child { page-break-after: avoid !important; }
+  }
 `
 
 function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: string): string {
   const totalQty = items.reduce((s, i) => s + i.quantity, 0)
-  const rowsHtml = items.map((item, idx) => `
+
+  const rowsHtml = items.map((item) => {
+    const category = getMaterialInfoFromMatcode(item.materialCode).category
+    return `
     <tr>
-      <td class="center">${idx + 1}</td>
-      <td>${item.materialCode}</td>
+      <td class="col-matcode">${item.materialCode}</td>
       <td>${item.customerModel || item.materialDesc || '—'}</td>
-      <td class="center">${item.location || '—'}</td>
-      <td class="center">${item.division || '—'}</td>
-      <td class="center bold">${item.quantity}</td>
-    </tr>`).join('')
+      <td class="col-location" style="text-align:center">${item.location || 'PC8A'}</td>
+      <td class="col-category" style="text-align:center">${category}</td>
+      <td class="col-qty" style="text-align:center">${item.quantity}</td>
+    </tr>`
+  }).join('')
 
   return `
   <div class="container">
 
-    <!-- Header -->
     <div class="header-section">
       <div class="logo-section">
-        <img src="https://brandlogos.net/wp-content/uploads/2025/06/sf_express-logo_brandlogos.net_shwfy-512x512.png" alt="SF Express" />
-        <div class="warehouse-info">
-          <strong>SF EXPRESS WAREHOUSE</strong><br/>
-          UPPER TINGUB, MANDAUE, CEBU
-        </div>
+        <img src="/haier2.png" alt="Haier" />
       </div>
-      <div class="doc-number-box">
-        <div class="doc-number-label">DN NO.</div>
-        <div class="doc-number-value">${dn.dnNo}</div>
-        <div class="print-time" style="margin-top:6px">Printed: ${printTime}</div>
-      </div>
-    </div>
-
-    <!-- Title -->
-    <div class="doc-title-row">
-      <div class="doc-title-line"></div>
       <div class="doc-title">Picking List</div>
-      <div class="doc-title-line"></div>
+      <div class="print-time">Print Time:&nbsp;&nbsp;${printTime}</div>
     </div>
 
-    <!-- Info -->
-    <div class="info-section">
-      <div class="info-row">
-        <div class="info-label">Client</div>
-        <div class="info-value">HAIER PHILIPPINES INC.</div>
-        <div class="info-label">DN No.</div>
-        <div class="info-value">${dn.dnNo}</div>
-      </div>
-      <div class="info-row">
-        <div class="info-label">Ship-To Name</div>
-        <div class="info-value">${dn.shipToName || '—'}</div>
-        <div class="info-label">Dealer</div>
-        <div class="info-value">${dn.dealer || '—'}</div>
-      </div>
+    <div class="dn-info-row">
+      <span class="dn-label">DN NO.</span>
+      <span class="dn-value">${dn.dnNo}</span>
+      <span class="dealer-label">Dealer/Ship</span>
+      <span class="dealer-value">${dn.shipToName || dn.dealer || '—'}</span>
+      <span class="sl-badge">SL</span>
     </div>
 
-    <!-- Items table -->
     <table class="data-table">
       <thead>
         <tr>
-          <th style="width:36px">NO.</th>
-          <th style="width:120px">MATERIAL CODE</th>
-          <th>DESCRIPTION</th>
-          <th style="width:80px">LOCATION</th>
-          <th style="width:70px">DIVISION</th>
-          <th style="width:70px">QTY</th>
+          <th class="col-matcode">Material Code</th>
+          <th>Material Desc</th>
+          <th class="col-location" style="text-align:center">Location</th>
+          <th class="col-category" style="text-align:center">Category</th>
+          <th class="col-qty" style="text-align:center">Quantity</th>
         </tr>
       </thead>
       <tbody>
         ${rowsHtml}
-        <tr class="total-row">
-          <td colspan="5" style="text-align:right;padding-right:10px">TOTAL</td>
-          <td class="center">${totalQty}</td>
-        </tr>
       </tbody>
     </table>
 
-    <!-- Summary -->
-    <div class="footer-summary">
-      TOTAL LINES: ${items.length}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL QUANTITY: ${totalQty}
-    </div>
+    <div class="spacer"></div>
 
-    <!-- Signatures -->
+    <div class="total-row">Total Quantity/Bulk</div>
+
     <div class="signature-section">
       <div class="signature-box">
         <div class="signature-space"></div>
@@ -345,6 +317,8 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
         <div class="signature-label">Scanned By</div>
       </div>
     </div>
+
+    <div class="page-number">Page 1 of 1</div>
 
   </div>`
 }
@@ -367,10 +341,11 @@ ${buildPageHtml(dn, items, printTime)}
 function printAllPickingLists(toPrint: BookingEntry[], dnInfoMap: DNRefMap, printTime: string): void {
   const pages = toPrint.map((dn, i) => {
     const items = buildItems(dn, dnInfoMap)
-    const pageBreak = i < toPrint.length - 1
-      ? 'style="page-break-after:always;padding-bottom:20px"'
-      : ''
-    return `<div ${pageBreak}>${buildPageHtml(dn, items, printTime)}</div>`
+    const isLast = i === toPrint.length - 1
+    const style = isLast
+      ? 'style="page-break-after:avoid"'
+      : 'style="page-break-after:always"'
+    return `<div ${style}>${buildPageHtml(dn, items, printTime)}</div>`
   }).join('\n')
 
   const win = window.open('', '', 'width=1000,height=800')
