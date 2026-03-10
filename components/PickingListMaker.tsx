@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import {
   Home, CheckCircle2,
   Search, Printer, AlertCircle, Package,
-  X, ChevronRight, FileSpreadsheet,
+  X, ChevronRight, FileSpreadsheet, MapPin,
 } from 'lucide-react'
 import Link from 'next/link'
 import { getMaterialInfoFromMatcode } from '@/lib/category-mapping'
@@ -68,6 +68,7 @@ interface BookingEntry {
   rawDN: string
   shipToName: string
   dealer: string
+  area: string
   items: BookingItem[]
 }
 
@@ -148,6 +149,7 @@ function parseBooking(wb: XLSX.WorkBook): BookingMap {
     qty:    idx('Sales order quantity'),
     loc:    idx('storage location'),
     dealer: idx('Sold-to-party Name'),
+    area:   idx('AREA'),
   }
 
   const seen  = new Set<string>()
@@ -168,6 +170,7 @@ function parseBooking(wb: XLSX.WorkBook): BookingMap {
         rawDN:      dn,
         shipToName: String(r[col.shipTo] ?? ''),
         dealer:     String(r[col.dealer] ?? ''),
+        area:       col.area >= 0 ? String(r[col.area] ?? '').trim() : '',
         items:      [],
       }
     }
@@ -219,6 +222,7 @@ const PDF_STYLES = `
   .dn-value { font-weight: bold; font-size: 13px; margin-right: 24px; }
   .dealer-label { font-weight: bold; font-size: 11px; margin-right: 6px; }
   .dealer-value { font-size: 11px; flex: 1; }
+  .area-badge { font-size: 10px; font-weight: bold; margin-left: 16px; padding: 2px 8px; border: 1px solid #000; white-space: nowrap; }
   .sl-badge { font-weight: bold; font-size: 11px; margin-left: auto; }
 
   .data-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
@@ -262,6 +266,8 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
     </tr>`
   }).join('')
 
+  const areaLabel = dn.area ? dn.area : 'N/A'
+
   return `
   <div class="container">
 
@@ -278,7 +284,8 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
       <span class="dn-value">${dn.dnNo}</span>
       <span class="dealer-label">Dealer/Ship</span>
       <span class="dealer-value">${dn.shipToName || dn.dealer || '—'}</span>
-      <span class="sl-badge">SL</span>
+      <span class="area-badge">${areaLabel}</span>
+      
     </div>
 
     <table class="data-table">
@@ -448,6 +455,26 @@ function DropZone({ label, hint, onFile, loaded, fileName, step }: DropZoneProps
   )
 }
 
+// ── Area Badge component ───────────────────────────────────────────────────────
+
+function AreaBadge({ area, size = 'sm' }: { area: string; size?: 'sm' | 'md' }) {
+  const hasArea = !!area
+  return (
+    <span
+      className={`inline-flex items-center gap-1 font-bold uppercase tracking-wider ${size === 'md' ? 'px-3 py-1 text-[11px]' : 'px-2 py-0.5 text-[10px]'}`}
+      style={{
+        background: hasArea ? 'rgba(88,166,255,0.08)' : 'rgba(255,255,255,0.03)',
+        border:     `1px solid ${hasArea ? 'rgba(88,166,255,0.25)' : C.border}`,
+        color:      hasArea ? '#58A6FF' : C.textGhost,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <MapPin className={size === 'md' ? 'w-3 h-3' : 'w-2.5 h-2.5'} />
+      {hasArea ? area : 'N/A'}
+    </span>
+  )
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export function PickingListMaker() {
@@ -536,7 +563,8 @@ export function PickingListMaker() {
     (dn) =>
       !search ||
       dn.dnNo.includes(search) ||
-      dn.shipToName.toLowerCase().includes(search.toLowerCase())
+      dn.shipToName.toLowerCase().includes(search.toLowerCase()) ||
+      dn.area.toLowerCase().includes(search.toLowerCase())
   )
 
   const totalSelectedQty = matchedDNs
@@ -798,7 +826,7 @@ export function PickingListMaker() {
                       <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search DN No. or Ship To Name…"
+                        placeholder="Search DN No., Ship To Name, or Area…"
                         className="w-full h-9 pl-9 pr-8 bg-transparent text-[13px] text-white focus:outline-none transition-colors"
                         style={{ border: `1px solid ${C.border}`, color: C.inputText }}
                         onFocus={(e) => (e.currentTarget.style.borderColor = C.inputFocus)}
@@ -830,6 +858,7 @@ export function PickingListMaker() {
                       <span className="w-5 flex-shrink-0" />
                       <span className="flex-1">Ship To</span>
                       <span className="hidden sm:block w-32 flex-shrink-0">DN No.</span>
+                      <span className="hidden sm:block w-28 flex-shrink-0">Area</span>
                       <span className="w-10 text-center flex-shrink-0">Lines</span>
                       <span className="w-12 text-right flex-shrink-0">Qty</span>
                       <span className="w-4" />
@@ -892,15 +921,24 @@ export function PickingListMaker() {
                               >
                                 {dn.shipToName}
                               </p>
-                              <p className="text-[12px] mt-0.5 sm:hidden" style={{ color: C.textSilver }}>
-                                {dn.dnNo}
-                              </p>
+                              {/* Mobile: show DN + Area below ship to */}
+                              <div className="flex items-center gap-2 mt-1 sm:hidden">
+                                <p className="text-[12px]" style={{ color: C.textSilver }}>
+                                  {dn.dnNo}
+                                </p>
+                                <AreaBadge area={dn.area} size="sm" />
+                              </div>
                             </div>
 
-                            {/* DN No */}
+                            {/* DN No — desktop */}
                             <span className="hidden sm:block text-[11px] font-bold tabular-nums w-32 flex-shrink-0 transition-colors" style={{ color: C.textSilver }}>
                               {dn.dnNo}
                             </span>
+
+                            {/* Area badge — desktop */}
+                            <div className="hidden sm:flex w-28 flex-shrink-0">
+                              <AreaBadge area={dn.area} size="sm" />
+                            </div>
 
                             {/* Lines */}
                             <span className="w-10 text-center text-2xl font-[#0D1117] group-hover:text-white transition-colors tabular-nums flex-shrink-0" style={{ color: C.textPrimary }}>
@@ -923,8 +961,14 @@ export function PickingListMaker() {
                           {isExpanded && (
                             <div className="px-4 pb-6 sm:px-8" style={{ borderTop: `1px solid ${C.divider}` }}>
 
+                              {/* Area display in expanded panel */}
+                              <div className="flex items-center gap-3 mt-5 mb-5">
+                                <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textMuted }}>Area</span>
+                                <AreaBadge area={dn.area} size="md" />
+                              </div>
+
                               {/* Items table */}
-                              <div className="mt-5 mb-5 overflow-hidden" style={{ border: `1px solid ${C.divider}` }}>
+                              <div className="mb-5 overflow-hidden" style={{ border: `1px solid ${C.divider}` }}>
                                 <div
                                   className="grid grid-cols-4 py-3 px-3"
                                   style={{ background: '#1C2128', borderBottom: `1px solid ${C.divider}` }}
