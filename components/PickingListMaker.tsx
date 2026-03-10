@@ -720,55 +720,49 @@ export function PickingListMaker() {
               </div>
 
               {/* Step indicators */}
-              <div className="flex items-center">
-                {[
-                  { n: 1, title: 'DN Reference',  short: 'Reference', done: !!dnInfoMap },
-                  { n: 2, title: 'Booking File',  short: 'Booking',   done: !!bookingMap },
-                  { n: 3, title: 'Match & Print', short: 'Print',     done: processed },
-                ].map((step, idx) => {
-                  const isActive =
-                    (step.n === 1 && !dnInfoMap) ||
-                    (step.n === 2 && !!dnInfoMap && !bookingMap) ||
-                    (step.n === 3 && !!dnInfoMap && !!bookingMap && !processed)
-                  return (
-                    <div key={step.n} className="flex items-center flex-1">
-                      <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0 min-w-0">
-                        <div
-                          className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all duration-300"
-                          style={{
-                            background: step.done
-                              ? 'rgba(34,197,94,0.1)'
-                              : isActive ? C.accent : 'transparent',
-                            border: step.done
-                              ? '1px solid rgba(34,197,94,0.3)'
-                              : isActive ? 'none'
-                              : `1px solid ${C.border}`,
-                            color: step.done ? '#22c55e' : isActive ? '#fff' : C.textGhost,
-                          }}
-                        >
-                          {step.done
-                            ? <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                            : <span className="text-[11px] font-bold">{step.n}</span>
-                          }
-                        </div>
-                        <p
-                          className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-bold transition-colors"
-                          style={{ color: step.done ? '#22c55e' : isActive ? C.textPrimary : C.textMuted }}
-                        >
-                          <span className="sm:hidden">{step.short}</span>
-                          <span className="hidden sm:inline">{step.title}</span>
-                        </p>
-                      </div>
-                      {idx < 2 && (
-                        <div className="flex-1 mx-2 sm:mx-4">
-                          <div className="h-px transition-all duration-500"
-                            style={{ background: step.done ? 'rgba(34,197,94,0.35)' : C.divider }} />
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+<div className="flex items-center justify-center gap-0">
+  {[
+    { n: 1, title: 'DN Reference',  short: 'Reference', done: !!dnInfoMap },
+    { n: 2, title: 'Booking File',  short: 'Booking',   done: !!bookingMap },
+    { n: 3, title: 'Match & Print', short: 'Print',     done: processed },
+  ].map((step, idx) => {
+    const isActive =
+      (step.n === 1 && !dnInfoMap) ||
+      (step.n === 2 && !!dnInfoMap && !bookingMap) ||
+      (step.n === 3 && !!dnInfoMap && !!bookingMap && !processed)
+    return (
+      <div key={step.n} className="flex items-center">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <div
+            className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all duration-300"
+            style={{
+              background: step.done ? 'rgba(34,197,94,0.1)' : isActive ? C.accent : 'transparent',
+              border: step.done ? '1px solid rgba(34,197,94,0.3)' : isActive ? 'none' : `1px solid ${C.border}`,
+              color: step.done ? '#22c55e' : isActive ? '#fff' : C.textGhost,
+            }}
+          >
+            {step.done
+              ? <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
+              : <span className="text-[11px] font-bold">{step.n}</span>
+            }
+          </div>
+          <p
+            className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-bold transition-colors"
+            style={{ color: step.done ? '#22c55e' : isActive ? C.textPrimary : C.textMuted }}
+          >
+            {step.short}
+          </p>
+        </div>
+        {idx < 2 && (
+          <div className="w-12 sm:w-20 mx-2 sm:mx-4">
+            <div className="h-px transition-all duration-500"
+              style={{ background: step.done ? 'rgba(34,197,94,0.35)' : C.divider }} />
+          </div>
+        )}
+      </div>
+    )
+  })}
+</div>
             </div>
 
             {/* Card body */}
@@ -779,7 +773,7 @@ export function PickingListMaker() {
                 <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textMuted }}>
                   Upload Files
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <DropZone step="1" label="DN Reference File"      hint="DN_Info Excel (.xlsx)"  onFile={handleDNInfo}  loaded={!!dnInfoMap}  fileName={dnInfoFile}  />
                   <DropZone step="2" label="Booking / Picklist File" hint="Booking Excel (.xlsx)"  onFile={handleBooking} loaded={!!bookingMap} fileName={bookingFile} />
                 </div>
