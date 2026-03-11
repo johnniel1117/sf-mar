@@ -305,7 +305,7 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
 
     <div class="spacer"></div>
 
-    <div class="total-row">Total Quantity/Bulk</div>
+    <div class="total-row">Total Quantity: ${totalQty}</div>
 
     <div class="signature-section">
       <div class="signature-box">
