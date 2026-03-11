@@ -12,6 +12,7 @@ import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
 import { OutboundAnalyticsPanel } from '@/components/OutboundAnalytics'
 import type { TripManifest } from '@/lib/services/tripManifestService'
 
+
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
 function useGreeting() {
@@ -268,7 +269,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
       <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#0D1117]/15 rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── Foreground ── */}
-      <div className="relative z-10 h-full flex flex-col">
+      <div className="relative z-10  flex flex-col">
 
         {/* Header */}
         <header className="fixed sm:static top-0 left-0 right-0 z-50 border-b border-[#30363D] backdrop-blur">
