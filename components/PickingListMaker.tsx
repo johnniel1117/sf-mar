@@ -194,7 +194,7 @@ function buildItems(dn: BookingEntry, dnInfoMap: DNRefMap): ResolvedItem[] {
       materialDesc:  ri?.materialDesc ?? '',
       location:      ri?.location ?? bi.location,
       division:      ri?.division ?? '',
-      quantity:      bi.quantity,
+      quantity:      ri?.quantity ?? bi.quantity,
     }
   })
 }
