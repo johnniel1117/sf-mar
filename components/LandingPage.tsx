@@ -375,11 +375,11 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                   {SERVICES.map(({ href, label, desc, icon: Icon, index }) => (
                     <Link key={href} href={href} className="group block">
                       <div className="flex items-center gap-5 sm:gap-6 py-5 sm:py-6 transition-all duration-200 group-hover:pl-1.5">
-                        <span className="text-[11px] font-bold text-[#484F58] w-5 flex-shrink-0 group-hover:text-[#E8192C] transition-colors">
+                        <span className="text-[11px] font-bold text-[#484F58] w-5 flex-shrink-0 group-hover:text-white transition-colors">
                           {index}
                         </span>
-                        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border bg-red-600 border-[#30363D] bg-[#161B22] group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6 transition-all duration-200">
-                          <Icon className="w-4 h-4 text-white group-hover:text-[#E8192C] transition-colors" strokeWidth={1.5} />
+                        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border bg-red-600 border-[#30363D] bg-[#161B22]  group-hover:bg-yellow-400 transition-all duration-200">
+                          <Icon className="w-4 h-4 text-white group-hover:text-black transition-colors" strokeWidth={1.5} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[15px] font-[#0D1117] text-[#C9D1D9] group-hover:text-white transition-colors leading-snug">
@@ -413,7 +413,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               {/* RIGHT — analytics sidebar */}
               <div className="hidden lg:block py-10 sm:py-12 pl-12">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#6E7681] mb-7">Outbound</p>
+                <p className="text-lg uppercase tracking-[0.25em] font-bold text-white mb-3">Outbound</p>
                 {manifests.length === 0 ? (
                   <div className="space-y-3 py-2">
                     <TrendingUp className="w-5 h-5 text-[#484F58]" />
