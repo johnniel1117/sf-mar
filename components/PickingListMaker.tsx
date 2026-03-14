@@ -202,49 +202,61 @@ function buildItems(dn: BookingEntry, dnInfoMap: DNRefMap): ResolvedItem[] {
 // ── PDF helpers ────────────────────────────────────────────────────────────────
 
 const PDF_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
+
   @page { size: A4 portrait; margin: 15mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; color: #000; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: 'DM Sans', Arial, sans-serif; font-size: 11px; line-height: 1.4; color: #000; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { height: 100%; }
   .container { width: 100%; min-height: 267mm; display: flex; flex-direction: column; }
 
-  .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-  .logo-section img {
-  height: 100px;
-  width: auto;
-  filter: brightness(0) saturate(100%) invert(27%) sepia(93%) saturate(500%) hue-rotate(190deg) brightness(95%);
-}
-  .doc-title { font-size: 20px; font-weight: bold; text-align: center; }
-  .print-time { font-size: 10px; text-align: right; color: #333; }
+  .header-section { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 16px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #000; }
+  .logo-section { display: inline-block; line-height: 1; }
+  .logo-section img { height: 52px; width: auto; filter: brightness(0) saturate(100%); display: block; }
+  .doc-title-block { text-align: center; }
+  .doc-title { font-size: 13px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #000; }
+  .doc-subtitle { font-size: 10px; color: #888; margin-top: 4px; letter-spacing: 0.05em; font-family: 'DM Mono', monospace; }
+  .print-time { font-family: 'DM Mono', monospace; font-size: 10px; color: #888; text-align: right; line-height: 1.8; }
 
-  .dn-info-row { display: flex; align-items: center; border: 1.5px solid #000; margin-bottom: 18px; padding: 7px 12px; }
-  .dn-label { font-weight: bold; font-size: 11px; margin-right: 6px; white-space: nowrap; }
-  .dn-value { font-weight: bold; font-size: 13px; margin-right: 24px; }
-  .dealer-label { font-weight: bold; font-size: 11px; margin-right: 6px; }
-  .dealer-value { font-size: 11px; flex: 1; }
-  .area-badge { font-size: 10px; font-weight: bold; margin-left: 16px; padding: 2px 8px; border: 1px solid #000; white-space: nowrap; }
-  .sl-badge { font-weight: bold; font-size: 11px; margin-left: auto; }
+  .dn-info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 28px; border: 1px solid #000; }
+  .dn-cell { padding: 14px 18px; }
+  .dn-cell + .dn-cell { border-left: 1px solid #000; }
+  .dn-label { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #888; margin-bottom: 5px; font-weight: 600; }
+  .dn-value { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; letter-spacing: -0.5px; }
+  .dealer-value { font-size: 13px; }
+  .tag-row { display: flex; gap: 8px; margin-top: 8px; }
+  .tag { font-size: 9px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid #000; padding: 3px 8px; display: inline-block; }
 
-  .data-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
-  .data-table th { border: 1px solid #000; padding: 6px 8px; text-align: left; font-weight: bold; font-size: 11px; background: #fff; }
-  .data-table td { border: 1px solid #000; padding: 10px 8px; font-size: 11px; vertical-align: middle; }
-  .col-matcode { width: 120px; }
-  .col-location { width: 70px; text-align: center !important; }
-  .col-category { width: 110px; text-align: center !important; }
-  .col-qty { width: 60px; text-align: center !important; }
+  .data-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+  .data-table thead tr { border-bottom: 2px solid #000; }
+  .data-table th { padding: 10px 12px; font-size: 9px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; text-align: left; color: #888; }
+  .data-table th.col-location,
+  .data-table th.col-category,
+  .data-table th.col-qty { text-align: center; }
+  .data-table td { padding: 14px 12px; font-size: 12px; border-bottom: 0.5px solid #ddd; vertical-align: middle; }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .col-matcode { width: 130px; font-family: 'DM Mono', monospace; font-size: 11px; color: #444; }
+  .col-location { width: 70px; text-align: center !important; font-family: 'DM Mono', monospace; font-size: 11px; }
+  .col-category { width: 120px; text-align: center !important; }
+  .col-qty { width: 60px; text-align: center !important; font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; }
 
   .spacer { flex: 1; min-height: 0; }
 
-  .total-row { text-align: right; font-weight: bold; font-size: 11px; padding-right: 4px; margin-bottom: 40px; }
+  .total-row { border-top: 2px solid #000; display: flex; justify-content: flex-end; align-items: baseline; gap: 12px; padding: 12px 12px 32px; }
+  .total-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: #888; font-weight: 600; }
+  .total-value { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
 
-  .signature-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 40px; margin-bottom: 8px; }
-  .signature-box { font-size: 11px; text-align: center; }
-  .signature-space { height: 50px; }
-  .signature-line { border-top: 1.5px solid #000; }
-  .signature-label { font-weight: bold; font-size: 11px; margin-top: 6px; }
+  .signature-section { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid #000; margin-bottom: 16px; }
+  .signature-box { padding: 14px 16px 10px; font-size: 11px; }
+  .signature-box + .signature-box { border-left: 1px solid #000; }
+  .signature-space { height: 48px; }
+  .signature-line { border-top: 1px solid #000; margin-bottom: 8px; }
+  .signature-label { font-size: 9px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #555; }
 
-  .page-number { font-size: 10px; text-align: right; color: #333; margin-top: 6px; }
-  
+  .page-footer { display: flex; justify-content: space-between; align-items: center; }
+  .page-number { font-family: 'DM Mono', monospace; font-size: 10px; color: #aaa; }
+  .doc-stamp { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #ccc; font-weight: 500; }
+
   @media print {
     html, body { height: auto !important; margin: 0 !important; }
     div:last-child { page-break-after: avoid !important; }
@@ -260,9 +272,9 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
     <tr>
       <td class="col-matcode">${item.materialCode}</td>
       <td>${item.customerModel || item.materialDesc || '—'}</td>
-      <td class="col-location" style="text-align:center">${item.location || 'PC8A'}</td>
+      <td class="col-location">${item.location || 'PC8A'}</td>
       <td class="col-category" style="text-align:center">${category}</td>
-      <td class="col-qty" style="text-align:center">${item.quantity}</td>
+      <td class="col-qty">${item.quantity}</td>
     </tr>`
   }).join('')
 
@@ -275,27 +287,35 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
       <div class="logo-section">
         <img src="/haier2.png" alt="Haier" />
       </div>
-      <div class="doc-title">Picking List</div>
-      <div class="print-time">Print Time:&nbsp;&nbsp;${printTime}</div>
+      <div class="doc-title-block">
+        <div class="doc-title">Picking List</div>
+        <div class="doc-subtitle">Warehouse Fulfillment Document</div>
+      </div>
+      <div class="print-time">Print Time<br>${printTime}</div>
     </div>
 
     <div class="dn-info-row">
-      <span class="dn-label">DN NO.</span>
-      <span class="dn-value">${dn.dnNo}</span>
-      <span class="dealer-label">Dealer/Ship</span>
-      <span class="dealer-value">${dn.shipToName || dn.dealer || '—'}</span>
-      <span class="area-badge">${areaLabel}</span>
-      
+      <div class="dn-cell">
+        <div class="dn-label">DN Number</div>
+        <div class="dn-value">${dn.dnNo}</div>
+      </div>
+      <div class="dn-cell">
+        <div class="dn-label">Dealer / Ship To</div>
+        <div class="dn-value dealer-value">${dn.shipToName || dn.dealer || '—'}</div>
+        <div class="tag-row">
+          <span class="tag">${areaLabel}</span>
+        </div>
+      </div>
     </div>
 
     <table class="data-table">
       <thead>
         <tr>
           <th class="col-matcode">Material Code</th>
-          <th>Material Desc</th>
-          <th class="col-location" style="text-align:center">Location</th>
-          <th class="col-category" style="text-align:center">Category</th>
-          <th class="col-qty" style="text-align:center">Quantity</th>
+          <th>Description</th>
+          <th class="col-location">Location</th>
+          <th class="col-category">Category</th>
+          <th class="col-qty">Qty</th>
         </tr>
       </thead>
       <tbody>
@@ -305,7 +325,10 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
 
     <div class="spacer"></div>
 
-    <div class="total-row">Total Quantity: ${totalQty}</div>
+    <div class="total-row">
+      <span class="total-label">Total Quantity</span>
+      <span class="total-value">${totalQty}</span>
+    </div>
 
     <div class="signature-section">
       <div class="signature-box">
@@ -325,7 +348,10 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
       </div>
     </div>
 
-    <div class="page-number">Page 1 of 1</div>
+    <div class="page-footer">
+      <span class="doc-stamp">Haier Philippines · Warehouse Operations</span>
+      <span class="page-number">Page 1 of 1</span>
+    </div>
 
   </div>`
 }
