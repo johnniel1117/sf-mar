@@ -210,40 +210,59 @@ const PDF_STYLES = `
   html, body { height: 100%; }
   .container { width: 100%; min-height: 267mm; display: flex; flex-direction: column; }
 
-  .header-section { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 16px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #000; }
-  .logo-section { display: inline-block; line-height: 1; }
-  .logo-section img { height: 52px; width: auto; filter: brightness(0) saturate(100%); display: block; }
+  .header-section {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center; /* vertical center */
+  gap: 16px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
+.logo-section {
+  text-align: center;
+  display: inline-block;
+  line-height: 1;
+}
+
+.logo-section img {
+  height: 20px;
+  width: auto;
+  filter: brightness(0) saturate(100%);
+  display: block;
+}
   .doc-title-block { text-align: center; }
   .doc-title { font-size: 13px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #000; }
-  .doc-subtitle { font-size: 10px; color: #888; margin-top: 4px; letter-spacing: 0.05em; font-family: 'DM Mono', monospace; }
-  .print-time { font-family: 'DM Mono', monospace; font-size: 10px; color: #888; text-align: right; line-height: 1.8; }
+  .doc-subtitle { font-size: 10px; color: #292929; margin-top: 4px; letter-spacing: 0.05em; font-family: 'DM Mono', monospace; }
+  .print-time { font-family: 'DM Mono', monospace; font-size: 10px; color: #292929; text-align: right; line-height: 1.8; }
 
-  .dn-info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 28px; border: 1px solid #000; }
+  .dn-info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 10px; border: 1px solid #000; }
   .dn-cell { padding: 14px 18px; }
   .dn-cell + .dn-cell { border-left: 1px solid #000; }
-  .dn-label { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #888; margin-bottom: 5px; font-weight: 600; }
+  .dn-label { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #292929; margin-bottom: 5px; font-weight: 600; }
   .dn-value { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; letter-spacing: -0.5px; }
   .dealer-value { font-size: 13px; }
   .tag-row { display: flex; gap: 8px; margin-top: 8px; }
   .tag { font-size: 9px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid #000; padding: 3px 8px; display: inline-block; }
 
   .data-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-  .data-table thead tr { border-bottom: 2px solid #000; }
-  .data-table th { padding: 10px 12px; font-size: 9px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; text-align: left; color: #888; }
+  .data-table thead tr {  }
+  .data-table th { padding: 10px 12px; font-size: 9px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; text-align: left; color: #292929; }
   .data-table th.col-location,
   .data-table th.col-category,
   .data-table th.col-qty { text-align: center; }
   .data-table td { padding: 14px 12px; font-size: 12px; border-bottom: 0.5px solid #ddd; vertical-align: middle; }
   .data-table tbody tr:last-child td { border-bottom: none; }
   .col-matcode { width: 130px; font-family: 'DM Mono', monospace; font-size: 11px; color: #444; }
+  .col-desc { width: 130px; font-family: 'DM Mono', monospace; font-size: 11px; color: #444; }
   .col-location { width: 70px; text-align: center !important; font-family: 'DM Mono', monospace; font-size: 11px; }
-  .col-category { width: 120px; text-align: center !important; }
+  .col-category { width: 120px; text-align: center !important; font-family: 'DM Mono', monospace; font-size: 11px; }
   .col-qty { width: 60px; text-align: center !important; font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; }
 
   .spacer { flex: 1; min-height: 0; }
 
-  .total-row { border-top: 2px solid #000; display: flex; justify-content: flex-end; align-items: baseline; gap: 12px; padding: 12px 12px 32px; }
-  .total-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: #888; font-weight: 600; }
+  .total-row {  display: flex; justify-content: flex-end; align-items: baseline; gap: 12px; padding: 12px 12px 32px; }
+  .total-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: #292929; font-weight: 600; }
   .total-value { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
 
   .signature-section { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid #000; margin-bottom: 16px; }
@@ -255,7 +274,7 @@ const PDF_STYLES = `
 
   .page-footer { display: flex; justify-content: space-between; align-items: center; }
   .page-number { font-family: 'DM Mono', monospace; font-size: 10px; color: #aaa; }
-  .doc-stamp { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #ccc; font-weight: 500; }
+  .doc-stamp { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #707070; font-weight: 500; }
 
   @media print {
     html, body { height: auto !important; margin: 0 !important; }
@@ -285,11 +304,11 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
 
     <div class="header-section">
       <div class="logo-section">
-        <img src="/haier2.png" alt="Haier" />
+        <img src="/haier3.png" alt="Haier" />
       </div>
       <div class="doc-title-block">
         <div class="doc-title">Picking List</div>
-        <div class="doc-subtitle">Warehouse Fulfillment Document</div>
+        <div class="doc-subtitle">SF EXPRESS CEBU WAREHOUSE</div>
       </div>
       <div class="print-time">Print Time<br>${printTime}</div>
     </div>
@@ -312,7 +331,7 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
       <thead>
         <tr>
           <th class="col-matcode">Material Code</th>
-          <th>Description</th>
+          <th class="col-desc">Description</th>
           <th class="col-location">Location</th>
           <th class="col-category">Category</th>
           <th class="col-qty">Qty</th>
@@ -349,8 +368,8 @@ function buildPageHtml(dn: BookingEntry, items: ResolvedItem[], printTime: strin
     </div>
 
     <div class="page-footer">
-      <span class="doc-stamp">Haier Philippines · Warehouse Operations</span>
-      <span class="page-number">Page 1 of 1</span>
+      <span class="doc-stamp">PREPARED BY: JOHNNIEL MAR</span>
+      
     </div>
 
   </div>`
