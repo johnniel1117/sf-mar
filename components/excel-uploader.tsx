@@ -1,19 +1,23 @@
-"use client"
+'use client'
 
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
-import * as XLSX from "xlsx-js-style"
-import { MATCODE_CATEGORY_MAP, getCategoryFromBinCode } from '../components/CategoryMapping'
-import { MATCODE_CBM_MAP } from '../lib/category-mapping'
+import { useState, useCallback, useRef } from 'react'
+import * as XLSX from 'xlsx'
 import {
-  Upload, X, FileSpreadsheet, Download, FileText, CheckCircle2,
-  Layers, AlertCircle, ArrowUp, Search, Home, Menu,
-  ChevronRight, ChevronLeft, ArrowUpRight
-} from "lucide-react"
-import Link from "next/link"
-import JsBarcode from "jsbarcode"
+  Home, CheckCircle2, Search, Printer, AlertCircle,
+  X, ChevronRight, FileSpreadsheet, Download, Layers,
+  Hash, Package,
+} from 'lucide-react'
+import Link from 'next/link'
+import JsBarcode from 'jsbarcode'
+import { getCategoryFromBinCode } from '../components/CategoryMapping'
+import { MATCODE_CBM_MAP } from '../lib/category-mapping'
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
+const getCBMFromMatcode = (code: string): number | null => {
+  if (!code) return null
+  return MATCODE_CBM_MAP[code] ?? MATCODE_CBM_MAP[code.toUpperCase()] ?? null
+}
+
+// ── Design tokens — identical to existing pages ───────────────────────────────
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
@@ -21,1080 +25,835 @@ const C = {
   border:       '#30363D',
   borderHover:  '#8B949E',
   divider:      '#21262D',
-
   accent:       '#E8192C',
   accentHover:  '#FF1F30',
   accentGlow:   'rgba(232,25,44,0.25)',
-
   amber:        '#F5A623',
-
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
   textSub:      '#8B949E',
   textMuted:    '#6E7681',
   textGhost:    '#484F58',
-
   inputBg:      '#0D1117',
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
   inputFocus:   '#1F6FEB',
-
-  stripeEven:   '#161B22',   // slightly lighter than bg — the "filled" stripe
-  stripeOdd:    '#0D1117',   // same as bg — the "empty" stripe
+  stripeEven:   '#161B22',
+  stripeOdd:    '#0D1117',
 }
 
-interface MaterialData {
-  materialCode: string
-  materialDescription: string
-  category: string
-  qty: number
-  cbm: number | null
-  remarks: string
-  shipName: string
-}
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-interface SerialData {
-  dnNo: string
-  orderItem: string
-  factoryCode: string
-  location: string
-  binCode: string
-  materialCode: string
-  materialDesc: string
-  barcode: string
-  materialType: string
+interface SerialRow {
+  dnNo:          string
+  orderItem:     string
+  factoryCode:   string
+  location:      string
+  binCode:       string
+  materialCode:  string
+  materialDesc:  string
+  barcode:       string
+  materialType:  string
   productStatus: string
-  shipTo: string
-  shipToName: string
+  shipTo:        string
+  shipToName:    string
   shipToAddress: string
-  soldTo: string
-  soldToName: string
-  scanBy: string
-  scanTime: string
+  soldTo:        string
+  soldToName:    string
+  scanBy:        string
+  scanTime:      string
 }
 
-interface UploadedFile {
-  id: string
-  name: string
-  dnNo: string
-  data: MaterialData[]
-  serialData: SerialData[]
+interface DNGroup {
+  dnNo:         string
+  shipToName:   string
+  shipToAddress:string
+  rows:         SerialRow[]
 }
 
-type TabType = "consolidated" | "serialList" | "individualDN"
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-interface Notification {
-  id: string
-  type: "error" | "warning" | "success"
-  message: string
+function normalizeDN(val: unknown): string {
+  if (val == null) return ''
+  const s = typeof val === 'number' ? String(Math.round(val)) : String(val)
+  return s.trim().replace(/\s+/g, '')
 }
 
-const getCBMFromMatcode = (code: string): number | null => {
-  if (!code) return null
-  return MATCODE_CBM_MAP[code] ?? MATCODE_CBM_MAP[code.toUpperCase()] ?? null
+function parseDNList(raw: string): string[] {
+  return raw
+    .split(/[\n,;]+/)
+    .map(s => s.trim().replace(/\s+/g, ''))
+    .filter(Boolean)
 }
 
-const totalCBM = (data: MaterialData[]): number =>
-  data.reduce((sum, r) => {
-    if (r.cbm == null) return sum
-    return sum + r.cbm * r.qty
-  }, 0)
+// ── Excel parser ──────────────────────────────────────────────────────────────
 
-// CBM from serial rows (each serial row = 1 unit)
-const totalCBMFromSerials = (serials: SerialData[]): number =>
-  serials.reduce((sum, r) => {
-    const cbm = getCBMFromMatcode(r.materialCode)
-    return cbm != null ? sum + cbm : sum
-  }, 0)
+function parseSerialExcel(wb: XLSX.WorkBook): SerialRow[] {
+  const ws   = wb.Sheets[wb.SheetNames[0]]
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: null })
+  const hdr  = (rows[0] as unknown[]) || []
 
-
-
-export default function ExcelUploader() {
-  const [groupedData, setGroupedData]         = useState<MaterialData[]>([])
-  const [serialListData, setSerialListData]   = useState<SerialData[]>([])
-  const [uploadedFiles, setUploadedFiles]     = useState<UploadedFile[]>([])
-  const [isLoading, setIsLoading]             = useState(false)
-  const tableRef                              = useRef<HTMLDivElement>(null)
-  const [animatingRows, setAnimatingRows]     = useState<Set<number>>(new Set())
-  const [selectedFileId, setSelectedFileId]   = useState<string | null>(null)
-  const [showFilesList, setShowFilesList]     = useState(false)
-  const [activeTab, setActiveTab]             = useState<TabType>("consolidated")
-  const [showDownloadModal, setShowDownloadModal] = useState(false)
-  const [downloadType, setDownloadType]       = useState<"pdf" | "excel">("excel")
-  const [selectedDownloadFile, setSelectedDownloadFile] = useState<UploadedFile | null>(null)
-  const [isDownloadingAllDN, setIsDownloadingAllDN] = useState(false)
-  const [isDragging, setIsDragging]           = useState(false)
-  const [notifications, setNotifications]     = useState<Notification[]>([])
-  const [showScrollTop, setShowScrollTop]     = useState(false)
-  const [searchQuery, setSearchQuery]         = useState("")
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
-  const [sidebarOpen, setSidebarOpen]         = useState(false)
-  const [mounted, setMounted]                 = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    const handleScroll = () => setShowScrollTop(window.scrollY > 400)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  useEffect(() => {
-    document.body.style.overflow = showDownloadModal ? 'hidden' : 'unset'
-    return () => { document.body.style.overflow = 'unset' }
-  }, [showDownloadModal])
-
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
-
-  const addNotification = (type: "error" | "warning" | "success", message: string) => {
-    const id = `${Date.now()}-${Math.random()}`
-    setNotifications(prev => [...prev, { id, type, message }])
-    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 5000)
-  }
-
-  const removeNotification = (id: string) => setNotifications(prev => prev.filter(n => n.id !== id))
-
-  const saveToSupabase = async (files: UploadedFile[]) => {
-    try {
-      for (const file of files) {
-        const totalQuantity = file.data.reduce((sum, item) => sum + (item.qty || 0), 0)
-        const isDN = file.dnNo.startsWith('DN') || file.dnNo.includes('-DN-')
-        const payload = {
-          fileName: file.name,
-          dnNo: isDN ? file.dnNo : undefined,
-          traNo: !isDN ? file.dnNo : undefined,
-          totalQuantity,
-          data: file.data,
-          serialData: file.serialData,
-        }
-        const response = await fetch('/api/save-excel-upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-        if (!response.ok) {
-          const error = await response.json()
-          addNotification('error', `Failed to save ${file.name}: ${error.error}`)
-          continue
-        }
-        addNotification('success', `Saved ${file.name} to database (Qty: ${totalQuantity})`)
-      }
-    } catch (error) {
-      addNotification('error', `Error saving: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
-  }
-
-  const formatDate = () =>
-    new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
-  const formatDateShort = () =>
-    new Date().toLocaleDateString("en-US", { month: '2-digit', day: '2-digit', year: 'numeric' })
-
-  const generateBarcodeSVG = (value: string): string => {
-    const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-    JsBarcode(svgElement, value, { format: "CODE128", width: 2, height: 60, displayValue: false })
-    return svgElement.outerHTML
-  }
-
-  const isTRAFormat = (headers: string[]): boolean => {
-    const traHeaders = ["order no","order item","factory code","gi location","gr location","material code","material desc","barcode","create by","create date"]
-    const hl = headers.map(h => h.toLowerCase().trim())
-    return traHeaders.every(t => hl.some(h => h.includes(t)))
-  }
-
-  const parseTRAData = (jsonData: any[][], headers: string[]) => {
-    const idx = (terms: string[]) => headers.findIndex(h => terms.some(t => h.includes(t)))
-    const orderNoIdx      = idx(["order no","orderno"])
-    const orderItemIdx    = idx(["order item","orderitem"])
-    const factoryCodeIdx  = idx(["factory code","factorycode"])
-    const giLocationIdx   = idx(["gi location","gilocation"])
-    const grLocationIdx   = idx(["gr location","grlocation"])
-    const materialCodeIdx = idx(["material code","materialcode"])
-    const materialDescIdx = idx(["material desc","materialdesc"])
-    const barcodeIdx      = idx(["barcode","bar code"])
-    const createByIdx     = idx(["create by","createby"])
-    const createDateIdx   = idx(["create date","createdate"])
-    const traNo = jsonData[1] && orderNoIdx >= 0 ? String(jsonData[1][orderNoIdx] || "N/A") : "N/A"
-    const materialData: MaterialData[] = []
-    const serialData: SerialData[]     = []
-    const seenMaterials = new Set<string>()
-    for (let i = 1; i < jsonData.length; i++) {
-      const row = jsonData[i]
-      if (!row || !row[materialCodeIdx]) continue
-      const materialCode = String(row[materialCodeIdx] || "").trim()
-      const materialDesc = materialDescIdx >= 0 ? String(row[materialDescIdx] || "").trim() : ""
-      const barcode      = barcodeIdx >= 0 ? String(row[barcodeIdx] || "").trim() : ""
-      if (!materialCode) continue
-      const key = `${materialCode}|${materialDesc}`
-      if (!seenMaterials.has(key)) {
-        seenMaterials.add(key)
-        materialData.push({
-          materialCode,
-          materialDescription: materialDesc,
-          category: MATCODE_CATEGORY_MAP[materialCode] || "Others",
-          qty: 0,
-          cbm: getCBMFromMatcode(materialCode),
-          remarks: traNo,
-          shipName: ""
-        })
-      }
-      const matItem = materialData.find(m => m.materialCode === materialCode && m.materialDescription === materialDesc)
-      if (matItem) matItem.qty += 1
-      serialData.push({ dnNo: traNo, orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "", factoryCode: factoryCodeIdx >= 0 ? String(row[factoryCodeIdx] || "") : "", location: giLocationIdx >= 0 ? String(row[giLocationIdx] || "") : "", binCode: grLocationIdx >= 0 ? String(row[grLocationIdx] || "") : "", materialCode, materialDesc, barcode, materialType: "", productStatus: "", shipTo: "", shipToName: "", shipToAddress: "", soldTo: "", soldToName: "", scanBy: createByIdx >= 0 ? String(row[createByIdx] || "") : "", scanTime: createDateIdx >= 0 ? String(row[createDateIdx] || "") : "" })
-    }
-    return { material: materialData, serial: serialData, traNo }
-  }
-
-  const filterDNsBySearch = (files: UploadedFile[]) => {
-    if (!searchQuery.trim()) return files
-    const q = searchQuery.toLowerCase()
-    return files.filter(f =>
-      f.dnNo.toLowerCase().includes(q) || f.name.toLowerCase().includes(q) ||
-      f.data.some(i => i.materialCode.toLowerCase().includes(q) || i.materialDescription.toLowerCase().includes(q)) ||
-      f.serialData.some(i => i.barcode.toLowerCase().includes(q) || i.shipToName.toLowerCase().includes(q))
+  const idx = (terms: string[]) =>
+    (hdr as unknown[]).findIndex(h =>
+      h && terms.some(t => String(h).toLowerCase().trim().includes(t.toLowerCase()))
     )
-  }
-  const filterGroupedDataBySearch = (data: MaterialData[]) => {
-    if (!searchQuery.trim()) return data
-    const q = searchQuery.toLowerCase()
-    return data.filter(i => i.materialCode.toLowerCase().includes(q) || i.materialDescription.toLowerCase().includes(q) || i.category.toLowerCase().includes(q) || i.remarks.toLowerCase().includes(q))
-  }
-  const filterSerialDataBySearch = (data: SerialData[]) => {
-    if (!searchQuery.trim()) return data
-    const q = searchQuery.toLowerCase()
-    return data.filter(i => i.dnNo.toLowerCase().includes(q) || i.barcode.toLowerCase().includes(q) || i.materialCode.toLowerCase().includes(q) || i.materialDesc.toLowerCase().includes(q) || i.shipToName.toLowerCase().includes(q))
+
+  const col = {
+    dnNo:          idx(['dn no', 'dn_no', 'dnno', 'order no', 'orderno']),
+    orderItem:     idx(['order item', 'orderitem']),
+    factoryCode:   idx(['factory code', 'factorycode']),
+    location:      idx(['location', 'gi location']),
+    binCode:       idx(['gr location', 'bin code', 'bincode']),
+    materialCode:  idx(['material code', 'materialcode']),
+    materialDesc:  idx(['material desc', 'material description', 'materialdesc']),
+    barcode:       idx(['barcode', 'bar code', 'serial']),
+    materialType:  idx(['material type', 'materialtype']),
+    productStatus: idx(['product status', 'productstatus']),
+    shipTo:        idx(['ship to', 'shipto']),
+    shipToName:    idx(['ship to name', 'shiptoname', 'ship name']),
+    shipToAddress: idx(['ship to address', 'shiptoaddress']),
+    soldTo:        idx(['sold to', 'soldto']),
+    soldToName:    idx(['sold to name', 'soldtoname']),
+    scanBy:        idx(['scan by', 'scanby', 'create by', 'createby']),
+    scanTime:      idx(['scan time', 'scantime', 'create date', 'createdate']),
   }
 
-  const groupAllData = (files: UploadedFile[]): MaterialData[] => {
-    const map = new Map<string, MaterialData>()
-    files.forEach(file => file.data.forEach(item => {
-      const key = `${item.materialCode}|${item.materialDescription}|${item.remarks}`
-      if (map.has(key)) {
-        const e = map.get(key)!
-        e.qty += item.qty
-        if (item.shipName && !e.shipName.includes(item.shipName)) e.shipName = e.shipName ? `${e.shipName}, ${item.shipName}` : item.shipName
-      } else map.set(key, { ...item })
+  const result: SerialRow[] = []
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i] as unknown[]
+    const matCode = String(r[col.materialCode] ?? '').trim()
+    const barcode  = col.barcode >= 0 ? String(r[col.barcode] ?? '').trim() : ''
+    if (!matCode && !barcode) continue
+
+    const dnRaw = col.dnNo >= 0 ? normalizeDN(r[col.dnNo]) : ''
+
+    result.push({
+      dnNo:          dnRaw,
+      orderItem:     col.orderItem     >= 0 ? String(r[col.orderItem]     ?? '') : '',
+      factoryCode:   col.factoryCode   >= 0 ? String(r[col.factoryCode]   ?? '') : '',
+      location:      col.location      >= 0 ? String(r[col.location]      ?? '') : '',
+      binCode:       col.binCode       >= 0 ? String(r[col.binCode]       ?? '') : '',
+      materialCode:  matCode,
+      materialDesc:  col.materialDesc  >= 0 ? String(r[col.materialDesc]  ?? '') : '',
+      barcode,
+      materialType:  col.materialType  >= 0 ? String(r[col.materialType]  ?? '') : '',
+      productStatus: col.productStatus >= 0 ? String(r[col.productStatus] ?? '') : '',
+      shipTo:        col.shipTo        >= 0 ? String(r[col.shipTo]        ?? '') : '',
+      shipToName:    col.shipToName    >= 0 ? String(r[col.shipToName]    ?? '') : '',
+      shipToAddress: col.shipToAddress >= 0 ? String(r[col.shipToAddress] ?? '') : '',
+      soldTo:        col.soldTo        >= 0 ? String(r[col.soldTo]        ?? '') : '',
+      soldToName:    col.soldToName    >= 0 ? String(r[col.soldToName]    ?? '') : '',
+      scanBy:        col.scanBy        >= 0 ? String(r[col.scanBy]        ?? '') : '',
+      scanTime:      col.scanTime      >= 0 ? String(r[col.scanTime]      ?? '') : '',
+    })
+  }
+  return result
+}
+
+function groupByDN(rows: SerialRow[]): Record<string, DNGroup> {
+  const map: Record<string, DNGroup> = {}
+  for (const row of rows) {
+    if (!map[row.dnNo]) {
+      map[row.dnNo] = {
+        dnNo:          row.dnNo,
+        shipToName:    row.shipToName,
+        shipToAddress: row.shipToAddress,
+        rows:          [],
+      }
+    }
+    map[row.dnNo].rows.push(row)
+    if (!map[row.dnNo].shipToName && row.shipToName) map[row.dnNo].shipToName = row.shipToName
+    if (!map[row.dnNo].shipToAddress && row.shipToAddress) map[row.dnNo].shipToAddress = row.shipToAddress
+  }
+  return map
+}
+
+
+
+// ── PDF — exact same format as handleDownloadIndividualDNPDF ─────────────────
+
+function generateBarcodeSVG(value: string): string {
+  const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  JsBarcode(svgElement, value, { format: 'CODE128', width: 2, height: 60, displayValue: false })
+  return svgElement.outerHTML
+}
+
+function formatDateShort(): string {
+  return new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+}
+
+function buildDNPageHtml(group: DNGroup): string {
+  const rows = group.rows.filter(r => r.materialCode && r.barcode)
+  const totalQuantity = rows.length
+
+  const rowsHtml = rows.map((r, idx) => `
+    <tr>
+      <td style="text-align:center">${idx + 1}</td>
+      <td style="text-align:center">${getCategoryFromBinCode(r.barcode).toUpperCase()}</td>
+      <td style="text-align:center">${r.materialDesc || r.materialCode}</td>
+      <td style="text-align:center;font-weight:bold">${r.barcode}</td>
+      <td style="text-align:center">${getCBMFromMatcode(r.materialCode) != null ? getCBMFromMatcode(r.materialCode) : '—'}</td>
+      <td></td>
+    </tr>`).join('')
+
+  return `
+    <div class="header-section">
+      <div>
+        <img src="/sf.png" alt="SF Express Logo" style="height:60px;width:auto"/>
+        <div style="font-size:9px;line-height:1.4;margin-top:5px"><strong>SF Express Warehouse</strong><br/>TINGUB, MANDAUE, CEBU</div>
+      </div>
+      <div style="text-align:right">
+        <div class="dealer-copy">DEALER'S COPY</div>
+        <div style="margin-top:8px">${generateBarcodeSVG(group.dnNo)}</div>
+      </div>
+    </div>
+    <div class="document-header">
+      <div class="doc-number">ORDER NO: ${group.dnNo}</div>
+    </div>
+    <div class="info-row"><div class="info-label">Client</div><div>HAIER PHILIPPINES INC.</div></div>
+    <div class="info-row"><div class="info-label">Date</div><div>${formatDateShort()}</div></div>
+    <div class="info-row"><div class="info-label">Customer</div><div>${group.shipToName || 'N/A'}</div></div>
+    <div class="info-row"><div class="info-label">Address</div><div>${group.shipToAddress || ''}</div></div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:35px">NO.</th>
+          <th style="width:110px">CATEGORY</th>
+          <th style="width:240px">MATERIAL DESCRIPTION</th>
+          <th style="width:180px">SERIAL NUMBER</th>
+          <th style="width:60px">CBM</th>
+          <th style="width:80px">REMARKS</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div class="footer-info" style="display:flex;gap:24px;">
+      <div><strong>TOTAL QTY: ${totalQuantity}</strong></div>
+      <div><strong>TOTAL CBM: ${rows.reduce((s, r) => { const c = getCBMFromMatcode(r.materialCode); return c != null ? s + c : s }, 0).toFixed(2)}</strong></div>
+    </div>`
+}
+
+const PDF_STYLES = `
+  @page{size:portrait;margin:10mm}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:15px;font-size:11px}
+  .header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px}
+  .dealer-copy{font-size:18px;font-weight:bold;letter-spacing:1px;color:#FF2C2C}
+  .document-header{text-align:center;margin:15px 0}
+  .doc-number{font-size:20px;font-weight:bold}
+  .info-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px}
+  .info-label{font-weight:bold;width:80px}
+  .data-table{width:100%;border-collapse:collapse;margin:15px 0;border:2px }
+  .data-table th{border:1px solid #000;padding:8px 6px;font-weight:bold;font-size:10px;text-align:center;}
+  .data-table td{border:1px solid #000;padding:6px;font-size:10px}
+  .footer-info{margin:10px 0;font-size:11px}
+  .separator{text-align:center;margin:15px 0;font-size:10px}
+  @media print{body{margin:0;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:portrait;margin:10mm}}
+`
+
+function printSerialLists(groups: DNGroup[]): void {
+  const win = window.open('', '', 'width=1200,height=800')
+  if (!win) return
+  const pages = groups.map((g, i) => {
+    const isLast = i === groups.length - 1
+    return `<div style="${isLast ? '' : 'page-break-after:always'}">${buildDNPageHtml(g)}</div>`
+  }).join('\n')
+  win.document.write(`<!DOCTYPE html><html><head><title>Serial Lists</title><style>${PDF_STYLES}</style></head><body>${pages}</body></html>`)
+  win.document.close()
+  setTimeout(() => win.print(), 400)
+}
+
+// ── Excel export ──────────────────────────────────────────────────────────────
+
+function exportExcel(groups: DNGroup[]): void {
+  const allRows = groups.flatMap(g =>
+    g.rows.filter(r => r.barcode || r.materialCode).map(r => ({
+      'DN No':            r.dnNo,
+      'Location':         r.location,
+      'Bin Code':         r.binCode,
+      'Material Code':    r.materialCode,
+      'Material Desc':    r.materialDesc,
+      'Barcode':          r.barcode,
+      'Ship To Name':     r.shipToName,
+      'Ship To Address':  r.shipToAddress,
     }))
-    return Array.from(map.values())
-  }
+  )
+  const ws = XLSX.utils.json_to_sheet(allRows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Serial List')
+  XLSX.writeFile(wb, 'Filtered_Serial_List.xlsx')
+}
 
-  const combineAllSerialData = (files: UploadedFile[]) =>
-    files.flatMap(f => f.serialData).filter(r => r.materialCode && r.barcode)
+// ── Drop Zone ─────────────────────────────────────────────────────────────────
 
-  const groupSingleFileData = (fileData: MaterialData[]): MaterialData[] => {
-    const map = new Map<string, MaterialData>()
-    fileData.forEach(item => {
-      const key = `${item.materialCode}|${item.materialDescription}|${item.remarks}`
-      if (map.has(key)) { const e = map.get(key)!; e.qty += item.qty } else map.set(key, { ...item })
-    })
-    return Array.from(map.values())
-  }
+interface DropZoneProps {
+  onFile: (file: File) => void
+  loaded: boolean
+  fileName: string | null
+}
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-    setIsLoading(true)
-    try {
-      const newFiles: UploadedFile[] = []
-      const duplicateDNs: string[] = []
-      const existingDNs = new Set(uploadedFiles.map(f => f.dnNo))
-      for (let fi = 0; fi < files.length; fi++) {
-        const file = files[fi]
-        const ab = await file.arrayBuffer()
-        const wb = XLSX.read(ab)
-        const ws = wb.Sheets[wb.SheetNames[0]]
-        const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][]
-        const headers = jsonData[0].map((h: any) => String(h || "").toLowerCase().trim())
-        const isTRA = isTRAFormat(headers)
-        let fileData: MaterialData[] = [], serialData: SerialData[] = [], dnNo = "N/A"
-        if (isTRA) {
-          const r = parseTRAData(jsonData, headers); fileData = r.material; serialData = r.serial; dnNo = r.traNo
-        } else {
-          const dnNoIdx = headers.findIndex(h => h.includes("dn no") || h.includes("dnno"))
-          const materialCodeIdx = headers.findIndex(h => h.includes("material code") || h.includes("materialcode"))
-          const materialDescIdx = headers.findIndex(h => h.includes("material desc") || h.includes("material description"))
-          const barCodeIdx = headers.findIndex(h => h.includes("barcode") || h.includes("bar code"))
-          const shipToNameIdx = headers.findIndex(h => h.includes("ship to name") || h.includes("shiptoname") || h.includes("ship name"))
-          const orderItemIdx = headers.findIndex(h => h.includes("order item"))
-          const factoryCodeIdx = headers.findIndex(h => h.includes("factory code"))
-          const locationIdx = headers.findIndex(h => h.includes("location"))
-          const materialTypeIdx = headers.findIndex(h => h.includes("material type"))
-          const productStatusIdx = headers.findIndex(h => h.includes("product status"))
-          const shipToIdx = headers.findIndex(h => h === "ship to" || h === "shipto")
-          const shipToAddressIdx = headers.findIndex(h => h.includes("ship to address"))
-          const soldToIdx = headers.findIndex(h => h === "sold to" || h === "soldto")
-          const soldToNameIdx = headers.findIndex(h => h.includes("sold to name"))
-          const scanByIdx = headers.findIndex(h => h.includes("scan by"))
-          const scanTimeIdx = headers.findIndex(h => h.includes("scan time"))
-          if (dnNoIdx >= 0 && jsonData[1]) dnNo = String(jsonData[1][dnNoIdx] || "N/A")
-          for (let i = 1; i < jsonData.length; i++) {
-            const row = jsonData[i]
-            if (!row || !row[materialCodeIdx]) continue
-            const materialCode = String(row[materialCodeIdx] || "").trim()
-            const materialDescription = materialDescIdx >= 0 ? String(row[materialDescIdx] || "").trim() : ""
-            const barCode = barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : ""
-            const shipName = shipToNameIdx >= 0 ? String(row[shipToNameIdx] || "").trim() : ""
-            if (!materialCode) continue
-            const qtyIdx = headers.findIndex(h => h.includes("qty") || h.includes("quantity"))
-            const qty = qtyIdx >= 0 ? parseInt(String(row[qtyIdx] || "1"), 10) || 1 : 1
-            fileData.push({
-              materialCode,
-              materialDescription,
-              category: MATCODE_CATEGORY_MAP[materialCode] || "Others",
-              qty,
-              cbm: getCBMFromMatcode(materialCode),
-              remarks: dnNo,
-              shipName
-            })
-            serialData.push({ dnNo: dnNoIdx >= 0 ? String(row[dnNoIdx] || dnNo) : dnNo, orderItem: orderItemIdx >= 0 ? String(row[orderItemIdx] || "") : "", factoryCode: factoryCodeIdx >= 0 ? String(row[factoryCodeIdx] || "") : "", location: locationIdx >= 0 ? String(row[locationIdx] || "") : "", binCode: barCodeIdx >= 0 ? String(row[barCodeIdx] || "") : "", materialCode, materialDesc: materialDescription, barcode: barCode, materialType: materialTypeIdx >= 0 ? String(row[materialTypeIdx] || "") : "", productStatus: productStatusIdx >= 0 ? String(row[productStatusIdx] || "") : "", shipTo: shipToIdx >= 0 ? String(row[shipToIdx] || "") : "", shipToName: shipName, shipToAddress: shipToAddressIdx >= 0 ? String(row[shipToAddressIdx] || "") : "", soldTo: soldToIdx >= 0 ? String(row[soldToIdx] || "") : "", soldToName: soldToNameIdx >= 0 ? String(row[soldToNameIdx] || "") : "", scanBy: scanByIdx >= 0 ? String(row[scanByIdx] || "") : "", scanTime: scanTimeIdx >= 0 ? String(row[scanTimeIdx] || "") : "" })
-          }
-        }
-        if (existingDNs.has(dnNo)) { duplicateDNs.push(dnNo); continue }
-        newFiles.push({ id: `${Date.now()}-${fi}`, name: file.name, dnNo, data: fileData, serialData })
-        existingDNs.add(dnNo)
-      }
-      if (duplicateDNs.length > 0) addNotification("warning", `Duplicate DN${duplicateDNs.length > 1 ? 's' : ''} skipped: ${duplicateDNs.join(", ")}`)
-      if (newFiles.length > 0) { addNotification("success", `Uploaded ${newFiles.length} file${newFiles.length > 1 ? 's' : ''}`); await saveToSupabase(newFiles) }
-      const allFiles = [...uploadedFiles, ...newFiles]
-      setUploadedFiles(allFiles)
-      const newGrouped = groupAllData(allFiles); setGroupedData(newGrouped)
-      const newSerial = combineAllSerialData(allFiles); setSerialListData(newSerial)
-      setAnimatingRows(new Set())
-      Array.from({ length: newGrouped.length }).forEach((_, idx) => {
-        setTimeout(() => setAnimatingRows(prev => { const s = new Set(prev); s.add(idx); return s }), idx * 50)
-      })
-      if (newFiles.length > 0) setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), newGrouped.length * 50 + 300)
-    } catch (err) {
-      addNotification("error", "Error parsing file. Check required columns.")
-    } finally { setIsLoading(false); e.target.value = "" }
-  }
+function DropZone({ onFile, loaded, fileName }: DropZoneProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
 
-  const handleDeleteFile = (fileId: string) => {
-    const updated = uploadedFiles.filter(f => f.id !== fileId)
-    setUploadedFiles(updated); setGroupedData(groupAllData(updated)); setSerialListData(combineAllSerialData(updated))
-  }
-
-  const handleClear = () => {
-    setGroupedData([]); setSerialListData([]); setUploadedFiles([])
-    setAnimatingRows(new Set()); setSelectedFileId(null); setShowFilesList(false)
-  }
-
-  const handleSelectFile = (fileId: string) => {
-    if (selectedFileId === fileId) {
-      setSelectedFileId(null)
-      const all = groupAllData(uploadedFiles); setGroupedData(all); setSerialListData(combineAllSerialData(uploadedFiles))
-    } else {
-      setSelectedFileId(fileId)
-      const sel = uploadedFiles.find(f => f.id === fileId)
-      if (sel) { setGroupedData(groupSingleFileData(sel.data)); setSerialListData(sel.serialData) }
-    }
-    setAnimatingRows(new Set())
-    setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300)
-  }
-
-  const handleDownloadExcel = () => {
-    const ws = activeTab === "consolidated"
-      ? XLSX.utils.json_to_sheet(groupedData.map(r => ({
-          "Material Code": r.materialCode,
-          "Material Description": r.materialDescription,
-          Category: r.category,
-          "Qty.": r.qty,
-          "CBM (unit)": r.cbm ?? "",
-          "Total CBM": r.cbm != null ? +(r.cbm * r.qty).toFixed(2) : "",
-          UM: "-",
-          ShipName: r.shipName,
-          Remarks: r.remarks
-        })))
-      : XLSX.utils.json_to_sheet(serialListData.map(r => ({ "DN No": r.dnNo, Location: r.location, "Bin Code": r.binCode, "Material Code": r.materialCode, "Material Desc": r.materialDesc, Barcode: r.barcode, "Ship To Name": r.shipToName, "Ship To Address": r.shipToAddress })))
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, activeTab === "consolidated" ? "Consolidated" : "Serial List")
-    XLSX.writeFile(wb, activeTab === "consolidated" ? "Consolidated_Materials.xlsx" : "Bulking_Serial_List.xlsx")
-  }
-
-  const handleDownloadAllDN = () => {
-    const wb = XLSX.utils.book_new()
-    uploadedFiles.forEach(file => {
-      const ws = XLSX.utils.json_to_sheet(file.serialData.map(r => ({ "DN No": r.dnNo, Location: r.location, "Bin Code": r.binCode, "Material Code": r.materialCode, "Material Desc": r.materialDesc, Barcode: r.barcode, "Ship To Name": r.shipToName, "Ship To Address": r.shipToAddress })))
-      XLSX.utils.book_append_sheet(wb, ws, file.dnNo.substring(0, 31))
-    })
-    XLSX.writeFile(wb, "All_DN_Serial_Lists.xlsx")
-  }
-
-  const handleDownloadIndividualDN = (file: UploadedFile) => {
-    const ws = XLSX.utils.json_to_sheet(file.serialData.map(r => ({ "DN No": r.dnNo, Location: r.location, "Bin Code": r.binCode, "Material Code": r.materialCode, "Material Desc": r.materialDesc, Barcode: r.barcode, "Ship To Name": r.shipToName, "Ship To Address": r.shipToAddress })))
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, file.dnNo.substring(0, 31))
-    XLSX.writeFile(wb, `${file.dnNo}_Serial_List.xlsx`)
-  }
-
-  const handleDownloadPDF = () => {
-    const visibleData = filterGroupedDataBySearch(groupedData).filter(r => r.materialCode && r.materialDescription)
-    const grandTotalCBM = totalCBM(visibleData)
-    const printWindow = window.open("", "", "width=1200,height=800")
-    if (!printWindow) return
-    const htmlContent = `<!DOCTYPE html><html><head><title>${activeTab === "consolidated" ? "Consolidated Materials Report" : "Bulking Serial List Report"}</title><style>@page{size:landscape;margin:15mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:20px}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:15px}.logo img{height:45px;width:auto}.date{text-align:right;font-size:11px;color:#000;line-height:1.6}.date strong{font-weight:bold;font-size:12px}h1{color:#000;margin:15px 0 20px;font-size:22px;font-weight:bold;text-align:center}table{width:100%;border-collapse:collapse;margin-top:15px;font-size:10px;background:#fff;border:2px solid #000}th,td{border:1.5px solid #000;padding:10px 8px;text-align:center;word-wrap:break-word;color:#000}th{background:linear-gradient(180deg,#E8E8E8 0%,#D3D3D3 100%);font-weight:bold;font-size:11px;text-transform:uppercase;padding:12px 8px}tbody tr:nth-child(even){background:#F9F9F9}.total-row{background:#f0f0f0!important;font-weight:bold}@media print{body{margin:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:landscape;margin:15mm}}</style></head><body><div class="header"><div class="logo"><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF EXPRESS Logo"/></div><div class="date"><strong>Date Printed:</strong><br/>${formatDate()}</div></div><h1>${activeTab === "consolidated" ? "Consolidated Materials Report" : "Bulking Serial List Report"}</h1>${activeTab === "consolidated" ? `<table><thead><tr><th>MATERIAL CODE</th><th>MATERIAL DESCRIPTION</th><th>CATEGORY</th><th>QTY.</th><th>CBM (UNIT)</th><th>TOTAL CBM</th><th>UM</th><th>SHIP NAME</th><th>REMARKS</th></tr></thead><tbody>${visibleData.map(r => `<tr><td style="font-weight:bold">${r.materialCode}</td><td>${r.materialDescription}</td><td>${r.category}</td><td style="font-weight:bold">${r.qty}</td><td>${r.cbm != null ? r.cbm : '—'}</td><td style="font-weight:bold">${r.cbm != null ? (r.cbm * r.qty).toFixed(2) : '—'}</td><td>-</td><td>${r.shipName}</td><td>${r.remarks}</td></tr>`).join("")}<tr class="total-row"><td colspan="5" style="text-align:right;padding-right:12px">GRAND TOTAL CBM</td><td>${grandTotalCBM.toFixed(2)}</td><td colspan="3"></td></tr></tbody></table>` : `<table><thead><tr><th>DN NO</th><th>LOCATION</th><th>BIN CODE</th><th>MATERIAL CODE</th><th>MATERIAL DESC</th><th>SERIAL NUMBER</th><th>SHIP TO NAME</th><th>SHIP TO ADDRESS</th></tr></thead><tbody>${serialListData.filter(r => r.materialCode && r.barcode).map(r => `<tr><td>${r.dnNo}</td><td>${r.location}</td><td>${r.binCode}</td><td style="font-weight:bold">${r.materialCode}</td><td>${r.materialDesc}</td><td style="font-weight:bold">${r.barcode}</td><td>${r.shipToName}</td><td>${r.shipToAddress}</td></tr>`).join("")}</tbody></table>`}</body></html>`
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-    setTimeout(() => printWindow.print(), 250)
-  }
-
-  const handleDownloadAllDNPDF = () => {
-    const printWindow = window.open("", "", "width=1200,height=800")
-    if (!printWindow) return
-    const allDNContent = uploadedFiles.map((file, index) => {
-      const shipToName = file.serialData[0]?.shipToName || "N/A"
-      const shipToAddress = file.serialData[0]?.shipToAddress || ""
-      const pageBreakClass = index < uploadedFiles.length - 1 ? "page-break" : ""
-      const totalQty = file.serialData.filter(r => r.materialCode && r.barcode).length
-      const totalCbm = totalCBMFromSerials(file.serialData.filter(r => r.materialCode && r.barcode))
-      return `<div class="${pageBreakClass}"><div class="header-section"><div class="logo-section"><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height:60px;width:auto"/><div style="font-size:9px;line-height:1.4;margin-top:5px"><strong>SF Express Warehouse</strong><br/>UPPER TINGUB, MANDAUE, CEBU</div></div><div class="title-section"><div class="dealer-copy">DEALER'S COPY</div><div style="margin-top:8px;text-align:right">${generateBarcodeSVG(file.dnNo)}</div></div></div><div class="document-header"><div class="doc-number">ORDER NO: ${file.dnNo}</div></div><div class="info-row"><div class="info-label">Client</div><div class="info-value">HAIER PHILIPPINES INC.</div></div><div class="info-row"><div class="info-label">Date</div><div class="info-value">${formatDateShort()}</div></div><div class="info-row"><div class="info-label">Customer</div><div class="info-value">${shipToName}</div></div><div class="info-row"><div class="info-label">Address</div><div class="info-value">${shipToAddress}</div></div><table class="data-table"><thead><tr><th style="width:40px">NO.</th><th style="width:120px">CATEGORY</th><th style="width:250px">MATERIAL DESCRIPTION</th><th style="width:180px">SERIAL NUMBER</th><th style="width:70px">CBM</th><th style="width:100px">REMARKS</th></tr></thead><tbody>${file.serialData.filter(r => r.materialCode && r.barcode).map((r, idx) => `<tr><td style="text-align:center">${idx + 1}</td><td style="text-align:center">${getCategoryFromBinCode(r.barcode).toUpperCase()}</td><td style="text-align:center">${r.materialDesc || r.materialCode}</td><td style="text-align:center;font-weight:bold">${r.barcode}</td><td style="text-align:center">${getCBMFromMatcode(r.materialCode) != null ? getCBMFromMatcode(r.materialCode) : '—'}</td><td></td></tr>`).join("")}</tbody></table><div class="footer-info" style="display:flex;gap:24px;"><div><strong>TOTAL QTY: ${totalQty}</strong></div><div><strong>TOTAL CBM: ${totalCbm.toFixed(2)}</strong></div></div></div>`
-    }).join("")
-    const htmlContent = `<!DOCTYPE html><html><head><title>All DN Serial Lists</title><style>@page{size:portrait;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:15px;font-size:11px}.page-break{page-break-after:always;margin-bottom:20px;margin-right:10px}.header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #000}.title-section{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start}.dealer-copy{font-size:15px;font-weight:bold;letter-spacing:1px;margin-right:10px;text-align:right;color:#FF2C2C}.document-header{text-align:center;margin:15px 0;font-size:20px;font-weight:bold}.doc-number{font-size:20px;font-weight:bold}.info-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px}.info-label{font-weight:bold;width:80px}.data-table{width:100%;border-collapse:collapse;margin:15px 0;border:2px solid #000}.data-table th{border:1px solid #000;padding:8px 6px;font-weight:bold;font-size:10px;text-align:center;background:#fff}.data-table td{border:1px solid #000;padding:6px;font-size:10px}.footer-info{margin:10px 0;font-size:11px}@media print{body{margin:0;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:portrait;margin:10mm}}</style></head><body>${allDNContent}</body></html>`
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-    setTimeout(() => printWindow.print(), 250)
-  }
-
-  const handleDownloadIndividualDNPDF = (file: UploadedFile) => {
-    const printWindow = window.open("", "", "width=1200,height=800")
-    if (!printWindow) return
-    const shipToName = file.serialData[0]?.shipToName || "N/A"
-    const shipToAddress = file.serialData[0]?.shipToAddress || ""
-    const totalQuantity = file.serialData.filter(r => r.materialCode && r.barcode).length
-    const totalCbmInd = totalCBMFromSerials(file.serialData.filter(r => r.materialCode && r.barcode))
-    const htmlContent = `<!DOCTYPE html><html><head><title>${file.dnNo} - Serial List</title><style>@page{size:portrait;margin:10mm}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:15px;font-size:11px}.header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #000}.dealer-copy{font-size:18px;font-weight:bold;letter-spacing:1px}.document-header{text-align:center;margin:15px 0}.doc-number{font-size:20px;font-weight:bold}.info-row{display:flex;gap:8px;margin-bottom:4px;font-size:10px}.info-label{font-weight:bold;width:80px}.data-table{width:100%;border-collapse:collapse;margin:15px 0;border:2px solid #000}.data-table th{border:1px solid #000;padding:8px 6px;font-weight:bold;font-size:10px;text-align:center;background:#e8e8e8}.data-table td{border:1px solid #000;padding:6px;font-size:10px}.footer-info{margin:10px 0;font-size:11px}.separator{text-align:center;margin:15px 0;font-size:10px}@media print{body{margin:0;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:portrait;margin:10mm}}</style></head><body><div class="header-section"><div><img src="https://www.pngkey.com/png/full/77-774114_express-logo-sf-express.png" alt="SF Express Logo" style="height:60px;width:auto"/><div style="font-size:9px;line-height:1.4;margin-top:5px"><strong>SF Express Warehouse</strong><br/>TINGUB, MANDAUE, CEBU</div></div><div style="text-align:right"><div class="dealer-copy">DEALER'S COPY</div><div style="margin-top:8px">${generateBarcodeSVG(file.dnNo)}</div><div style="font-size:10px;margin-top:4px">${formatDateShort()}</div></div></div><div class="document-header"><div class="doc-number">Doc # : ${file.dnNo}</div></div><div class="info-row"><div class="info-label">Client</div><div>HAIER PHILIPPINES INC.</div></div><div class="info-row"><div class="info-label">Date</div><div>${formatDateShort()}</div></div><div class="info-row"><div class="info-label">Customer</div><div>${shipToName}</div></div><div class="info-row"><div class="info-label">Address</div><div>${shipToAddress}</div></div><table class="data-table"><thead><tr><th style="width:35px">#</th><th style="width:110px">CATEGORY</th><th style="width:240px">MATERIAL DESCRIPTION</th><th style="width:180px">SERIAL NUMBER</th><th style="width:60px">CBM</th><th style="width:80px">REMARKS</th></tr></thead><tbody>${file.serialData.filter(r => r.materialCode && r.barcode).map((r, idx) => `<tr><td style="text-align:center">${idx + 1}</td><td style="text-align:center">${getCategoryFromBinCode(r.barcode).toUpperCase()}</td><td style="text-align:center">${r.materialDesc || r.materialCode}</td><td style="text-align:center;font-weight:bold">${r.barcode}</td><td style="text-align:center">${getCBMFromMatcode(r.materialCode) != null ? getCBMFromMatcode(r.materialCode) : '—'}</td><td></td></tr>`).join("")}</tbody></table><div class="footer-info" style="display:flex;gap:24px;"><div><strong>TOTAL QTY: ${totalQuantity}</strong></div><div><strong>TOTAL CBM: ${totalCbmInd.toFixed(2)}</strong></div></div><div class="separator">********** Nothing Follows **********</div></body></html>`
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-    setTimeout(() => printWindow.print(), 250)
-  }
-
-  const handleDownloadConfirm = () => {
-    setShowDownloadModal(false)
-    if (downloadType === "pdf") {
-      if (isDownloadingAllDN) handleDownloadAllDNPDF()
-      else if (selectedDownloadFile) handleDownloadIndividualDNPDF(selectedDownloadFile)
-      else handleDownloadPDF()
-    } else {
-      if (isDownloadingAllDN) handleDownloadAllDN()
-      else if (selectedDownloadFile) handleDownloadIndividualDN(selectedDownloadFile)
-      else handleDownloadExcel()
-    }
-    setSelectedDownloadFile(null); setIsDownloadingAllDN(false)
-  }
-
-  const handleDragOver  = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true) }
-  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false) }
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault(); setIsDragging(false)
-    const files = e.dataTransfer.files
-    if (files?.length) {
-      const input = document.getElementById('file-upload') as HTMLInputElement
-      if (input) {
-        const dt = new DataTransfer()
-        Array.from(files).forEach(f => dt.items.add(f))
-        input.files = dt.files
-        input.dispatchEvent(new Event('change', { bubbles: true }))
-      }
-    }
-  }
-
-  const tabs = [
-    { id: "consolidated" as TabType, label: "Consolidated",  index: "01", icon: Layers        },
-    { id: "serialList"   as TabType, label: "Serial List",   index: "02", icon: FileText       },
-    { id: "individualDN" as TabType, label: "Individual DN", index: "03", icon: Download       },
-  ]
-
-  const sidebarItemBase = `w-full flex items-center transition-all duration-200 relative group`
-  const sidebarRowCls = sidebarCollapsed
-    ? `${sidebarItemBase} flex-row gap-4 px-5 py-5 lg:flex-col lg:justify-center lg:gap-1.5 lg:px-0 lg:py-4`
-    : `${sidebarItemBase} flex-row gap-4 px-5 py-5`
-
-  const visibleGrouped = filterGroupedDataBySearch(groupedData).filter(r => r.materialCode && r.materialDescription)
-  const grandTotal = totalCBM(visibleGrouped)
-
-  // Per-DN CBM + grand total across all DNs
-  const filteredDNs = filterDNsBySearch(uploadedFiles)
-  const allDNsTotalCBM = filteredDNs.reduce((sum, f) =>
-    sum + totalCBMFromSerials(f.serialData.filter(r => r.materialCode && r.barcode)), 0)
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); setDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) onFile(file)
+  }, [onFile])
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: C.bg }}>
+    <div
+      onDragOver={e => { e.preventDefault(); setDragging(true) }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={handleDrop}
+      onClick={() => inputRef.current?.click()}
+      className="relative cursor-pointer transition-all duration-200"
+      style={{
+        border:     `1px solid ${loaded ? 'rgba(34,197,94,0.4)' : dragging ? C.inputFocus : C.border}`,
+        background: loaded ? 'rgba(34,197,94,0.04)' : dragging ? `${C.inputFocus}10` : C.surface,
+        padding: '20px 18px',
+      }}
+    >
+      <input ref={inputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
+        onChange={e => { if (e.target.files?.[0]) onFile(e.target.files[0]) }} />
 
-      {/* ── Navbar ── */}
-      <nav className="flex-shrink-0 h-[73px] z-50 flex items-center px-5 sm:px-8 gap-3 sm:gap-4" style={{ background: C.bg, borderBottom: `1px solid ${C.border}` }}>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden p-2 rounded-full transition-colors flex-shrink-0"
-          style={{ color: C.textSub }}
-          onMouseEnter={e => (e.currentTarget.style.background = C.surface)}
-          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-        >
-          <Menu className="w-4 h-4" />
-        </button>
-
-        <Link href="/" className="p-2 rounded-full transition-colors flex-shrink-0" style={{ color: C.textSub }}
-          onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = C.surface)}
-          onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.background = 'transparent')}
-          title="Home">
-          <Home className="w-4 h-4" />
-        </Link>
-
-        <div className="w-px h-4 flex-shrink-0 hidden sm:block" style={{ background: C.border }} />
-
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
-          <div className="w-px h-4 hidden sm:block" style={{ background: C.border }} />
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold hidden sm:block" style={{ color: C.textMuted }}>Serial List</p>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold sm:hidden" style={{ color: C.textMuted }}>Upload</p>
-        </div>
-
-        <div className="flex-1" />
-
-        {uploadedFiles.length > 0 && (
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0" style={{ border: `1px solid ${C.border}` }}>
-            <span className="text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textMuted }}>Files</span>
-            <span className="text-[11px] font-[#0D1117] tabular-nums" style={{ color: C.textPrimary }}>{uploadedFiles.length}</span>
-          </div>
-        )}
-      </nav>
-
-      {/* ── Toast notifications ── */}
-      <div className="fixed top-[85px] right-4 z-[100] space-y-2 max-w-sm pointer-events-none">
-        {notifications.map(n => (
-          <div key={n.id} className="flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl pointer-events-auto"
-            style={{
-              background: C.bg,
-              border: `1px solid ${n.type === 'error' ? 'rgba(232,25,44,0.2)' : n.type === 'warning' ? 'rgba(245,166,35,0.2)' : 'rgba(34,197,94,0.2)'}`,
-              animation: 'slideInRight 0.3s ease forwards',
-            }}>
-            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: n.type === 'error' ? C.accent : n.type === 'warning' ? C.amber : '#22c55e' }} />
-            <p className="text-[11px] font-bold uppercase tracking-widest flex-1" style={{ color: C.textPrimary }}>{n.message}</p>
-            <button onClick={() => removeNotification(n.id)} className="p-0.5 rounded-full transition-colors" style={{ color: C.textMuted }}>
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        ))}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-5 h-5 flex items-center justify-center text-[10px] font-bold"
+          style={{ background: loaded ? 'rgba(34,197,94,0.15)' : 'rgba(232,25,44,0.1)', border: `1px solid ${loaded ? 'rgba(34,197,94,0.3)' : 'rgba(232,25,44,0.2)'}`, color: loaded ? '#22c55e' : C.accent }}>
+          {loaded ? '✓' : '1'}
+        </span>
+        <span className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textMuted }}>
+          {loaded ? 'Loaded' : 'Required'}
+        </span>
       </div>
 
-      <style>{`
-        @keyframes slideInRight { from { opacity:0; transform:translateX(20px) } to { opacity:1; transform:translateX(0) } }
-        @keyframes fadeInUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
-        .animate-row { animation: fadeInUp 0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
-      `}</style>
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-0.5"
+          style={{ background: loaded ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)', border: `1px solid ${loaded ? 'rgba(34,197,94,0.25)' : C.border}` }}>
+          {loaded
+            ? <CheckCircle2 className="w-4 h-4" style={{ color: '#22c55e' }} />
+            : <FileSpreadsheet className="w-4 h-4" style={{ color: C.textGhost }} />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold truncate leading-snug" style={{ color: loaded ? '#86efac' : C.textSilver }}>
+            {loaded ? fileName : 'Serial List Excel File'}
+          </p>
+          <p className="text-[11px] mt-0.5" style={{ color: C.textMuted }}>
+            {loaded ? 'Click to replace' : 'Upload the full barcode / serial Excel (.xlsx)'}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-      {/* ── Layout ── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+// ── Main Component ────────────────────────────────────────────────────────────
 
-        {/* Mobile overlay */}
-        <div
-          aria-hidden="true"
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 top-[73px] z-40 lg:hidden transition-opacity duration-300"
-          style={{
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(12px)',
-            opacity: sidebarOpen ? 1 : 0,
-            pointerEvents: sidebarOpen ? 'auto' : 'none',
-          }}
-        />
+export function SerialListPrinter() {
+  const [allRows,      setAllRows]      = useState<SerialRow[]>([])
+  const [dnMap,        setDnMap]        = useState<Record<string, DNGroup>>({})
+  const [fileName,     setFileName]     = useState<string | null>(null)
+  const [dnInput,      setDnInput]      = useState('')
+  const [matchedDNs,   setMatchedDNs]   = useState<DNGroup[]>([])
+  const [unmatchedDNs, setUnmatchedDNs] = useState<string[]>([])
+  const [processed,    setProcessed]    = useState(false)
+  const [expandedDN,   setExpandedDN]   = useState<string | null>(null)
+  const [search,       setSearch]       = useState('')
 
-        {/* ── Sidebar ── */}
-        <aside
-          className="sidebar-aside fixed left-0 top-[73px] flex flex-col z-50 transition-all duration-300 ease-in-out w-60"
-          style={{
-            background: C.bg,
-            borderRight: `1px solid ${C.border}`,
-            height: 'calc(100dvh - 73px)',
-            transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-          }}
-        >
-          <style>{`
-            @media (min-width: 1024px) {
-              .sidebar-aside { transform: translateX(0) !important; position: sticky !important; top: 73px; width: ${sidebarCollapsed ? '60px' : '240px'} !important; flex-shrink: 0; }
-            }
-          `}</style>
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error'; show: boolean }>({
+    message: '', type: 'success', show: false,
+  })
 
-          <nav className="flex-1 py-5 overflow-y-auto overflow-x-hidden">
-            <div style={{ borderBottom: `1px solid ${C.border}` }}>
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type, show: true })
+    setTimeout(() => setToast(p => ({ ...p, show: false })), 3500)
+  }
 
-              <label htmlFor="file-upload"
-                className={`${sidebarRowCls} cursor-pointer hover:pl-7 ${sidebarCollapsed ? 'lg:hover:pl-0' : ''}`}
-                style={{ borderBottom: `1px solid ${C.border}` }}
-              >
-                <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>↑</span>
-                <Upload className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
-                {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest transition-colors" style={{ color: C.textGhost }}>↑</span>}
-                <span className={`text-[13px] font-[#0D1117] transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textSub }}>Upload Files</span>
-                {sidebarCollapsed && (
-                  <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
-                    style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>Upload Files</div>
-                )}
-                <input id="file-upload" type="file" accept=".xlsx,.xls,.csv" multiple onChange={handleFileUpload} className="hidden" />
-              </label>
+  const handleFile = async (file: File) => {
+    try {
+      const ab = await file.arrayBuffer()
+      const wb = XLSX.read(ab)
+      const rows = parseSerialExcel(wb)
+      const grouped = groupByDN(rows)
+      setAllRows(rows)
+      setDnMap(grouped)
+      setFileName(file.name)
+      setProcessed(false)
+      showToast(`Loaded ${rows.length} rows · ${Object.keys(grouped).length} DNs`, 'success')
+    } catch {
+      showToast('Error reading file. Check format.', 'error')
+    }
+  }
 
-              {tabs.map(({ id, label, index, icon: Icon }) => {
-                const isActive = activeTab === id && (groupedData.length > 0 || serialListData.length > 0)
-                return (
-                  <button key={id}
-                    onClick={() => { setActiveTab(id); setSidebarOpen(false); setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100) }}
-                    className={`${sidebarRowCls} ${isActive ? 'pl-6' : 'hover:pl-7'} ${sidebarCollapsed ? 'lg:hover:pl-0' : ''}`}
-                    style={{ borderBottom: `1px solid ${C.border}` }}
-                  >
-                    {isActive && <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-px h-8 ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ background: C.accent }} />}
-                    {isActive && sidebarCollapsed && <span className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 h-px w-6" style={{ background: C.accent }} />}
-                    <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>
-                    <Icon className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: isActive ? C.accent : C.textSub }} strokeWidth={1.5} />
-                    {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest transition-colors" style={{ color: isActive ? C.accent : C.textGhost }}>{index}</span>}
-                    <span className={`text-[13px] font-[#0D1117] leading-snug transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: isActive ? C.textPrimary : C.textSub }}>{label}</span>
-                    {sidebarCollapsed && (
-                      <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
-                        style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>{label}</div>
-                    )}
-                  </button>
-                )
-              })}
+  const saveToSupabase = async (groups: DNGroup[]) => {
+    for (const group of groups) {
+      try {
+        const rows = group.rows.filter(r => r.materialCode && r.barcode)
+        const totalQuantity = rows.length
 
-              {uploadedFiles.length > 0 && (
-                <button onClick={() => { handleClear(); setSidebarOpen(false) }} className={`${sidebarRowCls} hover:pl-7 ${sidebarCollapsed ? 'lg:hover:pl-0' : ''}`}>
-                  <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>×</span>
-                  <X className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textGhost }} strokeWidth={1.5} />
-                  {sidebarCollapsed && <span className="hidden lg:block text-[10px] font-bold tracking-widest" style={{ color: C.textGhost }}>×</span>}
-                  <span className={`text-[13px] font-[#0D1117] transition-colors ${sidebarCollapsed ? 'lg:hidden' : ''}`} style={{ color: C.textGhost }}>Clear All</span>
-                  {sidebarCollapsed && (
-                    <div className="hidden lg:block absolute left-14 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[11px] z-50 shadow-2xl"
-                      style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>Clear All</div>
-                  )}
-                </button>
-              )}
+        // Build materialData summary per DN (grouped by materialCode)
+        const matMap = new Map<string, { materialCode: string; materialDescription: string; qty: number }>()
+        for (const r of rows) {
+          const key = r.materialCode
+          if (matMap.has(key)) matMap.get(key)!.qty += 1
+          else matMap.set(key, { materialCode: r.materialCode, materialDescription: r.materialDesc, qty: 1 })
+        }
+
+        const isDN = group.dnNo.startsWith('DN') || group.dnNo.includes('-DN-')
+        const payload = {
+          fileName:      group.dnNo,
+          dnNo:          isDN ? group.dnNo : undefined,
+          traNo:         !isDN ? group.dnNo : undefined,
+          totalQuantity,
+          data:          Array.from(matMap.values()),
+          serialData:    rows,
+        }
+
+        const response = await fetch('/api/save-excel-upload', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          showToast(`Failed to save ${group.dnNo}: ${error.error}`, 'error')
+        } else {
+          showToast(`Saved ${group.dnNo} (Qty: ${totalQuantity})`, 'success')
+        }
+      } catch (err) {
+        showToast(`Error saving ${group.dnNo}: ${err instanceof Error ? err.message : 'Unknown'}`, 'error')
+      }
+    }
+  }
+
+  const handleMatch = () => {
+    const requested = parseDNList(dnInput)
+    if (!requested.length) { showToast('Enter at least one DN number', 'error'); return }
+
+    const matched: DNGroup[] = []
+    const unmatched: string[] = []
+
+    for (const dn of requested) {
+      // Try direct match first, then try stripping leading zeros both ways
+      const group = dnMap[dn]
+        ?? dnMap[dn.replace(/^0+/, '')]
+        ?? Object.values(dnMap).find(g => g.dnNo.replace(/^0+/, '') === dn.replace(/^0+/, ''))
+      if (group) matched.push(group)
+      else unmatched.push(dn)
+    }
+
+    setMatchedDNs(matched)
+    setUnmatchedDNs(unmatched)
+    setProcessed(true)
+    showToast(`${matched.length} matched · ${unmatched.length} not found`, matched.length ? 'success' : 'error')
+    if (matched.length > 0) saveToSupabase(matched)
+  }
+
+
+
+  const canMatch = !!fileName && !!dnInput.trim()
+
+  const filtered = matchedDNs.filter(g =>
+    !search ||
+    g.dnNo.toLowerCase().includes(search.toLowerCase()) ||
+    g.shipToName.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const totalQty = matchedDNs.reduce((s, g) => s + g.rows.filter(r => r.barcode || r.materialCode).length, 0)
+
+  const availableDNs = Object.keys(dnMap)
+
+  return (
+    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: C.bg }}>
+
+      {/* ── Nav ── */}
+      <nav className="relative flex-shrink-0 h-[73px] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4"
+        style={{ background: C.bg, borderBottom: `1px solid ${C.divider}` }}>
+        <Link href="/" className="p-2 rounded-full transition-colors flex-shrink-0" style={{ color: C.textSub }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHover }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }} title="Home">
+          <Home className="w-4 h-4 transition-colors" />
+        </Link>
+        <div className="w-px h-4 flex-shrink-0 hidden sm:block" style={{ backgroundColor: C.divider }} />
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
+          <div className="w-px h-4 hidden sm:block" style={{ backgroundColor: C.divider }} />
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold hidden sm:block" style={{ color: C.textSub }}>
+            Serial List Printer
+          </p>
+        </div>
+        <div className="flex-1" />
+        <div className="flex items-center gap-2 sm:gap-3">
+          {processed && matchedDNs.length > 0 && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 flex-shrink-0"
+              style={{ border: `1px solid rgba(245,166,35,0.3)`, background: 'rgba(245,166,35,0.05)' }}>
+              <Package className="w-3.5 h-3.5" style={{ color: C.amber }} />
+              <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.amber }}>Total Qty</span>
+              <span className="text-[11px] tabular-nums" style={{ color: C.textPrimary }}>{totalQty}</span>
             </div>
-          </nav>
+          )}
+          {processed && matchedDNs.length > 0 && (
+            <>
+              <button
+                onClick={() => exportExcel(matchedDNs)}
+                className="flex items-center gap-1.5 px-3 py-1.5 border text-[10px] font-bold uppercase tracking-widest transition-all duration-150"
+                style={{ borderColor: C.border, color: C.textSub }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Excel</span>
+              </button>
+              <button
+                onClick={() => printSerialLists(matchedDNs)}
+                className="flex items-center gap-1.5 px-3 py-1.5 border text-[10px] font-bold uppercase tracking-widest transition-all duration-150"
+                style={{ borderColor: C.accent, color: C.accent, background: `${C.accent}08` }}
+                onMouseEnter={e => { e.currentTarget.style.background = `${C.accent}18` }}
+                onMouseLeave={e => { e.currentTarget.style.background = `${C.accent}08` }}
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Print All ({matchedDNs.length})</span>
+                <span className="sm:hidden">Print</span>
+              </button>
+            </>
+          )}
+        </div>
+      </nav>
 
-          <div className="flex-shrink-0 p-3" style={{ borderTop: `1px solid ${C.border}` }}>
-            <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:flex w-full items-center justify-center p-2.5 rounded-full transition-colors"
-              style={{ color: C.textGhost }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.surface; e.currentTarget.style.color = C.textPrimary }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textGhost }}>
-              {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
-            </button>
-            {!sidebarCollapsed && <p className="text-[10px] text-center pt-1" style={{ color: C.textGhost }}>v1.0.0</p>}
-          </div>
-        </aside>
+      {/* ── Body ── */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-5 sm:p-8 lg:p-10">
+          <div className="overflow-hidden rounded-2xl" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
 
-        {/* ── Main content ── */}
-        <main className="flex-1 overflow-y-auto min-h-0 min-w-0" style={{ background: C.bg }}>
-          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] rounded-full blur-[120px] z-0" style={{ background: 'rgba(232,25,44,0.03)' }} />
-
-          <div className="relative z-10 p-5 sm:p-8 lg:p-10 space-y-6">
-
-            {/* Upload zone */}
-            <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
-              <div className="px-6 sm:px-8 pt-7 pb-6" style={{ borderBottom: `1px solid ${C.border}` }}>
-                <div className="flex items-center gap-2.5 mb-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{ background: C.accent }} />
-                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: C.accent }} />
-                  </span>
-                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.amber }}>Haier Barcode Excel</p>
+            {/* Header */}
+            <div className="px-5 sm:px-8 pt-8 pb-7" style={{ borderBottom: `1px solid ${C.border}` }}>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-5 mb-7">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{ background: C.accent }} />
+                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: C.accent }} />
+                    </span>
+                    <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: C.amber }}>
+                      Serial List Printer
+                    </p>
+                  </div>
+                  <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-bold leading-[0.93] tracking-tight" style={{ color: C.textPrimary }}>
+                    Print by DN Number
+                  </h2>
+                  <p className="text-[12px] mt-2" style={{ color: C.textSilver }}>SF Express · Cebu Warehouse</p>
                 </div>
-                <h2 className="text-[clamp(1.4rem,3.5vw,2rem)] font-[#0D1117] tracking-tight leading-[0.93]" style={{ color: C.textPrimary }}>Upload Files</h2>
-                <p className="text-[11px] uppercase tracking-widest mt-1.5" style={{ color: C.textMuted }}>SF Express · Cebu Warehouse</p>
+                {processed && (
+                  <div className="hidden sm:flex items-center gap-6">
+                    <div className="text-right">
+                      <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: C.textMuted }}>Matched</p>
+                      <p className="text-3xl font-black tabular-nums leading-none" style={{ color: '#22c55e' }}>{matchedDNs.length}</p>
+                    </div>
+                    {unmatchedDNs.length > 0 && (
+                      <>
+                        <div className="w-px h-10" style={{ background: C.divider }} />
+                        <div className="text-right">
+                          <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: C.textMuted }}>Not Found</p>
+                          <p className="text-3xl font-black tabular-nums leading-none" style={{ color: C.textGhost }}>{unmatchedDNs.length}</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="p-6 sm:p-8">
-                <label htmlFor="file-upload-main"
-                  onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-                  className={`relative block cursor-pointer transition-all duration-300 ${isDragging ? 'scale-[1.01]' : ''}`}
-                >
-                  <div className="border border-dashed rounded-xl transition-all duration-300"
-                    style={{ borderColor: isDragging ? 'rgba(232,25,44,0.5)' : C.border, background: isDragging ? 'rgba(232,25,44,0.04)' : 'transparent' }}>
-                    <div className="flex flex-col items-center justify-center py-14 px-6">
-                      <div className="w-14 h-14 rounded-full flex items-center justify-center mb-5 transition-all duration-300"
-                        style={{ border: `1px solid ${isDragging ? 'rgba(232,25,44,0.4)' : C.border}`, background: isDragging ? 'rgba(232,25,44,0.1)' : 'transparent' }}>
-                        <Upload className="w-6 h-6 transition-colors duration-300" style={{ color: isDragging ? C.accent : C.textGhost }} />
+
+              {/* Steps */}
+              <div className="flex items-center justify-center gap-0">
+                {[
+                  { n: 1, short: 'Upload Excel', done: !!fileName },
+                  { n: 2, short: 'Enter DNs',    done: !!dnInput.trim() },
+                  { n: 3, short: 'Print',        done: processed },
+                ].map((step, i) => {
+                  const isActive = (step.n === 1 && !fileName) || (step.n === 2 && !!fileName && !dnInput.trim()) || (step.n === 3 && !!fileName && !!dnInput.trim() && !processed)
+                  return (
+                    <div key={step.n} className="flex items-center">
+                      <div className="flex items-center gap-1.5 sm:gap-2.5">
+                        <div className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                          style={{ background: step.done ? 'rgba(34,197,94,0.1)' : isActive ? C.accent : 'transparent', border: step.done ? '1px solid rgba(34,197,94,0.3)' : isActive ? 'none' : `1px solid ${C.border}`, color: step.done ? '#22c55e' : isActive ? '#fff' : C.textGhost }}>
+                          {step.done ? <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" /> : <span className="text-[11px] font-bold">{step.n}</span>}
+                        </div>
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-bold transition-colors"
+                          style={{ color: step.done ? '#22c55e' : isActive ? C.textPrimary : C.textMuted }}>{step.short}</p>
                       </div>
-                      <p className="text-base font-[#0D1117] mb-1 tracking-tight transition-colors duration-300" style={{ color: isDragging ? C.accent : C.textPrimary }}>
-                        {isDragging ? 'Drop files here' : 'Drop files or click to upload'}
-                      </p>
-                      <p className="text-[11px] mb-5" style={{ color: C.textMuted }}>Haier barcode Excel files</p>
-                      <div className="flex items-center gap-2">
-                        {['.xlsx', '.xls', '.csv'].map(ext => (
-                          <span key={ext} className="px-3 py-1 rounded-full text-[10px] font-bold" style={{ border: `1px solid ${C.border}`, color: C.textMuted }}>{ext}</span>
+                      {i < 2 && (
+                        <div className="w-12 sm:w-20 mx-2 sm:mx-4">
+                          <div className="h-px transition-all duration-500" style={{ background: step.done ? 'rgba(34,197,94,0.35)' : C.divider }} />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 sm:p-8 space-y-6">
+
+              {/* Step 1: Upload */}
+              <div className="space-y-3">
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textMuted }}>Step 1 — Upload File</p>
+                <DropZone onFile={handleFile} loaded={!!fileName} fileName={fileName} />
+                {fileName && (
+                  <div className="flex items-center justify-between px-3 py-2" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-3.5 h-3.5" style={{ color: C.textGhost }} />
+                      <span className="text-[11px]" style={{ color: C.textSub }}>
+                        <span style={{ color: C.accent }}>{availableDNs.length}</span> DNs found in file
+                      </span>
+                    </div>
+                    <span className="text-[11px]" style={{ color: C.textSub }}>
+                      <span style={{ color: C.textPrimary }}>{allRows.length}</span> rows total
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Step 2: DN Input */}
+              <div className="space-y-3" style={{ borderTop: `1px solid ${C.border}`, paddingTop: '24px' }}>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textMuted }}>Step 2 — Enter DN Numbers</p>
+                  <span className="text-[10px]" style={{ color: C.textGhost }}>
+                    Separate by newline, comma, or semicolon
+                  </span>
+                </div>
+                <div className="relative">
+                  <Hash className="absolute left-3.5 top-3.5 w-4 h-4" style={{ color: C.textGhost }} />
+                  <textarea
+                    value={dnInput}
+                    onChange={e => setDnInput(e.target.value)}
+                    placeholder={"Enter DN numbers, one per line:\n\n0004500001\n0004500002\n0004500003"}
+                    rows={6}
+                    className="w-full pl-10 pr-4 py-3 text-[13px] outline-none resize-none transition-all font-mono"
+                    style={{
+                      background:   C.surface,
+                      border:       `1px solid ${C.border}`,
+                      color:        C.textPrimary,
+                      lineHeight:   '1.7',
+                    }}
+                    onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
+                    onBlur={e  => (e.currentTarget.style.borderColor = C.border)}
+                  />
+                  {dnInput && (
+                    <button onClick={() => { setDnInput(''); setProcessed(false) }}
+                      className="absolute right-3 top-3 p-1 transition-colors" style={{ color: C.textGhost }}
+                      onMouseEnter={e => (e.currentTarget.style.color = C.textPrimary)}
+                      onMouseLeave={e => (e.currentTarget.style.color = C.textGhost)}>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                {dnInput.trim() && (
+                  <div className="flex items-center gap-2 px-3 py-2" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+                    <Hash className="w-3.5 h-3.5" style={{ color: C.textGhost }} />
+                    <span className="text-[11px]" style={{ color: C.textSub }}>
+                      <span style={{ color: C.textPrimary }}>{parseDNList(dnInput).length}</span> DN numbers entered
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Match button */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 pb-1"
+                style={{ borderTop: `1px solid ${C.border}` }}>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>Step 3 — Match &amp; Print</p>
+                  <p className="text-[12px]" style={{ color: C.textGhost }}>Find serial rows for the entered DN numbers</p>
+                </div>
+                <button onClick={handleMatch} disabled={!canMatch}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 font-bold text-xs uppercase tracking-widest transition-all duration-150 flex-shrink-0"
+                  style={{ background: canMatch ? C.accent : C.textGhost, color: '#fff', cursor: canMatch ? 'pointer' : 'not-allowed', boxShadow: canMatch ? `0 8px 24px ${C.accentGlow}` : 'none', opacity: canMatch ? 1 : 0.5 }}>
+                  <Search className="w-3.5 h-3.5" />
+                  Match DNs
+                </button>
+              </div>
+
+              {/* Results */}
+              {processed && (
+                <div className="space-y-4" style={{ borderTop: `1px solid ${C.border}`, paddingTop: '24px' }}>
+
+                  {/* Search + actions */}
+                  <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: C.textSilver }} />
+                      <input value={search} onChange={e => setSearch(e.target.value)}
+                        placeholder="Search DN, Ship To…"
+                        className="w-full h-9 pl-9 pr-8 bg-transparent text-[13px] focus:outline-none transition-colors"
+                        style={{ border: `1px solid ${C.border}`, color: C.inputText }}
+                        onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
+                        onBlur={e  => (e.currentTarget.style.borderColor = C.border)} />
+                      {search && (
+                        <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors" style={{ color: C.textSilver }}>
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Column headers */}
+                  {filtered.length > 0 && (
+                    <div className="flex items-center gap-3 sm:gap-5 px-4 py-3 text-[10px] font-bold uppercase tracking-widest"
+                      style={{ borderBottom: `1px solid ${C.divider}`, color: C.textSilver }}>
+                      <span className="flex-1">Ship To</span>
+                      <span className="hidden sm:block w-36 flex-shrink-0">DN No.</span>
+                      <span className="w-12 text-center flex-shrink-0">Rows</span>
+                      <span className="w-16 flex-shrink-0" />
+                    </div>
+                  )}
+
+                  {/* DN rows */}
+                  <div>
+                    {filtered.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <Search className="w-8 h-8" style={{ color: C.textMuted }} />
+                        <div className="text-center">
+                          <p className="text-base font-semibold" style={{ color: C.textSilver }}>No results found</p>
+                          <p className="text-[12px] mt-1" style={{ color: C.textGhost }}>Try adjusting your search</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {filtered.map(group => {
+                      const rows = group.rows.filter(r => r.barcode || r.materialCode)
+                      const isExpanded = expandedDN === group.dnNo
+
+                      return (
+                        <div key={group.dnNo} className="group border-b transition-colors duration-150"
+                          style={{ borderColor: C.divider, background: isExpanded ? C.surfaceHover : 'transparent' }}
+                          onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = C.surfaceHover }}
+                          onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = 'transparent' }}>
+
+                          {/* Row */}
+                          <div className="flex items-center gap-3 sm:gap-5 px-4 py-5 cursor-pointer select-none"
+                            onClick={() => setExpandedDN(isExpanded ? null : group.dnNo)}>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[15px] font-semibold truncate leading-snug group-hover:text-white transition-colors" style={{ color: C.textPrimary }}>
+                                {group.shipToName || '—'}
+                              </p>
+                              <p className="text-[12px] mt-0.5 sm:hidden" style={{ color: C.textSilver }}>{group.dnNo}</p>
+                            </div>
+                            <span className="hidden sm:block text-[11px] font-bold tabular-nums w-36 flex-shrink-0 font-mono" style={{ color: C.textSilver }}>{group.dnNo}</span>
+                            <span className="w-12 text-center text-2xl font-bold group-hover:text-white transition-colors tabular-nums flex-shrink-0" style={{ color: C.textPrimary }}>{rows.length}</span>
+                            <div className="flex items-center gap-2 w-16 flex-shrink-0 justify-end">
+                              <button
+                                onClick={e => { e.stopPropagation(); printSerialLists([group]) }}
+                                className="p-1.5 transition-colors"
+                                style={{ color: C.textGhost, border: `1px solid ${C.border}` }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = C.amber; e.currentTarget.style.color = C.amber }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textGhost }}
+                                title="Print this DN">
+                                <Printer className="w-3.5 h-3.5" />
+                              </button>
+                              <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                style={{ color: isExpanded ? C.accent : C.textGhost }} />
+                            </div>
+                          </div>
+
+                          {/* Expanded */}
+                          {isExpanded && (
+                            <div className="px-4 pb-6 sm:px-8" style={{ borderTop: `1px solid ${C.divider}` }}>
+                              {group.shipToAddress && (
+                                <p className="text-[11px] mt-4 mb-3" style={{ color: C.textMuted }}>{group.shipToAddress}</p>
+                              )}
+                              <div className="mt-4 mb-5 overflow-hidden" style={{ border: `1px solid ${C.divider}` }}>
+                                <div className="grid px-3 py-3" style={{ gridTemplateColumns: '40px 1fr 1fr 140px 80px', background: '#1C2128', borderBottom: `1px solid ${C.divider}` }}>
+                                  {['#', 'Material Code', 'Description', 'Barcode / Serial', 'Location'].map(h => (
+                                    <span key={h} className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textSilver }}>{h}</span>
+                                  ))}
+                                </div>
+                                {rows.map((r, i) => (
+                                  <div key={i} className="grid px-3 py-3 transition-colors"
+                                    style={{ gridTemplateColumns: '40px 1fr 1fr 140px 80px', background: i % 2 === 0 ? C.stripeEven : C.stripeOdd, borderBottom: i < rows.length - 1 ? `1px solid ${C.divider}` : 'none' }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = C.surfaceHover }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = i % 2 === 0 ? C.stripeEven : C.stripeOdd }}>
+                                    <span className="text-[11px]" style={{ color: C.textGhost }}>{i + 1}</span>
+                                    <span className="text-[11px] font-mono" style={{ color: C.textMuted }}>{r.materialCode}</span>
+                                    <span className="text-[13px] truncate" style={{ color: C.textPrimary }}>{r.materialDesc || '—'}</span>
+                                    <span className="text-[11px] font-mono font-bold" style={{ color: C.accent }}>{r.barcode || '—'}</span>
+                                    <span className="text-[11px]" style={{ color: C.textSub }}>{r.location || r.binCode || '—'}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-3 pt-2">
+                                <button onClick={() => printSerialLists([group])}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 border text-[11px] font-bold uppercase tracking-widest transition-all"
+                                  style={{ border: `1px solid ${C.amber}40`, color: C.amber }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = `${C.amber}05`; e.currentTarget.style.borderColor = C.amber }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = `${C.amber}40` }}>
+                                  <Printer className="w-3.5 h-3.5" /> Print This DN
+                                </button>
+                                <button onClick={() => exportExcel([group])}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all"
+                                  style={{ border: `1px solid ${C.border}`, color: C.textSub }}
+                                  onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
+                                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
+                                  <Download className="w-3.5 h-3.5" /> Export Excel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Summary footer */}
+                  {filtered.length > 1 && (
+                    <div className="flex items-center gap-5 py-4 px-4" style={{ borderTop: `1px solid ${C.border}`, background: C.surface }}>
+                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.textGhost }}>Grand Total</span>
+                      <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
+                      <span className="text-[11px] font-bold tabular-nums" style={{ color: C.textPrimary }}>
+                        {filtered.reduce((s, g) => s + g.rows.filter(r => r.barcode || r.materialCode).length, 0)} rows
+                      </span>
+                      <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
+                      <span className="text-[11px] tabular-nums" style={{ color: C.textSub }}>
+                        {filtered.length} DN{filtered.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Unmatched */}
+                  {unmatchedDNs.length > 0 && (
+                    <div className="p-4 sm:p-5" style={{ background: 'rgba(245,166,35,0.03)', border: `1px solid rgba(245,166,35,0.15)` }}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: C.amber }} />
+                        <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: C.amber }}>
+                          Not Found in Excel ({unmatchedDNs.length})
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {unmatchedDNs.map(dn => (
+                          <span key={dn} className="px-3 py-1 text-[12px] font-mono"
+                            style={{ background: 'rgba(245,166,35,0.06)', border: `1px solid rgba(245,166,35,0.15)`, color: C.textSub }}>
+                            {dn}
+                          </span>
                         ))}
                       </div>
                     </div>
-                  </div>
-                  <input id="file-upload-main" type="file" accept=".xlsx,.xls,.csv" multiple onChange={handleFileUpload} className="hidden" />
-                </label>
-                {isLoading && (
-                  <div className="mt-5 flex items-center gap-4 p-4 rounded-xl" style={{ border: `1px solid ${C.border}` }}>
-                    <div className="w-4 h-4 rounded-full border animate-spin flex-shrink-0" style={{ borderColor: C.border, borderTopColor: C.accent }} />
-                    <div className="flex-1">
-                      <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: C.textPrimary }}>Processing files…</p>
-                      <div className="mt-2 h-px rounded-full overflow-hidden" style={{ background: C.border }}>
-                        <div className="h-full rounded-full animate-pulse" style={{ width: '60%', background: C.accent }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Uploaded files list */}
-            {uploadedFiles.length > 0 && (
-              <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
-                <button onClick={() => setShowFilesList(!showFilesList)}
-                  className="w-full flex items-center justify-between px-6 sm:px-8 py-5 transition-colors group"
-                  onMouseEnter={e => (e.currentTarget.style.background = C.surface)}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <div className="flex items-center gap-4">
-                    <span className="text-[11px] font-bold w-5 transition-colors" style={{ color: C.textGhost }}>↓</span>
-                    <FileSpreadsheet className="w-4 h-4 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
-                    <span className="text-[13px] font-[#0D1117] transition-colors" style={{ color: C.textSub }}>Uploaded Files</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ border: `1px solid ${C.border}`, color: C.textMuted }}>{uploadedFiles.length}</span>
-                  </div>
-                  <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 ${showFilesList ? 'rotate-90' : ''}`} style={{ color: C.textGhost }} />
-                </button>
-                {showFilesList && (
-                  <div className="max-h-72 overflow-y-auto" style={{ borderTop: `1px solid ${C.border}` }}>
-                    {uploadedFiles.map((file) => (
-                      <div key={file.id} onClick={() => handleSelectFile(file.id)}
-                        className="flex items-center gap-4 px-6 sm:px-8 py-4 cursor-pointer transition-all duration-200 group"
-                        style={{ borderBottom: `1px solid ${C.divider}`, background: selectedFileId === file.id ? C.surface : 'transparent', paddingLeft: selectedFileId === file.id ? '2.25rem' : undefined }}
-                        onMouseEnter={e => { if (selectedFileId !== file.id) e.currentTarget.style.paddingLeft = '2.25rem' }}
-                        onMouseLeave={e => { if (selectedFileId !== file.id) e.currentTarget.style.paddingLeft = '1.5rem' }}>
-                        <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors" style={{ color: selectedFileId === file.id ? C.accent : C.textGhost }}>
-                          {selectedFileId === file.id ? '→' : '·'}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-[#0D1117] truncate transition-colors" style={{ color: selectedFileId === file.id ? C.textPrimary : C.textSub }}>{file.name}</p>
-                          <p className="text-[10px] mt-0.5" style={{ color: C.textGhost }}>{file.dnNo} · {file.data.length} items</p>
-                        </div>
-                        {selectedFileId === file.id && <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.accent }} />}
-                        <button onClick={e => { e.stopPropagation(); handleDeleteFile(file.id) }}
-                          className="p-1 flex-shrink-0 transition-colors" style={{ color: C.textGhost }}
-                          onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
-                          onMouseLeave={e => (e.currentTarget.style.color = C.textGhost)}>
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Data table section */}
-            {(groupedData.length > 0 || serialListData.length > 0) && (
-              <div ref={tableRef} className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
-
-                {/* Tab bar */}
-                <div className="flex" style={{ borderBottom: `1px solid ${C.border}` }}>
-                  {tabs.map(({ id, label, index, icon: Icon }) => (
-                    <button key={id} onClick={() => setActiveTab(id)}
-                      className="flex-1 flex items-center justify-center gap-2.5 px-3 py-4 text-[10px] uppercase tracking-[0.15em] font-bold transition-all duration-150 relative"
-                      style={{ borderRight: `1px solid ${C.border}`, color: activeTab === id ? C.textPrimary : C.textGhost, background: activeTab === id ? C.surface : 'transparent' }}>
-                      <Icon className="w-3.5 h-3.5" style={{ color: activeTab === id ? C.accent : C.textGhost }} strokeWidth={1.5} />
-                      <span className="hidden sm:inline">{label}</span>
-                      {activeTab === id && <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: C.accent }} />}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="p-6 sm:p-8">
-                  {/* Search + download row */}
-                  <div className="flex gap-3 mb-6">
-                    <div className="relative flex-1 max-w-sm">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: C.textGhost }} />
-                      <input type="text" placeholder="Search DN, serial, material…" value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl text-[11px] outline-none transition-all"
-                        style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textSilver }}
-                        onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
-                        onBlur={e => (e.currentTarget.style.borderColor = C.border)} />
-                    </div>
-                    <div className="flex gap-2">
-                      {searchQuery && (
-                        <button onClick={() => setSearchQuery("")}
-                          className="px-3 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all"
-                          style={{ border: `1px solid ${C.border}`, color: C.textSub }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
-                          Clear
-                        </button>
-                      )}
-                      <button onClick={() => setShowDownloadModal(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[10px] font-[#0D1117] uppercase tracking-widest transition-all"
-                        style={{ background: C.accent, color: '#fff', boxShadow: `0 8px 24px ${C.accentGlow}` }}
-                        onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
-                        onMouseLeave={e => (e.currentTarget.style.background = C.accent)}>
-                        <Download className="w-3.5 h-3.5" /> Download
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* ── Consolidated ── */}
-                  {activeTab === "consolidated" && (
-                    <>
-                      <div className="flex items-baseline justify-between mb-5">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>
-                            {selectedFileId ? `Viewing: ${uploadedFiles.find(f => f.id === selectedFileId)?.name}` : 'All files combined'}
-                          </p>
-                          <h3 className="text-lg font-[#0D1117] tracking-tight" style={{ color: C.textPrimary }}>Consolidated Materials</h3>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ border: `1px solid rgba(245,166,35,0.2)`, background: 'rgba(245,166,35,0.05)' }}>
-                            <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.amber }}>Total CBM</span>
-                            <span className="text-[12px] font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{grandTotal.toFixed(2)}</span>
-                          </div>
-                          <span className="text-[10px] font-[#0D1117] tabular-nums" style={{ color: C.textPrimary }}>
-                            <span style={{ color: C.accent }}>{visibleGrouped.length}</span> items
-                          </span>
-                        </div>
-                      </div>
-                      <div className="overflow-x-auto rounded-xl" style={{ border: `1px solid ${C.border}` }}>
-                        <table className="w-full">
-                          <thead>
-                            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                              {["#","Material Code","Material Description","Category","Qty.","CBM","Total CBM","Ship Name","Remarks"].map(h => (
-                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textGhost }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {visibleGrouped.map((row, idx) => (
-                              <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`}
-                                style={{ borderBottom: `1px solid ${C.divider}`, animationDelay: `${idx * 0.02}s` }}>
-                                <td className="px-4 py-3.5 text-[11px] transition-colors" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</td>
-                                <td className="px-4 py-3.5 text-sm font-[#0D1117]" style={{ color: C.textPrimary }}>{row.materialCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-[#0D1117] transition-colors" style={{ color: C.textSilver }}>{row.materialDescription}</td>
-                                <td className="px-4 py-3.5"><span className="text-[10px] font-bold" style={{ color: C.textSub }}>{row.category}</span></td>
-                                <td className="px-4 py-3.5 text-sm font-[#0D1117] tabular-nums" style={{ color: C.accent }}>{row.qty}</td>
-                                <td className="px-4 py-3.5 text-[11px] tabular-nums" style={{ color: C.textSub }}>
-                                  {row.cbm != null ? row.cbm : <span style={{ color: C.textGhost }}>—</span>}
-                                </td>
-                                <td className="px-4 py-3.5 text-[11px] font-bold tabular-nums" style={{ color: row.cbm != null ? C.amber : C.textGhost }}>
-                                  {row.cbm != null ? (row.cbm * row.qty).toFixed(2) : '—'}
-                                </td>
-                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.shipName || '—'}</td>
-                                <td className="px-4 py-3.5 text-[10px]" style={{ color: C.textMuted }}>{row.remarks}</td>
-                              </tr>
-                            ))}
-                            {visibleGrouped.length > 0 && (
-                              <tr style={{ borderTop: `1px solid ${C.border}`, background: C.surface }}>
-                                <td colSpan={6} className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest" style={{ color: C.textGhost }}>Grand Total CBM</td>
-                                <td className="px-4 py-3 text-[12px] font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{grandTotal.toFixed(2)}</td>
-                                <td colSpan={2} />
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </>
-                  )}
-
-                  {/* ── Serial List ── */}
-                  {activeTab === "serialList" && (
-                    <>
-                      <div className="flex items-baseline justify-between mb-5">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>All serial numbers combined</p>
-                          <h3 className="text-lg font-[#0D1117] tracking-tight" style={{ color: C.textPrimary }}>Bulking Serial List</h3>
-                        </div>
-                        <span className="text-[10px] font-[#0D1117] tabular-nums" style={{ color: C.textPrimary }}>
-                          <span style={{ color: C.accent }}>{filterSerialDataBySearch(serialListData).length}</span> rows
-                        </span>
-                      </div>
-                      <div className="overflow-x-auto rounded-xl" style={{ border: `1px solid ${C.border}` }}>
-                        <table className="w-full">
-                          <thead>
-                            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                              {["#","DN No","Location","Bin Code","Material Code","Material Desc","Barcode","Ship To Name","Ship To Address"].map(h => (
-                                <th key={h} className="px-4 py-3 text-left text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textGhost }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filterSerialDataBySearch(serialListData).filter(r => r.materialCode && r.barcode).map((row, idx) => (
-                              <tr key={idx} className={`group transition-all duration-200 ${animatingRows.has(idx) ? 'animate-row' : 'opacity-0'}`}
-                                style={{ borderBottom: `1px solid ${C.divider}`, animationDelay: `${idx * 0.02}s` }}>
-                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</td>
-                                <td className="px-4 py-3.5 text-sm font-[#0D1117]" style={{ color: C.textPrimary }}>{row.dnNo}</td>
-                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.location}</td>
-                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.binCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-[#0D1117]" style={{ color: C.textPrimary }}>{row.materialCode}</td>
-                                <td className="px-4 py-3.5 text-sm font-[#0D1117] transition-colors" style={{ color: C.textSilver }}>{row.materialDesc}</td>
-                                <td className="px-4 py-3.5 text-sm font-[#0D1117]" style={{ color: C.accent }}>{row.barcode}</td>
-                                <td className="px-4 py-3.5 text-[11px]" style={{ color: C.textSub }}>{row.shipToName}</td>
-                                <td className="px-4 py-3.5 text-[10px]" style={{ color: C.textMuted }}>{row.shipToAddress}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </>
-                  )}
-
-                  {/* ── Individual DN ── */}
-                  {activeTab === "individualDN" && (
-                    <>
-                      <div className="flex items-start justify-between mb-6">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1" style={{ color: C.textMuted }}>Download per-DN or all at once</p>
-                          <h3 className="text-lg font-[#0D1117] tracking-tight" style={{ color: C.textPrimary }}>Individual DN Downloads</h3>
-                        </div>
-                        {/* Grand total CBM across all DNs */}
-                        {filteredDNs.length > 0 && (
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0" style={{ border: `1px solid rgba(245,166,35,0.2)`, background: 'rgba(245,166,35,0.05)' }}>
-                            <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.amber }}>Total CBM</span>
-                            <span className="text-[12px] font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{allDNsTotalCBM.toFixed(2)}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={{ borderTop: `1px solid ${C.border}` }}>
-                        {/* Download all row */}
-                        <div className="flex items-center gap-5 py-5 group transition-all duration-200 cursor-pointer" style={{ borderBottom: `1px solid ${C.divider}` }}>
-                          <span className="text-[11px] font-bold w-5 flex-shrink-0 transition-colors" style={{ color: C.textGhost }}>↓</span>
-                          <Layers className="w-4 h-4 flex-shrink-0 transition-colors" style={{ color: C.textSub }} strokeWidth={1.5} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-[#0D1117] transition-colors" style={{ color: C.textSilver }}>Download All DN Serial Lists</p>
-                            <p className="text-[10px] mt-0.5" style={{ color: C.textGhost }}>{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} available</p>
-                          </div>
-                          <button onClick={() => { setIsDownloadingAllDN(true); setShowDownloadModal(true) }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-[#0D1117] uppercase tracking-widest transition-all flex-shrink-0"
-                            style={{ background: C.accent, color: '#fff', boxShadow: `0 6px 20px ${C.accentGlow}` }}
-                            onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
-                            onMouseLeave={e => (e.currentTarget.style.background = C.accent)}>
-                            <Download className="w-3 h-3" /> All
-                          </button>
-                        </div>
-
-                        {/* Per-DN rows */}
-                        {filteredDNs.map((file, idx) => {
-                          const dnCBM = totalCBMFromSerials(file.serialData.filter(r => r.materialCode && r.barcode))
-                          const dnQty = file.serialData.filter(r => r.materialCode && r.barcode).length
-                          return (
-                            <div key={file.id} className="flex items-center gap-5 py-4 group transition-all duration-200" style={{ borderBottom: `1px solid ${C.divider}` }}>
-                              <span className="text-[11px] font-bold w-5 flex-shrink-0" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</span>
-                              <FileSpreadsheet className="w-4 h-4 flex-shrink-0" style={{ color: C.textSub }} strokeWidth={1.5} />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-[#0D1117] truncate" style={{ color: C.textSilver }}>{file.dnNo}</p>
-                                <div className="flex items-center gap-3 mt-0.5">
-                                  <p className="text-[10px]" style={{ color: C.textGhost }}>{file.name}</p>
-                                  <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
-                                  <span className="text-[10px] font-bold tabular-nums" style={{ color: C.textMuted }}>{dnQty} pcs</span>
-                                  {dnCBM > 0 && (
-                                    <>
-                                      <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
-                                      <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{dnCBM.toFixed(2)} CBM</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                              <button onClick={() => { setSelectedDownloadFile(file); setIsDownloadingAllDN(false); setShowDownloadModal(true) }}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0"
-                                style={{ border: `1px solid ${C.border}`, color: C.textSub }}
-                                onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
-                                <Download className="w-3 h-3" />
-                                <span className="hidden sm:inline">Download</span>
-                              </button>
-                            </div>
-                          )
-                        })}
-
-                        {/* Grand total footer row */}
-                        {filteredDNs.length > 1 && (
-                          <div className="flex items-center gap-5 py-4" style={{ borderTop: `1px solid ${C.border}`, background: C.surface }}>
-                            <span className="w-5 flex-shrink-0" />
-                            <span className="w-4 flex-shrink-0" />
-                            <div className="flex-1 flex items-center gap-3">
-                              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.textGhost }}>Grand Total</span>
-                              <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
-                              <span className="text-[11px] font-[#0D1117] tabular-nums" style={{ color: C.textMuted }}>
-                                {filteredDNs.reduce((s, f) => s + f.serialData.filter(r => r.materialCode && r.barcode).length, 0)} pcs
-                              </span>
-                              <span className="text-[10px]" style={{ color: C.textGhost }}>·</span>
-                              <span className="text-[12px] font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{allDNsTotalCBM.toFixed(2)} CBM</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </>
                   )}
                 </div>
-              </div>
-            )}
-
-          </div>
-        </main>
-      </div>
-
-      {/* ── Download modal ── */}
-      {showDownloadModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}
-          onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}>
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}
-            style={{ background: C.bg, border: `1px solid ${C.border}` }}>
-            <div className="px-7 pt-7 pb-5" style={{ borderBottom: `1px solid ${C.border}` }}>
-              <p className="text-[10px] uppercase tracking-[0.25em] font-bold mb-1.5" style={{ color: C.amber }}>Export</p>
-              <h3 className="text-xl font-[#0D1117] tracking-tight leading-none" style={{ color: C.textPrimary }}>Download Format</h3>
-            </div>
-            <div>
-              {[
-                { type: 'excel', label: 'Excel (.xlsx)', index: '01', desc: 'Editable spreadsheet', icon: FileSpreadsheet },
-                { type: 'pdf',   label: 'PDF',           index: '02', desc: 'Print-ready document', icon: FileText },
-              ].map(opt => {
-                const active = downloadType === opt.type
-                return (
-                  <button key={opt.type} onClick={() => setDownloadType(opt.type as 'pdf' | 'excel')}
-                    className="w-full flex items-center gap-5 px-7 py-4 transition-all duration-200 text-left"
-                    style={{ borderBottom: `1px solid ${C.border}`, paddingLeft: active ? '2rem' : undefined }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.paddingLeft = '2rem' }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.paddingLeft = '1.75rem' }}>
-                    <span className="text-[11px] font-bold w-5 flex-shrink-0" style={{ color: active ? C.accent : C.textGhost }}>{opt.index}</span>
-                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg transition-all duration-200"
-                      style={{ border: `1px solid ${active ? 'rgba(232,25,44,0.2)' : C.border}`, background: active ? 'rgba(232,25,44,0.08)' : 'transparent' }}>
-                      <opt.icon className="w-4 h-4" style={{ color: active ? C.accent : C.textSub }} strokeWidth={1.5} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-[#0D1117] leading-snug" style={{ color: active ? C.textPrimary : C.textSub }}>{opt.label}</p>
-                      <p className="text-[11px] mt-0.5" style={{ color: active ? C.textSub : C.textGhost }}>{opt.desc}</p>
-                    </div>
-                    <ArrowUpRight className="w-4 h-4 flex-shrink-0" style={{ color: active ? C.accent : C.textGhost }} />
-                  </button>
-                )
-              })}
-            </div>
-            <div className="flex gap-3 px-7 py-5" style={{ borderTop: `1px solid ${C.border}` }}>
-              <button onClick={() => { setShowDownloadModal(false); setSelectedDownloadFile(null); setIsDownloadingAllDN(false) }}
-                className="flex-1 px-4 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all"
-                style={{ border: `1px solid ${C.border}`, color: C.textSub }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
-                Cancel
-              </button>
-              <button onClick={handleDownloadConfirm}
-                className="flex-1 px-4 py-2.5 rounded-full text-[10px] font-[#0D1117] uppercase tracking-widest transition-all"
-                style={{ background: C.accent, color: '#fff', boxShadow: `0 8px 24px ${C.accentGlow}` }}
-                onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
-                onMouseLeave={e => (e.currentTarget.style.background = C.accent)}>
-                Download
-              </button>
+              )}
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Scroll to top */}
-      {showScrollTop && (
-        <button onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 rounded-full transition-all shadow-2xl"
-          style={{ border: `1px solid ${C.border}`, color: C.textSub, background: C.bg }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
-          <ArrowUp className="w-4 h-4" />
-        </button>
+      {/* ── Toast ── */}
+      {toast.show && (
+        <div className="fixed bottom-6 right-6 px-5 py-3.5 shadow-2xl flex items-center gap-3 z-[100] border"
+          style={{ backgroundColor: C.bg, borderColor: toast.type === 'success' ? '#22C55E' : C.accent }}>
+          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: toast.type === 'success' ? '#22C55E' : C.accent }} />
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: C.textPrimary }}>{toast.message}</span>
+          <button onClick={() => setToast(p => ({ ...p, show: false }))} className="ml-1 p-0.5 transition-colors" style={{ color: C.textSub }}>
+            <X className="w-3 h-3" />
+          </button>
+        </div>
       )}
     </div>
   )
