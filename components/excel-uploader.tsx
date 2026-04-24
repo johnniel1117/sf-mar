@@ -208,7 +208,7 @@ function buildDNPageHtml(group: DNGroup): string {
       </div>
     </div>
     <div class="document-header">
-      <div class="doc-number">ORDER NO: ${group.dnNo}</div>
+      <div class="doc-number">ORDER NO : ${group.dnNo}</div>
     </div>
     <div class="info-row"><div class="info-label">Client</div><div>HAIER PHILIPPINES INC.</div></div>
     <div class="info-row"><div class="info-label">Date</div><div>${formatDateShort()}</div></div>
@@ -237,7 +237,7 @@ const PDF_STYLES = `
   @page{size:portrait;margin:10mm}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:15px;font-size:11px}
-  .header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px}
+  .header-section{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #000}
   .dealer-copy{font-size:18px;font-weight:bold;letter-spacing:1px;color:#FF2C2C}
   .document-header{text-align:center;margin:15px 0}
   .doc-number{font-size:20px;font-weight:bold}
@@ -393,19 +393,21 @@ export function SerialListPrinter() {
         const totalQuantity = rows.length
 
         // Build materialData summary per DN (grouped by materialCode)
-        const matMap = new Map<string, { materialCode: string; materialDescription: string; qty: number }>()
+        const matMap = new Map<string, { materialCode: string; materialDescription: string; qty: number; cbm: number | null }>()
         for (const r of rows) {
           const key = r.materialCode
           if (matMap.has(key)) matMap.get(key)!.qty += 1
-          else matMap.set(key, { materialCode: r.materialCode, materialDescription: r.materialDesc, qty: 1 })
+          else matMap.set(key, { materialCode: r.materialCode, materialDescription: r.materialDesc, qty: 1, cbm: getCBMFromMatcode(r.materialCode) })
         }
 
         const isDN = group.dnNo.startsWith('DN') || group.dnNo.includes('-DN-')
+        const totalCbm = rows.reduce((s, r) => { const c = getCBMFromMatcode(r.materialCode); return c != null ? s + c : s }, 0)
         const payload = {
           fileName:      group.dnNo,
           dnNo:          isDN ? group.dnNo : undefined,
           traNo:         !isDN ? group.dnNo : undefined,
           totalQuantity,
+          totalCbm:      +totalCbm.toFixed(2),
           data:          Array.from(matMap.values()),
           serialData:    rows,
         }
@@ -420,7 +422,7 @@ export function SerialListPrinter() {
           const error = await response.json()
           showToast(`Failed to save ${group.dnNo}: ${error.error}`, 'error')
         } else {
-          showToast(`Saved ${group.dnNo} (Qty: ${totalQuantity})`, 'success')
+          showToast(`Saved ${group.dnNo} (Qty: ${totalQuantity} · CBM: ${totalCbm.toFixed(2)})`, 'success')
         }
       } catch (err) {
         showToast(`Error saving ${group.dnNo}: ${err instanceof Error ? err.message : 'Unknown'}`, 'error')
