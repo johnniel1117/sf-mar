@@ -144,8 +144,9 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
   const metricUnit: Record<Metric, string> = { totalQty: 'units', totalTrips: 'trips', totalDocs: 'docs' }
   const allZero = values.every(v => v === 0)
 
-  const CHART_H = 280
-  const LABEL_H = 28
+  const CHART_H = 340
+  const LABEL_H = 40
+  const Y_AXIS_W = 60
 
   if (allZero) {
     return (
@@ -156,26 +157,37 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
   }
 
   return (
-    <div ref={ref} className="relative w-full select-none" style={{ height: CHART_H + LABEL_H }}>
+    <div ref={ref} className="relative w-full select-none rounded-lg p-6" style={{ height: CHART_H + LABEL_H, background: C.surface, border: `1px solid ${C.divider}` }}>
       
-      {/* Y-axis gridlines */}
-      <div className="absolute left-0 right-0 pointer-events-none" style={{ top: 0, height: CHART_H }}>
+      {/* Y-axis with labels */}
+      <div className="absolute left-0 top-0 bottom-0 pointer-events-none flex flex-col justify-between text-right pr-4" style={{ width: Y_AXIS_W, paddingTop: 12, paddingBottom: LABEL_H + 16 }}>
+        {[100, 75, 50, 25, 0].map(p => {
+          const val = Math.round((p / 100) * max)
+          return (
+            <div key={p} className="relative -translate-y-1/2">
+              <span className="text-[8px] font-mono font-bold leading-none" style={{color: p === 0 ? C.textGhost : C.textGhost}}>
+                {val > 999 ? `${(val / 1000).toFixed(0)}k` : val}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Grid lines with Y-axis */}
+      <div className="absolute left-0 right-0 pointer-events-none" style={{ top: 12, height: CHART_H, left: Y_AXIS_W, borderLeft: `2px solid ${C.border}`, borderBottom: `2px solid ${C.border}` }}>
         {[100, 75, 50, 25].map(p => (
-          <div key={p} className="absolute w-full" style={{ bottom: `${p}%` }}>
-            <div className="w-full border-t" style={{borderColor: C.border}} />
-            <span className="absolute right-0 top-0 -translate-y-full pb-1 text-[9px] font-mono leading-none" style={{color: C.textGhost}}>
-              {Math.round((p / 100) * max).toLocaleString()}
-            </span>
+          <div key={p} className="absolute w-full" style={{ bottom: `${p * (CHART_H / 100)}px`, height: 1 }}>
+            <div className="w-full" style={{borderTop: `1px dashed ${C.divider}`, opacity: 0.5}} />
           </div>
         ))}
       </div>
 
       {/* Bars row */}
-      <div className="absolute left-0 right-0 flex gap-2 sm:gap-3" style={{ top: 0, height: CHART_H }}>
+      <div className="absolute flex gap-3 sm:gap-4 lg:gap-5" style={{ top: 12, left: Y_AXIS_W + 24, right: 0, height: CHART_H, paddingRight: 12 }}>
         {data.map((d, i) => {
           const val       = d[activeMetric]
           const hPct      = max > 0 ? (val / max) * 100 : 0
-          const barH      = mounted ? Math.max(hPct, val > 0 ? 2 : 0) : 0
+          const barH      = mounted ? Math.max(hPct, val > 0 ? 3 : 0) : 0
           const isHovered = hovered === i
           const isCurr    = i === data.length - 1
           const isPrev    = i === data.length - 2
@@ -185,97 +197,126 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
           let barBg = C.surfaceHover
           if (isCurr)  barBg = `linear-gradient(180deg, ${C.accent} 0%, #c8140e 60%, ${C.amber} 100%)`
           else if (isPrev) barBg = `rgba(245,166,35,0.35)`
-          if (isHovered && !isCurr && !isPrev) barBg = C.borderHover
+          if (isHovered && !isCurr && !isPrev) barBg = `linear-gradient(180deg, ${C.borderHover} 0%, ${C.border} 100%)`
+
+          const tooltipPosition = barH > 70 ? 'inside' : 'above'
 
           return (
             <div
               key={d.label}
-              className="relative flex-1 h-full cursor-default"
+              className="relative flex-1 h-full cursor-pointer group transition-all duration-200"
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
             >
-              {/* Tooltip */}
-              {isHovered && val > 0 && (
+              {/* Tooltip - above bars to prevent overlap */}
+              {isHovered && val > 0 && tooltipPosition === 'above' && (
                 <div
-                  className="absolute z-40 pointer-events-none animate-in fade-in"
-                  style={{ bottom: `calc(${barH}% + 16px)`, left: '50%', transform: 'translateX(-50%)' }}
+                  className="absolute -top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in"
                 >
                   <div
-                    className="relative px-5 py-4 text-center rounded-lg"
+                    className="relative px-4 py-3 text-center rounded-lg whitespace-nowrap"
                     style={{
                       background: C.surface,
-                      border: `1px solid ${C.border}`,
-                      minWidth: 150,
-                      boxShadow: `0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)`,
+                      border: `1.5px solid ${C.accent}`,
+                      boxShadow: `0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px ${C.accentGlow}`,
                     }}
                   >
                     <div
-                      className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-3 h-3 rotate-45"
-                      style={{ background: C.border, borderRight: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}
+                      className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-2.5 h-2.5 rotate-45"
+                      style={{ background: C.surface, border: `1px solid ${C.accent}` }}
                     />
-                    <div className="mb-2">
-                      <p className="font-bold text-xl tabular-nums leading-none font-mono" style={{color: C.textPrimary}}>
-                        {val.toLocaleString()}
-                      </p>
-                      <p className="text-[9px] uppercase tracking-widest font-bold mt-2" style={{color: C.textMuted}}>{metricUnit[activeMetric]}</p>
-                    </div>
+                    <p className="font-bold text-lg tabular-nums leading-none font-mono" style={{color: C.textPrimary}}>
+                      {val.toLocaleString()}
+                    </p>
+                    <p className="text-[8px] uppercase tracking-widest font-bold mt-1.5" style={{color: C.textMuted}}>{metricUnit[activeMetric]}</p>
                     {delta !== null && (
-                      <div className="flex items-center justify-center gap-1.5 mt-3 pt-3" style={{borderTop: `1px solid ${C.divider}`}}>
-                        <DeltaBadge value={delta} />
-                        <span className="text-[9px] font-mono" style={{color: C.textMuted}}>vs {data[i - 1]?.label}</span>
+                      <div className="flex items-center justify-center gap-1 mt-2 pt-2" style={{borderTop: `1px solid ${C.divider}`}}>
+                        <DeltaBadge value={delta} size="xs" />
+                        <span className="text-[7px] font-mono" style={{color: C.textMuted}}>vs {data[i - 1]?.label}</span>
                       </div>
                     )}
-                    <p className="text-[8px] font-mono mt-2.5 opacity-70" style={{color: C.textGhost}}>{d.label} {d.year}</p>
                   </div>
                 </div>
               )}
 
-              {/* Bar */}
-              <div
-                className="absolute bottom-0 left-0 right-0 overflow-hidden"
-                style={{
-                  height: `${barH}%`,
-                  minHeight: val > 0 && mounted ? '4px' : '0px',
-                  background: barBg,
-                  transition: 'height 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
-                  transitionDelay: `${i * 60}ms`,
-                  boxShadow: isCurr
-                    ? `0 0 20px ${C.accentGlow}, 0 0 60px rgba(232,25,44,0.1)`
-                    : isPrev
-                    ? '0 0 12px rgba(245,166,35,0.2)'
-                    : 'none',
-                }}
-              >
-                {isCurr && (
-                  <div
-                    className="absolute inset-0 opacity-30"
-                    style={{
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                      animation: 'shimmer 2.5s ease-in-out infinite',
-                    }}
-                  />
-                )}
+              {/* Value label inside tall bars */}
+              {barH > 60 && val > 0 && (
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 transition-all duration-200 pointer-events-none"
+                  style={{
+                    bottom: `${barH / 2 + 12}%`,
+                    opacity: isHovered ? 1 : 0.6,
+                  }}
+                >
+                  <span className="text-[9px] font-bold font-mono leading-none" style={{color: '#fff'}}>
+                    {val > 999 ? `${(val / 1000).toFixed(0)}k` : val}
+                  </span>
+                </div>
+              )}
+
+              {/* Bar container */}
+              <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center transition-all duration-200" style={{ height: '100%' }}>
+                <div
+                  className="w-full rounded-t-lg transition-all duration-500 relative overflow-hidden group-hover:shadow-lg"
+                  style={{
+                    height: `${barH}%`,
+                    minHeight: val > 0 && mounted ? '6px' : '0px',
+                    background: barBg,
+                    transitionDelay: `${i * 60}ms`,
+                    boxShadow: isCurr
+                      ? `0 0 20px ${C.accentGlow}, inset 0 1px 0 rgba(255,255,255,0.2)`
+                      : isPrev
+                      ? '0 0 12px rgba(245,166,35,0.2)'
+                      : isHovered ? `0 0 16px ${C.accent}40` : 'none',
+                  }}
+                >
+                  {isCurr && (
+                    <div
+                      className="absolute inset-0 opacity-40"
+                      style={{
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                        animation: 'shimmer 2.5s ease-in-out infinite',
+                      }}
+                    />
+                  )}
+                </div>
               </div>
+
+              {/* Hover indicator */}
+              {isHovered && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 pointer-events-none transition-all"
+                  style={{
+                    height: `${barH}%`,
+                    borderRadius: '8px 8px 0 0',
+                    boxShadow: `inset 0 0 20px ${C.accent}30`,
+                  }}
+                />
+              )}
             </div>
           )
         })}
       </div>
 
       {/* Labels row */}
-      <div className="absolute left-0 right-0 flex gap-2 sm:gap-3" style={{ top: CHART_H, height: LABEL_H }}>
+      <div className="absolute left-0 right-0 flex gap-3 sm:gap-4 lg:gap-5" style={{ top: CHART_H + 12, height: LABEL_H, left: Y_AXIS_W + 24, paddingRight: 12 }}>
         {data.map((d, i) => {
           const isCurr = i === data.length - 1
           const isPrev = i === data.length - 2
           const isHov  = hovered === i
           return (
-            <div key={d.label} className="flex-1 flex items-center justify-center pt-2">
+            <div key={d.label} className="flex-1 flex flex-col items-center justify-start pt-2 transition-all duration-200">
               <span
-                className="text-[9px] font-mono font-bold leading-none uppercase tracking-widest"
+                className="text-[10px] font-mono font-bold leading-none uppercase tracking-widest transition-colors"
                 style={{
-                  color: isCurr ? C.textPrimary : isPrev ? C.amber + '80' : isHov ? C.textSub : C.textGhost,
+                  color: isCurr ? C.accent : isPrev ? C.amber : isHov ? C.textPrimary : C.textSub,
+                  fontSize: isCurr ? '11px' : '10px',
                 }}
               >
                 {d.label}
+              </span>
+              <span className="text-[7px] mt-1 opacity-70" style={{color: C.textGhost}}>
+                {d.year}
               </span>
             </div>
           )
