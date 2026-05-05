@@ -244,18 +244,18 @@ function buildPageHtml(entry: DNRefEntry, printTime: string, area: string): stri
   </div>`
 }
 
-function printPickingList(entry: DNRefEntry, printTime: string): void {
+function printPickingList(entry: DNRefEntry, printTime: string, area: string = ''): void {
   const win = window.open('', '', 'width=1000,height=800')
   if (!win) return
-  win.document.write(`<!DOCTYPE html><html><head><title>Picking List - ${entry.dnNo}</title><style>${PDF_STYLES}</style></head><body>${buildPageHtml(entry, printTime)}</body></html>`)
+  win.document.write(`<!DOCTYPE html><html><head><title>Picking List - ${entry.dnNo}</title><style>${PDF_STYLES}</style></head><body>${buildPageHtml(entry, printTime, area)}</body></html>`)
   win.document.close()
   setTimeout(() => win.print(), 400)
 }
 
-function printAllPickingLists(entries: DNRefEntry[], printTime: string): void {
+function printAllPickingLists(entries: DNRefEntry[], printTime: string, area: string = ''): void {
   const pages = entries.map((entry, i) => {
     const isLast = i === entries.length - 1
-    return `<div style="${isLast ? '' : 'page-break-after:always'}">${buildPageHtml(entry, printTime)}</div>`
+    return `<div style="${isLast ? '' : 'page-break-after:always'}">${buildPageHtml(entry, printTime, area)}</div>`
   }).join('\n')
   const win = window.open('', '', 'width=1000,height=800')
   if (!win) return
@@ -348,8 +348,7 @@ export function PickingListMaker() {
   const [selected,     setSelected]     = useState<Set<string>>(new Set())
   const [search,       setSearch]       = useState('')
   const [expandedDN,   setExpandedDN]   = useState<string | null>(null)
-  const [globalArea,   setGlobalArea]   = useState('')
-  const [perDnArea,    setPerDnArea]    = useState<Record<string, string>>({})
+  const [printArea,    setPrintArea]    = useState('')
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error'; show: boolean }>({
     message: '', type: 'success', show: false,
@@ -468,7 +467,7 @@ export function PickingListMaker() {
           )}
           {processed && (
             <button
-              onClick={() => { const toPrint = matchedDNs.filter(dn => selected.has(dn.rawDN)); if (!toPrint.length) return; printAllPickingLists(toPrint, printTime) }}
+              onClick={() => { const toPrint = matchedDNs.filter(dn => selected.has(dn.rawDN)); if (!toPrint.length) return; printAllPickingLists(toPrint, printTime, printArea) }}
               disabled={selected.size === 0}
               className="flex items-center gap-1.5 px-3 py-1.5 border text-[10px] font-bold uppercase tracking-widest transition-all duration-150"
               style={{ borderColor: selected.size > 0 ? C.accent : C.border, color: selected.size > 0 ? C.accent : C.textSub, background: selected.size > 0 ? `${C.accent}08` : 'transparent', cursor: selected.size > 0 ? 'pointer' : 'not-allowed' }}>
@@ -626,6 +625,28 @@ export function PickingListMaker() {
               {processed && (
                 <div className="space-y-4" style={{ borderTop: `1px solid ${C.border}`, paddingTop: '24px' }}>
 
+                  {/* Area Input */}
+                  <div className="p-4" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.2em] font-bold mb-1" style={{ color: C.textMuted }}>Area / Batch Name</p>
+                        <p className="text-[12px]" style={{ color: C.textSub }}>Enter the area or batch name to be printed on the picking lists</p>
+                      </div>
+                      <div className="relative flex-1 sm:flex-none sm:w-64">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: C.textGhost }} />
+                        <input
+                          value={printArea}
+                          onChange={e => setPrintArea(e.target.value)}
+                          placeholder="e.g., BATCH 1 CEBU AREA"
+                          className="w-full h-10 pl-10 pr-4 text-[13px] outline-none transition-all font-mono"
+                          style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.inputText }}
+                          onFocus={e => (e.currentTarget.style.borderColor = C.inputFocus)}
+                          onBlur={e => (e.currentTarget.style.borderColor = C.inputBorder)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Search + Select All */}
                   <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                     <div className="relative flex-1">
@@ -753,7 +774,7 @@ export function PickingListMaker() {
                                 ))}
                               </div>
                               <div className="flex flex-wrap gap-3 items-center pt-2">
-                                <button onClick={() => printPickingList(dn, printTime)}
+                                <button onClick={() => printPickingList(dn, printTime, printArea)}
                                   className="inline-flex items-center gap-1.5 px-4 py-2 border text-[11px] font-bold uppercase tracking-widest transition-all"
                                   style={{ border: `1px solid ${C.amber}40`, color: C.amber }}
                                   onMouseEnter={e => { e.currentTarget.style.background = `${C.amber}05`; e.currentTarget.style.borderColor = C.amber }}
