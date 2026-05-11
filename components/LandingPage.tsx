@@ -397,19 +397,19 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                 </div>
 
                 {/* Quick jumps */}
-                <div className="mt-9 pt-7 border-t border-[#21262D]">
-                  <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#6E7681] mb-4">Quick jump</p>
-                  <div className="flex flex-wrap gap-2">
-                    {QUICK_JUMPS.map(({ href, label }) => (
-                      <Link key={href} href={href}>
-                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#30363D] text-[11px] font-semibold text-[#6E7681] hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 cursor-pointer">
-                          <ChevronRight className="w-3 h-3" />
-                          {label}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+                  {/* <div className="mt-9 pt-7 border-t border-[#21262D]">
+                    <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#6E7681] mb-4">Quick jump</p>
+                    <div className="flex flex-wrap gap-2">
+                      {QUICK_JUMPS.map(({ href, label }) => (
+                        <Link key={href} href={href}>
+                          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#30363D] text-[11px] font-semibold text-[#6E7681] hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 cursor-pointer">
+                            <ChevronRight className="w-3 h-3" />
+                            {label}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div> */}
               </div>
 
               {/* RIGHT — analytics sidebar */}
