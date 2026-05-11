@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import {
   FileSpreadsheet, AlertTriangle, Truck, LogOut,
-  TrendingUp, ArrowUpRight, ArrowDownRight, ChevronRight, X, ClipboardList,
+  TrendingUp, ArrowUpRight, ArrowDownRight, X, ClipboardList, BarChart3,
 } from 'lucide-react'
 import { signOut } from '@/lib/actions/auth'
 import LogoGridBackground from './LogoBackground'
@@ -64,19 +64,13 @@ function useCountUp(target: number, duration = 1200, delay = 0) {
 
 const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
+// Order: Picking List → Serial List → Trip Manifest → Accrual Report → Damage Report
 const SERVICES = [
-  { href: '/excel-uploader', label: 'Serial List',   desc: 'Upload and process barcode data',          icon: FileSpreadsheet, index: '01' },
-  { href: '/trip-manifest',  label: 'Trip Manifest', desc: 'Manage shipment details',                  icon: Truck,           index: '02' },
-  { href: '/damage-report',  label: 'Damage Report', desc: 'Document and track damaged products',      icon: AlertTriangle,   index: '03' },
-  { href: '/picking-list',   label: 'Picking List',  desc: 'Generate picking lists from booking data', icon: ClipboardList,   index: '04' },
-  { href: '/accrual-report',  label: 'Accrual Report',  desc: 'Generate accrual reports from booking data', icon: ClipboardList,   index: '05' },
-]
-
-const QUICK_JUMPS = [
-  { href: '/excel-uploader', label: 'Upload Files' },
-  { href: '/trip-manifest',  label: 'New Trip'     },
-  { href: '/damage-report',  label: 'Report Issue' },
-  { href: '/picking-list',   label: 'Picking List' },
+  { href: '/picking-list',   label: 'Picking List',   desc: 'Generate picking lists from booking data',   icon: ClipboardList,   index: '01' },
+  { href: '/excel-uploader', label: 'Serial List',    desc: 'Upload and process barcode data',            icon: FileSpreadsheet, index: '02' },
+  { href: '/trip-manifest',  label: 'Trip Manifest',  desc: 'Manage and track shipment details',          icon: Truck,           index: '03' },
+  { href: '/accrual-report', label: 'Accrual Report', desc: 'Generate accrual reports from booking data', icon: BarChart3,       index: '04' },
+  { href: '/damage-report',  label: 'Damage Report',  desc: 'Document and track damaged products',        icon: AlertTriangle,   index: '05' },
 ]
 
 // ── Sidebar analytics ─────────────────────────────────────────────────────────
@@ -152,14 +146,14 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
         </div>
       </div>
 
-      {/* Divider stats */}
+      {/* Stats */}
       <div className="divide-y divide-[#21262D]">
         <div className="flex items-baseline justify-between pb-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681]">
             {MONTH_LABELS[new Date().getMonth()]} qty
           </span>
           <div className="text-right">
-            <p className="text-2xl font-[#0D1117] text-white tabular-nums leading-none">{animCurrentQty.toLocaleString()}</p>
+            <p className="text-2xl text-white tabular-nums leading-none">{animCurrentQty.toLocaleString()}</p>
             {delta !== null && (
               <div className={`flex items-center justify-end gap-0.5 mt-0.5 text-[10px] font-bold ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
                 {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
@@ -170,15 +164,15 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
         </div>
         <div className="flex items-baseline justify-between py-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681]">Trips</span>
-          <p className="text-2xl font-[#0D1117] text-white tabular-nums">{animCurrentTrips}</p>
+          <p className="text-2xl text-white tabular-nums">{animCurrentTrips}</p>
         </div>
         <div className="flex items-baseline justify-between py-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681]">All-time qty</span>
-          <p className="text-2xl font-[#0D1117] text-white tabular-nums">{animTotalAllTime.toLocaleString()}</p>
+          <p className="text-2xl text-white tabular-nums">{animTotalAllTime.toLocaleString()}</p>
         </div>
         <div className="flex items-baseline justify-between pt-4">
           <span className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681]">Manifests</span>
-          <p className="text-2xl font-[#0D1117] text-white tabular-nums">{animManifests}</p>
+          <p className="text-2xl text-white tabular-nums">{animManifests}</p>
         </div>
       </div>
 
@@ -207,7 +201,6 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
   const time     = useTime()
   const [showSignOutModal,   setShowSignOutModal]   = useState(false)
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
-  const isViewer = role?.toLowerCase() === 'viewer'
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   const now   = new Date()
@@ -236,7 +229,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
         onCancel={() => setShowSignOutModal(false)}
       />
 
-      {/* ── Analytics modal ── */}
+      {/* Analytics modal */}
       {showAnalyticsModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
@@ -261,7 +254,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
         </div>
       )}
 
-      {/* ── Background ── */}
+      {/* Background */}
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <LogoGridBackground />
       </div>
@@ -269,12 +262,12 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
       <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-[#0D1117]/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[600px] h-[600px] bg-[#0D1117]/15 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* ── Foreground ── */}
-      <div className="relative z-10  flex flex-col">
+      {/* Foreground */}
+      <div className="relative z-10 flex flex-col h-full">
 
         {/* Header */}
-        <header className="fixed sm:static top-0 left-0 right-0 z-50 border-b border-[#30363D] backdrop-blur">
-          <div className="px-5 sm:px-8 h-[72px] flex items-center justify-between">
+        <header className="flex-shrink-0 border-b border-[#21262D] backdrop-blur">
+          <div className="max-w-[1320px] mx-auto px-5 sm:px-8 h-[64px] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
               <div className="w-px h-4 bg-[#30363D]" />
@@ -286,7 +279,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               <div className="flex items-center gap-2.5">
                 <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-[#0D1117] flex-shrink-0"
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
                   style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}
                 >
                   {displayName.charAt(0).toUpperCase()}
@@ -311,19 +304,17 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
         </header>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto pt-[72px] sm:pt-0">
+        <div className="flex-1 overflow-y-auto min-h-0">
           <div className="max-w-[1320px] mx-auto px-5 sm:px-8">
 
             {/* Hero */}
-            <div className="pt-12 sm:pt-16 pb-10 sm:pb-14 border-b border-[#21262D]">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8">
+            <div className="pt-10 sm:pt-14 pb-8 sm:pb-10 border-b border-[#21262D]">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-[#F5A623] mb-3">{today}</p>
-                  <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] font-[#0D1117] text-white leading-[0.93] tracking-tight">
+                  <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)]  uppercase text-white leading-[0.93] tracking-tight">
                     {greeting},<br />
-                    <span className="italic text-[#6E7681]">
-                      {displayName}.
-                    </span>
+                    <span className="italic text-[#6E7681]">{displayName}.</span>
                   </h1>
                 </div>
 
@@ -333,14 +324,14 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                     <p className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681] mb-1.5">
                       {now.toLocaleString('en-US', { month: 'short' })} trips
                     </p>
-                    <p className="text-5xl font-[#0D1117] text-white tabular-nums leading-none">
+                    <p className="text-5xl text-white tabular-nums leading-none">
                       {String(animTrips).padStart(2, '0')}
                     </p>
                   </div>
                   <div className="w-px h-14 bg-[#21262D]" />
                   <div>
                     <p className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681] mb-1.5">Units out</p>
-                    <p className="text-5xl font-[#0D1117] text-white tabular-nums leading-none">
+                    <p className="text-5xl text-white tabular-nums leading-none">
                       {animQty >= 1000
                         ? `${(animQty / 1000).toFixed(1)}k`
                         : animQty.toLocaleString()}
@@ -354,7 +345,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                         className="flex flex-col items-start gap-2 group"
                       >
                         <p className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681] group-hover:text-[#F5A623] transition-colors">Analytics</p>
-                        <div className="flex items-center gap-1.5 text-[#F5A623] group-hover:text-[#F5A623] transition-colors">
+                        <div className="flex items-center gap-1.5 text-[#F5A623]">
                           <TrendingUp className="w-10 h-10" />
                           <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
@@ -369,52 +360,37 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_340px] divide-y lg:divide-y-0 lg:divide-x divide-[#21262D]">
 
               {/* LEFT — services */}
-              <div className="py-10 sm:py-12 lg:pr-12">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#6E7681] mb-7">Services</p>
+              <div className="py-8 sm:py-10 lg:pr-12">
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#6E7681] mb-2">Services</p>
 
                 <div className="divide-y divide-[#21262D]">
                   {SERVICES.map(({ href, label, desc, icon: Icon, index }) => (
                     <Link key={href} href={href} className="group block">
-                      <div className="flex items-center gap-5 sm:gap-6 py-5 sm:py-6 transition-all duration-200 group-hover:pl-1.5">
-                        <span className="text-[11px] font-bold text-[#484F58] w-5 flex-shrink-0 group-hover:text-white transition-colors">
+                      <div className="flex items-center gap-5 sm:gap-6 py-4 sm:py-5 transition-all duration-200 group-hover:pl-1.5">
+                        <span className="text-[11px] font-bold text-[#484F58] w-5 flex-shrink-0 group-hover:text-[#6E7681] transition-colors tabular-nums">
                           {index}
                         </span>
-                        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border bg-red-600 border-[#30363D] bg-[#161B22]  group-hover:bg-yellow-400 transition-all duration-200">
-                          <Icon className="w-4 h-4 text-white group-hover:text-black transition-colors" strokeWidth={1.5} />
+                        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-[#30363D] bg-[#161B22] group-hover:border-[#F5A623]/40 group-hover:bg-[#F5A623] transition-all duration-200">
+                          <Icon className="w-4 h-4 text-[#6E7681] group-hover:text-[#ffff] transition-colors duration-200" strokeWidth={1.5} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[15px] font-[#0D1117] text-[#C9D1D9] group-hover:text-white transition-colors leading-snug">
+                          <p className="text-[14px] font-semibold text-[#C9D1D9] group-hover:text-white transition-colors leading-snug">
                             {label}
                           </p>
-                          <p className="text-[12px] text-[#6E7681] mt-0.5 group-hover:text-[#6E7681] transition-colors">
+                          <p className="text-[12px] text-[#6E7681] mt-0.5">
                             {desc}
                           </p>
                         </div>
-                        <ArrowUpRight className="w-4 h-4 text-[#484F58] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0" />
+                        <ArrowUpRight className="w-3.5 h-3.5 text-[#484F58] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 opacity-0 group-hover:opacity-100" />
                       </div>
                     </Link>
                   ))}
                 </div>
-
-                {/* Quick jumps */}
-                  {/* <div className="mt-9 pt-7 border-t border-[#21262D]">
-                    <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#6E7681] mb-4">Quick jump</p>
-                    <div className="flex flex-wrap gap-2">
-                      {QUICK_JUMPS.map(({ href, label }) => (
-                        <Link key={href} href={href}>
-                          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#30363D] text-[11px] font-semibold text-[#6E7681] hover:border-[#F5A623]/40 hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all duration-200 cursor-pointer">
-                            <ChevronRight className="w-3 h-3" />
-                            {label}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div> */}
               </div>
 
               {/* RIGHT — analytics sidebar */}
-              <div className="hidden lg:block py-10 sm:py-12 pl-12">
-                <p className="text-lg uppercase tracking-[0.25em] font-bold text-white mb-3">Outbound</p>
+              <div className="hidden lg:block py-8 sm:py-10 pl-12">
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#6E7681] mb-6">Outbound</p>
                 {manifests.length === 0 ? (
                   <div className="space-y-3 py-2">
                     <TrendingUp className="w-5 h-5 text-[#484F58]" />
