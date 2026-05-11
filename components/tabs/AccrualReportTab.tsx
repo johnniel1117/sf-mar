@@ -15,7 +15,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// ── Design tokens — identical to SerialListPrinter ────────────────────────────
+// ── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
@@ -42,29 +42,41 @@ const C = {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface MaterialEntry {
-  materialCode:        string
-  materialDescription: string
-  category:            string
-  qty:                 number
-  cbm:                 number | null
-  remarks:             string
-  shipName:            string
+interface SerialEntry {
+  dnNo:          string
+  orderItem:     string
+  factoryCode:   string
+  location:      string
+  binCode:       string
+  materialCode:  string
+  materialDesc:  string
+  barcode:       string
+  materialType:  string
+  productStatus: string
+  shipTo:        string
+  shipToName:    string
+  shipToAddress: string
+  soldTo:        string
+  soldToName:    string
+  scanBy:        string
+  scanTime:      string | number
 }
 
 interface AccrualRow {
-  orderNo:      string
-  matCode:      string
-  matDesc:      string
-  category:     string
-  shipToName:   string
-  qty:          number
-  totalVolume:  number
-  drAmount:     number
-  trucker:      string
-  plateNo:      string
-  truckType:    string
-  manifestDate: string
+  orderNo:       string
+  matCode:       string
+  matDesc:       string
+  category:      string
+  shipToName:    string
+  shipToAddress: string
+  soldToName:    string
+  qty:           number
+  totalVolume:   number
+  drAmount:      number
+  trucker:       string
+  plateNo:       string
+  truckType:     string
+  manifestDate:  string
 }
 
 interface TruckerGroup {
@@ -113,13 +125,12 @@ function toExcelSerial(s: string) {
 
 // ── Supabase fetch ────────────────────────────────────────────────────────────
 
-// Batch size kept small to stay well under PostgREST's URL length limit (~8 KB)
 const FETCH_BATCH_SIZE = 20
 
-async function fetchBatch(dns: string[]): Promise<{ document_number: string; material_data: string | null }[]> {
+async function fetchBatch(dns: string[]): Promise<{ document_number: string; serial_data: string | null }[]> {
   const { data, error } = await supabase
     .from('excel_uploads')
-    .select('document_number, material_data')
+    .select('document_number, serial_data')
     .in('document_number', dns)
 
   if (error) {
@@ -129,39 +140,35 @@ async function fetchBatch(dns: string[]): Promise<{ document_number: string; mat
   return data ?? []
 }
 
-async function fetchMaterialsForDNs(dns: string[]): Promise<Map<string, MaterialEntry[]>> {
-  const map = new Map<string, MaterialEntry[]>()
+async function fetchSerialsForDNs(dns: string[]): Promise<Map<string, SerialEntry[]>> {
+  const map = new Map<string, SerialEntry[]>()
   if (!dns.length) return map
 
-  // Build variant list: original + leading-zero-stripped versions
   const unique   = [...new Set(dns)]
   const stripped = unique.map(d => d.replace(/^0+/, '')).filter(s => s && !unique.includes(s))
   const variants = [...unique, ...stripped]
 
-  // Split into chunks to avoid PostgREST URL-length 400 errors
   const chunks: string[][] = []
   for (let i = 0; i < variants.length; i += FETCH_BATCH_SIZE) {
     chunks.push(variants.slice(i, i + FETCH_BATCH_SIZE))
   }
 
-  // Fetch all batches in parallel
   const results = await Promise.all(chunks.map(fetchBatch))
   const rows = results.flat()
 
   for (const row of rows) {
-    let mats: MaterialEntry[] = []
+    let serials: SerialEntry[] = []
     try {
-      if (row.material_data) {
-        const parsed = JSON.parse(row.material_data)
-        mats = Array.isArray(parsed) ? parsed : []
+      if (row.serial_data) {
+        const parsed = JSON.parse(row.serial_data)
+        serials = Array.isArray(parsed) ? parsed : []
       }
     } catch { continue }
-    if (!mats.length) continue
+    if (!serials.length) continue
 
-    map.set(row.document_number, mats)
-    // Also index by stripped key so lookup works regardless of leading zeros
+    map.set(row.document_number, serials)
     const sk = row.document_number.replace(/^0+/, '')
-    if (sk !== row.document_number) map.set(sk, mats)
+    if (sk !== row.document_number) map.set(sk, serials)
   }
   return map
 }
@@ -170,47 +177,62 @@ async function fetchMaterialsForDNs(dns: string[]): Promise<Map<string, Material
 
 function buildAccrualRows(
   manifests: TripManifest[],
-  materialsMap: Map<string, MaterialEntry[]>
+  serialsMap: Map<string, SerialEntry[]>
 ): AccrualRow[] {
   const rows: AccrualRow[] = []
 
   for (const m of manifests) {
     if (!m.manifest_date) continue
-    for (const item of m.items ?? []) {
-      const dn   = item.document_number ?? ''
-      const mats = materialsMap.get(dn) ?? materialsMap.get(dn.replace(/^0+/, ''))
 
-      if (mats && mats.length > 0) {
-        for (const mat of mats) {
+    for (const item of m.items ?? []) {
+      const dn      = item.document_number ?? ''
+      const serials = serialsMap.get(dn) ?? serialsMap.get(dn.replace(/^0+/, ''))
+
+      if (serials && serials.length > 0) {
+        // Group by materialCode + orderItem — qty = count of scanned barcodes
+        const groupMap = new Map<string, SerialEntry[]>()
+        for (const s of serials) {
+          const key = `${s.materialCode}||${s.orderItem}`
+          if (!groupMap.has(key)) groupMap.set(key, [])
+          groupMap.get(key)!.push(s)
+        }
+
+        for (const group of groupMap.values()) {
+          const first = group[0]
           rows.push({
-            orderNo:      dn,
-            matCode:      mat.materialCode        ?? '',
-            matDesc:      mat.materialDescription ?? '',
-            category:     mat.category            ?? '',
-            shipToName:   item.ship_to_name       ?? '—',
-            qty:          mat.qty                 ?? 0,
-            totalVolume:  mat.cbm                 ?? 0,
-            drAmount:     0,
-            trucker:      m.trucker               ?? '',
-            plateNo:      m.plate_no              ?? '',
-            truckType:    m.truck_type            ?? '',
-            manifestDate: m.manifest_date,
+            orderNo:       dn,
+            matCode:       first.materialCode  ?? '',
+            matDesc:       first.materialDesc  ?? '',
+            category:      first.materialType  ?? '',
+            shipToName:    first.shipToName    ?? '—',
+            shipToAddress: first.shipToAddress ?? '—',
+            soldToName:    first.soldToName    ?? '—',
+            qty:           group.length,
+            totalVolume:   item.total_cbm      ?? 0,
+            drAmount:      0,
+            trucker:       m.trucker           ?? '',
+            plateNo:       m.plate_no          ?? '',
+            truckType:     m.truck_type        ?? '',
+            manifestDate:  m.manifest_date,
           })
         }
       } else {
+        // Fallback: no serial data found for this DN
         rows.push({
-          orderNo:      dn,
-          matCode:      '',
-          matDesc:      '',
-          category:     '',
-          shipToName:   item.ship_to_name  ?? '—',
-          qty:          item.total_quantity ?? 0,
-          totalVolume:  item.total_cbm      ?? 0,
-          drAmount:     0,
-          trucker:      m.trucker           ?? '',
-          plateNo:      m.plate_no          ?? '',
-          truckType:    m.truck_type        ?? '',
-          manifestDate: m.manifest_date,
+          orderNo:       dn,
+          matCode:       '',
+          matDesc:       '',
+          category:      '',
+          shipToName:    item.ship_to_name  ?? '—',
+          shipToAddress: '—',
+          soldToName:    '—',
+          qty:           item.total_quantity ?? 0,
+          totalVolume:   item.total_cbm      ?? 0,
+          drAmount:      0,
+          trucker:       m.trucker           ?? '',
+          plateNo:       m.plate_no          ?? '',
+          truckType:     m.truck_type        ?? '',
+          manifestDate:  m.manifest_date,
         })
       }
     }
@@ -249,7 +271,7 @@ function groupByDay(rows: AccrualRow[]): DayGroup[] {
 // ── Excel export ──────────────────────────────────────────────────────────────
 
 function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
-  const wb   = XLSX.utils.book_new()
+  const wb    = XLSX.utils.book_new()
   const bThin = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }
 
   const headerStyle = {
@@ -262,11 +284,15 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
     font:      { bold: true, sz: 10, color: { rgb: '1E3A5F' } },
     fill:      { fgColor: { rgb: 'EBF0FA' } },
     alignment: { horizontal: 'center', vertical: 'center' },
-    border:    bThin,
   }
 
-  const COLS       = ['ORDER NO','MAT CODE','MAT DESC','CATEGORY','SHIP TO NAME','QTY','TOTAL CBM','DR AMOUNT','TRUCKER','PLATE NO.','TRUCK TYPE','DATE DISPATCHED']
-  const COL_WIDTHS = [20, 16, 36, 14, 30, 8, 12, 12, 20, 12, 14, 16]
+  const COLS = [
+    'ORDER NO', 'MAT CODE', 'MAT DESC',
+    'SOLD TO NAME', 'SHIP TO NAME', 'SHIP TO ADDRESS',
+    'QTY', 'TOTAL CBM', 'DR AMOUNT',
+    'TRUCKER', 'PLATE NO.', 'TRUCK TYPE', 'DATE DISPATCHED',
+  ]
+  const COL_WIDTHS = [20, 16, 36, 28, 28, 32, 8, 12, 12, 20, 12, 14, 16]
 
   for (const day of dayGroups) {
     const ws: XLSX.WorkSheet = {}
@@ -283,35 +309,36 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
     for (const sub of day.subGroups) {
       sub.rows.forEach((r2, idx) => {
         const fill = { fgColor: { rgb: idx % 2 === 0 ? 'F6F8FA' : 'FFFFFF' } }
-        const base = { font:{sz:10}, fill, border:bThin, alignment:{vertical:'center',wrapText:true} }
-        const ctr  = { ...base, alignment:{horizontal:'center',vertical:'center'} }
+        const base = { font:{sz:10}, fill, border:bThin, alignment:{horizontal:'center',vertical:'center',wrapText:true} }
+        const ctr  = { ...base }
         const bold = { ...base, font:{sz:10,bold:true} }
 
-        setCell(row,  0, r2.orderNo,                    bold)
-        setCell(row,  1, r2.matCode     || '—',          base)
-        setCell(row,  2, r2.matDesc     || '—',          base)
-        setCell(row,  3, r2.category    || '—',          ctr)
-        setCell(row,  4, r2.shipToName,                  base)
-        setCell(row,  5, r2.qty,                         ctr, 'n')
-        setCell(row,  6, r2.totalVolume,                 ctr, 'n')
-        setCell(row,  7, r2.drAmount,                    ctr, 'n')
-        setCell(row,  8, r2.trucker,                     base)
-        setCell(row,  9, r2.plateNo,                     ctr)
-        setCell(row, 10, r2.truckType,                   ctr)
-        setCell(row, 11, toExcelSerial(r2.manifestDate), { ...ctr, numFmt:'MM/DD/YYYY' }, 'n')
+        setCell(row,  0, r2.orderNo.replace(/^0+/, '') || r2.orderNo,                    bold)
+        setCell(row,  1, r2.matCode       || '—',        base)
+        setCell(row,  2, r2.matDesc       || '—',        base)
+        setCell(row,  3, r2.soldToName    || '—',        base)
+        setCell(row,  4, r2.shipToName    || '—',        base)
+        setCell(row,  5, r2.shipToAddress || '—',        base)
+        setCell(row,  6, r2.qty,                         ctr, 'n')
+        setCell(row,  7, r2.totalVolume,                 ctr, 'n')
+        setCell(row,  8, r2.drAmount,                    ctr, 'n')
+        setCell(row,  9, r2.trucker,                     base)
+        setCell(row, 10, r2.plateNo,                     ctr)
+        setCell(row, 11, r2.truckType,                   ctr)
+        setCell(row, 12, toExcelSerial(r2.manifestDate), { ...ctr, numFmt:'MM/DD/YYYY' }, 'n')
         row++
       })
 
       COLS.forEach((_, c) => {
-        const v = c === 5 ? sub.totalQty : c === 6 ? sub.totalVol : c === 0 ? 'SUBTOTAL' : ''
-        setCell(row, c, v, subtotalStyle, (c === 5 || c === 6) ? 'n' : 's')
+        const v = c === 6 ? sub.totalQty : c === 7 ? sub.totalVol : c === 0 ? 'SUBTOTAL' : ''
+        setCell(row, c, v, subtotalStyle, (c === 6 || c === 7) ? 'n' : 's')
       })
       row++
     }
 
-    ws['!ref']  = `A1:L${row + 1}`
+    ws['!ref']  = `A1:M${row + 1}`
     ws['!cols'] = COL_WIDTHS.map(wch => ({ wch }))
-    ws['!rows'] = [{ hpt: 28 }]
+    ws['!rows'] = Array.from({ length: row }, () => ({ hpt: 28 }))
     XLSX.utils.book_append_sheet(wb, ws, formatSheetName(day.date))
   }
 
@@ -322,14 +349,12 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
 
 function StatCard({ label, value, color, icon: Icon }: { label: string; value: string; color: string; icon?: any }) {
   return (
-    <div className="px-5 py-4 rounded-lg transition-all duration-200"
-      style={{ 
-        background: C.surface, 
-        border: `1px solid ${C.border}`,
-        cursor: 'pointer'
-      }}
+    <div
+      className="px-5 py-4 rounded-lg transition-all duration-200"
+      style={{ background: C.surface, border: `1px solid ${C.border}`, cursor: 'pointer' }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.backgroundColor = C.surfaceHover }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.backgroundColor = C.surface }}>
+      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.backgroundColor = C.surface }}
+    >
       <div className="flex items-start gap-3">
         {Icon && (
           <div className="flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center"
@@ -351,12 +376,15 @@ function StatCard({ label, value, color, icon: Icon }: { label: string; value: s
 function CategoryPill({ category }: { category: string }) {
   if (!category) return null
   const colors: Record<string, { bg: string; text: string }> = {
-    TV:   { bg: 'rgba(59,130,246,0.12)',  text: '#60A5FA' },
-    REF:  { bg: 'rgba(63,185,80,0.12)',   text: '#3FB950' },
-    AC:   { bg: 'rgba(245,166,35,0.12)',  text: '#F5A623' },
-    WM:   { bg: 'rgba(168,85,247,0.12)', text: '#C084FC' },
+    DOMESTIC:    { bg: 'rgba(59,130,246,0.12)',  text: '#60A5FA' },
+    EXPORT:      { bg: 'rgba(63,185,80,0.12)',   text: '#3FB950' },
+    TV:          { bg: 'rgba(59,130,246,0.12)',  text: '#60A5FA' },
+    REF:         { bg: 'rgba(63,185,80,0.12)',   text: '#3FB950' },
+    AC:          { bg: 'rgba(245,166,35,0.12)',  text: '#F5A623' },
+    WM:          { bg: 'rgba(168,85,247,0.12)', text: '#C084FC' },
   }
-  const style = colors[category.toUpperCase()] ?? { bg: 'rgba(139,148,158,0.12)', text: '#8B949E' }
+  const key   = category.toUpperCase()
+  const style = colors[key] ?? { bg: 'rgba(139,148,158,0.12)', text: '#8B949E' }
   return (
     <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-sm"
       style={{ background: style.bg, color: style.text }}>
@@ -372,10 +400,10 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
     const n = new Date()
     return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`
   })
-  const [search,       setSearch]       = useState('')
-  const [expandedDay,  setExpandedDay]  = useState<string | null>(null)
-  const [materialsMap, setMaterialsMap] = useState<Map<string, MaterialEntry[]>>(new Map())
-  const [loading,      setLoading]      = useState(false)
+  const [search,      setSearch]      = useState('')
+  const [expandedDay, setExpandedDay] = useState<string | null>(null)
+  const [serialsMap,  setSerialsMap]  = useState<Map<string, SerialEntry[]>>(new Map())
+  const [loading,     setLoading]     = useState(false)
 
   const [selYear, selMonth] = selectedMonth.split('-').map(Number)
   const monthLabel = `${MONTH_NAMES[selMonth - 1]} ${selYear}`
@@ -406,17 +434,17 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
   useEffect(() => {
     const dns = dnsKey ? dnsKey.split(',') : []
-    if (!dns.length) { setMaterialsMap(new Map()); return }
+    if (!dns.length) { setSerialsMap(new Map()); return }
 
     let cancelled = false
     setLoading(true)
-    fetchMaterialsForDNs(dns).then(map => {
-      if (!cancelled) { setMaterialsMap(map); setLoading(false) }
+    fetchSerialsForDNs(dns).then(map => {
+      if (!cancelled) { setSerialsMap(map); setLoading(false) }
     })
     return () => { cancelled = true }
   }, [dnsKey])
 
-  const allRows = useMemo(() => buildAccrualRows(monthManifests, materialsMap), [monthManifests, materialsMap])
+  const allRows = useMemo(() => buildAccrualRows(monthManifests, serialsMap), [monthManifests, serialsMap])
 
   const dayGroups = useMemo(() => {
     let groups = groupByDay(allRows)
@@ -425,11 +453,13 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
       groups = groups.filter(g =>
         g.label.toLowerCase().includes(q) ||
         g.rows.some(r =>
-          r.orderNo.toLowerCase().includes(q)    ||
-          r.matCode.toLowerCase().includes(q)    ||
-          r.matDesc.toLowerCase().includes(q)    ||
-          r.shipToName.toLowerCase().includes(q) ||
-          r.trucker.toLowerCase().includes(q)    ||
+          r.orderNo.toLowerCase().includes(q)       ||
+          r.matCode.toLowerCase().includes(q)       ||
+          r.matDesc.toLowerCase().includes(q)       ||
+          r.shipToName.toLowerCase().includes(q)    ||
+          r.shipToAddress.toLowerCase().includes(q) ||
+          r.soldToName.toLowerCase().includes(q)    ||
+          r.trucker.toLowerCase().includes(q)       ||
           r.plateNo.toLowerCase().includes(q)
         )
       )
@@ -440,14 +470,16 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
   const totalQty   = allRows.reduce((s, r) => s + r.qty, 0)
   const totalVol   = allRows.reduce((s, r) => s + r.totalVolume, 0)
   const totalDays  = dayGroups.length
-  const hasMatData = allRows.some(r => r.matCode)
+  const hasSerials = allRows.some(r => r.matCode)
 
-  // Table column layout
-  const gridCols   = hasMatData ? '120px 90px 1fr 72px 1fr 56px 72px' : '120px 1fr 56px 72px'
-  const minWidth   = hasMatData ? '680px' : '380px'
-  const colHeaders = hasMatData
-    ? ['Order No.', 'Mat Code', 'Description', 'Category', 'Ship To', 'Qty', 'CBM']
-    : ['Order No.', 'Ship To', 'Qty', 'CBM']
+  // Table column layout — extended for soldToName + shipToAddress
+  const gridCols   = hasSerials
+    ? '120px 90px 1fr 80px 160px 140px 56px 72px'
+    : '120px 1fr 160px 56px 72px'
+  const minWidth   = hasSerials ? '960px' : '500px'
+  const colHeaders = hasSerials
+    ? ['Order No.', 'Mat Code', 'Description', 'Type', 'Sold To', 'Ship To / Address', 'Qty', 'CBM']
+    : ['Order No.', 'Ship To', 'Address', 'Qty', 'CBM']
 
   return (
     <div className="rounded-xl overflow-hidden flex flex-col"
@@ -457,12 +489,11 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
       <div className="px-6 sm:px-8 pt-8 pb-8 flex-shrink-0"
         style={{ borderBottom: `1px solid ${C.border}` }}>
 
-        {/* Title section */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg"
-            style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}` }}>
-            <BarChart3 className="w-5 h-5" style={{ color: C.accent }} />
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg"
+              style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}` }}>
+              <BarChart3 className="w-5 h-5" style={{ color: C.accent }} />
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textMuted }}>
@@ -475,33 +506,18 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
           </div>
         </div>
 
-        {/* Stats grid — shown when data exists */}
+        {/* Stats */}
         {monthManifests.length > 0 && !loading && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-            <StatCard 
-              label="Active Days" 
-              value={String(totalDays)} 
-              color={C.accent}
-              icon={CalendarIcon}
-            />
-            <StatCard 
-              label="Total Qty" 
-              value={totalQty.toLocaleString()} 
-              color={C.textPrimary}
-              icon={Package}
-            />
+            <StatCard label="Active Days"  value={String(totalDays)}           color={C.accent}       icon={CalendarIcon} />
+            <StatCard label="Total Qty"    value={totalQty.toLocaleString()}    color={C.textPrimary}  icon={Package} />
             {totalVol > 0 && (
-              <StatCard 
-                label="Total CBM" 
-                value={totalVol.toFixed(2)} 
-                color={C.amber}
-                icon={TrendingUp}
-              />
+              <StatCard label="Total CBM"  value={totalVol.toFixed(2)}          color={C.amber}        icon={TrendingUp} />
             )}
           </div>
         )}
 
-        {/* Controls row */}
+        {/* Controls */}
         <div className="flex gap-3 flex-wrap items-center"
           style={{ background: 'rgba(255,255,255,0.02)', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${C.border}` }}>
 
@@ -515,7 +531,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
               className="h-10 pl-10 pr-4 text-[13px] font-medium appearance-none cursor-pointer outline-none rounded-md transition-colors"
               style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textSilver }}
               onFocus={e => (e.currentTarget.style.borderColor = C.inputFocus)}
-              onBlur={e => (e.currentTarget.style.borderColor = C.border)}
+              onBlur={e  => (e.currentTarget.style.borderColor = C.border)}
             >
               {availableMonths.length === 0 && <option value={selectedMonth}>{monthLabel}</option>}
               {availableMonths.map(m => {
@@ -532,17 +548,11 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search DN, material, trucker…"
+              placeholder="Search DN, material, sold to, trucker…"
               className="w-full h-10 pl-10 pr-4 bg-transparent text-[13px] rounded-md focus:outline-none transition-all"
               style={{ border: `1px solid ${C.border}`, color: C.textSilver }}
-              onFocus={e => {
-                e.currentTarget.style.borderColor = C.inputFocus
-                e.currentTarget.style.background = C.surface
-              }}
-              onBlur={e => {
-                e.currentTarget.style.borderColor = C.border
-                e.currentTarget.style.background = 'transparent'
-              }}
+              onFocus={e => { e.currentTarget.style.borderColor = C.inputFocus; e.currentTarget.style.background = C.surface }}
+              onBlur={e  => { e.currentTarget.style.borderColor = C.border;     e.currentTarget.style.background = 'transparent' }}
             />
             {search && (
               <button onClick={() => setSearch('')}
@@ -553,14 +563,14 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
             )}
           </div>
 
-          {/* Export button */}
+          {/* Export */}
           <button
             onClick={() => exportAccrualExcel(dayGroups, monthLabel)}
             disabled={dayGroups.length === 0 || loading}
             className="flex items-center gap-2 px-4 h-10 text-[13px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wide"
             style={{ background: C.accent, color: 'white', border: 'none' }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.accentHover; e.currentTarget.style.boxShadow = `0 0 12px ${C.accentGlow}` }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = C.accent; e.currentTarget.style.boxShadow = 'none' }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = C.accent;      e.currentTarget.style.boxShadow = 'none' }}
           >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export</span>
@@ -593,12 +603,8 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
           <div className="flex flex-col items-center justify-center py-28 gap-4">
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: C.accent }} />
             <div className="text-center">
-              <p className="text-[14px] font-semibold" style={{ color: C.textPrimary }}>
-                Fetching material data…
-              </p>
-              <p className="text-[12px] mt-1" style={{ color: C.textMuted }}>
-                Please wait while we load your reports
-              </p>
+              <p className="text-[14px] font-semibold" style={{ color: C.textPrimary }}>Fetching serial data…</p>
+              <p className="text-[12px] mt-1" style={{ color: C.textMuted }}>Please wait while we load your reports</p>
             </div>
           </div>
         )}
@@ -632,10 +638,11 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                 No manifests match your search for "{search}"
               </p>
             </div>
-            <button onClick={() => setSearch('')} className="px-4 py-2 rounded-md text-[12px] font-semibold mt-2 transition-all"
+            <button onClick={() => setSearch('')}
+              className="px-4 py-2 rounded-md text-[12px] font-semibold mt-2 transition-all"
               style={{ background: 'rgba(232,25,44,0.1)', color: C.accent, border: `1px solid rgba(232,25,44,0.2)` }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(232,25,44,0.15)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(232,25,44,0.1)' }}>
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(232,25,44,0.1)'  }}>
               Clear search
             </button>
           </div>
@@ -649,14 +656,14 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
           const uniqueDNs = [...new Set(day.rows.map(r => r.orderNo))].length
 
           return (
-            <div key={day.date} 
+            <div key={day.date}
               className="transition-all duration-200 mx-4 my-2 rounded-lg overflow-hidden"
-              style={{ 
-                border: `1px solid ${isOpen ? C.accent : C.border}`,
+              style={{
+                border:     `1px solid ${isOpen ? C.accent : C.border}`,
                 background: isOpen ? 'rgba(232,25,44,0.04)' : 'transparent',
               }}>
 
-              {/* ── Summary row (clickable) ── */}
+              {/* Summary row */}
               <button
                 className="w-full text-left transition-all duration-150"
                 style={{ background: isOpen ? 'rgba(255,255,255,0.02)' : 'transparent' }}
@@ -667,11 +674,8 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                 <div className="grid px-6 py-4 items-center"
                   style={{ gridTemplateColumns: '1fr 80px 64px 72px 20px' }}>
 
-                  {/* Date + truck info */}
                   <div className="min-w-0">
-                    <p className="text-[15px] font-bold" style={{ color: C.textPrimary }}>
-                      {day.label}
-                    </p>
+                    <p className="text-[15px] font-bold" style={{ color: C.textPrimary }}>{day.label}</p>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       {day.subGroups.map((sg, i) => (
                         <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide"
@@ -683,7 +687,6 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                     </div>
                   </div>
 
-                  {/* DN count */}
                   <div className="hidden sm:block text-center">
                     <span className="inline-flex items-center justify-center text-[12px] font-bold px-2.5 py-1 rounded-md"
                       style={{ background: 'rgba(255,255,255,0.04)', color: 'white', border: `1px solid ${C.border}` }}>
@@ -691,30 +694,29 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                     </span>
                   </div>
 
-                  {/* Qty */}
                   <p className="text-right text-[18px] font-bold tabular-nums" style={{ color: C.textPrimary }}>
                     {dayQty.toLocaleString()}
                   </p>
 
-                  {/* CBM */}
-                  <p className="text-right text-[14px] font-bold tabular-nums" style={{ color: dayVol > 0 ? C.amber : C.textGhost }}>
+                  <p className="text-right text-[14px] font-bold tabular-nums"
+                    style={{ color: dayVol > 0 ? C.amber : C.textGhost }}>
                     {dayVol > 0 ? dayVol.toFixed(2) : '—'}
                   </p>
 
-                  {/* Chevron */}
                   <ChevronRight className={`w-5 h-5 ml-auto transition-all duration-300 ${isOpen ? 'rotate-90' : ''}`}
                     style={{ color: isOpen ? C.accent : C.textGhost }} />
                 </div>
               </button>
 
-              {/* ── Expanded detail ── */}
+              {/* Expanded detail */}
               {isOpen && (
                 <div className="px-6 pb-6" style={{ borderTop: `1px solid ${C.border}` }}>
 
                   {day.subGroups.map((sub, si) => (
-                    <div key={si} className={si > 0 ? 'mt-6 pt-6 border-t' : 'mt-4'} style={si > 0 ? { borderColor: C.border } : {}}>
+                    <div key={si} className={si > 0 ? 'mt-6 pt-6 border-t' : 'mt-4'}
+                      style={si > 0 ? { borderColor: C.border } : {}}>
 
-                      {/* Truck header with badge */}
+                      {/* Truck header */}
                       <div className="flex items-center gap-3 mb-4">
                         <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg flex-1"
                           style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}` }}>
@@ -756,7 +758,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                         {/* Data rows */}
                         {sub.rows.map((r, idx) => (
                           <div key={idx}
-                            className="grid px-4 py-2.5 transition-all duration-100 group/row"
+                            className="grid px-4 py-2.5 transition-all duration-100"
                             style={{
                               gridTemplateColumns: gridCols,
                               minWidth: minWidth,
@@ -770,7 +772,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                             <span className="text-[12px] font-bold font-mono truncate"
                               style={{ color: C.accent }}>{r.orderNo}</span>
 
-                            {hasMatData && <>
+                            {hasSerials && <>
                               {/* Mat Code */}
                               <span className="text-[12px] font-mono truncate"
                                 style={{ color: r.matCode ? C.textSilver : C.textGhost }}>
@@ -783,14 +785,36 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                                 {r.matDesc || '—'}
                               </span>
 
-                              {/* Category */}
+                              {/* Type / Category */}
                               <span><CategoryPill category={r.category} /></span>
+
+                              {/* Sold To Name */}
+                              <span className="text-[12px] truncate" style={{ color: C.textSilver }}>
+                                {r.soldToName}
+                              </span>
+
+                              {/* Ship To Name + Address stacked */}
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[12px] truncate font-medium" style={{ color: C.textSilver }}>
+                                  {r.shipToName}
+                                </span>
+                                <span className="text-[10px] truncate" style={{ color: C.textMuted }}>
+                                  {r.shipToAddress}
+                                </span>
+                              </div>
                             </>}
 
-                            {/* Ship To */}
-                            <span className="text-[12px] truncate" style={{ color: C.textSilver }}>
-                              {r.shipToName}
-                            </span>
+                            {/* Fallback (no serial data) columns */}
+                            {!hasSerials && <>
+                              {/* Ship To */}
+                              <span className="text-[12px] truncate" style={{ color: C.textSilver }}>
+                                {r.shipToName}
+                              </span>
+                              {/* Address */}
+                              <span className="text-[12px] truncate" style={{ color: C.textMuted }}>
+                                {r.shipToAddress}
+                              </span>
+                            </>}
 
                             {/* Qty */}
                             <span className="text-[13px] font-bold tabular-nums"
@@ -814,10 +838,13 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                           }}>
                           <span className="text-[11px] font-bold uppercase tracking-wider"
                             style={{ color: C.accent }}>Subtotal</span>
-                          {hasMatData && <span />}
-                          {hasMatData && <span />}
-                          {hasMatData && <span />}
-                          <span style={{ color: C.textMuted }} />
+                          {hasSerials && <span />}
+                          {hasSerials && <span />}
+                          {hasSerials && <span />}
+                          {hasSerials && <span />}
+                          {hasSerials && <span />}
+                          {!hasSerials && <span />}
+                          {!hasSerials && <span />}
                           <span className="text-[13px] font-bold tabular-nums"
                             style={{ color: C.textPrimary }}>{sub.totalQty.toLocaleString()}</span>
                           <span className="text-[12px] font-bold tabular-nums"
