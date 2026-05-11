@@ -15,43 +15,29 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
-// Cleaner palette: blue primary, amber for CBM/volume, red only for brand dot
+// ── Design tokens — identical to SerialListPrinter ────────────────────────────
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
-  surfaceHover: '#1C2128',
-  surfaceActive:'#21262D',
+  surfaceHover: '#21262D',
   border:       '#30363D',
-  borderLight:  '#21262D',
-
-  // Primary interactive accent — blue instead of red
-  blue:         '#3B82F6',
-  blueDim:      'rgba(59,130,246,0.12)',
-  blueBorder:   'rgba(59,130,246,0.25)',
-
-  // Brand red — used ONLY for the live dot indicator
-  brand:        '#E8192C',
-
-  // Volume / CBM data — amber
+  borderHover:  '#8B949E',
+  divider:      '#21262D',
+  accent:       '#F5A623',
+  accentHover:  '#FF1F30',
+  accentGlow:   'rgba(245,166,35,0.25)',
   amber:        '#F5A623',
-  amberDim:     'rgba(245,166,35,0.10)',
-  amberBorder:  'rgba(245,166,35,0.22)',
-
-  // Green for quantity highlights
-  green:        '#3FB950',
-  greenDim:     'rgba(63,185,80,0.10)',
-
-  // Text scale
-  textPrimary:  '#E6EDF3',
+  textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
   textSub:      '#8B949E',
   textMuted:    '#6E7681',
-  textGhost:    '#3D444D',
-
-  // Table stripes
-  stripeA:      '#161B22',
-  stripeB:      '#0D1117',
+  textGhost:    '#484F58',
+  inputBg:      '#0D1117',
+  inputBorder:  '#30363D',
+  inputText:    '#C9D1D9',
+  inputFocus:   '#1F6FEB',
+  stripeEven:   '#161B22',
+  stripeOdd:    '#0D1117',
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -336,18 +322,24 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
 
 function StatCard({ label, value, color, icon: Icon }: { label: string; value: string; color: string; icon?: any }) {
   return (
-    <div className="px-4 py-3 rounded-lg transition-all duration-200 hover:shadow-lg"
-      style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+    <div className="px-5 py-4 rounded-lg transition-all duration-200"
+      style={{ 
+        background: C.surface, 
+        border: `1px solid ${C.border}`,
+        cursor: 'pointer'
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.backgroundColor = C.surfaceHover }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.backgroundColor = C.surface }}>
       <div className="flex items-start gap-3">
         {Icon && (
           <div className="flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center"
-            style={{ background: `${color}15` }}>
+            style={{ background: color === C.amber ? 'rgba(245,166,35,0.1)' : 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}` }}>
             <Icon className="w-4 h-4" style={{ color }} />
           </div>
         )}
-        <div>
-          <p className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: C.textMuted }}>{label}</p>
-          <p className="text-2xl font-bold tabular-nums leading-none mt-1" style={{ color }}>{value}</p>
+        <div className="flex-1">
+          <p className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.textMuted }}>{label}</p>
+          <p className="text-xl font-bold tabular-nums leading-none mt-2" style={{ color }}>{value}</p>
         </div>
       </div>
     </div>
@@ -468,15 +460,15 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
         {/* Title section */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg"
-              style={{ background: `${C.blue}15`, border: `1px solid ${C.blueBorder}` }}>
-              <BarChart3 className="w-5 h-5" style={{ color: C.blue }} />
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg"
+            style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}` }}>
+            <BarChart3 className="w-5 h-5" style={{ color: C.accent }} />
             </div>
             <div>
-              <p className="text-[12px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textMuted }}>
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textMuted }}>
                 Accrual Report
               </p>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mt-1" style={{ color: C.textPrimary }}>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1" style={{ color: C.textPrimary }}>
                 {monthLabel}
               </h2>
             </div>
@@ -489,13 +481,13 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
             <StatCard 
               label="Active Days" 
               value={String(totalDays)} 
-              color={C.textPrimary}
+              color={C.accent}
               icon={CalendarIcon}
             />
             <StatCard 
               label="Total Qty" 
               value={totalQty.toLocaleString()} 
-              color={C.blue}
+              color={C.textPrimary}
               icon={Package}
             />
             {totalVol > 0 && (
@@ -511,7 +503,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
         {/* Controls row */}
         <div className="flex gap-3 flex-wrap items-center"
-          style={{ background: `${C.surface}40`, padding: '12px 16px', borderRadius: '8px', border: `1px solid ${C.borderLight}` }}>
+          style={{ background: 'rgba(255,255,255,0.02)', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${C.border}` }}>
 
           {/* Month selector */}
           <div className="relative flex-shrink-0">
@@ -522,7 +514,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
               onChange={e => { setSelectedMonth(e.target.value); setExpandedDay(null) }}
               className="h-10 pl-10 pr-4 text-[13px] font-medium appearance-none cursor-pointer outline-none rounded-md transition-colors"
               style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textSilver }}
-              onFocus={e => (e.currentTarget.style.borderColor = C.blue)}
+              onFocus={e => (e.currentTarget.style.borderColor = C.inputFocus)}
               onBlur={e => (e.currentTarget.style.borderColor = C.border)}
             >
               {availableMonths.length === 0 && <option value={selectedMonth}>{monthLabel}</option>}
@@ -544,7 +536,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
               className="w-full h-10 pl-10 pr-4 bg-transparent text-[13px] rounded-md focus:outline-none transition-all"
               style={{ border: `1px solid ${C.border}`, color: C.textSilver }}
               onFocus={e => {
-                e.currentTarget.style.borderColor = C.blue
+                e.currentTarget.style.borderColor = C.inputFocus
                 e.currentTarget.style.background = C.surface
               }}
               onBlur={e => {
@@ -565,10 +557,10 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
           <button
             onClick={() => exportAccrualExcel(dayGroups, monthLabel)}
             disabled={dayGroups.length === 0 || loading}
-            className="flex items-center gap-2 px-4 h-10 text-[13px] font-semibold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-md"
-            style={{ background: C.blue, color: 'white', border: 'none' }}
-            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.1)' }}
-            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)' }}
+            className="flex items-center gap-2 px-4 h-10 text-[13px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wide"
+            style={{ background: C.accent, color: 'white', border: 'none' }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.accentHover; e.currentTarget.style.boxShadow = `0 0 12px ${C.accentGlow}` }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = C.accent; e.currentTarget.style.boxShadow = 'none' }}
           >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export</span>
@@ -599,7 +591,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
         {/* Loading */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-28 gap-4">
-            <Loader2 className="w-8 h-8 animate-spin" style={{ color: C.blue }} />
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: C.accent }} />
             <div className="text-center">
               <p className="text-[14px] font-semibold" style={{ color: C.textPrimary }}>
                 Fetching material data…
@@ -615,8 +607,8 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
         {!loading && monthManifests.length === 0 && (
           <div className="flex flex-col items-center justify-center py-28 gap-4 text-center px-8">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-2"
-              style={{ background: `${C.blue}15`, border: `2px solid ${C.blueBorder}` }}>
-              <TrendingUp className="w-8 h-8" style={{ color: C.blue }} />
+              style={{ background: 'rgba(255,255,255,0.04)', border: `2px solid ${C.border}` }}>
+              <TrendingUp className="w-8 h-8" style={{ color: C.accent }} />
             </div>
             <div>
               <p className="text-lg font-bold" style={{ color: C.textPrimary }}>No manifests for {monthLabel}</p>
@@ -631,8 +623,8 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
         {!loading && monthManifests.length > 0 && dayGroups.length === 0 && (
           <div className="flex flex-col items-center justify-center py-28 gap-4 text-center px-8">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-2"
-              style={{ background: `${C.amber}15`, border: `2px solid ${C.amberBorder}` }}>
-              <Search className="w-8 h-8" style={{ color: C.amber }} />
+              style={{ background: 'rgba(255,255,255,0.04)', border: `2px solid ${C.border}` }}>
+              <Search className="w-8 h-8" style={{ color: C.textSub }} />
             </div>
             <div>
               <p className="text-lg font-bold" style={{ color: C.textPrimary }}>No results found</p>
@@ -641,9 +633,9 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
               </p>
             </div>
             <button onClick={() => setSearch('')} className="px-4 py-2 rounded-md text-[12px] font-semibold mt-2 transition-all"
-              style={{ background: `${C.blue}20`, color: C.blue, border: `1px solid ${C.blueBorder}` }}
-              onMouseEnter={e => { e.currentTarget.style.background = `${C.blue}30` }}
-              onMouseLeave={e => { e.currentTarget.style.background = `${C.blue}20` }}>
+              style={{ background: 'rgba(232,25,44,0.1)', color: C.accent, border: `1px solid rgba(232,25,44,0.2)` }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(232,25,44,0.15)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(232,25,44,0.1)' }}>
               Clear search
             </button>
           </div>
@@ -660,15 +652,15 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
             <div key={day.date} 
               className="transition-all duration-200 mx-4 my-2 rounded-lg overflow-hidden"
               style={{ 
-                border: `1px solid ${isOpen ? C.blue : C.borderLight}`,
-                background: isOpen ? `${C.blue}05` : 'transparent',
+                border: `1px solid ${isOpen ? C.accent : C.border}`,
+                background: isOpen ? 'rgba(232,25,44,0.04)' : 'transparent',
               }}>
 
               {/* ── Summary row (clickable) ── */}
               <button
                 className="w-full text-left transition-all duration-150"
-                style={{ background: isOpen ? `${C.surface}60` : 'transparent' }}
-                onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background = `${C.surfaceHover}40` }}
+                style={{ background: isOpen ? 'rgba(255,255,255,0.02)' : 'transparent' }}
+                onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
                 onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background = 'transparent' }}
                 onClick={() => setExpandedDay(isOpen ? null : day.date)}
               >
@@ -682,8 +674,8 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                     </p>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       {day.subGroups.map((sg, i) => (
-                        <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium"
-                          style={{ background: `${C.blue}10`, color: C.blue, border: `1px solid ${C.blueBorder}` }}>
+                        <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide"
+                          style={{ background: 'rgba(255,255,255,0.04)', color: C.textSilver, border: `1px solid ${C.border}` }}>
                           <Truck className="w-3 h-3 flex-shrink-0" />
                           <span className="font-mono">{sg.plateNo || sg.trucker || 'N/A'}</span>
                         </span>
@@ -694,7 +686,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                   {/* DN count */}
                   <div className="hidden sm:block text-center">
                     <span className="inline-flex items-center justify-center text-[12px] font-bold px-2.5 py-1 rounded-md"
-                      style={{ background: C.surface, color: C.blue, border: `1px solid ${C.blueBorder}` }}>
+                      style={{ background: 'rgba(255,255,255,0.04)', color: 'white', border: `1px solid ${C.border}` }}>
                       {uniqueDNs}
                     </span>
                   </div>
@@ -711,24 +703,24 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
                   {/* Chevron */}
                   <ChevronRight className={`w-5 h-5 ml-auto transition-all duration-300 ${isOpen ? 'rotate-90' : ''}`}
-                    style={{ color: isOpen ? C.blue : C.textGhost }} />
+                    style={{ color: isOpen ? C.accent : C.textGhost }} />
                 </div>
               </button>
 
               {/* ── Expanded detail ── */}
               {isOpen && (
-                <div className="px-6 pb-6" style={{ borderTop: `1px solid ${C.borderLight}` }}>
+                <div className="px-6 pb-6" style={{ borderTop: `1px solid ${C.border}` }}>
 
                   {day.subGroups.map((sub, si) => (
-                    <div key={si} className={si > 0 ? 'mt-6 pt-6 border-t' : 'mt-4'} style={si > 0 ? { borderColor: C.borderLight } : {}}>
+                    <div key={si} className={si > 0 ? 'mt-6 pt-6 border-t' : 'mt-4'} style={si > 0 ? { borderColor: C.border } : {}}>
 
                       {/* Truck header with badge */}
                       <div className="flex items-center gap-3 mb-4">
                         <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg flex-1"
-                          style={{ background: `${C.blue}10`, border: `1px solid ${C.blueBorder}` }}>
-                          <Truck className="w-4 h-4 flex-shrink-0" style={{ color: C.blue }} />
+                          style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}` }}>
+                          <Truck className="w-4 h-4 flex-shrink-0" style={{ color: C.accent }} />
                           <div className="min-w-0">
-                            <span className="text-[12px] font-bold block" style={{ color: C.blue }}>
+                            <span className="text-[12px] font-bold block" style={{ color: C.textPrimary }}>
                               {sub.trucker || 'Unknown Trucker'}
                             </span>
                             {sub.plateNo && (
@@ -738,9 +730,9 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                             )}
                           </div>
                         </div>
-                        <span className="text-[12px] font-semibold px-3 py-1.5 rounded-lg flex-shrink-0"
-                          style={{ background: C.surface, color: C.textPrimary, border: `1px solid ${C.border}` }}>
-                          {sub.rows.length} item{sub.rows.length !== 1 ? 's' : ''}
+                        <span className="text-[12px] font-bold px-3 py-1.5 rounded-lg flex-shrink-0 uppercase tracking-wide"
+                          style={{ background: 'rgba(255,255,255,0.04)', color: C.textSilver, border: `1px solid ${C.border}` }}>
+                          {sub.rows.length} {sub.rows.length !== 1 ? 'items' : 'item'}
                         </span>
                       </div>
 
@@ -748,11 +740,11 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                       <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${C.border}` }}>
 
                         {/* Table header */}
-                        <div className="grid px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
+                        <div className="grid px-4 py-3 text-[10px] font-bold uppercase tracking-wider"
                           style={{
                             gridTemplateColumns: gridCols,
                             minWidth: minWidth,
-                            background: `${C.surface}80`,
+                            background: 'rgba(255,255,255,0.02)',
                             borderBottom: `1px solid ${C.border}`,
                             color: C.textMuted,
                           }}>
@@ -768,15 +760,15 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                             style={{
                               gridTemplateColumns: gridCols,
                               minWidth: minWidth,
-                              background: idx % 2 === 0 ? C.stripeA : C.stripeB,
-                              borderBottom: idx < sub.rows.length - 1 ? `1px solid ${C.borderLight}` : 'none',
+                              background: idx % 2 === 0 ? C.stripeEven : C.stripeOdd,
+                              borderBottom: idx < sub.rows.length - 1 ? `1px solid ${C.border}` : 'none',
                             }}
                             onMouseEnter={e => { e.currentTarget.style.background = C.surfaceHover }}
-                            onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? C.stripeA : C.stripeB }}
+                            onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? C.stripeEven : C.stripeOdd }}
                           >
                             {/* Order No */}
                             <span className="text-[12px] font-bold font-mono truncate"
-                              style={{ color: C.blue }}>{r.orderNo}</span>
+                              style={{ color: C.accent }}>{r.orderNo}</span>
 
                             {hasMatData && <>
                               {/* Mat Code */}
@@ -817,11 +809,11 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                           style={{
                             gridTemplateColumns: gridCols,
                             minWidth: minWidth,
-                            background: C.surfaceActive,
+                            background: 'rgba(255,255,255,0.02)',
                             borderTop: `1px solid ${C.border}`,
                           }}>
                           <span className="text-[11px] font-bold uppercase tracking-wider"
-                            style={{ color: C.blue }}>Subtotal</span>
+                            style={{ color: C.accent }}>Subtotal</span>
                           {hasMatData && <span />}
                           {hasMatData && <span />}
                           {hasMatData && <span />}
@@ -839,7 +831,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
                   {/* Day summary */}
                   <div className="flex items-center justify-between mt-5 pt-4 px-2"
-                    style={{ borderTop: `1px solid ${C.borderLight}` }}>
+                    style={{ borderTop: `1px solid ${C.border}` }}>
                     <span className="text-[12px] font-semibold" style={{ color: C.textMuted }}>
                       {uniqueDNs} document{uniqueDNs !== 1 ? 's' : ''}
                     </span>

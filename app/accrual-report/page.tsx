@@ -10,11 +10,13 @@ const C = {
   bg: '#0D1117',
   divider: '#21262D',
   border: '#30363D',
+  borderHover: '#8B949E',
+  surfaceHover: '#21262D',
   textSub: '#8B949E',
   textSilver: '#B1BAC4',
-  surfaceHover: '#1C2128',
-  blue: '#3B82F6',
-  blueBorder: 'rgba(59,130,246,0.25)',
+  textPrimary: '#C9D1D9',
+  accent: '#E8192C',
+  accentGlow: 'rgba(232,25,44,0.25)',
 }
 
 export default function AccrualReportPage() {
@@ -70,21 +72,10 @@ export default function AccrualReportPage() {
         {/* Home Button */}
         <Link
           href="/"
-          className="p-2.5 rounded-lg transition-all flex-shrink-0"
-          style={{color: C.textSub}}
-          onMouseEnter={(e) => { 
-            const el = e.currentTarget as HTMLElement
-            el.style.backgroundColor = C.surfaceHover;
-            (el.querySelector('svg') as SVGElement).style.color = 'white' 
-          }}
-          onMouseLeave={(e) => { 
-            const el = e.currentTarget as HTMLElement
-            el.style.backgroundColor = 'transparent'
-            ;(el.querySelector('svg') as SVGElement).style.color = C.textSub 
-          }}
-          title="Back to home"
+          className="p-2.5 rounded-full hover:bg-[#1a1a1a] transition-colors flex-shrink-0 text-[#5A5A5A] hover:text-white"
+          title="Home"
         >
-          <Home className="w-4 h-4 transition-colors" />
+          <Home className="w-4 h-4" />
         </Link>
 
         <div className="w-px h-6 flex-shrink-0 hidden sm:block" style={{backgroundColor: C.divider}} />
@@ -92,8 +83,8 @@ export default function AccrualReportPage() {
         {/* Report Info */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{background: `${C.blue}20`, border: `1px solid ${C.blueBorder}`}}>
-            <BarChart3 className="w-4 h-4" style={{color: C.blue}} />
+            style={{background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`}}>
+            <BarChart3 className="w-4 h-4" style={{color: C.accent}} />
           </div>
           <div className="min-w-0">
             <p className="text-sm sm:text-base font-bold truncate" style={{color: C.textSilver}}>
