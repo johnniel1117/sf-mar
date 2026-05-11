@@ -292,7 +292,7 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
     'QTY', 'TOTAL CBM', 'DR AMOUNT',
     'TRUCKER', 'PLATE NO.', 'TRUCK TYPE', 'DATE DISPATCHED',
   ]
-  const COL_WIDTHS = [20, 16, 36, 28, 28, 32, 8, 12, 12, 20, 12, 14, 16]
+  const COL_WIDTHS = [20, 18, 36, 34, 30, 42, 8, 12, 12, 20, 12, 14, 16]
 
   for (const day of dayGroups) {
     const ws: XLSX.WorkSheet = {}
@@ -313,7 +313,8 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
         const ctr  = { ...base }
         const bold = { ...base, font:{sz:10,bold:true} }
 
-        setCell(row,  0, r2.orderNo.replace(/^0+/, '') || r2.orderNo,                    bold)
+        const orderNoVal = 'TRA' + r2.orderNo
+        setCell(row,  0, orderNoVal,                                              bold)
         setCell(row,  1, r2.matCode       || '—',        base)
         setCell(row,  2, r2.matDesc       || '—',        base)
         setCell(row,  3, r2.soldToName    || '—',        base)
@@ -330,7 +331,7 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
       })
 
       COLS.forEach((_, c) => {
-        const v = c === 6 ? sub.totalQty : c === 7 ? sub.totalVol : c === 0 ? 'SUBTOTAL' : ''
+        const v = c === 6 ? sub.totalQty : c === 7 ? sub.totalVol : c === 0 ? '' : ''
         setCell(row, c, v, subtotalStyle, (c === 6 || c === 7) ? 'n' : 's')
       })
       row++
@@ -474,9 +475,9 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
   // Table column layout — extended for soldToName + shipToAddress
   const gridCols   = hasSerials
-    ? '120px 90px 1fr 80px 160px 140px 56px 72px'
-    : '120px 1fr 160px 56px 72px'
-  const minWidth   = hasSerials ? '960px' : '500px'
+    ? '220px 200px 1fr 100px 300px 340px 70px 90px'
+    : '220px 1fr 300px 70px 90px'
+  const minWidth   = hasSerials ? '1200px' : '700px'
   const colHeaders = hasSerials
     ? ['Order No.', 'Mat Code', 'Description', 'Type', 'Sold To', 'Ship To / Address', 'Qty', 'CBM']
     : ['Order No.', 'Ship To', 'Address', 'Qty', 'CBM']
