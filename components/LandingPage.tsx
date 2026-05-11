@@ -69,6 +69,7 @@ const SERVICES = [
   { href: '/trip-manifest',  label: 'Trip Manifest', desc: 'Manage shipment details',                  icon: Truck,           index: '02' },
   { href: '/damage-report',  label: 'Damage Report', desc: 'Document and track damaged products',      icon: AlertTriangle,   index: '03' },
   { href: '/picking-list',   label: 'Picking List',  desc: 'Generate picking lists from booking data', icon: ClipboardList,   index: '04' },
+  { href: '/accrual-report',  label: 'Accrual Report',  desc: 'Generate accrual reports from booking data', icon: ClipboardList,   index: '05' },
 ]
 
 const QUICK_JUMPS = [
