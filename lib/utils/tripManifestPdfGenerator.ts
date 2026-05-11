@@ -279,7 +279,7 @@ export class TripManifestPDFGenerator {
           <!-- Header -->
           <div class="header-section">
             <div class="logo-section">
-              <img src="https://brandlogos.net/wp-content/uploads/2025/06/sf_express-logo_brandlogos.net_shwfy-512x512.png" alt="SF Express Logo" />
+              <img src="SFEXPRESS.png" alt="SF Express Logo" />
               <div class="warehouse-info">
                 <strong>SF EXPRESS WAREHOUSE</strong><br/>
                 UPPER TINGUB, MANDAUE, CEBU
