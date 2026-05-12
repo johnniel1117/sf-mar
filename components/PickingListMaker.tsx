@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import {
   Home, CheckCircle2,
   Search, Printer, AlertCircle, Package,
-  X, ChevronRight, FileSpreadsheet, MapPin, Hash,
+  X, ChevronRight, FileSpreadsheet, MapPin, Hash, ClipboardList,
 } from 'lucide-react'
 import Link from 'next/link'
 import { getMaterialInfoFromMatcode } from '@/lib/category-mapping'
@@ -77,7 +77,6 @@ function parseDNList(raw: string): string[] {
 }
 
 // ── DN Reference Excel parser ─────────────────────────────────────────────────
-// Reads the DN_Info file — same as before
 
 function parseDNInfo(wb: XLSX.WorkBook): DNRefMap {
   const ws   = wb.Sheets[wb.SheetNames[0]]
@@ -129,7 +128,7 @@ function parseDNInfo(wb: XLSX.WorkBook): DNRefMap {
   return map
 }
 
-// ── PDF ───────────────────────────────────────────────────────────────────────
+// ── Shared print styles ───────────────────────────────────────────────────────
 
 const PDF_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
@@ -177,6 +176,185 @@ const PDF_STYLES = `
   .doc-stamp { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #707070; font-weight: 500; }
   @media print { html, body { height: auto !important; margin: 0 !important; } div:last-child { page-break-after: avoid !important; } }
 `
+
+// ── Summary sheet styles ──────────────────────────────────────────────────────
+
+const SUMMARY_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
+  @page { size: A4 portrait; margin: 12mm 15mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', Arial, sans-serif; font-size: 10px; line-height: 1.4; color: #000; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .summary-header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 2px solid #000; }
+  .logo-section img { height: 18px; width: auto; filter: brightness(0) saturate(100%); display: block; }
+  .doc-title-block { text-align: center; }
+  .doc-title { font-size: 13px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
+  .doc-subtitle { font-size: 9px; color: #444; margin-top: 3px; letter-spacing: 0.08em; font-family: 'DM Mono', monospace; }
+  .print-meta { font-family: 'DM Mono', monospace; font-size: 9px; color: #444; text-align: right; line-height: 1.9; }
+
+  .summary-meta { display: flex; gap: 24px; margin-bottom: 14px; padding: 10px 14px; border: 1px solid #000; background: #f8f8f8; }
+  .meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .meta-label { font-size: 8px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #555; }
+  .meta-value { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; }
+  .meta-value.small { font-size: 11px; }
+  .meta-divider { width: 1px; background: #ccc; align-self: stretch; margin: 0 4px; }
+
+  .summary-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .summary-table thead tr { background: #000; color: #fff; }
+  .summary-table th { padding: 7px 10px; font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; text-align: left; white-space: nowrap; }
+  .summary-table th.center { text-align: center; }
+  .summary-table th.right { text-align: right; }
+
+  /* DN group header */
+  .dn-group-row td { padding: 6px 10px; background: #f0f0f0; border-top: 1.5px solid #000; border-bottom: 0.5px solid #aaa; font-weight: 700; font-size: 10px; }
+  .dn-group-row td .dn-no { font-family: 'DM Mono', monospace; font-size: 11px; }
+  .dn-group-row td .ship-to { color: #333; margin-left: 10px; font-size: 10px; }
+  .dn-group-row td .area-tag { font-size: 7.5px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid #000; padding: 1px 6px; margin-left: 8px; display: inline-block; }
+
+  /* Item rows */
+  .item-row td { padding: 6px 10px; border-bottom: 0.5px solid #e0e0e0; vertical-align: middle; }
+  .item-row:last-of-type td { border-bottom: none; }
+  .item-row.even td { background: #fafafa; }
+  .item-row.odd td { background: #fff; }
+  .item-row td.matcode { font-family: 'DM Mono', monospace; font-size: 9px; color: #555; width: 110px; }
+  .item-row td.desc { font-size: 10px; }
+  .item-row td.location { text-align: center; font-family: 'DM Mono', monospace; font-size: 9px; width: 60px; }
+  .item-row td.category { text-align: center; font-size: 9px; width: 90px; }
+  .item-row td.qty { text-align: right; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600; width: 50px; padding-right: 14px; }
+
+  /* DN subtotal */
+  .dn-subtotal-row td { padding: 5px 10px; background: #e8e8e8; border-top: 0.5px solid #aaa; border-bottom: 1.5px solid #000; }
+  .dn-subtotal-row td.label { font-size: 8px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #555; }
+  .dn-subtotal-row td.value { text-align: right; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700; padding-right: 14px; }
+
+  /* Grand total */
+  .grand-total-row td { padding: 8px 10px; background: #000; color: #fff; border-top: 2px solid #000; }
+  .grand-total-row td.label { font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
+  .grand-total-row td.value { text-align: right; font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 700; padding-right: 14px; }
+
+  .summary-footer { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid #000; }
+  .sig-box { padding: 12px 14px 8px; }
+  .sig-box + .sig-box { border-left: 1px solid #000; }
+  .sig-space { height: 40px; }
+  .sig-line { border-top: 1px solid #000; margin-bottom: 6px; }
+  .sig-label { font-size: 8px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #555; }
+
+  .page-footer { margin-top: 14px; display: flex; justify-content: space-between; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: #888; }
+
+  @media print { html, body { height: auto !important; margin: 0 !important; } }
+`
+
+// ── Summary sheet HTML builder ────────────────────────────────────────────────
+
+function buildSummaryHtml(entries: DNRefEntry[], printTime: string, area: string): string {
+  const grandTotal = entries.reduce((s, e) => s + e.items.reduce((ss, i) => ss + i.quantity, 0), 0)
+  const totalDNs   = entries.length
+  const totalLines = entries.reduce((s, e) => s + e.items.length, 0)
+  const areaLabel  = area || 'ALL'
+
+  const dnRowsHtml = entries.map(entry => {
+    const dnQty = entry.items.reduce((s, i) => s + i.quantity, 0)
+    const entryArea = area || entry.area || ''
+
+    const itemRowsHtml = entry.items.map((item, idx) => {
+      const category = getMaterialInfoFromMatcode(item.materialCode).category
+      return `
+        <tr class="item-row ${idx % 2 === 0 ? 'even' : 'odd'}">
+          <td class="matcode">${item.materialCode}</td>
+          <td class="desc">${item.customerModel || item.materialDesc || '—'}</td>
+          <td class="location">${item.location || 'PC8A'}</td>
+          <td class="category">${category}</td>
+          <td class="qty">${item.quantity}</td>
+        </tr>`
+    }).join('')
+
+    return `
+      <tr class="dn-group-row">
+        <td colspan="5">
+          <span class="dn-no">${entry.dnNo}</span>
+          <span class="ship-to">${entry.shipToName || entry.dealer || '—'}</span>
+          ${entryArea ? `<span class="area-tag">${entryArea}</span>` : ''}
+        </td>
+      </tr>
+      ${itemRowsHtml}
+      <tr class="dn-subtotal-row">
+        <td class="label" colspan="4">DN Subtotal</td>
+        <td class="value">${dnQty}</td>
+      </tr>`
+  }).join('')
+
+  return `
+  <div class="summary-header">
+    <div class="logo-section"><img src="/haier3.png" alt="Haier" /></div>
+    <div class="doc-title-block">
+      <div class="doc-title">Pull-Out Summary Sheet</div>
+      <div class="doc-subtitle">SF EXPRESS CEBU WAREHOUSE</div>
+    </div>
+    <div class="print-meta">Print Time<br>${printTime}</div>
+  </div>
+
+  <div class="summary-meta">
+    <div class="meta-item">
+      <span class="meta-label">Area / Batch</span>
+      <span class="meta-value small">${areaLabel}</span>
+    </div>
+    <div class="meta-divider"></div>
+    <div class="meta-item">
+      <span class="meta-label">Total DNs</span>
+      <span class="meta-value">${totalDNs}</span>
+    </div>
+    <div class="meta-divider"></div>
+    <div class="meta-item">
+      <span class="meta-label">Line Items</span>
+      <span class="meta-value">${totalLines}</span>
+    </div>
+    <div class="meta-divider"></div>
+    <div class="meta-item">
+      <span class="meta-label">Grand Total Qty</span>
+      <span class="meta-value">${grandTotal}</span>
+    </div>
+  </div>
+
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Material Code</th>
+        <th>Description</th>
+        <th class="center">Location</th>
+        <th class="center">Category</th>
+        <th class="right" style="padding-right:14px">Qty</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${dnRowsHtml}
+      <tr class="grand-total-row">
+        <td class="label" colspan="4">Grand Total</td>
+        <td class="value">${grandTotal}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="summary-footer">
+    <div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-label">Checked By</div></div>
+    <div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-label">Picked By</div></div>
+    <div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-label">Verified By</div></div>
+  </div>
+
+  <div class="page-footer">
+    <span>Prepared by: Johnniel Mar</span>
+    <span>${printTime}</span>
+  </div>`
+}
+
+function printSummarySheet(entries: DNRefEntry[], printTime: string, area: string): void {
+  const win = window.open('', '', 'width=1000,height=800')
+  if (!win) return
+  win.document.write(`<!DOCTYPE html><html><head><title>Pull-Out Summary</title><style>${SUMMARY_STYLES}</style></head><body>${buildSummaryHtml(entries, printTime, area)}</body></html>`)
+  win.document.close()
+  setTimeout(() => win.print(), 400)
+}
+
+// ── Individual picking list builders ─────────────────────────────────────────
 
 function buildPageHtml(entry: DNRefEntry, printTime: string, area: string): string {
   const items    = entry.items
@@ -264,7 +442,7 @@ function printAllPickingLists(entries: DNRefEntry[], printTime: string, area: st
   setTimeout(() => win.print(), 400)
 }
 
-// ── Drop Zone (DN Reference only) ─────────────────────────────────────────────
+// ── Drop Zone ─────────────────────────────────────────────────────────────────
 
 function DropZone({ onFile, loaded, fileName }: { onFile: (f: File) => void; loaded: boolean; fileName: string | null }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -336,19 +514,143 @@ function AreaBadge({ area, size = 'sm' }: { area: string; size?: 'sm' | 'md' }) 
   )
 }
 
+// ── Summary Preview Panel ─────────────────────────────────────────────────────
+
+function SummaryPreview({ entries, onClose, onPrint }: {
+  entries: DNRefEntry[]
+  onClose: () => void
+  onPrint: () => void
+}) {
+  const grandTotal = entries.reduce((s, e) => s + e.items.reduce((ss, i) => ss + i.quantity, 0), 0)
+  const totalLines = entries.reduce((s, e) => s + e.items.length, 0)
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl overflow-hidden"
+        style={{ background: C.bg, border: `1px solid ${C.border}` }}>
+
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-6 py-5 flex-shrink-0"
+          style={{ borderBottom: `1px solid ${C.border}` }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 flex items-center justify-center"
+              style={{ background: 'rgba(245,166,35,0.1)', border: `1px solid rgba(245,166,35,0.25)` }}>
+              <ClipboardList className="w-4 h-4" style={{ color: C.amber }} />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textMuted }}>Pull-Out Summary</p>
+              <p className="text-base font-bold" style={{ color: C.textPrimary }}>
+                {entries.length} DN{entries.length !== 1 ? 's' : ''} · {totalLines} lines · {grandTotal} pcs
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 transition-colors"
+            style={{ color: C.textSub }}
+            onMouseEnter={e => (e.currentTarget.style.color = C.textPrimary)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.textSub)}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {entries.map((entry, ei) => {
+            const dnQty = entry.items.reduce((s, i) => s + i.quantity, 0)
+            return (
+              <div key={entry.rawDN}
+                style={{ borderBottom: ei < entries.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+
+                {/* DN header */}
+                <div className="flex items-center justify-between px-6 py-3"
+                  style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-[12px] font-bold font-mono flex-shrink-0"
+                      style={{ color: C.amber }}>{entry.dnNo}</span>
+                    <span className="text-[12px] truncate" style={{ color: C.textSilver }}>
+                      {entry.shipToName || entry.dealer || '—'}
+                    </span>
+                    {entry.area && <AreaBadge area={entry.area} size="sm" />}
+                  </div>
+                  <span className="text-[13px] font-bold tabular-nums flex-shrink-0 ml-4"
+                    style={{ color: C.textPrimary }}>{dnQty} pcs</span>
+                </div>
+
+                {/* Items */}
+                {entry.items.map((item, idx) => (
+                  <div key={idx}
+                    className="flex items-center gap-4 px-6 py-2.5"
+                    style={{
+                      background: idx % 2 === 0 ? C.stripeEven : C.stripeOdd,
+                      borderTop: `1px solid ${C.divider}`,
+                    }}>
+                    <span className="text-[11px] font-mono w-28 flex-shrink-0"
+                      style={{ color: C.textMuted }}>{item.materialCode}</span>
+                    <span className="text-[12px] flex-1 truncate"
+                      style={{ color: C.textSilver }}>{item.customerModel || item.materialDesc || '—'}</span>
+                    <span className="text-[11px] w-14 text-center flex-shrink-0 font-mono"
+                      style={{ color: C.textSub }}>{item.location || '—'}</span>
+                    <span className="text-[13px] font-bold tabular-nums w-10 text-right flex-shrink-0"
+                      style={{ color: C.textPrimary }}>{item.quantity}</span>
+                  </div>
+                ))}
+
+                {/* DN subtotal */}
+                <div className="flex items-center justify-end gap-3 px-6 py-2"
+                  style={{ background: 'rgba(255,255,255,0.015)', borderTop: `1px solid ${C.divider}` }}>
+                  <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: C.textMuted }}>DN Subtotal</span>
+                  <span className="text-[14px] font-bold tabular-nums" style={{ color: C.textPrimary }}>{dnQty}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+          style={{ borderTop: `1px solid ${C.border}`, background: C.surface }}>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textMuted }}>Grand Total</span>
+            <span className="text-2xl font-bold tabular-nums" style={{ color: C.textPrimary }}>{grandTotal}</span>
+            <span className="text-[10px]" style={{ color: C.textMuted }}>pcs</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={onClose}
+              className="px-4 h-9 text-[11px] font-bold uppercase tracking-widest transition-all"
+              style={{ border: `1px solid ${C.border}`, color: C.textSub }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
+              Close
+            </button>
+            <button onClick={onPrint}
+              className="flex items-center gap-2 px-5 h-9 text-[11px] font-bold uppercase tracking-widest transition-all"
+              style={{ background: C.amber, color: '#000' }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
+              <Printer className="w-3.5 h-3.5" />
+              Print Summary
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function PickingListMaker() {
-  const [dnInfoMap,    setDnInfoMap]    = useState<DNRefMap | null>(null)
-  const [dnInfoFile,   setDnInfoFile]   = useState<string | null>(null)
-  const [dnInput,      setDnInput]      = useState('')
-  const [matchedDNs,   setMatchedDNs]   = useState<DNRefEntry[]>([])
-  const [unmatchedDNs, setUnmatchedDNs] = useState<string[]>([])
-  const [processed,    setProcessed]    = useState(false)
-  const [selected,     setSelected]     = useState<Set<string>>(new Set())
-  const [search,       setSearch]       = useState('')
-  const [expandedDN,   setExpandedDN]   = useState<string | null>(null)
-  const [printArea,    setPrintArea]    = useState('')
+  const [dnInfoMap,      setDnInfoMap]      = useState<DNRefMap | null>(null)
+  const [dnInfoFile,     setDnInfoFile]     = useState<string | null>(null)
+  const [dnInput,        setDnInput]        = useState('')
+  const [matchedDNs,     setMatchedDNs]     = useState<DNRefEntry[]>([])
+  const [unmatchedDNs,   setUnmatchedDNs]   = useState<string[]>([])
+  const [processed,      setProcessed]      = useState(false)
+  const [selected,       setSelected]       = useState<Set<string>>(new Set())
+  const [search,         setSearch]         = useState('')
+  const [expandedDN,     setExpandedDN]     = useState<string | null>(null)
+  const [printArea,      setPrintArea]      = useState('')
+  const [showSummary,    setShowSummary]    = useState(false)
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error'; show: boolean }>({
     message: '', type: 'success', show: false,
@@ -383,7 +685,6 @@ export function PickingListMaker() {
     const unmatched: string[]     = []
 
     for (const dn of requested) {
-      // Try direct, strip-leading-zeros, and padded variants
       const entry = dnInfoMap[dn]
         ?? dnInfoMap[dn.replace(/^0+/, '')]
         ?? Object.values(dnInfoMap).find(e => e.rawDN.replace(/^0+/, '') === dn.replace(/^0+/, ''))
@@ -425,14 +726,28 @@ export function PickingListMaker() {
     dn.area.toLowerCase().includes(search.toLowerCase())
   )
 
-  const totalSelectedQty = matchedDNs
-    .filter(dn => selected.has(dn.rawDN))
-    .reduce((sum, dn) => sum + dn.items.reduce((s, i) => s + i.quantity, 0), 0)
+  const selectedEntries = matchedDNs.filter(dn => selected.has(dn.rawDN))
+
+  const totalSelectedQty = selectedEntries.reduce(
+    (sum, dn) => sum + dn.items.reduce((s, i) => s + i.quantity, 0), 0
+  )
 
   const availableDNs = dnInfoMap ? Object.keys(dnInfoMap).length : 0
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: C.bg }}>
+
+      {/* Summary modal */}
+      {showSummary && selectedEntries.length > 0 && (
+        <SummaryPreview
+          entries={selectedEntries}
+          onClose={() => setShowSummary(false)}
+          onPrint={() => {
+            printSummarySheet(selectedEntries, printTime, printArea)
+            setShowSummary(false)
+          }}
+        />
+      )}
 
       {/* ── Nav ── */}
       <nav className="relative flex-shrink-0 h-[73px] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4"
@@ -465,6 +780,20 @@ export function PickingListMaker() {
               <span className="text-[11px] tabular-nums font-bold" style={{ color: C.textPrimary }}>{selected.size} / {matchedDNs.length}</span>
             </div>
           )}
+
+          {/* Summary button */}
+          {processed && (
+            <button
+              onClick={() => { if (selectedEntries.length) setShowSummary(true) }}
+              disabled={selected.size === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 border text-[10px] font-bold uppercase tracking-widest transition-all duration-150"
+              style={{ borderColor: selected.size > 0 ? C.amber : C.border, color: selected.size > 0 ? C.amber : C.textSub, background: selected.size > 0 ? `${C.amber}08` : 'transparent', cursor: selected.size > 0 ? 'pointer' : 'not-allowed' }}
+              title="View & print pull-out summary sheet">
+              <ClipboardList className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Summary</span>
+            </button>
+          )}
+
           {processed && (
             <button
               onClick={() => { const toPrint = matchedDNs.filter(dn => selected.has(dn.rawDN)); if (!toPrint.length) return; printAllPickingLists(toPrint, printTime, printArea) }}
@@ -554,7 +883,7 @@ export function PickingListMaker() {
             {/* Card body */}
             <div className="p-5 sm:p-8 space-y-6">
 
-              {/* Step 1 — DN Reference upload */}
+              {/* Step 1 */}
               <div className="space-y-3">
                 <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textMuted }}>Step 1 — Upload DN Reference</p>
                 <DropZone onFile={handleDNInfo} loaded={!!dnInfoMap} fileName={dnInfoFile} />
@@ -570,7 +899,7 @@ export function PickingListMaker() {
                 )}
               </div>
 
-              {/* Step 2 — DN number input */}
+              {/* Step 2 */}
               <div className="space-y-3" style={{ borderTop: `1px solid ${C.border}`, paddingTop: '24px' }}>
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textMuted }}>Step 2 — Enter DN Numbers</p>
@@ -647,6 +976,31 @@ export function PickingListMaker() {
                     </div>
                   </div>
 
+                  {/* Summary CTA banner */}
+                  {selectedEntries.length > 0 && (
+                    <div className="flex items-center justify-between px-4 py-3"
+                      style={{ background: 'rgba(245,166,35,0.04)', border: `1px solid rgba(245,166,35,0.2)` }}>
+                      <div className="flex items-center gap-3">
+                        <ClipboardList className="w-4 h-4 flex-shrink-0" style={{ color: C.amber }} />
+                        <div>
+                          <p className="text-[11px] font-bold" style={{ color: C.amber }}>Pull-Out Summary Sheet</p>
+                          <p className="text-[10px]" style={{ color: C.textSub }}>
+                            {selectedEntries.length} DN{selectedEntries.length !== 1 ? 's' : ''} · {totalSelectedQty} pcs total — view before printing
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowSummary(true)}
+                        className="flex items-center gap-1.5 px-4 h-8 text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0"
+                        style={{ background: C.amber, color: '#000' }}
+                        onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+                        onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
+                        <ClipboardList className="w-3.5 h-3.5" />
+                        View Summary
+                      </button>
+                    </div>
+                  )}
+
                   {/* Search + Select All */}
                   <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                     <div className="relative flex-1">
@@ -710,10 +1064,8 @@ export function PickingListMaker() {
                           onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = C.surfaceHover }}
                           onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = 'transparent' }}>
 
-                          {/* Collapsed row */}
                           <div className="flex items-center gap-3 sm:gap-5 px-4 py-5 cursor-pointer select-none"
                             onClick={() => setExpandedDN(isExpanded ? null : dn.rawDN)}>
-                            {/* Checkbox */}
                             <div onClick={e => { e.stopPropagation(); toggleSelect(dn.rawDN) }}
                               className="w-5 h-5 flex items-center justify-center flex-shrink-0 transition-all cursor-pointer text-white text-[12px]"
                               style={{ border: `2px solid ${isSelected ? '#3b82f6' : C.border}`, background: isSelected ? '#3b82f6' : 'transparent' }}
@@ -748,7 +1100,6 @@ export function PickingListMaker() {
                               style={{ color: isExpanded ? C.accent : C.textGhost }} />
                           </div>
 
-                          {/* Expanded panel */}
                           {isExpanded && (
                             <div className="px-4 pb-6 sm:px-8" style={{ borderTop: `1px solid ${C.divider}` }}>
                               <div className="flex items-center gap-3 mt-5 mb-5">
