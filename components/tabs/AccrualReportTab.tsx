@@ -123,6 +123,14 @@ function toExcelSerial(s: string) {
   return Math.round((utc - Date.UTC(1899, 11, 30)) / 86400000)
 }
 
+/**
+ * Prefix a DN with "TRA" only if it doesn't already start with "TRA".
+ */
+function formatOrderNo(dn: string): string {
+  if (!dn) return dn
+  return dn.startsWith('TRA') ? dn : `TRA${dn}`
+}
+
 // ── Supabase fetch ────────────────────────────────────────────────────────────
 
 const FETCH_BATCH_SIZE = 20
@@ -313,7 +321,8 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
         const ctr  = { ...base }
         const bold = { ...base, font:{sz:10,bold:true} }
 
-        const orderNoVal = 'TRA' + r2.orderNo
+        const orderNoVal = r2.orderNo.replace(/^0+/, '')
+
         setCell(row,  0, orderNoVal,                                              bold)
         setCell(row,  1, r2.matCode       || '—',        base)
         setCell(row,  2, r2.matDesc       || '—',        base)
@@ -769,9 +778,9 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                             onMouseEnter={e => { e.currentTarget.style.background = C.surfaceHover }}
                             onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? C.stripeEven : C.stripeOdd }}
                           >
-                            {/* Order No */}
+                            {/* Order No — ✅ formatted with TRA prefix guard */}
                             <span className="text-[12px] font-bold font-mono truncate"
-                              style={{ color: C.accent }}>{r.orderNo}</span>
+                              style={{ color: C.accent }}>{r.orderNo.replace(/^0+/, '')}</span>
 
                             {hasSerials && <>
                               {/* Mat Code */}
