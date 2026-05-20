@@ -243,13 +243,6 @@ const DETAILED_STYLES = `
   .data-table td { border: 1px solid #000; padding: 5px 7px; vertical-align: middle; }
 
   /* ── DN group header row ── */
-  .dn-header td {
-    background: #fff;
-    border-top: 1.5px solid #000;
-    border-bottom: 0.5px solid #000;
-    font-size: 9px;
-    padding: 5px 7px;
-  }
   .dn-no   { font-family: monospace; font-weight: 700; font-size: 10px; }
   .ship-to { margin-left: 10px; color: #000; }
 
@@ -257,26 +250,17 @@ const DETAILED_STYLES = `
   .mat-row-even td { background: #fff; }
   .mat-row-odd  td { background: #fff; }
   .col-no   { text-align: center; width: 28px; color: #000; font-size: 8px; }
-  .col-code { font-family: monospace; font-size: 8.5px; color: #000; width: 110px; }
-  .col-desc { font-size: 9px; width: 120px; }
+  .col-dn   { text-align: center; width: 80px; font-family: monospace; font-weight: 700; font-size: 9px; }
+  .col-ship { text-align: center; width: 100px; font-size: 9px; }
+  .col-code { text-align: center; font-family: monospace; font-size: 8.5px; color: #000; width: 90px; }
+  .col-desc { text-align: center; font-size: 9px; width: 100px; }
   .col-loc  { text-align: center; width: 55px; font-family: monospace; font-size: 8.5px; }
   .col-qty  { text-align: center; width: 45px; font-weight: 700; font-size: 10px; }
-  .col-rem  { width: 150px; }
-
-  /* ── DN subtotal ── */
-  .dn-subtotal td {
-    background: #fff;
-    border-top: 0.5px solid #000;
-    border-bottom: 1.5px solid #000;
-    font-size: 8.5px; font-weight: 700;
-    padding: 4px 7px;
-  }
-  .dn-subtotal .sub-label { text-align: right; color: #000; letter-spacing: 0.1em; text-transform: uppercase; }
-  .dn-subtotal .sub-val   { text-align: center; font-family: monospace; font-size: 11px; }
+  .col-rem  { text-align: center; width: 150px; }
 
   /* ── Grand total ── */
   .grand-total td {
-    background: #fff; color: #000;
+    background: #000; color: #fff;
     padding: 7px 7px; font-weight: 700; font-size: 10px;
     border: 1px solid #000;
   }
@@ -315,6 +299,8 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
       return `
         <tr class="${isEven ? 'mat-row-even' : 'mat-row-odd'}">
           <td class="col-no">${rowCounter}</td>
+          <td class="col-dn">${dn.documentNumber.replace(/^0+/, '')}</td>
+          <td class="col-ship">${dn.shipToName}</td>
           <td class="col-code">${line.materialCode}</td>
           <td class="col-desc">${line.materialDesc}</td>
           <td class="col-loc">${line.location}</td>
@@ -323,18 +309,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
         </tr>`
     }).join('')
 
-    return `
-      <tr class="dn-header">
-        <td colspan="6">
-          <span class="dn-no">${dn.documentNumber.replace(/^0+/, '')}</span>
-          <span class="ship-to">— ${dn.shipToName}</span>
-        </td>
-      </tr>
-      ${dnLines}
-      <tr class="dn-subtotal">
-        <td colspan="5" class="sub-label">DN Subtotal</td>
-        <td class="sub-val" style="text-align:center">${dn.totalQty}</td>
-      </tr>`
+    return dnLines
   }).join('')
 
   return `<!DOCTYPE html>
@@ -401,8 +376,10 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
     <thead>
       <tr>
         <th style="width:28px">No.</th>
-        <th style="width:110px">Material Code</th>
-        <th style="width:120px">Description</th>
+        <th style="width:80px">DN No.</th>
+        <th style="width:100px">Ship To Name</th>
+        <th style="width:90px">Material Code</th>
+        <th style="width:100px">Material Description</th>
         <th style="width:55px">Location</th>
         <th style="width:45px">Qty</th>
         <th style="width:150px">Remarks</th>
@@ -410,10 +387,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
     </thead>
     <tbody>
       ${bodyHtml}
-      <tr class="grand-total">
-        <td colspan="5" class="gt-label">Grand Total</td>
-        <td class="gt-val">${grandQty}</td>
-      </tr>
+      
     </tbody>
   </table>
 
@@ -435,7 +409,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
     <div class="signature-box">
       <div class="signature-label">Approved by (Signature Over Printed Name):</div>
       <div class="signature-line-container">
-        <div class="signature-name">KENNETH IRVIN BELICARIO / ANTHONYLOU CHAN</div>
+        <div class="signature-name">ANTHONYLOU CHAN</div>
         <div class="signature-line"></div>
         <div class="signature-position">Warehouse Supervisor</div>
       </div>
@@ -450,6 +424,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
     <div class="signature-box">
       <div class="signature-label">Witnessed by (Signature Over Printed Name):</div>
       <div class="signature-line-container">
+      <div class="signature-name">SG MELANIO / SG FORMENTERA / SG ABOSO</div>
         <div class="signature-line"></div>
         <div class="signature-position">Security Guard</div>
       </div>
