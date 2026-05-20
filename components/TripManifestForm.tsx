@@ -18,7 +18,7 @@ import { CreateManifestTab } from '@/components/tabs/CreateManifestTab'
 import { SavedManifestsTab } from '@/components/tabs/SavedManifestTab'
 import { ViewManifestModal } from '@/components/modals/ViewManifestModal'
 import { ConfirmationModal } from '@/components/modals/ConfirmationModal'
-import { DownloadModal } from '@/components/modals/DownloadManifestModal'
+import { DownloadModal, DownloadType } from '@/components/modals/DownloadManifestModal'
 import { OutboundAnalyticsPanel } from '@/components/OutboundAnalytics'
 
 const supabase = createClient(
@@ -26,7 +26,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// Design tokens (match SavedManifestTab)
+// Design tokens
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
@@ -34,18 +34,14 @@ const C = {
   border:       '#30363D',
   borderHover:  '#8B949E',
   divider:      '#21262D',
-
   accent:       '#E8192C',
   accentHover:  '#FF1F30',
-
   amber:        '#F5A623',
-
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
   textSub:      '#8B949E',
   textMuted:    '#6E7681',
   textGhost:    '#484F58',
-
   inputBg:      '#0D1117',
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
@@ -104,20 +100,20 @@ const EMPTY_MANIFEST = (): TripManifest => ({
 export default function TripManifestForm({ role }: { role?: string }) {
   const isViewer = role?.toLowerCase() === 'viewer'
 
-  const [currentStep, setCurrentStep] = useState<Step>(1)
-  const [manifest, setManifest] = useState<TripManifest>(EMPTY_MANIFEST())
-  const [barcodeInput, setBarcodeInput] = useState('')
-  const [scanningDocument, setScanningDocument] = useState(false)
-  const barcodeInputRef = useRef<HTMLInputElement>(null)
-  const [activeTab, setActiveTab] = useState<'create' | 'saved' | 'analytics'>(isViewer ? 'saved' : 'create')
-  const [showViewModal, setShowViewModal] = useState(false)
-  const [viewingManifest, setViewingManifest] = useState<TripManifest | null>(null)
+  const [currentStep, setCurrentStep]             = useState<Step>(1)
+  const [manifest, setManifest]                   = useState<TripManifest>(EMPTY_MANIFEST())
+  const [barcodeInput, setBarcodeInput]           = useState('')
+  const [scanningDocument, setScanningDocument]   = useState(false)
+  const barcodeInputRef                           = useRef<HTMLInputElement>(null)
+  const [activeTab, setActiveTab]                 = useState<'create' | 'saved' | 'analytics'>(isViewer ? 'saved' : 'create')
+  const [showViewModal, setShowViewModal]         = useState(false)
+  const [viewingManifest, setViewingManifest]     = useState<TripManifest | null>(null)
   const [editingManifestId, setEditingManifestId] = useState<string | null>(null)
-  const [isEditMode, setIsEditMode] = useState(false)
+  const [isEditMode, setIsEditMode]               = useState(false)
   const [showManualEntryModal, setShowManualEntryModal] = useState(false)
-  const [pendingDocument, setPendingDocument] = useState<{ documentNumber: string; quantity: number; cbm?: number } | null>(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
+  const [pendingDocument, setPendingDocument]     = useState<{ documentNumber: string; quantity: number; cbm?: number } | null>(null)
+  const [sidebarOpen, setSidebarOpen]             = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed]   = useState(true)
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; show: boolean }>({
     message: '', type: 'info', show: false,
@@ -145,8 +141,8 @@ export default function TripManifestForm({ role }: { role?: string }) {
     saveManifest: saveManifestService, deleteManifest, lookupDocument,
   } = useTripManifest()
 
-  const [showDownloadModal, setShowDownloadModal] = useState(false)
-  const [selectedDownloadType, setSelectedDownloadType] = useState<'pdf' | 'excel' | 'both' | null>(null)
+  const [showDownloadModal, setShowDownloadModal]             = useState(false)
+  const [selectedDownloadType, setSelectedDownloadType]       = useState<DownloadType>('both')
   const [pendingManifestForDownload, setPendingManifestForDownload] = useState<TripManifest | null>(null)
 
   const openDownloadModal = (m: TripManifest) => {
@@ -155,16 +151,68 @@ export default function TripManifestForm({ role }: { role?: string }) {
     setShowDownloadModal(true)
   }
 
+  // ── Download handler ──────────────────────────────────────────────────────
+  // IMPORTANT: window.open must be called SYNCHRONOUSLY (before any await)
+  // or the browser blocks it as a popup. For the detailed PDF we open the
+  // window first, write a loading screen, then fill it after the fetch.
+
   const handleConfirmDownload = () => {
     if (!pendingManifestForDownload || !selectedDownloadType) return
-    if (selectedDownloadType === 'pdf' || selectedDownloadType === 'both')
-      TripManifestPDFGenerator.generatePDF(pendingManifestForDownload)
-    if (selectedDownloadType === 'excel' || selectedDownloadType === 'both')
-      TripManifestExcelGenerator.generateExcel(pendingManifestForDownload)
+
     setShowDownloadModal(false)
+
+    const manifest = pendingManifestForDownload
+
+    if (selectedDownloadType === 'pdf') {
+      TripManifestPDFGenerator.generatePDF(manifest)
+      showToast('Download started!', 'success')
+    }
+
+    else if (selectedDownloadType === 'pdf-detailed') {
+      // Open window NOW (sync) so the browser doesn't block it
+      const printWindow = window.open('', '', 'width=1200,height=800')
+      if (!printWindow) {
+        showToast('Pop-up blocked — allow pop-ups and try again', 'error')
+        return
+      }
+      // Show loading state immediately
+      printWindow.document.write(`
+        <!DOCTYPE html><html><head><title>Loading…</title>
+        <style>
+          body { margin:0; display:flex; align-items:center; justify-content:center;
+                 height:100vh; font-family:Arial,sans-serif; background:#fff; color:#555; }
+          .spinner { width:32px; height:32px; border:3px solid #eee;
+                     border-top-color:#E8192C; border-radius:50%;
+                     animation:spin .7s linear infinite; margin-bottom:16px; }
+          @keyframes spin { to { transform:rotate(360deg) } }
+        </style></head>
+        <body><div style="text-align:center">
+          
+        </div></body></html>`)
+
+      // Now do the async work and fill the window when ready
+      TripManifestPDFGenerator.generateDetailedPDF(manifest, printWindow)
+        .then(() => showToast('Detailed PDF ready!', 'success'))
+        .catch(err => {
+          console.error('Detailed PDF error:', err)
+          printWindow.close()
+          showToast('Failed to generate detailed PDF', 'error')
+        })
+    }
+
+    else if (selectedDownloadType === 'excel') {
+      TripManifestExcelGenerator.generateExcel(manifest)
+      showToast('Download started!', 'success')
+    }
+
+    else if (selectedDownloadType === 'both') {
+      TripManifestPDFGenerator.generatePDF(manifest)
+      TripManifestExcelGenerator.generateExcel(manifest)
+      showToast('Download started!', 'success')
+    }
+
     setPendingManifestForDownload(null)
-    setSelectedDownloadType(null)
-    showToast('Download started!', 'success')
+    setSelectedDownloadType('both')
   }
 
   useEffect(() => {
@@ -177,36 +225,6 @@ export default function TripManifestForm({ role }: { role?: string }) {
   useEffect(() => {
     if (currentStep === 2 && barcodeInputRef.current) barcodeInputRef.current.focus()
   }, [currentStep])
-
-  // Helper function to get CBM from material code (you may need to import this mapping)
-  const getCBMFromMatcode = (code: string): number | null => {
-    if (!code) return null
-    // This should be imported from your category-mapping or defined here
-    // For now, returning null as placeholder - you'll need to add your actual mapping
-    return null
-  }
-
-  // Add this useEffect to check CBM data on mount
-// useEffect(() => {
-//   const checkCBMData = async () => {
-//     try {
-//       const response = await fetch('/api/debug/cbm-check')
-//       const data = await response.json()
-//       console.log('CBM Data Check:', data)
-      
-//       if (data.recordsWithCBM === 0) {
-//         console.warn('No records with CBM found in database!')
-//       } else {
-//         console.log(`Found ${data.recordsWithCBM} records with CBM`)
-//         console.log('Sample with CBM:', data.samples.find((s: any) => s.total_cbm > 0))
-//       }
-//     } catch (error) {
-//       console.error('Failed to check CBM data:', error)
-//     }
-//   }
-  
-//   checkCBMData()
-// }, [])
 
   const searchDocument = async (documentNumber: string): Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number }> | null> => {
     if (!documentNumber || documentNumber.length < 1) return null
@@ -249,10 +267,10 @@ export default function TripManifestForm({ role }: { role?: string }) {
         } else {
           const normalizedShipTo = (doc.ship_to_name || '').trim().toLowerCase()
           if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
-            setPendingDocument({ 
-              documentNumber: doc.document_number, 
+            setPendingDocument({
+              documentNumber: doc.document_number,
               quantity: doc.total_quantity || 0,
-              cbm: doc.total_cbm || 0 
+              cbm: doc.total_cbm || 0,
             })
             setShowManualEntryModal(true)
             setBarcodeInput('')
@@ -364,106 +382,82 @@ export default function TripManifestForm({ role }: { role?: string }) {
     )
   }
 
-  // Calculate grand total CBM for current manifest
   const grandTotalCBM = manifest.items.reduce((sum, item) => sum + (item.total_cbm || 0), 0)
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{backgroundColor: C.bg}}>
+    <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: C.bg }}>
 
-      {/* ── Top Navigation Bar — landing page style ── */}
-      <nav className="relative flex-shrink-0 h-[73px] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4" style={{background: C.bg, borderBottom: `1px solid ${C.divider}`}}>
+      {/* ── Nav ── */}
+      <nav className="relative flex-shrink-0 h-[73px] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4"
+        style={{ background: C.bg, borderBottom: `1px solid ${C.divider}` }}>
 
-        {/* Mobile hamburger */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="lg:hidden p-2 rounded-full transition-colors flex-shrink-0"
-          style={{color: C.textSub}}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.surfaceHover }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+          style={{ color: C.textSub }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHover }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
         >
           <Menu className="w-4 h-4" />
         </button>
 
-        {/* Home */}
-        <Link
-          href="/"
+        <Link href="/"
           className="p-2 rounded-full transition-colors flex-shrink-0"
-          style={{color: C.textSub}}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.surfaceHover; (e.currentTarget.querySelector('svg') as SVGElement).style.color = 'white' }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; (e.currentTarget.querySelector('svg') as SVGElement).style.color = C.textSub }}
-          title="Home"
-        >
+          style={{ color: C.textSub }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHover; (e.currentTarget.querySelector('svg') as SVGElement).style.color = 'white' }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; (e.currentTarget.querySelector('svg') as SVGElement).style.color = C.textSub }}
+          title="Home">
           <Home className="w-4 h-4 transition-colors" />
         </Link>
 
-        <div className="w-px h-4 flex-shrink-0 hidden sm:block" style={{backgroundColor: C.divider}} />
+        <div className="w-px h-4 flex-shrink-0 hidden sm:block" style={{ backgroundColor: C.divider }} />
 
-        {/* Brand */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <img src="/sf-light.png" alt="SF Express" className="h-5 sm:h-6 w-auto" />
-          <div className="w-px h-4 hidden sm:block" style={{backgroundColor: C.divider}} />
+          <div className="w-px h-4 hidden sm:block" style={{ backgroundColor: C.divider }} />
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold hidden sm:block" style={{color: C.textSub}}>
-              Trip Manifest
-            </p>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold sm:hidden" style={{color: C.textSub}}>
-              Manifest
-            </p>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold hidden sm:block" style={{ color: C.textSub }}>Trip Manifest</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold sm:hidden" style={{ color: C.textSub }}>Manifest</p>
           </div>
         </div>
 
         <div className="flex-1" />
 
-        {/* Right side chips */}
         <div className="flex items-center gap-2 sm:gap-3">
-
-          {/* CBM Total Pill - NEW */}
           {activeTab === 'create' && manifest.items.length > 0 && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
-                 style={{ border: `1px solid ${C.inputFocus}40`, background: `${C.inputFocus}05` }}>
-              <Package className="w-3.5 h-3.5" style={{color: C.inputFocus}} />
-              <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{color: C.inputFocus}}>Total CBM</span>
-              <span className="text-[11px] text-white tabular-nums" style={{color: C.textPrimary}}>{grandTotalCBM.toFixed(4)}</span>
+              style={{ border: `1px solid ${C.inputFocus}40`, background: `${C.inputFocus}05` }}>
+              <Package className="w-3.5 h-3.5" style={{ color: C.inputFocus }} />
+              <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.inputFocus }}>Total CBM</span>
+              <span className="text-[11px] tabular-nums" style={{ color: C.textPrimary }}>{grandTotalCBM.toFixed(4)}</span>
             </div>
           )}
 
-          {/* Manifest number pill */}
           {activeTab === 'create' && manifest.manifest_number && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0" style={{border: `1px solid ${C.border}`}}>
-              <span className="text-[10px] uppercase tracking-[0.15em]" style={{color: C.textSub}}>No.</span>
-              <span className="text-[11px] text-white tabular-nums" style={{color: C.textPrimary}}>{manifest.manifest_number}</span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
+              style={{ border: `1px solid ${C.border}` }}>
+              <span className="text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textSub }}>No.</span>
+              <span className="text-[11px] tabular-nums" style={{ color: C.textPrimary }}>{manifest.manifest_number}</span>
             </div>
           )}
 
-          {/* Edit mode badge */}
           {isEditMode && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0" >
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{backgroundColor: C.accent}} />
-              <span className="text-[10px] font-bold uppercase tracking-widest" style={{color: C.accent}}>Editing</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: C.accent }} />
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.accent }}>Editing</span>
             </div>
           )}
 
-          {/* Analytics button — amber accent, matches landing */}
           <button
             onClick={() => setActiveTab('analytics')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all duration-150"
             style={{
               borderColor: activeTab === 'analytics' ? C.inputFocus : C.border,
               color: activeTab === 'analytics' ? C.inputFocus : C.textSub,
-              backgroundColor: activeTab === 'analytics' ? `${C.inputFocus}05` : 'transparent'
+              backgroundColor: activeTab === 'analytics' ? `${C.inputFocus}05` : 'transparent',
             }}
-            onMouseEnter={(e) => {
-              if (activeTab !== 'analytics') {
-                e.currentTarget.style.borderColor = C.borderHover
-                e.currentTarget.style.color = C.textPrimary
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== 'analytics') {
-                e.currentTarget.style.borderColor = C.border
-                e.currentTarget.style.color = C.textSub
-              }
-            }}
+            onMouseEnter={e => { if (activeTab !== 'analytics') { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary } }}
+            onMouseLeave={e => { if (activeTab !== 'analytics') { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub } }}
           >
             <TrendingUp className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Analytics</span>
@@ -471,11 +465,11 @@ export default function TripManifestForm({ role }: { role?: string }) {
         </div>
       </nav>
 
-      {/* Main content area */}
+      {/* ── Body ── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <ManifestTabs
           activeTab={activeTab}
-          onTabChange={(tab) => {
+          onTabChange={tab => {
             if (isViewer && tab === 'create') return
             setActiveTab(tab as 'create' | 'saved' | 'analytics')
             setSidebarCollapsed(true)
@@ -486,11 +480,11 @@ export default function TripManifestForm({ role }: { role?: string }) {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        <main className="flex-1 overflow-y-auto min-h-0 min-w-0" style={{backgroundColor: C.bg}}>
-          {/* Subtle red ambient glow — same as landing */}
-          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] rounded-full blur-[120px] z-0"  />
+        <main className="flex-1 overflow-y-auto min-h-0 min-w-0" style={{ backgroundColor: C.bg }}>
+          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] rounded-full blur-[120px] z-0" />
 
           <div className="relative z-10 p-5 sm:p-8 lg:p-10 h-full">
+
             {activeTab === 'create' && !isViewer && (
               <CreateManifestTab
                 currentStep={currentStep}
@@ -516,7 +510,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
                 addDocumentWithManualShipTo={addDocumentWithManualShipTo}
                 searchDocument={searchDocument}
                 showToast={showToast}
-                grandTotalCBM={grandTotalCBM} 
+                grandTotalCBM={grandTotalCBM}
               />
             )}
 
@@ -524,7 +518,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
               <div className="h-full">
                 <SavedManifestsTab
                   savedManifests={savedManifests}
-                  handleViewManifest={(m) => { setViewingManifest(m); setShowViewModal(true) }}
+                  handleViewManifest={m => { setViewingManifest(m); setShowViewModal(true) }}
                   handleEditManifest={handleEditManifest}
                   handleDownloadManifest={openDownloadModal}
                   handleDeleteManifest={handleDeleteManifest}
@@ -538,24 +532,19 @@ export default function TripManifestForm({ role }: { role?: string }) {
                 <div className="h-full w-full overflow-y-auto">
                   {savedManifests.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center px-4 py-16">
-                      <TrendingUp className="w-10 h-10 mx-auto mb-5" style={{color: C.textMuted}} />
-                      <p className="text-[10px] uppercase tracking-[0.25em] mb-3" style={{color: C.inputFocus}}>No data yet</p>
-                      <h4 className="text-2xl sm:text-3xl text-white mb-3 tracking-tight" style={{color: C.textPrimary}}>
-                        Nothing to analyze
-                      </h4>
-                      <p className="text-sm max-w-sm mb-8 leading-relaxed" style={{color: C.textSub}}>
+                      <TrendingUp className="w-10 h-10 mx-auto mb-5" style={{ color: C.textMuted }} />
+                      <p className="text-[10px] uppercase tracking-[0.25em] mb-3" style={{ color: C.inputFocus }}>No data yet</p>
+                      <h4 className="text-2xl sm:text-3xl mb-3 tracking-tight" style={{ color: C.textPrimary }}>Nothing to analyze</h4>
+                      <p className="text-sm max-w-sm mb-8 leading-relaxed" style={{ color: C.textSub }}>
                         Save trip manifests to see trends, top destinations, trucker performance, and more.
                       </p>
                       {!isViewer && (
                         <button
                           onClick={() => setActiveTab('create')}
                           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all"
-                          style={{
-                            borderColor: C.border,
-                            color: C.textSub
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}
+                          style={{ borderColor: C.border, color: C.textSub }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}
                         >
                           Create First Manifest
                           <ArrowUpRight className="w-3.5 h-3.5" />
@@ -572,7 +561,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
         </main>
       </div>
 
-      {/* Modals */}
+      {/* ── Modals ── */}
       <ViewManifestModal
         isOpen={showViewModal}
         manifest={viewingManifest}
@@ -585,43 +574,37 @@ export default function TripManifestForm({ role }: { role?: string }) {
         isOpen={confirmModal.show}
         title={confirmModal.title}
         message={confirmModal.message}
-        onConfirm={() => {
-          confirmModal.onConfirm()
-          setConfirmModal(prev => ({ ...prev, show: false }))
-        }}
+        onConfirm={() => { confirmModal.onConfirm(); setConfirmModal(prev => ({ ...prev, show: false })) }}
         onCancel={confirmModal.onCancel}
       />
 
       <DownloadModal
         isOpen={showDownloadModal}
-        downloadType={selectedDownloadType || 'both'}
-        onDownloadTypeChange={(type) => setSelectedDownloadType(type)}
+        downloadType={selectedDownloadType}
+        onDownloadTypeChange={type => setSelectedDownloadType(type)}
         onConfirm={handleConfirmDownload}
         onClose={() => {
           setShowDownloadModal(false)
           setPendingManifestForDownload(null)
-          setSelectedDownloadType(null)
+          setSelectedDownloadType('both')
         }}
       />
 
-      {/* ── Toast — landing-style ── */}
+      {/* ── Toast ── */}
       {toast.show && (
-        <div className="fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] border" style={{
-          backgroundColor: C.bg,
-          borderColor: toast.type === 'success' ? '#22C55E' : toast.type === 'error' ? C.inputFocus : C.inputFocus,
-          borderStyle: 'solid'
-        }}>
-          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{
-            backgroundColor: toast.type === 'success' ? '#22C55E' : toast.type === 'error' ? C.inputFocus : C.inputFocus
-          }} />
-          <span className="text-[11px] font-bold uppercase tracking-widest" style={{color: C.textPrimary}}>{toast.message}</span>
-          <button
-            onClick={() => setToast(prev => ({ ...prev, show: false }))}
+        <div className="fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] border"
+          style={{
+            backgroundColor: C.bg,
+            borderColor: toast.type === 'success' ? '#22C55E' : toast.type === 'error' ? C.accent : C.inputFocus,
+          }}>
+          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: toast.type === 'success' ? '#22C55E' : toast.type === 'error' ? C.accent : C.inputFocus }} />
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: C.textPrimary }}>{toast.message}</span>
+          <button onClick={() => setToast(prev => ({ ...prev, show: false }))}
             className="ml-1 p-0.5 rounded-full transition-colors"
-            style={{color: C.textSub}}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.surfaceHover }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-          >
+            style={{ color: C.textSub }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHover }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}>
             <X className="w-3 h-3" />
           </button>
         </div>

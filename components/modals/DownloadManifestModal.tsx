@@ -1,12 +1,14 @@
 'use client'
 
 import React from 'react'
-import { X, FileText, FileSpreadsheet, Download, ArrowUpRight } from 'lucide-react'
+import { X, FileText, FileSpreadsheet, Download, ArrowUpRight, ClipboardList } from 'lucide-react'
+
+export type DownloadType = 'pdf' | 'pdf-detailed' | 'excel' | 'both'
 
 interface DownloadModalProps {
   isOpen: boolean
-  downloadType: 'pdf' | 'excel' | 'both'
-  onDownloadTypeChange: (type: 'pdf' | 'excel' | 'both') => void
+  downloadType: DownloadType
+  onDownloadTypeChange: (type: DownloadType) => void
   onConfirm: () => void
   onClose: () => void
 }
@@ -20,10 +22,41 @@ export function DownloadModal({
 }: DownloadModalProps) {
   if (!isOpen) return null
 
-  const options = [
-    { type: 'pdf'   as const, label: 'PDF Document',      desc: 'Best for printing & signatures', index: '01', icon: FileText       },
-    { type: 'excel' as const, label: 'Excel Spreadsheet', desc: 'Editable data & analysis',        index: '02', icon: FileSpreadsheet },
-    { type: 'both'  as const, label: 'Both Formats',      desc: 'PDF + Excel downloaded at once',  index: '03', icon: Download        },
+  const options: {
+    type:  DownloadType
+    label: string
+    desc:  string
+    index: string
+    icon:  React.ElementType
+  }[] = [
+    {
+      type:  'pdf',
+      label: 'PDF — Standard',
+      desc:  'Summary view: DN No., Ship To, Qty',
+      index: '01',
+      icon:  FileText,
+    },
+    {
+      type:  'pdf-detailed',
+      label: 'PDF — Detailed',
+      desc:  'Per-item breakdown: Material Code, Description, Location, Qty',
+      index: '02',
+      icon:  ClipboardList,
+    },
+    {
+      type:  'excel',
+      label: 'Excel Spreadsheet',
+      desc:  'Editable data & analysis',
+      index: '03',
+      icon:  FileSpreadsheet,
+    },
+    {
+      type:  'both',
+      label: 'Both Formats',
+      desc:  'Standard PDF + Excel downloaded at once',
+      index: '04',
+      icon:  Download,
+    },
   ]
 
   return (
@@ -38,10 +71,10 @@ export function DownloadModal({
         {/* Header */}
         <div className="px-7 pt-7 pb-5 border-b border-[#1a1a1a] flex items-end justify-between">
           <div>
-            <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1.5">
+            <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1.5">
               Export
             </p>
-            <h3 className="text-xl font-[#0D1117] text-white tracking-tight leading-none">
+            <h3 className="text-xl text-white tracking-tight leading-none">
               Download Manifest
             </h3>
           </div>
@@ -53,7 +86,7 @@ export function DownloadModal({
           </button>
         </div>
 
-        {/* Options — landing services-list style */}
+        {/* Options */}
         <div className="divide-y divide-[#1a1a1a] px-0">
           {options.map(opt => {
             const active = downloadType === opt.type
@@ -66,30 +99,38 @@ export function DownloadModal({
                   active ? 'pl-8' : 'hover:pl-8'
                 }`}
               >
-                <span className={`text-[11px]  font-bold w-5 flex-shrink-0 transition-colors ${
+                <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${
                   active ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
                 }`}>
                   {opt.index}
                 </span>
+
                 <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200 ${
                   active
                     ? 'border-[#E8192C]/20 bg-[#E8192C]/8'
                     : 'border-[#1a1a1a] bg-transparent group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6'
                 }`}>
-                  <Icon className={`w-4 h-4 transition-colors ${active ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-[#E8192C]'}`} strokeWidth={1.5} />
+                  <Icon
+                    className={`w-4 h-4 transition-colors ${
+                      active ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-[#E8192C]'
+                    }`}
+                    strokeWidth={1.5}
+                  />
                 </div>
+
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[13px] font-[#0D1117] leading-snug transition-colors ${
+                  <p className={`text-[13px] leading-snug transition-colors ${
                     active ? 'text-white' : 'text-[#9A9A9A] group-hover:text-white'
                   }`}>
                     {opt.label}
                   </p>
-                  <p className={`text-[11px]  mt-0.5 transition-colors ${
+                  <p className={`text-[11px] mt-0.5 transition-colors ${
                     active ? 'text-[#9A9A9A]' : 'text-[#5A5A5A] group-hover:text-[#9A9A9A]'
                   }`}>
                     {opt.desc}
                   </p>
                 </div>
+
                 <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0 ${
                   active ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
                 }`} />
@@ -98,17 +139,17 @@ export function DownloadModal({
           })}
         </div>
 
-        {/* Footer actions */}
+        {/* Footer */}
         <div className="flex gap-3 px-7 py-5 border-t border-[#1a1a1a]">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
+            className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-[#0D1117] uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
+            className="flex-1 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
           >
             Download
           </button>
