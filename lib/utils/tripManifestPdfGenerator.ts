@@ -378,8 +378,8 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
         <th style="width:28px">No.</th>
         <th style="width:80px">DN No.</th>
         <th style="width:100px">Ship To Name</th>
-        <th style="width:90px">Material Code</th>
-        <th style="width:100px">Material Description</th>
+        <th style="width:90px">Mat Code</th>
+        <th style="width:100px">Mat Desc</th>
         <th style="width:55px">Location</th>
         <th style="width:45px">Qty</th>
         <th style="width:150px">Remarks</th>
