@@ -234,11 +234,11 @@ const DETAILED_STYLES = `
 
   /* ── Main table ── */
   .data-table { width: 100%; border-collapse: collapse; font-size: 9px; }
-  .data-table thead tr { background: #000; color: #fff; }
+  .data-table thead tr { color: #fff; }
   .data-table th {
     padding: 6px 7px; font-size: 8.5px; font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase;
-    text-align: center; border: 1px solid #000; white-space: nowrap; color: #fff;
+    text-align: center; border: 1px solid #000; white-space: nowrap; color: #000;
   }
   .data-table td { border: 1px solid #000; padding: 5px 7px; vertical-align: middle; }
 
