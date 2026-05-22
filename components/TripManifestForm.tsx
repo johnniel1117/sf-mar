@@ -179,16 +179,54 @@ export default function TripManifestForm({ role }: { role?: string }) {
       printWindow.document.write(`
         <!DOCTYPE html><html><head><title>Loading…</title>
         <style>
-          body { margin:0; display:flex; align-items:center; justify-content:center;
-                 height:100vh; font-family:Arial,sans-serif; background:#fff; color:#555; }
-          .spinner { width:32px; height:32px; border:3px solid #eee;
-                     border-top-color:#E8192C; border-radius:50%;
-                     animation:spin .7s linear infinite; margin-bottom:16px; }
-          @keyframes spin { to { transform:rotate(360deg) } }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                        url('/jessa.png') center/cover no-repeat;
+            color: #fff;
+            overflow: hidden;
+          }
+          .loading-container {
+            text-align: center;
+            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+          }
+          .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #E8192C;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 24px;
+          }
+          @keyframes spin { to { transform: rotate(360deg) } }
+          .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+          }
+          .loading-subtext {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+          }
         </style></head>
-        <body><div style="text-align:center">
-          
-        </div></body></html>`)
+        <body>
+          <div class="loading-container">
+            <div class="spinner"></div>
+            <div class="loading-text">Generating PDF</div>
+            <div class="loading-subtext">Please wait...</div>
+          </div>
+        </body></html>`)
 
       // Now do the async work and fill the window when ready
       TripManifestPDFGenerator.generateDetailedPDF(manifest, printWindow)
