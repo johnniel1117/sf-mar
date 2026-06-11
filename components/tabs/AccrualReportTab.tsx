@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import {
   Download, Calendar, Search, X, ChevronRight,
   TrendingUp, Package, Loader2, Truck, FileText,
-  Calendar as CalendarIcon, BarChart3,
+  Calendar as CalendarIcon, BarChart3, Users,
 } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
 import { createClient } from '@supabase/supabase-js'
@@ -123,12 +123,13 @@ function toExcelSerial(s: string) {
   return Math.round((utc - Date.UTC(1899, 11, 30)) / 86400000)
 }
 
-/**
- * Prefix a DN with "TRA" only if it doesn't already start with "TRA".
- */
-function formatOrderNo(dn: string): string {
-  if (!dn) return dn
-  return dn.startsWith('TRA') ? dn : `TRA${dn}`
+function sanitizeSheetName(name: string): string {
+  // Excel sheet names: max 31 chars, no special chars
+  return name.replace(/[\\\/\?\*\[\]:]/g, '').slice(0, 31) || 'Sheet'
+}
+
+function sanitizeFileName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9\-_. ]/g, '').trim() || 'Trucker'
 }
 
 // ── Supabase fetch ────────────────────────────────────────────────────────────
@@ -197,7 +198,6 @@ function buildAccrualRows(
       const serials = serialsMap.get(dn) ?? serialsMap.get(dn.replace(/^0+/, ''))
 
       if (serials && serials.length > 0) {
-        // Group by materialCode + orderItem — qty = count of scanned barcodes
         const groupMap = new Map<string, SerialEntry[]>()
         for (const s of serials) {
           const key = `${s.materialCode}||${s.orderItem}`
@@ -225,7 +225,6 @@ function buildAccrualRows(
           })
         }
       } else {
-        // Fallback: no serial data found for this DN
         rows.push({
           orderNo:       dn,
           matCode:       '',
@@ -276,10 +275,23 @@ function groupByDay(rows: AccrualRow[]): DayGroup[] {
     })
 }
 
-// ── Excel export ──────────────────────────────────────────────────────────────
+// ── Excel sheet builder (shared between both export functions) ────────────────
 
-function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
-  const wb    = XLSX.utils.book_new()
+/**
+ * Columns (15 total):
+ * ORDER NO | MAT CODE | MAT DESC | CATEGORY (blank) | SOLD TO NAME |
+ * SHIP TO NAME | SHIP TO ADDRESS | QTY | CBM (blank) | TOTAL CBM |
+ * DR AMOUNT | TRUCKER | PLATE NO. | TRUCK TYPE | DATE DISPATCHED
+ */
+const COLS = [
+  'ORDER NO', 'MAT CODE', 'MAT DESC', 'CATEGORY',
+  'SOLD TO NAME', 'SHIP TO NAME', 'SHIP TO ADDRESS',
+  'QTY', 'CBM', 'TOTAL CBM', 'DR AMOUNT',
+  'TRUCKER', 'PLATE NO.', 'TRUCK TYPE', 'DATE DISPATCHED',
+]
+const COL_WIDTHS = [20, 18, 36, 14, 34, 30, 42, 8, 10, 12, 12, 20, 12, 14, 16]
+
+function buildWorksheetForDay(day: DayGroup): XLSX.WorkSheet {
   const bThin = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }
 
   const headerStyle = {
@@ -294,65 +306,122 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
     alignment: { horizontal: 'center', vertical: 'center' },
   }
 
-  const COLS = [
-    'ORDER NO', 'MAT CODE', 'MAT DESC',
-    'SOLD TO NAME', 'SHIP TO NAME', 'SHIP TO ADDRESS',
-    'QTY', 'TOTAL CBM', 'DR AMOUNT',
-    'TRUCKER', 'PLATE NO.', 'TRUCK TYPE', 'DATE DISPATCHED',
-  ]
-  const COL_WIDTHS = [20, 18, 36, 34, 30, 42, 8, 12, 12, 20, 12, 14, 16]
+  const ws: XLSX.WorkSheet = {}
+  ws['!merges'] = []
+  let row = 0
 
-  for (const day of dayGroups) {
-    const ws: XLSX.WorkSheet = {}
-    ws['!merges'] = []
-    let row = 0
-
-    const setCell = (r: number, c: number, v: any, s: any = {}, t: XLSX.CellObject['t'] = 's') => {
-      ws[XLSX.utils.encode_cell({ r, c })] = { v, t, s } as XLSX.CellObject
-    }
-
-    COLS.forEach((h, c) => setCell(row, c, h, headerStyle))
-    row++
-
-    for (const sub of day.subGroups) {
-      sub.rows.forEach((r2, idx) => {
-        const fill = { fgColor: { rgb: idx % 2 === 0 ? 'F6F8FA' : 'FFFFFF' } }
-        const base = { font:{sz:10}, fill, border:bThin, alignment:{horizontal:'center',vertical:'center',wrapText:true} }
-        const ctr  = { ...base }
-        const bold = { ...base, font:{sz:10,bold:true} }
-
-        const orderNoVal = r2.orderNo.replace(/^0+/, '')
-
-        setCell(row,  0, orderNoVal,                                              bold)
-        setCell(row,  1, r2.matCode       || '—',        base)
-        setCell(row,  2, r2.matDesc       || '—',        base)
-        setCell(row,  3, r2.soldToName    || '—',        base)
-        setCell(row,  4, r2.shipToName    || '—',        base)
-        setCell(row,  5, r2.shipToAddress || '—',        base)
-        setCell(row,  6, r2.qty,                         ctr, 'n')
-        setCell(row,  7, r2.totalVolume,                 ctr, 'n')
-        setCell(row,  8, r2.drAmount,                    ctr, 'n')
-        setCell(row,  9, r2.trucker,                     base)
-        setCell(row, 10, r2.plateNo,                     ctr)
-        setCell(row, 11, r2.truckType,                   ctr)
-        setCell(row, 12, toExcelSerial(r2.manifestDate), { ...ctr, numFmt:'MM/DD/YYYY' }, 'n')
-        row++
-      })
-
-      COLS.forEach((_, c) => {
-        const v = c === 6 ? sub.totalQty : c === 7 ? sub.totalVol : c === 0 ? '' : ''
-        setCell(row, c, v, subtotalStyle, (c === 6 || c === 7) ? 'n' : 's')
-      })
-      row++
-    }
-
-    ws['!ref']  = `A1:M${row + 1}`
-    ws['!cols'] = COL_WIDTHS.map(wch => ({ wch }))
-    ws['!rows'] = Array.from({ length: row }, () => ({ hpt: 28 }))
-    XLSX.utils.book_append_sheet(wb, ws, formatSheetName(day.date))
+  const setCell = (r: number, c: number, v: any, s: any = {}, t: XLSX.CellObject['t'] = 's') => {
+    ws[XLSX.utils.encode_cell({ r, c })] = { v, t, s } as XLSX.CellObject
   }
 
+  // Header row
+  COLS.forEach((h, c) => setCell(row, c, h, headerStyle))
+  row++
+
+  for (const sub of day.subGroups) {
+    sub.rows.forEach((r2, idx) => {
+      const fill = { fgColor: { rgb: idx % 2 === 0 ? 'F6F8FA' : 'FFFFFF' } }
+      const base = { font:{sz:10}, fill, border:bThin, alignment:{horizontal:'center',vertical:'center',wrapText:true} }
+      const bold = { ...base, font:{sz:10,bold:true} }
+
+      const orderNoVal = r2.orderNo.replace(/^0+/, '')
+
+      setCell(row,  0, orderNoVal,                                              bold)
+      setCell(row,  1, r2.matCode       || '—',        base)
+      setCell(row,  2, r2.matDesc       || '—',        base)
+      setCell(row,  3, '',                              base)        // CATEGORY — blank
+      setCell(row,  4, r2.soldToName    || '—',        base)
+      setCell(row,  5, r2.shipToName    || '—',        base)
+      setCell(row,  6, r2.shipToAddress || '—',        base)
+      setCell(row,  7, r2.qty,                         base, 'n')
+      setCell(row,  8, '',                              base)        // CBM — blank
+      setCell(row,  9, r2.totalVolume,                 base, 'n')
+      setCell(row, 10, r2.drAmount,                    base, 'n')
+      setCell(row, 11, r2.trucker,                     base)
+      setCell(row, 12, r2.plateNo,                     base)
+      setCell(row, 13, r2.truckType,                   base)
+      setCell(row, 14, toExcelSerial(r2.manifestDate), { ...base, numFmt:'MM/DD/YYYY' }, 'n')
+      row++
+    })
+
+    // Subtotal row
+    COLS.forEach((_, c) => {
+      const v = c === 7 ? sub.totalQty : c === 9 ? sub.totalVol : ''
+      setCell(row, c, v, subtotalStyle, (c === 7 || c === 9) ? 'n' : 's')
+    })
+    row++
+  }
+
+  ws['!ref']  = `A1:O${row + 1}`
+  ws['!cols'] = COL_WIDTHS.map(wch => ({ wch }))
+  ws['!rows'] = Array.from({ length: row }, () => ({ hpt: 28 }))
+
+  return ws
+}
+
+// ── Excel export — full month (all truckers in one file, sheets per day) ──────
+
+function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
+  const wb = XLSX.utils.book_new()
+  for (const day of dayGroups) {
+    const ws = buildWorksheetForDay(day)
+    XLSX.utils.book_append_sheet(wb, ws, formatSheetName(day.date))
+  }
   XLSX.writeFile(wb, `Accrual-${monthLabel.replace(' ', '-')}-${new Date().toISOString().slice(0,10)}.xlsx`)
+}
+
+// ── Excel export — per trucker (one file per trucker, sheets per day) ─────────
+
+function exportByTrucker(dayGroups: DayGroup[], monthLabel: string) {
+  // Collect all unique truckers across all days
+  const truckerRowMap = new Map<string, Map<string, AccrualRow[]>>()
+  // truckerRowMap: trucker → (isoDate → rows[])
+
+  for (const day of dayGroups) {
+    for (const sub of day.subGroups) {
+      const key = sub.trucker || sub.plateNo || 'Unknown'
+      if (!truckerRowMap.has(key)) truckerRowMap.set(key, new Map())
+      const dateMap = truckerRowMap.get(key)!
+      if (!dateMap.has(day.date)) dateMap.set(day.date, [])
+      dateMap.get(day.date)!.push(...sub.rows)
+    }
+  }
+
+  for (const [truckerName, dateMap] of truckerRowMap.entries()) {
+    const wb = XLSX.utils.book_new()
+
+    // Sort dates ascending
+    const sortedDates = Array.from(dateMap.keys()).sort()
+
+    for (const isoDate of sortedDates) {
+      const rows = dateMap.get(isoDate)!
+
+      // Build a synthetic DayGroup for just this trucker's rows on this date
+      const truckerSubGroup: TruckerGroup = {
+        trucker:   rows[0]?.trucker   ?? '',
+        plateNo:   rows[0]?.plateNo   ?? '',
+        truckType: rows[0]?.truckType ?? '',
+        rows,
+        totalQty:  rows.reduce((s, r) => s + r.qty, 0),
+        totalVol:  rows.reduce((s, r) => s + r.totalVolume, 0),
+      }
+
+      const syntheticDay: DayGroup = {
+        label:     formatDayLabel(isoDate),
+        date:      isoDate,
+        rows,
+        subGroups: [truckerSubGroup],
+      }
+
+      const ws = buildWorksheetForDay(syntheticDay)
+      const sheetName = sanitizeSheetName(formatSheetName(isoDate))
+      XLSX.utils.book_append_sheet(wb, ws, sheetName)
+    }
+
+    const safeFileName = sanitizeFileName(truckerName)
+    const dateStr = new Date().toISOString().slice(0, 10)
+    XLSX.writeFile(wb, `Accrual-${monthLabel.replace(' ', '-')}-${safeFileName}-${dateStr}.xlsx`)
+  }
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
@@ -482,7 +551,6 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
   const totalDays  = dayGroups.length
   const hasSerials = allRows.some(r => r.matCode)
 
-  // Table column layout — extended for soldToName + shipToAddress
   const gridCols   = hasSerials
     ? '220px 200px 1fr 100px 300px 340px 70px 90px'
     : '220px 1fr 300px 70px 90px'
@@ -490,6 +558,8 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
   const colHeaders = hasSerials
     ? ['Order No.', 'Mat Code', 'Description', 'Type', 'Sold To', 'Ship To / Address', 'Qty', 'CBM']
     : ['Order No.', 'Ship To', 'Address', 'Qty', 'CBM']
+
+  const canExport = dayGroups.length > 0 && !loading
 
   return (
     <div className="rounded-xl overflow-hidden flex flex-col"
@@ -573,17 +643,44 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
             )}
           </div>
 
-          {/* Export */}
+          {/* Export — full month */}
           <button
             onClick={() => exportAccrualExcel(dayGroups, monthLabel)}
-            disabled={dayGroups.length === 0 || loading}
+            disabled={!canExport}
             className="flex items-center gap-2 px-4 h-10 text-[13px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wide"
             style={{ background: C.accent, color: 'white', border: 'none' }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.accentHover; e.currentTarget.style.boxShadow = `0 0 12px ${C.accentGlow}` }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = C.accent;      e.currentTarget.style.boxShadow = 'none' }}
+            title="Export all truckers — one file, sheets per day"
           >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export</span>
+          </button>
+
+          {/* Export — per trucker */}
+          <button
+            onClick={() => exportByTrucker(dayGroups, monthLabel)}
+            disabled={!canExport}
+            className="flex items-center gap-2 px-4 h-10 text-[13px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wide"
+            style={{
+              background: 'transparent',
+              color: C.textSilver,
+              border: `1px solid ${C.border}`,
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = C.accent
+              e.currentTarget.style.color = C.accent
+              e.currentTarget.style.boxShadow = `0 0 12px ${C.accentGlow}`
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = C.border
+              e.currentTarget.style.color = C.textSilver
+              e.currentTarget.style.boxShadow = 'none'
+            }}
+            title="Export per trucker — one file per trucker, sheets per day"
+          >
+            <Users className="w-4 h-4" />
+            <span className="hidden sm:inline">By Trucker</span>
           </button>
         </div>
       </div>
@@ -778,32 +875,22 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                             onMouseEnter={e => { e.currentTarget.style.background = C.surfaceHover }}
                             onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? C.stripeEven : C.stripeOdd }}
                           >
-                            {/* Order No — ✅ formatted with TRA prefix guard */}
                             <span className="text-[12px] font-bold font-mono truncate"
                               style={{ color: C.accent }}>{r.orderNo.replace(/^0+/, '')}</span>
 
                             {hasSerials && <>
-                              {/* Mat Code */}
                               <span className="text-[12px] font-mono truncate"
                                 style={{ color: r.matCode ? C.textSilver : C.textGhost }}>
                                 {r.matCode || '—'}
                               </span>
-
-                              {/* Mat Desc */}
                               <span className="text-[12px] truncate pr-2"
                                 style={{ color: r.matDesc ? C.textPrimary : C.textGhost }}>
                                 {r.matDesc || '—'}
                               </span>
-
-                              {/* Type / Category */}
                               <span><CategoryPill category={r.category} /></span>
-
-                              {/* Sold To Name */}
                               <span className="text-[12px] truncate" style={{ color: C.textSilver }}>
                                 {r.soldToName}
                               </span>
-
-                              {/* Ship To Name + Address stacked */}
                               <div className="flex flex-col min-w-0">
                                 <span className="text-[12px] truncate font-medium" style={{ color: C.textSilver }}>
                                   {r.shipToName}
@@ -814,23 +901,17 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                               </div>
                             </>}
 
-                            {/* Fallback (no serial data) columns */}
                             {!hasSerials && <>
-                              {/* Ship To */}
                               <span className="text-[12px] truncate" style={{ color: C.textSilver }}>
                                 {r.shipToName}
                               </span>
-                              {/* Address */}
                               <span className="text-[12px] truncate" style={{ color: C.textMuted }}>
                                 {r.shipToAddress}
                               </span>
                             </>}
 
-                            {/* Qty */}
                             <span className="text-[13px] font-bold tabular-nums"
                               style={{ color: C.textPrimary }}>{r.qty}</span>
-
-                            {/* CBM */}
                             <span className="text-[12px] tabular-nums font-medium"
                               style={{ color: r.totalVolume > 0 ? C.amber : C.textGhost }}>
                               {r.totalVolume > 0 ? r.totalVolume.toFixed(3) : '—'}

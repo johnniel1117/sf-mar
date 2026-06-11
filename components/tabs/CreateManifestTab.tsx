@@ -93,10 +93,10 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
             </div>
             <div>
               <h3 className="text-sm font-[#0D1117] tracking-tight" style={{ color: C.textPrimary }}>Ship-To Name Required</h3>
-              <p className="text-[11px] uppercase tracking-widest mt-0.5" style={{ color: C.textMuted }}>Document not found in system</p>
+              <p className="text-[11px] uppercase tracking-widest mt-0.5" style={{ color: C.textPrimary }}>Document not found in system</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 transition-colors" style={{ color: C.textMuted }}>
+          <button onClick={onClose} className="p-1.5 transition-colors" style={{ color: C.textPrimary }}>
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -105,17 +105,17 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
         <div className="p-4 mb-5" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textMuted }}>Document No.</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textPrimary }}>Document No.</p>
               <p className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{documentNumber}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textMuted }}>Quantity</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textPrimary }}>Quantity</p>
               <p className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.accent }}>{quantity}</p>
             </div>
           </div>
           {cbm != null && cbm > 0 && (
             <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
-              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textMuted }}>CBM</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textPrimary }}>CBM</p>
               <p className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{cbm.toFixed(4)}</p>
             </div>
           )}
@@ -141,7 +141,7 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all" style={{ border: `1px solid ${C.border}`, color: C.textMuted }}>
+          <button onClick={onClose} className="flex-1 px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all" style={{ border: `1px solid ${C.border}`, color: C.textPrimary }}>
             Cancel
           </button>
           <button onClick={handleSave} disabled={!shipToName.trim()}
@@ -170,7 +170,7 @@ const formatTime12hr = (time: string | undefined): string => {
 
 function SectionLabel({ icon: Icon, children }: { icon?: React.ComponentType<{ className?: string; color?: string }>; children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textMuted }}>
+    <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textPrimary }}>
       {Icon && <Icon className="w-3.5 h-3.5" color={C.accent} />}
       {children}
     </p>
@@ -180,7 +180,7 @@ function SectionLabel({ icon: Icon, children }: { icon?: React.ComponentType<{ c
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.2em] mb-0.5" style={{ color: C.textMuted }}>{label}</p>
+      <p className="text-[10px] uppercase tracking-[0.2em] mb-0.5" style={{ color: C.textPrimary }}>{label}</p>
       {children}
     </div>
   )
@@ -208,7 +208,24 @@ export function CreateManifestTab({
   const [inputMode, setInputMode] = useState<'single' | 'mass'>('single') // Toggle between single and mass input
   const [massInput, setMassInput] = useState<string>('') // Mass input textarea value
   const [isProcessingMass, setIsProcessingMass] = useState(false) // Processing state for mass input
+  const [truckerDropdownOpen, setTruckerDropdownOpen] = useState(false)
+  const [truckerSearchInput, setTruckerSearchInput] = useState('')
+  const truckerDropdownRef = useRef<HTMLDivElement>(null)
+  const [truckTypeDropdownOpen, setTruckTypeDropdownOpen] = useState(false)
+  const [truckTypeSearchInput, setTruckTypeSearchInput] = useState('')
+  const truckTypeDropdownRef = useRef<HTMLDivElement>(null)
   const isMountedRef = useRef(true)
+
+  const TRUCKER_OPTIONS = ['SF EXPRESS', 'ACCLI', 'AFFI', 'INTELUCK', 'SUYLI']
+  const TRUCK_TYPE_OPTIONS = ['10W', '6WF', '6W', '4W']
+  
+  const filteredTruckers = TRUCKER_OPTIONS.filter(option =>
+    option.includes((truckerSearchInput || (manifest.trucker || '')).toUpperCase())
+  )
+  
+  const filteredTruckTypes = TRUCK_TYPE_OPTIONS.filter(option =>
+    option.includes((truckTypeSearchInput || (manifest.truck_type || '')).toUpperCase())
+  )
 
   const totalDocuments = manifest.items.length
   const totalQuantity = manifest.items.reduce((sum, item) => sum + item.total_quantity, 0)
@@ -219,6 +236,32 @@ export function CreateManifestTab({
     isMountedRef.current = true
     return () => { isMountedRef.current = false }
   }, [])
+
+  // Close trucker dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (truckerDropdownRef.current && !truckerDropdownRef.current.contains(e.target as Node)) {
+        setTruckerDropdownOpen(false)
+      }
+    }
+    if (truckerDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [truckerDropdownOpen])
+
+  // Close truck type dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (truckTypeDropdownRef.current && !truckTypeDropdownRef.current.contains(e.target as Node)) {
+        setTruckTypeDropdownOpen(false)
+      }
+    }
+    if (truckTypeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [truckTypeDropdownOpen])
 
   useEffect(() => {
     if (barcodeInput.trim().length >= 1 && searchDocument) {
@@ -496,7 +539,7 @@ export function CreateManifestTab({
                       }
                     </div>
                     <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-bold transition-colors"
-                      style={{ color: isActive ? C.textPrimary : isCompleted ? C.accent : C.textMuted }}>
+                      style={{ color: isActive ? C.textPrimary : isCompleted ? C.accent : C.textPrimary }}>
                       <span className="sm:hidden">{step.shortTitle}</span>
                       <span className="hidden sm:inline">{step.title}</span>
                     </p>
@@ -523,11 +566,11 @@ export function CreateManifestTab({
 
                 {/* Manifest number — read-only display */}
                 <div className="sm:col-span-2">
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textMuted }}>Manifest Number</label>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>Manifest Number</label>
                   <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
                     <div className="w-0.5 h-9 flex-shrink-0" style={{ background: 'rgba(232,25,44,0.6)' }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] uppercase tracking-[0.2em] mb-0.5" style={{ color: C.textMuted }}>Auto-generated</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] mb-0.5" style={{ color: C.textPrimary }}>Auto-generated</p>
                       <p className="text-lg sm:text-2xl font-[#0D1117] tracking-wider tabular-nums truncate leading-none" style={{ color: C.textPrimary }}>
                         {manifest.manifest_number || '—'}
                       </p>
@@ -538,30 +581,196 @@ export function CreateManifestTab({
                   </div>
                 </div>
 
-                {[
-                  { id: 'date',   label: 'Manifest Date', type: 'date',   key: 'manifest_date', required: true,  placeholder: '' },
-                  { id: 'truck',  label: 'Trucker',        type: 'text',   key: 'trucker',        required: true,  placeholder: 'ACCLI, SF EXPRESS, SUYLI' },
-                  { id: 'driver', label: 'Driver Name',    type: 'text',   key: 'driver_name',    required: true,  placeholder: "Driver's full name" },
-                  { id: 'plate',  label: 'Plate No.',      type: 'text',   key: 'plate_no',       required: true,  placeholder: 'e.g., ABC-1234' },
-                ].map(({ id, label, type, key, required, placeholder }) => (
-                  <div key={id}>
-                    <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textMuted }}>
-                      {label} {required && <span style={{ color: C.accent }}>*</span>}
-                    </label>
+                {/* Manifest Date */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                    Manifest Date <span style={{ color: C.accent }}>*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={manifest.manifest_date || ''}
+                    onChange={(e) => setManifest({ ...manifest, manifest_date: e.target.value })}
+                    required
+                    {...inputProps('date')}
+                  />
+                </div>
+
+                {/* Trucker Dropdown with Manual Input */}
+                <div ref={truckerDropdownRef}>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                    Trucker <span style={{ color: C.accent }}>*</span>
+                  </label>
+                  <div className="relative">
                     <input
-                      type={type}
-                      value={(manifest as any)[key] || ''}
-                      onChange={(e) => setManifest({ ...manifest, [key]: type === 'text' ? e.target.value.toUpperCase() : e.target.value })}
-                      placeholder={placeholder}
-                      required={required}
-                      {...inputProps(id)}
+                      type="text"
+                      value={truckerSearchInput || manifest.trucker || ''}
+                      onChange={(e) => {
+                        const val = e.target.value.toUpperCase()
+                        setTruckerSearchInput(val)
+                        setManifest({ ...manifest, trucker: val })
+                        setTruckerDropdownOpen(true)
+                      }}
+                      onFocus={() => setTruckerDropdownOpen(true)}
+                      placeholder="Type or select trucker..."
+                      required
+                      className="w-full px-4 py-3 text-sm"
+                      style={{
+                        background: C.inputBg,
+                        border: `1px solid ${truckerDropdownOpen ? C.inputFocus : C.inputBorder}`,
+                        color: C.inputText,
+                        outline: 'none',
+                        transition: 'border-color 0.15s',
+                      }}
                     />
+                    {truckerDropdownOpen && (
+                      <div
+                        className="absolute top-full left-0 right-0 mt-1 overflow-hidden rounded shadow-lg z-10"
+                        style={{ background: C.surface, border: `1px solid ${C.border}` }}
+                      >
+                        {filteredTruckers.length > 0 ? (
+                          filteredTruckers.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => {
+                                setManifest({ ...manifest, trucker: option })
+                                setTruckerSearchInput('')
+                                setTruckerDropdownOpen(false)
+                              }}
+                              className="w-full text-left px-4 py-3 transition-colors text-sm"
+                              style={{
+                                background: manifest.trucker === option ? C.accent : 'transparent',
+                                color: manifest.trucker === option ? '#fff' : C.textSilver,
+                              }}
+                              onMouseEnter={(e) => {
+                                if (manifest.trucker !== option) {
+                                  e.currentTarget.style.background = C.surfaceHover
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (manifest.trucker !== option) {
+                                  e.currentTarget.style.background = 'transparent'
+                                }
+                              }}
+                            >
+                              {option}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-[12px]" style={{ color: C.textPrimary }}>
+                            No matches found
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
+
+                {/* Driver Name */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                    Driver Name <span style={{ color: C.accent }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={manifest.driver_name || ''}
+                    onChange={(e) => setManifest({ ...manifest, driver_name: e.target.value.toUpperCase() })}
+                    placeholder="Driver's full name"
+                    required
+                    {...inputProps('driver')}
+                  />
+                </div>
+
+                {/* Plate No */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                    Plate No. <span style={{ color: C.accent }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={manifest.plate_no || ''}
+                    onChange={(e) => setManifest({ ...manifest, plate_no: e.target.value.toUpperCase() })}
+                    placeholder="e.g., ABC-1234"
+                    required
+                    {...inputProps('plate')}
+                  />
+                </div>
+
+                {/* Truck Type Dropdown with Manual Input */}
+                
+                <div className="sm:col-span-2" ref={truckTypeDropdownRef}>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                    Truck Type <span style={{ color: C.accent }}>*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={truckTypeSearchInput || manifest.truck_type || ''}
+                      onChange={(e) => {
+                        const val = e.target.value.toUpperCase()
+                        setTruckTypeSearchInput(val)
+                        setManifest({ ...manifest, truck_type: val })
+                        setTruckTypeDropdownOpen(true)
+                      }}
+                      onFocus={() => setTruckTypeDropdownOpen(true)}
+                      placeholder="Type or select truck type..."
+                      required
+                      className="w-full px-4 py-3 text-sm"
+                      style={{
+                        background: C.inputBg,
+                        border: `1px solid ${truckTypeDropdownOpen ? C.inputFocus : C.inputBorder}`,
+                        color: C.inputText,
+                        outline: 'none',
+                        transition: 'border-color 0.15s',
+                      }}
+                    />
+                    {truckTypeDropdownOpen && (
+                      <div
+                        className="absolute top-full left-0 right-0 mt-1 overflow-hidden rounded shadow-lg z-10"
+                        style={{ background: C.surface, border: `1px solid ${C.border}` }}
+                      >
+                        {filteredTruckTypes.length > 0 ? (
+                          filteredTruckTypes.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => {
+                                setManifest({ ...manifest, truck_type: option })
+                                setTruckTypeSearchInput('')
+                                setTruckTypeDropdownOpen(false)
+                              }}
+                              className="w-full text-left px-4 py-3 transition-colors text-sm"
+                              style={{
+                                background: manifest.truck_type === option ? C.accent : 'transparent',
+                                color: manifest.truck_type === option ? '#fff' : C.textSilver,
+                              }}
+                              onMouseEnter={(e) => {
+                                if (manifest.truck_type !== option) {
+                                  e.currentTarget.style.background = C.surfaceHover
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (manifest.truck_type !== option) {
+                                  e.currentTarget.style.background = 'transparent'
+                                }
+                              }}
+                            >
+                              {option}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-[12px]" style={{ color: C.textPrimary }}>
+                            No matches found
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {/* Time start */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textMuted }}>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
                     Time Start <span style={{ color: C.accent }}>*</span>
                   </label>
                   <div className="relative">
@@ -578,7 +787,7 @@ export function CreateManifestTab({
 
                 {/* Time end */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textMuted }}>Time End</label>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>Time End</label>
                   <div className="relative">
                     <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: C.textGhost }} />
                     <input type="time" value={manifest.time_end || ''}
@@ -591,14 +800,14 @@ export function CreateManifestTab({
                 </div>
 
                 {/* Truck type */}
-                <div className="sm:col-span-2">
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textMuted }}>Truck Type</label>
+                {/* <div className="sm:col-span-2">
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>Truck Type</label>
                   <input type="text" value={manifest.truck_type || ''}
                     onChange={(e) => setManifest({ ...manifest, truck_type: e.target.value.toUpperCase() })}
                     placeholder="E.G., 10W - 6W"
                     {...inputProps('truck_type')}
                   />
-                </div>
+                </div> */}
               </div>
             </div>
           )}
@@ -617,7 +826,7 @@ export function CreateManifestTab({
                       className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-all duration-200 rounded"
                       style={{
                         background: inputMode === 'single' ? C.accent : 'transparent',
-                        color: inputMode === 'single' ? '#fff' : C.textMuted,
+                        color: inputMode === 'single' ? '#fff' : C.textPrimary,
                       }}
                     >
                       Single
@@ -627,7 +836,7 @@ export function CreateManifestTab({
                       className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-all duration-200 rounded"
                       style={{
                         background: inputMode === 'mass' ? C.accent : 'transparent',
-                        color: inputMode === 'mass' ? '#fff' : C.textMuted,
+                        color: inputMode === 'mass' ? '#fff' : C.textPrimary,
                       }}
                     >
                       Mass Input
@@ -657,7 +866,7 @@ export function CreateManifestTab({
 
                     {/* Searching spinner */}
                     {isSearching && barcodeInput.trim().length >= 1 && (
-                      <div className="mt-3 p-3 flex items-center gap-2 text-[11px]" style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMuted }}>
+                      <div className="mt-3 p-3 flex items-center gap-2 text-[11px]" style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>
                         <div className="animate-spin rounded-full h-3.5 w-3.5 border border-t-transparent" style={{ borderColor: C.accent, borderTopColor: 'transparent' }} />
                         Searching…
                       </div>
@@ -675,7 +884,7 @@ export function CreateManifestTab({
                           >
                             <div className="flex items-baseline justify-between gap-2">
                               <div className="flex items-baseline gap-2 min-w-0">
-                                <span className="text-[10px]" style={{ color: C.textMuted }}>{String(idx + 1).padStart(2, '0')}</span>
+                                <span className="text-[10px]" style={{ color: C.textPrimary }}>{String(idx + 1).padStart(2, '0')}</span>
                                 <span className="font-[#0D1117] text-sm truncate transition-colors" style={{ color: C.textSilver }}>{result.documentNumber}</span>
                               </div>
                               <div className="flex items-baseline gap-3 flex-shrink-0">
@@ -685,7 +894,7 @@ export function CreateManifestTab({
                                 <span className="text-[10px] font-bold" style={{ color: C.accent }}>×{result.quantity}</span>
                               </div>
                             </div>
-                            <p className="text-[11px] mt-0.5 pl-6 truncate" style={{ color: C.textMuted }}>{result.shipToName}</p>
+                            <p className="text-[11px] mt-0.5 pl-6 truncate" style={{ color: C.textPrimary }}>{result.shipToName}</p>
                           </button>
                         ))}
                       </div>
@@ -697,7 +906,7 @@ export function CreateManifestTab({
                         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: C.accent }} />
                         <div>
                           <p className="font-[#0D1117] text-xs uppercase tracking-widest" style={{ color: C.textSilver }}>Not Found</p>
-                          <p className="text-[11px] mt-1" style={{ color: C.textMuted }}>
+                          <p className="text-[11px] mt-1" style={{ color: C.textPrimary }}>
                             Press Enter to add <span className="font-bold" style={{ color: C.textSilver }}>"{barcodeInput}"</span> manually
                           </p>
                         </div>
@@ -756,7 +965,7 @@ export function CreateManifestTab({
                         className="px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all"
                         style={{
                           border: `1px solid ${C.border}`,
-                          color: isProcessingMass ? C.textGhost : C.textMuted,
+                          color: isProcessingMass ? C.textGhost : C.textPrimary,
                           cursor: isProcessingMass ? 'not-allowed' : 'pointer',
                         }}
                       >
@@ -765,7 +974,7 @@ export function CreateManifestTab({
                     </div>
 
                     {/* Info text */}
-                    <div className="mt-3 p-3 flex items-start gap-2 text-[11px]" style={{ background: 'rgba(245,166,35,0.05)', border: `1px solid rgba(245,166,35,0.2)`, borderRadius: '6px', color: C.textMuted }}>
+                    <div className="mt-3 p-3 flex items-start gap-2 text-[11px]" style={{ background: 'rgba(245,166,35,0.05)', border: `1px solid rgba(245,166,35,0.2)`, borderRadius: '6px', color: C.textPrimary }}>
                       <span style={{ color: C.amber, fontWeight: 'bold', marginTop: '2px' }}>i</span>
                       <div>
                         <p>Separate document numbers with commas or new lines</p>
@@ -782,12 +991,12 @@ export function CreateManifestTab({
                   <SectionLabel icon={Package}>Scanned ({totalDocuments})</SectionLabel>
                   <div className="flex items-center gap-3">
                     {hasCbm && (
-                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                      <span className="text-[10px]" style={{ color: C.textPrimary }}>
                         CBM: <span className="font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
                       </span>
                     )}
                     {totalQuantity > 0 && (
-                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                      <span className="text-[10px]" style={{ color: C.textPrimary }}>
                         Total: <span className="font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
                       </span>
                     )}
@@ -797,7 +1006,7 @@ export function CreateManifestTab({
                 {manifest.items.length === 0 ? (
                   <div className="py-12 text-center" style={{ border: `1px dashed ${C.border}` }}>
                     <Package className="w-7 h-7 mx-auto mb-2.5" style={{ color: C.textGhost }} />
-                    <p className="font-[#0D1117] text-xs uppercase tracking-widest" style={{ color: C.textMuted }}>No documents yet</p>
+                    <p className="font-[#0D1117] text-xs uppercase tracking-widest" style={{ color: C.textPrimary }}>No documents yet</p>
                     <p className="text-[11px] mt-1" style={{ color: C.textGhost }}>Scan or type a DN/TRA above</p>
                   </div>
                 ) : (
@@ -810,7 +1019,7 @@ export function CreateManifestTab({
                         </span>
                         <div className="flex-1 min-w-0">
                           <p className="font-[#0D1117] text-sm truncate transition-colors group-hover:text-white" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
-                          <p className="text-[11px] mt-0.5 truncate" style={{ color: C.textMuted }}>{item.document_number}</p>
+                          <p className="text-[11px] mt-0.5 truncate" style={{ color: C.textPrimary }}>{item.document_number}</p>
                         </div>
                         <div className="flex items-baseline gap-2 flex-shrink-0">
                           {item.total_cbm != null && item.total_cbm > 0 && (
@@ -860,11 +1069,11 @@ export function CreateManifestTab({
                   <SectionLabel icon={Package}>Documents ({totalDocuments})</SectionLabel>
                   <div className="flex items-center gap-4">
                     {hasCbm && (
-                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                      <span className="text-[10px]" style={{ color: C.textPrimary }}>
                         Total CBM: <span className="font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
                       </span>
                     )}
-                    <span className="text-[10px]" style={{ color: C.textMuted }}>
+                    <span className="text-[10px]" style={{ color: C.textPrimary }}>
                       Total Qty: <span className="font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
                     </span>
                   </div>
@@ -889,9 +1098,9 @@ export function CreateManifestTab({
                     </span>
                     <div className="min-w-0">
                       <p className="font-[#0D1117] text-sm truncate group-hover/row:text-white transition-colors" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
-                      <p className="sm:hidden text-[11px] mt-0.5 truncate" style={{ color: C.textMuted }}>{item.document_number}</p>
+                      <p className="sm:hidden text-[11px] mt-0.5 truncate" style={{ color: C.textPrimary }}>{item.document_number}</p>
                     </div>
-                    <span className="text-[11px] hidden sm:block" style={{ color: C.textMuted }}>{item.document_number}</span>
+                    <span className="text-[11px] hidden sm:block" style={{ color: C.textPrimary }}>{item.document_number}</span>
                     {hasCbm && (
                       <span className="text-[11px] font-bold tabular-nums text-right" style={{ color: item.total_cbm != null && item.total_cbm > 0 ? C.amber : C.textGhost }}>
                         {item.total_cbm != null && item.total_cbm > 0 ? item.total_cbm.toFixed(4) : '—'}
