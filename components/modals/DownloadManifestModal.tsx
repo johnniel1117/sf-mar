@@ -105,7 +105,7 @@ export function DownloadModal({
                   {opt.index}
                 </span>
 
-                <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200 ${
+                <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center  border transition-all duration-200 ${
                   active
                     ? 'border-[#9d7bf8]/20 bg-[#9d7bf8]/8'
                     : 'border-[#1a1a1a] bg-transparent group-hover:border-[#9d7bf8]/20 group-hover:bg-[#9d7bf8]/6'
@@ -143,13 +143,13 @@ export function DownloadModal({
         <div className="flex gap-3 px-7 py-5 border-t border-[#1a1a1a]">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
+            className="flex-1 px-4 py-2.5 border border-[#1a1a1a] text-[#9A9A9A]  text-[10px] font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 rounded-full bg-[#C1F85C] text-black text-[10px] uppercase tracking-widest hover:opacity-80 transition-all"
+            className="flex-1 px-4 py-2.5  bg-[#C1F85C] text-black text-[10px] uppercase tracking-widest hover:opacity-80 transition-all"
           >
             Download
           </button>

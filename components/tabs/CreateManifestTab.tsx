@@ -528,9 +528,9 @@ export function CreateManifestTab({
                   <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0 min-w-0">
                     <div className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all duration-300"
                       style={{
-                        background:  isActive ? C.accent : isCompleted ? 'rgba(232,25,44,0.1)' : 'transparent',
-                        border:      isActive ? 'none' : isCompleted ? `1px solid rgba(232,25,44,0.3)` : `1px solid ${C.border}`,
-                        color:       isActive ? '#fff' : isCompleted ? C.accent : C.textGhost,
+                        background:  isActive ? C.accent : isCompleted ? C.amber : 'transparent',
+                        border:      isActive ? 'none' : isCompleted ? `1px solid ${C.amber}` : `1px solid ${C.border}`,
+                        color:       isActive ? '#fff' : isCompleted ? C.bg : C.textGhost,
                       }}
                     >
                       {isCompleted

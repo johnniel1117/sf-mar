@@ -76,13 +76,13 @@ export function ConfirmationModal({
         <div className="flex gap-3 px-7 py-5">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 border border-[#1a1a1a] text-[#9A9A9A] rounded-full text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
+            className="flex-1 py-2.5 border border-[#1a1a1a] text-[#9A9A9A]  text-[10px]  font-bold uppercase tracking-widest hover:border-[#3E3E3E] hover:text-white transition-all"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-2.5 rounded-full bg-[#9d7bf8] text-white text-[10px] font-[#0D1117] uppercase tracking-widest hover:bg-[#b59dff] transition-all shadow-lg shadow-[#9d7bf8]/20"
+            className="flex-1 py-2.5  bg-[#C1F85C]  text-[10px] font-[#0D1117] uppercase tracking-widest hover:bg-[#9cc254] transition-all shadow-lg "
           >
             {confirmText}
           </button>
