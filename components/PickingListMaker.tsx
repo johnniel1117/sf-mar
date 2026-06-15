@@ -18,10 +18,10 @@ const C = {
   border:       '#30363D',
   borderHover:  '#8B949E',
   divider:      '#21262D',
-  accent:       '#E8192C',
-  accentHover:  '#FF1F30',
-  accentGlow:   'rgba(232,25,44,0.25)',
-  amber:        '#F5A623',
+  accent:       '#9d7bf8',
+  accentHover:  '#b59dff',
+  accentGlow:   'rgba(157, 123, 248, 0.25)',
+  amber:        '#C1F85C',
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
   textSub:      '#8B949E',
@@ -30,7 +30,7 @@ const C = {
   inputBg:      '#0D1117',
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
-  inputFocus:   '#F5A623',
+  inputFocus:   '#C1F85C',
   stripeEven:   '#161B22',
   stripeOdd:    '#0D1117',
 }
@@ -471,7 +471,7 @@ function DropZone({ onFile, loaded, fileName }: { onFile: (f: File) => void; loa
 
       <div className="flex items-center gap-2 mb-3">
         <span className="w-5 h-5 flex items-center justify-center text-[10px] font-bold"
-          style={{ background: loaded ? 'rgba(34,197,94,0.15)' : 'rgba(232,25,44,0.1)', border: `1px solid ${loaded ? 'rgba(34,197,94,0.3)' : 'rgba(232,25,44,0.2)'}`, color: loaded ? '#22c55e' : C.accent }}>
+          style={{ background: loaded ? 'rgba(0, 100, 37, 0.1)' : 'rgba(25, 232, 60, 0.1)', border: `1px solid ${loaded ? 'rgba(34,197,94,0.3)' : 'rgba(25, 232, 60, 0.2)'}`, color: loaded ? '#22c55e' : C.accent }}>
           {loaded ? '✓' : '1'}
         </span>
         <span className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textMuted }}>
@@ -822,9 +822,9 @@ export function PickingListMaker() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{ background: C.accent }} />
                       <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: C.accent }} />
                     </span>
-                    <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: C.amber }}>Picking List Generator</p>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-white font-bold" >Picking List Generator</p>
                   </div>
-                  <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-bold leading-[0.93] tracking-tight" style={{ color: C.textPrimary }}>
+                  <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-bold leading-[0.93] tracking-tight"style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
                     Generate Picking Lists
                   </h2>
                   <p className="text-[12px] mt-2" style={{ color: C.textSilver }}>SF Express · Cebu Warehouse</p>
