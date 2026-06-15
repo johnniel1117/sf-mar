@@ -15,11 +15,11 @@ const C = {
   borderHover:  '#8B949E',
   divider:      '#21262D',
 
-  accent:       '#E8192C',
-  accentHover:  '#FF1F30',
-  accentGlow:   'rgba(232,25,44,0.25)',
+  accent:       '#9d7bf8',
+  accentHover:  '#5e2ee4f5',
+  accentGlow:   'rgba(104, 25, 232, 0.25)',
 
-  amber:        '#F5A623',
+  amber:        '#C1F85C',
 
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
@@ -93,10 +93,10 @@ export default function LoginPage() {
 
         {/* Heading */}
         <div className="mb-10">
-          <p className="text-[10px] uppercase tracking-[0.3em] font-bold mb-4" style={{color: C.amber}}>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white font-bold mb-4" >
             Secure access
           </p>
-          <h1 className="text-[2.2rem] text-white leading-[0.95] tracking-tight" style={{color: C.textPrimary}}>
+          <h1 className="text-[2.2rem] text-white leading-[0.95] tracking-tight" style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
             Sign in to your account
           </h1>
         </div>

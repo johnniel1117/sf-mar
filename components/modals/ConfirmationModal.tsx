@@ -49,12 +49,12 @@ export function ConfirmationModal({
           </div> */}
 
           {/* Eyebrow */}
-          <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-yellow-600 mb-1.5">
+          <p className="text-[10px]  uppercase tracking-[0.25em] font-bold text-[#C1F85C] mb-1.5">
             {isDangerous ? 'Warning' : 'Confirm'}
           </p>
 
           {/* Title */}
-          <h2 className="text-xl font-[#0D1117] text-white tracking-tight leading-none mb-3">
+          <h2 className="text-xl font-[#0D1117] text-white tracking-tight leading-none mb-3" >
             {title}
           </h2>
 
@@ -65,9 +65,9 @@ export function ConfirmationModal({
 
           {/* Danger strip */}
           {isDangerous && (
-            <div className="flex items-center gap-2 px-3 py-2.5 mt-4 border border-[#E8192C]/15 rounded-xl bg-[#E8192C]/5">
-              <div className="w-1 h-5 rounded-full bg-[#E8192C]/60 flex-shrink-0" />
-              <p className="text-[11px]  text-[#E8192C]/70">This action cannot be undone.</p>
+            <div className="flex items-center gap-2 px-3 py-2.5 mt-4 border border-[#9d7bf8]/15 rounded-xl bg-[#9d7bf8]/5">
+              <div className="w-1 h-5 rounded-full bg-[#9d7bf8]/60 flex-shrink-0" />
+              <p className="text-[11px]  text-[#9d7bf8]/70">This action cannot be undone.</p>
             </div>
           )}
         </div>
@@ -82,7 +82,7 @@ export function ConfirmationModal({
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] font-[#0D1117] uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
+            className="flex-1 py-2.5 rounded-full bg-[#9d7bf8] text-white text-[10px] font-[#0D1117] uppercase tracking-widest hover:bg-[#b59dff] transition-all shadow-lg shadow-[#9d7bf8]/20"
           >
             {confirmText}
           </button>
