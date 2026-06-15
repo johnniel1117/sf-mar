@@ -18,11 +18,11 @@ const C = {
   borderHover:  '#8B949E',
   divider:      '#21262D',
 
-  accent:       '#E8192C',
-  accentHover:  '#FF1F30',
-  accentGlow:   'rgba(232,25,44,0.25)',
+  accent:       '#9d7bf8',
+  accentHover:  '#b39eff',
+  accentGlow:   'rgba(157,123,248,0.25)',
 
-  amber:        '#F5A623',
+  amber:        '#C1F85C',
 
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
@@ -83,7 +83,7 @@ function FilterDropdown({ selectedMonth, onMonthChange, months }: {
               onClick={() => { onMonthChange(month); setIsOpen(false) }}
               className={`w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-widest transition-colors ${
                 selectedMonth === month
-                  ? 'text-[#E8192C] bg-[#E8192C]/6'
+                  ? 'text-[#9d7bf8] bg-[#9d7bf8]/6'
                   : 'text-[#B1BAC4] hover:bg-[#21262D] hover:text-[#C9D1D9]'
               }`}
             >
@@ -205,7 +205,7 @@ function ManifestRow({
                     onMouseEnter={(e) => { e.currentTarget.style.background = C.surfaceHover }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? C.stripeEven : C.stripeOdd }}
                   >
-                    <span className="text-[11px] font-bold group-hover/row:text-[#58A6FF] transition-colors" style={{color: C.textMuted}}>
+                    <span className="text-[11px] font-bold group-hover/row:text-[#C1F85C] transition-colors" style={{color: C.textMuted}}>
                       {String(idx + 1).padStart(2, '0')}
                     </span>
                     <span className="text-[13px] font-semibold truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1" style={{color: C.textPrimary}}>
@@ -245,10 +245,10 @@ function ManifestRow({
             )}
             <button
               onClick={onDownload}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all"
-              style={{border: `1px solid ${C.border}`, color: C.textPrimary}}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-black hover:opacity-80 transition-all"
+              style={{background: C.amber}}
             >
-              <Download className="w-3.5 h-3.5" style={{color: C.accent}} /> Download
+              <Download className="w-3.5 h-3.5" /> Download
             </button>
           </div>
         </div>
@@ -542,9 +542,9 @@ export function SavedManifestsTab({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{background: C.accent}} />
                 <span className="relative inline-flex rounded-full h-2 w-2" style={{background: C.accent}} />
               </span>
-              <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{color: C.amber}}>Trip Manifest</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white font-bold" >Trip Manifest</p>
             </div>
-            <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-[#0D1117] text-white leading-[0.93] tracking-tight" style={{ color: C.textPrimary }}>
+            <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-[#0D1117] text-white leading-[0.93] tracking-tight" style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
               {savedManifests.length} manifest{savedManifests.length !== 1 ? 's' : ''}
             </h2>
             <p className="text-[12px] mt-2" style={{color: C.textSilver}}>SF Express · Cebu Warehouse</p>
@@ -562,10 +562,8 @@ export function SavedManifestsTab({
             <button
               onClick={handleExportAll}
               disabled={filteredManifests.length === 0}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 border text-[11px] font-bold uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{border: `1px solid ${C.amber}40`, color: C.amber}}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.amber; e.currentTarget.style.background = C.amber + '05' }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.amber + '40'; e.currentTarget.style.background = 'transparent' }}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 text-[11px] font-bold uppercase tracking-widest  transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-80"
+              style={{background: C.amber}}
             >
               <Download className="w-3.5 h-3.5" />
               Export All
@@ -685,9 +683,12 @@ export function SavedManifestsTab({
                   onClick={() => setCurrentPage(page)}
                   className={`w-8 h-8 text-[11px] font-[#0D1117] uppercase tracking-widest transition-all ${
                     currentPage === page
-                      ? `bg-yellow-600 text-white`
+                      ? `text-white`
                       : 'border border-[#282828] text-[#9A9A9A] hover:border-[#6A6A6A] hover:text-white'
                   }`}
+                  style={{
+                    background: currentPage === page ? C.accent : 'transparent',
+                  }}
                 >{page}</button>
               ))}
             <button

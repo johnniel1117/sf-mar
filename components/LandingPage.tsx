@@ -16,12 +16,12 @@ import type { TripManifest } from '@/lib/services/tripManifestService'
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
 function useGreeting() {
-  const [greeting, setGreeting] = useState('GOOD DAY')
+  const [greeting, setGreeting] = useState('Good Day')
   useEffect(() => {
     const h = new Date().getHours()
-    if (h >= 5 && h < 12) setGreeting('GOOD MORNING')
-    else if (h >= 12 && h < 18) setGreeting('GOOD AFTERNOON')
-    else setGreeting('GOOD EVENING')
+    if (h >= 5 && h < 12) setGreeting('Good Morning')
+    else if (h >= 12 && h < 18) setGreeting('Good Afternoon')
+    else setGreeting('Good Evening')
   }, [])
   return greeting
 }
@@ -179,7 +179,7 @@ function OutboundSidebar({ manifests, onExpand }: { manifests: TripManifest[]; o
       {/* Full analytics */}
       <button
         onClick={onExpand}
-        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#6E7681] hover:text-[#F5A623] transition-colors group"
+        className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#6E7681] hover:text-[#C1F85C] transition-colors group"
       >
         Full analytics
         <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -280,7 +280,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
               <div className="flex items-center gap-2.5">
                 <div
                   className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #E8192C, #7f0e18)' }}
+                  style={{ background: 'linear-gradient(135deg, #9d7bf8, #5e2ee4)' }}
                 >
                   {displayName.charAt(0).toUpperCase()}
                 </div>
@@ -311,10 +311,10 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
             <div className="pt-10 sm:pt-14 pb-8 sm:pb-10 border-b border-[#21262D]">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-[#F5A623] mb-3">{today}</p>
-                  <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)]  uppercase text-white leading-[0.93] tracking-tight">
+                  <p className="text-[11px] uppercase tracking-[0.25em] font-bold text-white mb-3">{today}</p>
+                  <h1 className="text-[clamp(2.2rem,5.5vw,4.2rem)] text-white leading-[0.93] tracking-tight" style={{ fontFamily: 'var(--font-bricolage)' }}>
                     {greeting},<br />
-                    <span className="italic text-[#6E7681]">{displayName}.</span>
+                    <span className=" text-[#C1F85C]">{displayName}.</span>
                   </h1>
                 </div>
 
@@ -344,8 +344,8 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                         onClick={() => setShowAnalyticsModal(true)}
                         className="flex flex-col items-start gap-2 group"
                       >
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681] group-hover:text-[#F5A623] transition-colors">Analytics</p>
-                        <div className="flex items-center gap-1.5 text-[#F5A623]">
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-[#6E7681] group-hover:text-[#C1F85C] transition-colors">Analytics</p>
+                        <div className="flex items-center gap-1.5 text-[#C1F85C]">
                           <TrendingUp className="w-10 h-10" />
                           <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
@@ -370,7 +370,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                         <span className="text-[11px] font-bold text-[#484F58] w-5 flex-shrink-0 group-hover:text-[#6E7681] transition-colors tabular-nums">
                           {index}
                         </span>
-                        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-[#30363D] bg-[#161B22] group-hover:border-[#F5A623]/40 group-hover:bg-[#F5A623] transition-all duration-200">
+                        <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-[#30363D] bg-[#161B22] group-hover:border-[#9d7bf8]/40 group-hover:bg-[#9d7bf8] transition-all duration-200">
                           <Icon className="w-4 h-4 text-[#6E7681] group-hover:text-[#ffff] transition-colors duration-200" strokeWidth={1.5} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -381,7 +381,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                             {desc}
                           </p>
                         </div>
-                        <ArrowUpRight className="w-3.5 h-3.5 text-[#484F58] group-hover:text-[#E8192C] flex-shrink-0 transition-all duration-200 opacity-0 group-hover:opacity-100" />
+                        <ArrowUpRight className="w-3.5 h-3.5 text-[#484F58] group-hover:text-[#9d7bf8] flex-shrink-0 transition-all duration-200 opacity-0 group-hover:opacity-100" />
                       </div>
                     </Link>
                   ))}
@@ -390,7 +390,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
 
               {/* RIGHT — analytics sidebar */}
               <div className="hidden lg:block py-8 sm:py-10 pl-12">
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#6E7681] mb-6">Outbound</p>
+                <p className="text-[20px] text-white uppercase tracking-[0.25em] font-bold text-[#6E7681] mb-6">Outbound</p>
                 {manifests.length === 0 ? (
                   <div className="space-y-3 py-2">
                     <TrendingUp className="w-5 h-5 text-[#484F58]" />
@@ -399,7 +399,7 @@ export function LandingClient({ displayName, role, manifests = [] }: LandingClie
                       Create your first trip manifest to see outbound analytics.
                     </p>
                     <Link href="/trip-manifest">
-                      <span className="text-[11px] font-bold text-[#F5A623] uppercase tracking-widest hover:underline cursor-pointer">
+                      <span className="text-[11px] font-bold text-[#C1F85C] uppercase tracking-widest hover:underline cursor-pointer">
                         Get started →
                       </span>
                     </Link>

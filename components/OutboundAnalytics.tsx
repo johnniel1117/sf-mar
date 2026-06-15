@@ -18,11 +18,11 @@ const C = {
   borderHover:  '#8B949E',
   divider:      '#21262D',
 
-  accent:       '#E8192C',
-  accentHover:  '#FF1F30',
-  accentGlow:   'rgba(232,25,44,0.25)',
+  accent:       '#9d7bf8',
+  accentHover:  '#b39eff',
+  accentGlow:   'rgba(157,123,248,0.25)',
 
-  amber:        '#F5A623',
+  amber:        '#C1F85C',
 
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
@@ -157,7 +157,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
   }
 
   return (
-    <div ref={ref} className="relative w-full select-none rounded-lg p-6" style={{ height: CHART_H + LABEL_H, background: C.surface, border: `1px solid ${C.divider}` }}>
+    <div ref={ref} className="relative w-full select-none rounded-3xl p-6" style={{ height: CHART_H + LABEL_H, background: C.surface, border: `1px solid ${C.divider}` }}>
       
       {/* Y-axis with labels */}
       <div className="absolute left-0 top-0 bottom-0 pointer-events-none flex flex-col justify-between text-right pr-4" style={{ width: Y_AXIS_W, paddingTop: 12, paddingBottom: LABEL_H + 16 }}>
@@ -195,9 +195,9 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
           const delta     = prevVal !== null ? calcDelta(val, prevVal) : null
 
           let barBg = C.surfaceHover
-          if (isCurr)  barBg = `linear-gradient(180deg, ${C.accent} 0%, #c8140e 60%, ${C.amber} 100%)`
-          else if (isPrev) barBg = `rgba(245,166,35,0.35)`
-          if (isHovered && !isCurr && !isPrev) barBg = `linear-gradient(180deg, ${C.borderHover} 0%, ${C.border} 100%)`
+          if (isCurr)  barBg = C.accent
+          else if (isPrev) barBg = `rgba(193,248,92,0.35)`
+          if (isHovered && !isCurr && !isPrev) barBg = C.border
 
           const tooltipPosition = barH > 70 ? 'inside' : 'above'
 
@@ -214,7 +214,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                   className="absolute -top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in"
                 >
                   <div
-                    className="relative px-4 py-3 text-center rounded-lg whitespace-nowrap"
+                    className="relative px-4 py-3 text-center rounded-2xl whitespace-nowrap"
                     style={{
                       background: C.surface,
                       border: `1.5px solid ${C.accent}`,
@@ -257,7 +257,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
               {/* Bar container */}
               <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center transition-all duration-200" style={{ height: '100%' }}>
                 <div
-                  className="w-full rounded-t-lg transition-all duration-500 relative overflow-hidden group-hover:shadow-lg"
+                  className="w-full rounded-t-3xl transition-all duration-500 relative overflow-hidden group-hover:shadow-lg"
                   style={{
                     height: `${barH}%`,
                     minHeight: val > 0 && mounted ? '6px' : '0px',
@@ -274,7 +274,7 @@ function BarGraph({ data, activeMetric }: { data: ReturnType<typeof buildMonthly
                     <div
                       className="absolute inset-0 opacity-40"
                       style={{
-                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                        background: C.accent,
                         animation: 'shimmer 2.5s ease-in-out infinite',
                       }}
                     />
@@ -443,7 +443,7 @@ function TopDestinations({ manifests }: { manifests: TripManifest[] }) {
   return (
     <div className="space-y-6">
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-4 p-4 rounded-lg" style={{background: C.surface, borderRadius: 12}}>
+      <div className="grid grid-cols-3 gap-4 p-4 rounded-3xl" style={{background: C.surface, borderRadius: 24}}>
         <div className="text-center">
           <p className="text-[10px] uppercase tracking-widest font-bold" style={{color: C.textMuted}}>Total Locations</p>
           <p className="text-[20px] font-bold font-mono mt-1" style={{color: C.accent}}>{destinations.length}</p>
@@ -465,7 +465,7 @@ function TopDestinations({ manifests }: { manifests: TripManifest[] }) {
           const isTop = i === 0
           const Icon = i === 0 ? Target : MapPin
           return (
-            <div key={dest.name} className="group relative py-4 px-4 rounded-lg transition-all duration-150" style={{borderBottom: `1px solid ${C.divider}`, background: i % 2 === 0 ? 'transparent' : C.surface + '40'}}>
+            <div key={dest.name} className="group relative py-4 px-4 rounded-2xl transition-all duration-150" style={{borderBottom: `1px solid ${C.divider}`, background: i % 2 === 0 ? 'transparent' : C.surface + '40'}}>
               <div className="flex items-center justify-between mb-3 gap-4">
                 <div className="flex items-center gap-4 min-w-0">
                   <div className="flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0" style={{background: isTop ? C.accent + '20' : C.surface}}>
@@ -494,7 +494,7 @@ function TopDestinations({ manifests }: { manifests: TripManifest[] }) {
                   className="h-full origin-left rounded-full"
                   style={{
                     width: `${pct}%`,
-                    background: isTop ? `linear-gradient(90deg, ${C.accent}, ${C.amber})` : i === 1 ? `rgba(245,166,35,0.5)` : C.border,
+                    background: isTop ? C.accent : i === 1 ? `rgba(193,248,92,0.5)` : C.border,
                     transition: 'width 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
                     transitionDelay: `${i * 80}ms`,
                     boxShadow: isTop ? `0 0 8px ${C.accentGlow}` : 'none',
@@ -548,7 +548,7 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
           {truckers.map((t, i) => (
             <div
               key={t.name}
-              className="group flex items-center gap-5 py-4 px-4 transition-all duration-200 hover:pl-5 rounded-lg"
+              className="group flex items-center gap-5 py-4 px-4 transition-all duration-200 hover:pl-5 rounded-2xl"
               style={{borderBottom: `1px solid ${C.divider}`, background: i % 2 === 0 ? 'transparent' : C.surface + '40'}}
             >
               <span
@@ -560,10 +560,10 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
 
               {/* Avatar */}
               <div
-                className="w-9 h-9 flex-shrink-0 flex items-center justify-center text-[11px] font-bold rounded-lg"
+                className="w-9 h-9 flex-shrink-0 flex items-center justify-center text-[11px] font-bold rounded-xl"
                 style={{
                   background: i === 0
-                    ? `linear-gradient(135deg, ${C.accent}, #7f0e18)`
+                    ? C.accent
                     : C.surface,
                   border: i === 0 ? 'none' : `1px solid ${C.border}`,
                   color: i === 0 ? '#fff' : C.textSilver,
@@ -591,7 +591,7 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
         {drivers.length > 0 && (
           <div>
             <SectionLabel icon={<Users className="w-4 h-4" />} description="Most active drivers">Top drivers</SectionLabel>
-            <div className="mt-6 space-y-0 rounded-lg overflow-hidden" style={{border: `1px solid ${C.divider}`}}>
+            <div className="mt-6 space-y-0 rounded-2xl overflow-hidden" style={{border: `1px solid ${C.divider}`}}>
               {drivers.map(([name, trips], i) => (
                 <div key={name} className="flex items-center justify-between py-4 px-4 transition-colors" style={{borderBottom: i < drivers.length - 1 ? `1px solid ${C.divider}` : 'none', background: i % 2 === 0 ? 'transparent' : C.surface + '40'}}>
                   <div className="flex items-center gap-3">
@@ -611,7 +611,7 @@ function TopTruckers({ manifests }: { manifests: TripManifest[] }) {
         {truckTypes.length > 0 && (
           <div>
             <SectionLabel icon={<Package className="w-4 h-4" />} description="Vehicle type distribution">Fleet breakdown</SectionLabel>
-            <div className="mt-6 p-6 rounded-lg" style={{border: `1px solid ${C.divider}`, background: C.surface}}>
+            <div className="mt-6 p-6 rounded-2xl" style={{border: `1px solid ${C.divider}`, background: C.surface}}>
               <RingChart
                 data={truckTypes.map(([type, count], i) => ({
                   label: type,
@@ -642,7 +642,7 @@ function RecentActivity({ manifests }: { manifests: TripManifest[] }) {
   if (!recent.length) return <EmptyState label="No activity yet" icon={Activity} />
 
   return (
-    <div style={{borderTop: `1px solid ${C.divider}`}} className="rounded-lg overflow-hidden">
+    <div style={{borderTop: `1px solid ${C.divider}`}} className="rounded-2xl overflow-hidden">
       {recent.map((m, idx) => {
         const qty  = (m.items || []).reduce((s, i) => s + (i.total_quantity || 0), 0)
         const date = m.manifest_date
@@ -701,7 +701,7 @@ function SectionLabel({ children, icon: Icon, description }: { children: React.R
 function EmptyState({ label, icon: Icon = Activity }: { label: string; icon?: typeof Activity }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
-      <div className="w-12 h-12 flex items-center justify-center rounded-lg" style={{border: `2px solid ${C.border}`, background: C.surface}}>
+      <div className="w-12 h-12 flex items-center justify-center rounded-2xl" style={{border: `2px solid ${C.border}`, background: C.surface}}>
         <Icon className="w-6 h-6" style={{color: C.textGhost}} />
       </div>
       <div>
@@ -765,9 +765,9 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{background: C.accent}} />
                 <span className="relative inline-flex rounded-full h-2 w-2" style={{background: C.accent}} />
               </span>
-              <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{color: C.amber}}>Outbound analytics</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white font-bold" >Outbound analytics</p>
             </div>
-            <h2 className="text-[clamp(1.6rem,4vw,2.6rem)]  text-white leading-none tracking-tight">
+            <h2 className="text-[clamp(1.6rem,4vw,2.6rem)]  text-white leading-none tracking-tight" style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
               {manifests.length}
               <span className="font-normal" style={{color: C.textGhost}}> manifest{manifests.length !== 1 ? 's' : ''}</span>
             </h2>
@@ -784,7 +784,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
         </div>
 
         {/* Metric cards */}
-        <div className="grid grid-cols-3 rounded-lg overflow-hidden" style={{borderTop: `1px solid ${C.border}`, border: `1px solid ${C.border}`, marginBottom: 16}}>
+        <div className="grid grid-cols-3 rounded-2xl overflow-hidden" style={{borderTop: `1px solid ${C.border}`, border: `1px solid ${C.border}`, marginBottom: 16}}>
           {METRICS.map(({ key, label, value, delta }, i) => (
             <button
               key={key}
@@ -800,7 +800,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
               {activeMetric === key && (
                 <div
                   className="absolute top-0 left-0 right-0 h-1"
-                  style={{ background: `linear-gradient(90deg, ${C.accent}, ${C.amber})` }}
+                  style={{ background: C.accent }}
                 />
               )}
 
@@ -839,7 +839,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
               {activeTab === key && (
                 <span
                   className="absolute bottom-0 left-0 right-0 h-1"
-                  style={{ background: `linear-gradient(90deg, ${C.accent}, ${C.amber})`, borderRadius: '1px 1px 0 0' }}
+                  style={{ background: C.accent, borderRadius: '1px 1px 0 0' }}
                 />
               )}
             </button>
@@ -865,7 +865,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
 
             {/* Summary stats */}
             <div
-              className="grid grid-cols-2 sm:grid-cols-4 gap-0 rounded-lg overflow-hidden"
+              className="grid grid-cols-2 sm:grid-cols-4 gap-0 rounded-2xl overflow-hidden"
               style={{ border: `1px solid ${C.divider}`, background: C.surface }}
             >
               {[
@@ -882,7 +882,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
                     borderBottom: i < 2 ? `1px solid ${C.divider}` : 'none',
                   }}
                 >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg mb-3 mx-auto" style={{background: C.divider}}>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-xl mb-3 mx-auto" style={{background: C.divider}}>
                     <Icon className="w-4 h-4" style={{color: C.amber}} />
                   </div>
                   <p className="text-[9px] uppercase tracking-widest font-bold mb-2" style={{color: C.textGhost}}>{label}</p>
@@ -896,7 +896,7 @@ export function OutboundAnalyticsPanel({ manifests }: OutboundAnalyticsPanelProp
             {/* Monthly breakdown */}
             <div>
               <SectionLabel icon={<Calendar className="w-4 h-4" />} description="Detailed month-by-month analysis">Monthly breakdown</SectionLabel>
-              <div className="mt-5 rounded-lg overflow-hidden" style={{border: `1px solid ${C.divider}`, background: C.surface}}>
+              <div className="mt-5 rounded-2xl overflow-hidden" style={{border: `1px solid ${C.divider}`, background: C.surface}}>
                 {/* Header */}
                 <div className="grid grid-cols-5 py-4 px-5" style={{borderBottom: `1px solid ${C.divider}`, background: C.divider + '30'}}>
                   {['Month', 'Qty', 'Trips', 'Docs', 'Avg'].map(h => (
@@ -1011,9 +1011,9 @@ export function OutboundQuickCard({ manifests, onClick }: { manifests: TripManif
                 style={{
                   height: `${h}%`,
                   background: isCurrent
-                    ? `linear-gradient(180deg, ${C.accent} 0%, ${C.amber} 100%)`
+                    ? C.accent
                     : isPrev
-                    ? `rgba(245,166,35,0.4)`
+                    ? `rgba(193,248,92,0.4)`
                     : C.surfaceHover,
                   boxShadow: isCurrent ? `0 0 14px ${C.accentGlow}` : 'none',
                 }}

@@ -108,7 +108,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                 <div className="w-px h-10 bg-[#1a1a1a]" />
                 <div>
                   <p className="text-[10px]  uppercase tracking-widest text-[#9A9A9A] mb-1">Duration</p>
-                  <p className="text-3xl font-[#0D1117] text-[#F5A623] tabular-nums leading-none">{duration}</p>
+                  <p className="text-3xl font-[#0D1117] text-[#C1F85C] tabular-nums leading-none">{duration}</p>
                 </div>
               </>
             )}
@@ -118,7 +118,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
           <div className="flex items-center gap-2.5 mt-6">
             <button
               onClick={() => { onEdit(manifest); onClose() }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#E8192C] text-white text-[11px] font-[#0D1117] uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#9d7bf8] text-white text-[11px] font-[#0D1117] uppercase tracking-widest hover:bg-[#b39eff] transition-all shadow-lg shadow-[#9d7bf8]/20"
             >
               <Edit className="w-3.5 h-3.5" /> Edit
             </button>
@@ -151,7 +151,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                 <div key={label}
                   className="flex items-center gap-5 sm:gap-6 py-3.5 group transition-all duration-200 hover:pl-1.5"
                 >
-                  <Icon className="w-4 h-4 text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors flex-shrink-0" strokeWidth={1.5} />
+                  <Icon className="w-4 h-4 text-[#5A5A5A] group-hover:text-[#9d7bf8] transition-colors flex-shrink-0" strokeWidth={1.5} />
                   <span className="text-[11px]  uppercase tracking-[0.15em] text-[#9A9A9A] w-20 flex-shrink-0">{label}</span>
                   <span className="font-[#0D1117] text-[#D0D0D0] text-sm group-hover:text-white transition-colors">{value}</span>
                 </div>
@@ -190,7 +190,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                     <div key={idx}
                       className="grid grid-cols-[2rem_1fr_auto_auto] gap-3 py-3.5 group transition-all duration-200 hover:pl-1 items-center"
                     >
-                      <span className="text-[11px]  font-bold text-[#5A5A5A] group-hover:text-[#E8192C] transition-colors">
+                      <span className="text-[11px]  font-bold text-[#5A5A5A] group-hover:text-[#9d7bf8] transition-colors">
                         {String(idx + 1).padStart(2, '0')}
                       </span>
                       <div className="min-w-0">
@@ -203,7 +203,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                       <span className="hidden sm:block text-[11px]  text-[#9A9A9A] text-right flex-shrink-0">
                         {item.document_number || '—'}
                       </span>
-                      <span className="text-sm font-[#0D1117] text-[#E8192C] tabular-nums text-right flex-shrink-0">
+                      <span className="text-sm font-[#0D1117] text-[#9d7bf8] tabular-nums text-right flex-shrink-0">
                         ×{item.total_quantity ?? 0}
                       </span>
                     </div>
@@ -216,7 +216,7 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
                     {totalDocs} document{totalDocs !== 1 ? 's' : ''}
                   </span>
                   <span className="text-[10px]  font-[#0D1117] text-white tabular-nums">
-                    Total: <span className="text-[#E8192C]">{totalQty}</span>
+                    Total: <span className="text-[#9d7bf8]">{totalQty}</span>
                   </span>
                 </div>
               </>

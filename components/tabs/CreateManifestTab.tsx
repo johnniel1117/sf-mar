@@ -17,11 +17,11 @@ const C = {
   borderHover:  '#8B949E',
   divider:      '#21262D',
 
-  accent:       '#E8192C',
-  accentHover:  '#FF1F30',
-  accentGlow:   'rgba(232,25,44,0.25)',
+  accent:       '#9d7bf8',
+  accentHover:  '#5e2ee4f5',
+  accentGlow:   'rgba(104, 25, 232, 0.25)',
 
-  amber:        '#F5A623',
+  amber:        '#C1F85C',
 
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
@@ -494,11 +494,11 @@ export function CreateManifestTab({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{ background: C.accent }} />
                   <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: C.accent }} />
                 </span>
-                <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: C.amber }}>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-white font-bold" >
                   {isEditMode ? 'Editing manifest' : 'New manifest'}
                 </p>
               </div>
-              <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-[#0D1117] leading-[0.93] tracking-tight" style={{ color: C.textPrimary }}>
+              <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-[#0D1117] leading-[0.93] tracking-tight" style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
                 {isEditMode ? 'Edit Manifest' : 'Create Manifest'}
               </h2>
               <p className="text-[12px] mt-2" style={{ color: C.textSub }}>
@@ -1152,7 +1152,7 @@ export function CreateManifestTab({
                 disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
                 className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-[#0D1117] text-xs uppercase tracking-widest transition-all duration-150"
                 style={{
-                  background: C.accent,
+                  background: C.amber,
                   color: '#fff',
                   opacity: (currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3()) ? 0.3 : 1,
                   cursor: (currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3()) ? 'not-allowed' : 'pointer',

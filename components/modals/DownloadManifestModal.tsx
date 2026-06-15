@@ -100,19 +100,19 @@ export function DownloadModal({
                 }`}
               >
                 <span className={`text-[11px] font-bold w-5 flex-shrink-0 transition-colors ${
-                  active ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
+                  active ? 'text-[#9d7bf8]' : 'text-[#5A5A5A] group-hover:text-[#9d7bf8]'
                 }`}>
                   {opt.index}
                 </span>
 
                 <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200 ${
                   active
-                    ? 'border-[#E8192C]/20 bg-[#E8192C]/8'
-                    : 'border-[#1a1a1a] bg-transparent group-hover:border-[#E8192C]/20 group-hover:bg-[#E8192C]/6'
+                    ? 'border-[#9d7bf8]/20 bg-[#9d7bf8]/8'
+                    : 'border-[#1a1a1a] bg-transparent group-hover:border-[#9d7bf8]/20 group-hover:bg-[#9d7bf8]/6'
                 }`}>
                   <Icon
                     className={`w-4 h-4 transition-colors ${
-                      active ? 'text-[#E8192C]' : 'text-[#9A9A9A] group-hover:text-[#E8192C]'
+                      active ? 'text-[#9d7bf8]' : 'text-[#9A9A9A] group-hover:text-[#9d7bf8]'
                     }`}
                     strokeWidth={1.5}
                   />
@@ -132,7 +132,7 @@ export function DownloadModal({
                 </div>
 
                 <ArrowUpRight className={`w-4 h-4 flex-shrink-0 transition-all duration-200 translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0 ${
-                  active ? 'text-[#E8192C]' : 'text-[#5A5A5A] group-hover:text-[#E8192C]'
+                  active ? 'text-[#9d7bf8]' : 'text-[#5A5A5A] group-hover:text-[#9d7bf8]'
                 }`} />
               </button>
             )
@@ -149,7 +149,7 @@ export function DownloadModal({
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 rounded-full bg-[#E8192C] text-white text-[10px] uppercase tracking-widest hover:bg-[#FF1F30] transition-all shadow-lg shadow-[#E8192C]/20"
+            className="flex-1 px-4 py-2.5 rounded-full bg-[#C1F85C] text-black text-[10px] uppercase tracking-widest hover:opacity-80 transition-all"
           >
             Download
           </button>

@@ -11,11 +11,11 @@ const C = {
   borderHover:  '#8B949E',
   divider:      '#21262D',
 
-  accent:       '#E8192C',
-  accentHover:  '#FF1F30',
-  accentGlow:   'rgba(232,25,44,0.25)',
+  accent:       '#9d7bf8',
+  accentHover:  '#b39eff',
+  accentGlow:   'rgba(157,123,248,0.25)',
 
-  amber:        '#F5A623',
+  amber:        '#C1F85C',
 
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',

@@ -506,7 +506,7 @@ function AreaBadge({ area, size = 'sm' }: { area: string; size?: 'sm' | 'md' }) 
   return (
     <span
       className={`inline-flex items-center gap-1 font-bold uppercase tracking-wider ${size === 'md' ? 'px-3 py-1 text-[11px]' : 'px-2 py-0.5 text-[10px]'}`}
-      style={{ background: hasArea ? 'rgba(88,166,255,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${hasArea ? 'rgba(88,166,255,0.25)' : C.border}`, color: hasArea ? '#58A6FF' : C.textGhost, whiteSpace: 'nowrap' }}
+      style={{ background: hasArea ? 'rgba(193,248,92,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${hasArea ? 'rgba(193,248,92,0.25)' : C.border}`, color: hasArea ? '#C1F85C' : C.textGhost, whiteSpace: 'nowrap' }}
     >
       <MapPin className={size === 'md' ? 'w-3 h-3' : 'w-2.5 h-2.5'} />
       {hasArea ? area : 'N/A'}
@@ -1117,7 +1117,7 @@ export function PickingListMaker() {
                                     style={{ background: idx % 2 === 0 ? C.stripeEven : C.stripeOdd, borderBottom: idx < items.length - 1 ? `1px solid ${C.divider}` : 'none' }}
                                     onMouseEnter={e => { e.currentTarget.style.background = C.surfaceHover }}
                                     onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? C.stripeEven : C.stripeOdd }}>
-                                    <span className="text-[11px] font-bold group-hover/row:text-[#58A6FF] transition-colors" style={{ color: C.textMuted }}>{item.materialCode}</span>
+                                    <span className="text-[11px] font-bold group-hover/row:text-[#C1F85C] transition-colors" style={{ color: C.textMuted }}>{item.materialCode}</span>
                                     <span className="text-[13px] truncate group-hover/row:text-white transition-colors" style={{ color: C.textPrimary }}>{item.customerModel || item.materialDesc || '—'}</span>
                                     <span className="text-[13px] hidden sm:block" style={{ color: C.textSilver }}>{item.location || '—'}</span>
                                     <span className="text-[13px] font-bold text-white tabular-nums text-right sm:text-left">{item.quantity}</span>
