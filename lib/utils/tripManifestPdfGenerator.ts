@@ -324,7 +324,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
 
   const remarksHtml = manifest.remarks ? `
     <div class="remarks-section">
-      <div class="remarks-label">REMARKS:</div>
+      <div class="remarks-label">NOTE:</div>
       <div class="remarks-text">${manifest.remarks}</div>
     </div>
   ` : ''
