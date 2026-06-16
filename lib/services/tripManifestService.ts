@@ -18,6 +18,7 @@ export interface TripManifest {
   truck_type?: string
   time_start?: string       // HH:mm format
   time_end?: string         // HH:mm format
+  remarks?: string          // ← ADD THIS LINE
   status: 'draft' | 'completed'
   items: ManifestItem[]
   created_at?: string

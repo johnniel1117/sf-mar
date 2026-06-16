@@ -223,6 +223,16 @@ const DETAILED_STYLES = `
   .info-label { font-weight: bold; font-size: 9px; padding-top: 2px; }  
   .info-value { font-size: 9px; padding: 2px 5px; min-height: 18px; }
 
+  /* ── Remarks box ── */
+  .remarks-section {
+    margin-bottom: 12px;
+    padding: 8px;
+    border: 1px solid #000;
+    background: #f9f9f9;
+  }
+  .remarks-label { font-weight: bold; font-size: 9px; margin-bottom: 4px; }
+  .remarks-text { font-size: 9px; white-space: pre-wrap; word-wrap: break-word; }
+
   /* ── Detail badge ── */
   .detail-badge {
     display: inline-block;
@@ -312,6 +322,13 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
     return dnLines
   }).join('')
 
+  const remarksHtml = manifest.remarks ? `
+    <div class="remarks-section">
+      <div class="remarks-label">REMARKS:</div>
+      <div class="remarks-text">${manifest.remarks}</div>
+    </div>
+  ` : ''
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -370,6 +387,8 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
       <div class="info-value">${formatTime12hr(manifest.time_end)}</div>
     </div>
   </div>
+
+  ${remarksHtml}
 
   <!-- Table -->
   <table class="data-table">
@@ -436,7 +455,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
 </html>`
 }
 
-// ── Original simple PDF (unchanged) ──────────────────────────────────────────
+// ── Original simple PDF (with remarks) ──────────────────────────────────────────
 
 export class TripManifestPDFGenerator {
   static generatePDF(manifestData: TripManifest): void {
@@ -476,6 +495,13 @@ export class TripManifestPDFGenerator {
         ${hasCbm ? `<td style="text-align:center;padding:8px;border:1px solid #000;font-size:10px;">${cbmCol(item.total_cbm)}</td>` : ''}
         <td style="text-align:center;padding:8px;border:1px solid #000;font-size:10px;"></td>
       </tr>`).join('')
+
+    const remarksHtml = manifestData.remarks ? `
+      <div style="margin:20px 0;padding:10px;border:1px solid #000;background:#f9f9f9;">
+        <div style="font-weight:bold;font-size:10px;margin-bottom:5px;">NOTE:</div>
+        <div style="font-size:10px;white-space:pre-wrap;word-wrap:break-word;">${manifestData.remarks}</div>
+      </div>
+    ` : ''
 
     const htmlContent = `<!DOCTYPE html>
 <html>
@@ -549,6 +575,7 @@ export class TripManifestPDFGenerator {
         <div class="info-label">Time End</div><div class="info-value">${formatTime12hrLocal(manifestData.time_end)}</div>
       </div>
     </div>
+    ${remarksHtml}
     <table class="data-table">
       <thead>
         <tr>

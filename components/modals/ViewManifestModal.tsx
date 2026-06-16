@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import {
-  X, Truck, User, Hash, Clock, Package,
+  X, Truck, User, Hash, Clock, Package, MessageSquare,
   Edit, Download, FileText
 } from 'lucide-react'
 import type { TripManifest } from '@/lib/services/tripManifestService'
@@ -158,6 +158,23 @@ export function ViewManifestModal({ isOpen, manifest, onClose, onEdit, onDownloa
               ))}
             </div>
           </div>
+
+          {/* Remarks section — NEW */}
+          {manifest.remarks && (
+            <div className="px-6 sm:px-8 py-6 border-b border-[#1a1a1a]">
+              <div className="flex items-center gap-2 mb-4">
+                <MessageSquare className="w-4 h-4 text-[#9d7bf8]" />
+                <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#9A9A9A]">
+                  NOTE
+                </p>
+              </div>
+              <div className="p-4 rounded-lg bg-[#161B22] border border-[#1a1a1a]">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap text-[#D0D0D0]">
+                  {manifest.remarks}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Documents list — landing services-list style */}
           <div className="px-6 sm:px-8 py-6">

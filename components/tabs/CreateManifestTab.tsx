@@ -2,7 +2,7 @@
 
 import {
   Truck, Barcode, Save, ChevronRight, ChevronLeft, Trash2, X,
-  Package, CheckCircle2, AlertCircle, Search, Clock,
+  Package, CheckCircle2, AlertCircle, Search, Clock, MessageSquare,
 } from 'lucide-react'
 import type { TripManifest, ManifestItem } from '@/lib/services/tripManifestService'
 import { useEffect, useState, useRef } from 'react'
@@ -697,7 +697,6 @@ export function CreateManifestTab({
                 </div>
 
                 {/* Truck Type Dropdown with Manual Input */}
-                
                 <div className="sm:col-span-2" ref={truckTypeDropdownRef}>
                   <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
                     Truck Type <span style={{ color: C.accent }}>*</span>
@@ -799,15 +798,32 @@ export function CreateManifestTab({
                   </div>
                 </div>
 
-                {/* Truck type */}
-                {/* <div className="sm:col-span-2">
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>Truck Type</label>
-                  <input type="text" value={manifest.truck_type || ''}
-                    onChange={(e) => setManifest({ ...manifest, truck_type: e.target.value.toUpperCase() })}
-                    placeholder="E.G., 10W - 6W"
-                    {...inputProps('truck_type')}
+                {/* Remarks */}
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                    Note <span style={{ color: C.textSub }}>(Optional)</span>
+                  </label>
+                  <textarea
+                    value={manifest.remarks || ''}
+                    onChange={(e) => setManifest({ ...manifest, remarks: e.target.value })}
+                    placeholder="Add any notes about this trip..."
+                    className="w-full px-4 py-3 text-sm font-sans resize-none rounded"
+                    style={{
+                      background: C.inputBg,
+                      border: `1px solid ${focusedInput === 'remarks' ? C.inputFocus : C.inputBorder}`,
+                      color: C.inputText,
+                      outline: 'none',
+                      transition: 'border-color 0.15s',
+                      minHeight: '100px',
+                      maxHeight: '150px',
+                    }}
+                    onFocus={() => setFocusedInput('remarks')}
+                    onBlur={() => setFocusedInput(null)}
                   />
-                </div> */}
+                  <p className="text-[10px] mt-2 max-w-xs" style={{ color: C.textMuted }}>
+                    Add delivery instructions, special handling notes, or any other remarks.
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -1062,6 +1078,18 @@ export function CreateManifestTab({
                   )}
                 </div>
               </div>
+
+              {/* Remarks Section */}
+              {manifest.remarks && (
+                <div className="p-4 sm:p-6" style={{ border: `1px solid ${C.border}` }}>
+                  <SectionLabel icon={MessageSquare}>Note</SectionLabel>
+                  <div className="mt-4 p-4 rounded" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: C.textSilver }}>
+                      {manifest.remarks}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Documents */}
               <div className="p-4 sm:p-6" style={{ border: `1px solid ${C.border}` }}>
