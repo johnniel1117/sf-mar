@@ -15,8 +15,8 @@ const C = {
   textSub: '#8B949E',
   textSilver: '#B1BAC4',
   textPrimary: '#C9D1D9',
-  accent: '#E8192C',
-  accentGlow: 'rgba(232,25,44,0.25)',
+  accent: '#9d7bf8',
+  accentGlow: 'rgba(157,123,248,0.25)',
 }
 
 export default function AccrualReportPage() {
@@ -56,7 +56,7 @@ export default function AccrualReportPage() {
     return (
       <div className="min-h-screen bg-[#0D1117] flex items-center justify-center">
         <div className="text-center max-w-md">
-          <p className="text-[#E8192C] text-lg font-semibold mb-2">Error Loading Report</p>
+          <p className="text-[#9d7bf8] text-lg font-semibold mb-2">Error Loading Report</p>
           <p className="text-[#B1BAC4]">{error}</p>
         </div>
       </div>

@@ -23,10 +23,10 @@ const C = {
   border:       '#30363D',
   borderHover:  '#8B949E',
   divider:      '#21262D',
-  accent:       '#F5A623',
-  accentHover:  '#FF1F30',
-  accentGlow:   'rgba(245,166,35,0.25)',
-  amber:        '#F5A623',
+  accent:       '#9d7bf8',
+  accentHover:  '#b39eff',
+  accentGlow:   'rgba(157,123,248,0.25)',
+  amber:        '#C1F85C',
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
   textSub:      '#8B949E',
@@ -437,7 +437,7 @@ function StatCard({ label, value, color, icon: Icon }: { label: string; value: s
       <div className="flex items-start gap-3">
         {Icon && (
           <div className="flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center"
-            style={{ background: color === C.amber ? 'rgba(245,166,35,0.1)' : 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}` }}>
+            style={{ background: color === C.amber ? 'rgba(193,248,92,0.1)' : 'rgba(157,123,248,0.1)', border: `1px solid ${C.border}` }}>
             <Icon className="w-4 h-4" style={{ color }} />
           </div>
         )}
@@ -459,8 +459,8 @@ function CategoryPill({ category }: { category: string }) {
     EXPORT:      { bg: 'rgba(63,185,80,0.12)',   text: '#3FB950' },
     TV:          { bg: 'rgba(59,130,246,0.12)',  text: '#60A5FA' },
     REF:         { bg: 'rgba(63,185,80,0.12)',   text: '#3FB950' },
-    AC:          { bg: 'rgba(245,166,35,0.12)',  text: '#F5A623' },
-    WM:          { bg: 'rgba(168,85,247,0.12)', text: '#C084FC' },
+    AC:          { bg: 'rgba(157,123,248,0.12)', text: '#9d7bf8' },
+    WM:          { bg: 'rgba(193,248,92,0.12)',  text: '#C1F85C' },
   }
   const key   = category.toUpperCase()
   const style = colors[key] ?? { bg: 'rgba(139,148,158,0.12)', text: '#8B949E' }
@@ -747,9 +747,9 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
             </div>
             <button onClick={() => setSearch('')}
               className="px-4 py-2 rounded-md text-[12px] font-semibold mt-2 transition-all"
-              style={{ background: 'rgba(232,25,44,0.1)', color: C.accent, border: `1px solid rgba(232,25,44,0.2)` }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(232,25,44,0.15)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(232,25,44,0.1)'  }}>
+              style={{ background: 'rgba(157,123,248,0.1)', color: C.accent, border: `1px solid rgba(157,123,248,0.2)` }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(157,123,248,0.15)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(157,123,248,0.1)'  }}>
               Clear search
             </button>
           </div>
@@ -767,7 +767,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
               className="transition-all duration-200 mx-4 my-2 rounded-lg overflow-hidden"
               style={{
                 border:     `1px solid ${isOpen ? C.accent : C.border}`,
-                background: isOpen ? 'rgba(232,25,44,0.04)' : 'transparent',
+                background: isOpen ? 'rgba(157,123,248,0.04)' : 'transparent',
               }}>
 
               {/* Summary row */}
