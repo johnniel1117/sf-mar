@@ -295,7 +295,7 @@ const DETAILED_STYLES = `
 
   /* ── Haier Footer ── */
   .footer-haier-section {
-    margin-top: 60px;
+    margin-top: 50px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -303,10 +303,10 @@ const DETAILED_STYLES = `
     gap: 2px;
     padding-top: 20px;
   }
-  .haier2 { height: 60px; width: auto; }
-  .footer-text { font-size: 8px; font-style: italic; color: #666; letter-spacing: 0.08em; }
+  .haier2 { height: 30px; width: auto; }
+  .footer-text { font-size: 8px; gap: 10px; padding-top: 10px; font-style: italic; color: #666; letter-spacing: 0.08em; }
 
-  @media print { body { padding: 0; } }
+  @media print { body { padding: 10; } }
 `
 
 function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): string {
@@ -465,7 +465,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
 
   <!-- Footer with Haier logo -->
   <div class="footer-haier-section">
-    <img src="haier2.png" alt="Haier" class="haier2" />
+    <img src="haier3.png" alt="Haier" class="haier2" />
     <div class="footer-text">FOR DOCUMENT PURPOSES</div>
   </div>
 
@@ -657,7 +657,7 @@ export class TripManifestPDFGenerator {
 
     <!-- Footer with Haier logo -->
     <div class="footer-haier-section">
-      <img src="haier2.png" alt="Haier" class="haier2" />
+      <img src="haier3.png" alt="Haier" class="haier2" />
       <div class="footer-text">FOR DOCUMENT PURPOSES</div>
     </div>
 
