@@ -293,6 +293,19 @@ const DETAILED_STYLES = `
   .signature-name { position: absolute; top: 2px; left: 0; right: 0; font-weight: bold; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; text-align: center; }
   .signature-position { position: absolute; top: 30px; left: 0; right: 0; font-size: 8.5px; text-align: center; }
 
+  /* ── Haier Footer ── */
+  .footer-haier-section {
+    margin-top: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding-top: 20px;
+  }
+  .haier2 { height: 60px; width: auto; }
+  .footer-text { font-size: 8px; font-style: italic; color: #666; letter-spacing: 0.08em; }
+
   @media print { body { padding: 0; } }
 `
 
@@ -450,6 +463,12 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
     </div>
   </div>
 
+  <!-- Footer with Haier logo -->
+  <div class="footer-haier-section">
+    <img src="haier2.png" alt="Haier" class="haier2" />
+    <div class="footer-text">FOR DOCUMENT PURPOSES</div>
+  </div>
+
 </div>
 </body>
 </html>`
@@ -537,6 +556,9 @@ export class TripManifestPDFGenerator {
     .signature-line { border-top:1px solid #000; position:absolute; top:28px; left:0; right:0; }
     .signature-name { position:absolute; top:4px; left:0; right:0; font-weight:bold; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; }
     .signature-position { position:absolute; top:34px; left:0; right:0; font-size:9px; }
+    .footer-haier-section { margin-top:60px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding-top:15px; }
+    .haier2 { height:50px; width:auto; }
+    .footer-text { font-size:8.5px; font-style:italic; color:#666; letter-spacing:0.08em; }
     @media print { body { padding:0; } .page-container { max-width:100%; } }
   </style>
 </head>
@@ -632,6 +654,13 @@ export class TripManifestPDFGenerator {
         </div>
       </div>
     </div>
+
+    <!-- Footer with Haier logo -->
+    <div class="footer-haier-section">
+      <img src="haier2.png" alt="Haier" class="haier2" />
+      <div class="footer-text">FOR DOCUMENT PURPOSES</div>
+    </div>
+
   </div>
 </body>
 </html>`
