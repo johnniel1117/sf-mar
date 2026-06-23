@@ -466,7 +466,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
   <!-- Footer with Haier logo -->
   <div class="footer-haier-section">
     <img src="haier3.png" alt="Haier" class="haier2" />
-    <div class="footer-text">FOR DOCUMENT PURPOSES</div>
+    <div class="footer-text">FOR DOCUMENTATION PURPOSES</div>
   </div>
 
 </div>
