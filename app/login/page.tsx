@@ -1,12 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import LogoGridBackground from '@/components/LogoBackground'
 import { ArrowRight, Eye, EyeOff } from 'lucide-react'
 
-// Design tokens (match SavedManifestTab)
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
@@ -17,7 +16,6 @@ const C = {
 
   accent:       '#9d7bf8',
   accentHover:  '#5e2ee4f5',
-  accentGlow:   'rgba(104, 25, 232, 0.25)',
 
   amber:        '#C1F85C',
 
@@ -33,8 +31,7 @@ const C = {
   inputFocus:   '#1F6FEB',
 }
 
-// How long the welcome transition plays before we actually navigate.
-const TRANSITION_MS = 1400
+const TRANSITION_MS = 1600
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -43,9 +40,9 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
-  // Welcome-transition state
   const [showWelcome, setShowWelcome] = useState(false)
   const [welcomeName, setWelcomeName] = useState<string>('')
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
@@ -55,9 +52,9 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) {
+    if (authError) {
       setError('Invalid email or password.')
       setLoading(false)
       return
@@ -65,66 +62,70 @@ export default function LoginPage() {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('full_name')
       .eq('id', data.user.id)
       .single()
 
-    // Prefetch so the dashboard route is warm by the time the animation ends
     router.prefetch('/')
 
-    setWelcomeName(email.split('@')[0])
+    setWelcomeName(profile?.full_name?.trim() || email.split('@')[0])
     setLoading(false)
     setShowWelcome(true)
+    setIsTransitioning(true)
 
-    window.setTimeout(() => {
+    setTimeout(() => {
       router.push('/')
-      router.refresh()
-    }, TRANSITION_MS)
+      setTimeout(() => setIsTransitioning(false), 800)
+    }, TRANSITION_MS - 400)
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{background: C.bg}}>
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: C.bg }}>
 
-      {/* ── Background ── */}
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <LogoGridBackground />
-      </div>
-      <div className="absolute inset-0 bg-gradient-to-br pointer-events-none" style={{background: `linear-gradient(to bottom right, ${C.bg}10, ${C.bg}f2, ${C.bg})`}} />
+      {/* Background */}
+      {!showWelcome && (
+        <>
+          <div className="absolute inset-0 opacity-30 pointer-events-none">
+            <LogoGridBackground />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-br pointer-events-none" 
+               style={{ background: `linear-gradient(to bottom right, ${C.bg}10, ${C.bg}f2, ${C.bg})` }} />
+        </>
+      )}
 
-      {/* ── Logo top-left ── */}
+      {/* Top-left Logo */}
       <div className="absolute top-8 left-8 z-20 flex items-center gap-3">
         <img src="/sf-light.png" alt="SF Express" className="h-5 w-auto" />
-        <div className="w-px h-4" style={{background: C.textGhost}} />
-        <span className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{color: C.textSub}}>Warehouse</span>
+        <div className="w-px h-4" style={{ background: C.textGhost }} />
+        <span className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textSub }}>
+          Warehouse
+        </span>
       </div>
 
-      {/* ── Centered form ── */}
+      {/* Login Form */}
       <div
-        className="relative z-10 w-full max-w-[480px] px-6 transition-all duration-300"
+        className="relative z-10 w-full max-w-[480px] px-6 login-form"
         style={{
           opacity: showWelcome ? 0 : 1,
-          filter: showWelcome ? 'blur(6px)' : 'blur(0px)',
-          transform: showWelcome ? 'scale(0.98)' : 'scale(1)',
+          transform: showWelcome ? 'scale(0.95) translateY(20px)' : 'scale(1) translateY(0)',
+          filter: showWelcome ? 'blur(24px)' : 'blur(0px)',
           pointerEvents: showWelcome ? 'none' : 'auto',
         }}
       >
-
-        {/* Heading */}
         <div className="mb-10">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-white font-bold mb-4" >
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white font-bold mb-4">
             Secure access
           </p>
-          <h1 className="text-[2.2rem] text-white leading-[0.95] tracking-tight" style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
+          <h1 className="text-[2.2rem] text-white leading-[0.95] tracking-tight" 
+              style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
             Sign in to your account
           </h1>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleLogin} className="space-y-4">
-
           {/* Email */}
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-[10px] uppercase tracking-[0.2em] font-bold" style={{color: C.textSub}}>
+            <label htmlFor="email" className="block text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textSub }}>
               Email
             </label>
             <input
@@ -135,30 +136,18 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3.5 rounded-lg text-[13px] placeholder-[#282828] focus:outline-none transition-colors font-medium"
-              style={{
-                background: C.inputBg,
-                border: `1px solid ${C.inputBorder}`,
-                color: C.inputText,
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = C.inputFocus
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = C.inputBorder
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = C.borderHover
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = C.inputBorder
-              }}
+              style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.inputText }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = C.inputFocus }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.borderHover }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.inputBorder }}
               placeholder="name@domain.com"
             />
           </div>
 
           {/* Password */}
           <div className="space-y-2">
-            <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.2em] font-bold" style={{color: C.textSub}}>
+            <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textSub }}>
               Password
             </label>
             <div className="relative">
@@ -170,117 +159,79 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3.5 rounded-lg text-[13px] placeholder-[#282828] focus:outline-none transition-colors font-medium pr-11"
-                style={{
-                  background: C.inputBg,
-                  border: `1px solid ${C.inputBorder}`,
-                  color: C.inputText,
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = C.inputFocus
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = C.inputBorder
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = C.borderHover
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = C.inputBorder
-                }}
+                style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.inputText }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = C.inputFocus }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.borderHover }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.inputBorder }}
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors hover:text-white"
-                style={{color: C.textSub}}
+                style={{ color: C.textSub }}
               >
-                {showPassword
-                  ? <EyeOff className="w-4 h-4" />
-                  : <Eye className="w-4 h-4" />
-                }
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
-          {/* Error */}
           {error && (
-            <div className="flex items-start gap-3 text-[12px] px-4 py-3 rounded-lg" style={{background: `${C.accent}15`, border: `1px solid ${C.accent}30`, color: C.accent}}>
-              <span className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{background: C.accent}} />
+            <div className="flex items-start gap-3 text-[12px] px-4 py-3 rounded-lg" 
+                 style={{ background: `${C.accent}15`, border: `1px solid ${C.accent}30`, color: C.accent }}>
+              <span className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: C.accent }} />
               {error}
             </div>
           )}
 
-          {/* Submit */}
           <div className="pt-2">
             <button
               type="submit"
               disabled={loading || showWelcome}
-              className="w-full relative flex items-center justify-center gap-2.5 py-3.5 rounded-lg font-[#0D1117] text-[12px] uppercase tracking-[0.2em] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group text-white"
+              className="w-full relative flex items-center justify-center gap-2.5 py-3.5 rounded-lg font-medium text-[12px] uppercase tracking-[0.2em] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group text-white"
               style={{
-                background: loading
-                  ? C.surface
-                  : `linear-gradient(135deg, ${C.accent} 0%, ${C.accentHover} 100%)`,
+                background: loading ? C.surface : `linear-gradient(135deg, ${C.accent} 0%, ${C.accentHover} 100%)`,
               }}
             >
-              {/* Shimmer on hover */}
               <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{background: `linear-gradient(135deg, ${C.accentHover} 0%, ${C.accent} 100%)`}} />
+                style={{ background: `linear-gradient(135deg, ${C.accentHover} 0%, ${C.accent} 100%)` }} />
               <span className="relative">
                 {loading ? 'Signing in…' : 'Sign in'}
               </span>
-              {!loading && (
-                <ArrowRight className="relative w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
-              )}
+              {!loading && <ArrowRight className="relative w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />}
             </button>
           </div>
         </form>
 
-        {/* Divider */}
-        <div className="mt-8 pt-8" style={{borderTop: `1px solid ${C.divider}`}}>
-          <p className="text-[11px] text-center" style={{color: C.textMuted}}>
+        <div className="mt-8 pt-8" style={{ borderTop: `1px solid ${C.divider}` }}>
+          <p className="text-[11px] text-center" style={{ color: C.textMuted }}>
             SF Express · Upper Tingub, Mandaue, Cebu
           </p>
         </div>
-
       </div>
 
-      {/* ── Welcome transition overlay ── */}
+      {/* Welcome Overlay */}
       {showWelcome && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden" style={{background: C.bg}}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden welcome-overlay" style={{ background: C.bg }}>
+          <div className="absolute inset-0 bg-black/70 transition-blur" />
 
-          {/* Expanding glow disc that zooms to fill the screen */}
-          <div
-            className="absolute rounded-full welcome-zoom-disc"
-            style={{
-              width: 40,
-              height: 40,
-              background: `radial-gradient(circle, ${C.accent} 0%, ${C.accentHover} 55%, transparent 75%)`,
-            }}
-          />
-
-          {/* Subtle radial glow behind text, fades in fast */}
-          <div
-            className="absolute inset-0 welcome-glow-fade pointer-events-none"
-            style={{
-              background: `radial-gradient(circle at 50% 50%, ${C.accentGlow} 0%, transparent 60%)`,
-            }}
-          />
-
-          {/* Content: logo mark + welcome copy, scales/fades in */}
-          <div className="relative z-10 flex flex-col items-center gap-5 welcome-content">
+          <div className="relative z-10 flex flex-col items-center gap-5 welcome-content text-center">
             <img src="/sf-light.png" alt="SF Express" className="h-7 w-auto welcome-logo" />
-            <div className="flex flex-col items-center gap-2 text-center px-6">
-              <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{color: C.textSub}}>
+            
+            <div className="flex flex-col items-center gap-2 px-6">
+              <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: C.textSub }}>
                 Access granted
               </p>
-              <h2
-                className="text-[2rem] sm:text-[2.4rem] leading-[1.05] tracking-tight capitalize"
-                style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}
-              >
-                Welcome back, {welcomeName}
+              
+              <h2 className="text-[2.1rem] sm:text-[2.5rem] leading-[1.05] tracking-tight">
+                <span style={{ color: '#FFFFFF' }}>Welcome back,</span>{' '}
+                <span style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
+                  {welcomeName}
+                </span>
               </h2>
-              <p className="text-[12px] mt-1" style={{color: C.textMuted}}>
+              
+              <p className="text-[12px] mt-1" style={{ color: C.textMuted }}>
                 Taking you to your dashboard…
               </p>
             </div>
@@ -289,54 +240,45 @@ export default function LoginPage() {
       )}
 
       <style jsx global>{`
-        @keyframes welcomeZoomDisc {
-          0% {
-            transform: scale(1);
-            opacity: 0.9;
-          }
-          60% {
-            opacity: 0.5;
-          }
-          100% {
-            transform: scale(60);
-            opacity: 0;
-          }
-        }
-        .welcome-zoom-disc {
-          animation: welcomeZoomDisc ${TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .login-form {
+          transition: all 850ms cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        @keyframes welcomeGlowFade {
-          0% { opacity: 0; }
-          40% { opacity: 1; }
-          100% { opacity: 1; }
-        }
-        .welcome-glow-fade {
-          opacity: 0;
-          animation: welcomeGlowFade 500ms ease-out 100ms forwards;
+        .welcome-overlay {
+          animation: overlayFadeIn 500ms ease-out forwards;
         }
 
-        @keyframes welcomeContentIn {
-          0% {
-            opacity: 0;
-            transform: scale(0.85) translateY(6px);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
+        @keyframes overlayFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
+
+        .transition-blur {
+          animation: continuousBlur 1600ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes continuousBlur {
+          from { backdrop-filter: blur(0px); }
+          to   { backdrop-filter: blur(32px); }
+        }
+
         .welcome-content {
+          animation: welcomePop 700ms cubic-bezier(0.16, 1, 0.3, 1) 150ms forwards;
           opacity: 0;
-          animation: welcomeContentIn 550ms cubic-bezier(0.16, 1, 0.3, 1) 250ms forwards;
         }
 
-        @keyframes welcomeLogoPulse {
-          0%, 100% { opacity: 0.9; }
-          50% { opacity: 1; }
+        @keyframes welcomePop {
+          from { opacity: 0; transform: scale(0.88) translateY(30px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
         }
+
         .welcome-logo {
-          animation: welcomeLogoPulse 1.2s ease-in-out infinite;
+          animation: logoPulse 1.6s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+          0%, 100% { opacity: 0.8; }
+          50% { opacity: 1; }
         }
       `}</style>
     </div>
