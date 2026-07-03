@@ -299,17 +299,26 @@ export function CreateManifestTab({
   }, [currentStep, searchResults, isSearching])
 
   const handleSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      if (searchResults && searchResults.length === 1) { selectDocument(searchResults[0]); return }
-      handleBarcodeInput(e)
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    if (searchResults && searchResults.length === 1) { selectDocument(searchResults[0]); return }
+
+    const trimmed = barcodeInput.trim()
+    if (trimmed && manifest.items.some(item => item.document_number === trimmed)) {
+      if (showToast) showToast(`Document ${trimmed} already added`, 'error')
       setSearchResults(null); setBarcodeInput('')
       requestAnimationFrame(() => { if (barcodeInputRef.current) barcodeInputRef.current.focus() })
-    } else if (e.key === 'Escape') {
-      setSearchResults(null); setBarcodeInput('')
-      if (barcodeInputRef.current) barcodeInputRef.current.focus()
+      return
     }
+
+    handleBarcodeInput(e)
+    setSearchResults(null); setBarcodeInput('')
+    requestAnimationFrame(() => { if (barcodeInputRef.current) barcodeInputRef.current.focus() })
+  } else if (e.key === 'Escape') {
+    setSearchResults(null); setBarcodeInput('')
+    if (barcodeInputRef.current) barcodeInputRef.current.focus()
   }
+}
 
   const selectDocument = async (doc: { documentNumber: string; shipToName: string; quantity: number; cbm?: number }) => {
     const exists = manifest.items.some(item => item.document_number === doc.documentNumber)
@@ -343,18 +352,26 @@ export function CreateManifestTab({
   }
 
   const handleAddDocumentWithManualShipTo = (shipToName: string) => {
-    if (!pendingDocument) return
-    const newItem: ManifestItem = {
-      item_number: manifest.items.length + 1,
-      document_number: pendingDocument.documentNumber,
-      ship_to_name: shipToName,
-      total_quantity: pendingDocument.quantity,
-      total_cbm: pendingDocument.cbm ?? 0,
-    }
-    setManifest({ ...manifest, items: [...manifest.items, newItem] })
-    if (showToast) showToast(`Document ${pendingDocument.documentNumber} added manually`, 'success')
+  if (!pendingDocument) return
+
+  const exists = manifest.items.some(item => item.document_number === pendingDocument.documentNumber)
+  if (exists) {
+    if (showToast) showToast(`Document ${pendingDocument.documentNumber} already added`, 'error')
     setPendingDocument(null)
+    return
   }
+
+  const newItem: ManifestItem = {
+    item_number: manifest.items.length + 1,
+    document_number: pendingDocument.documentNumber,
+    ship_to_name: shipToName,
+    total_quantity: pendingDocument.quantity,
+    total_cbm: pendingDocument.cbm ?? 0,
+  }
+  setManifest({ ...manifest, items: [...manifest.items, newItem] })
+  if (showToast) showToast(`Document ${pendingDocument.documentNumber} added manually`, 'success')
+  setPendingDocument(null)
+}
 
   const handleProcessMassInput = async () => {
     if (!massInput.trim() || isProcessingMass) return

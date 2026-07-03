@@ -77,15 +77,17 @@ interface AccrualRow {
   plateNo:       string
   truckType:     string
   manifestDate:  string
+  manifestNo:    string
 }
 
 interface TruckerGroup {
-  trucker:   string
-  plateNo:   string
-  truckType: string
-  rows:      AccrualRow[]
-  totalQty:  number
-  totalVol:  number
+  trucker:    string
+  plateNo:    string
+  truckType:  string
+  manifestNo: string
+  rows:       AccrualRow[]
+  totalQty:   number
+  totalVol:   number
 }
 
 interface DayGroup {
@@ -192,6 +194,7 @@ function buildAccrualRows(
 
   for (const m of manifests) {
     if (!m.manifest_date) continue
+    const manifestNo = m.manifest_number ?? ''
 
     for (const item of m.items ?? []) {
       const dn      = item.document_number ?? ''
@@ -222,6 +225,7 @@ function buildAccrualRows(
             plateNo:       m.plate_no          ?? '',
             truckType:     m.truck_type        ?? '',
             manifestDate:  m.manifest_date,
+            manifestNo,
           })
         }
       } else {
@@ -240,6 +244,7 @@ function buildAccrualRows(
           plateNo:       m.plate_no          ?? '',
           truckType:     m.truck_type        ?? '',
           manifestDate:  m.manifest_date,
+          manifestNo,
         })
       }
     }
@@ -262,9 +267,19 @@ function groupByDay(rows: AccrualRow[]): DayGroup[] {
     .map(([date, dayRows]) => {
       const truckerMap = new Map<string, TruckerGroup>()
       for (const r of dayRows) {
-        const key = `${r.trucker}||${r.plateNo}`
+        // Include manifestNo so two separate trips on the same day with the
+        // same trucker/plate never collapse into a single subgroup.
+        const key = `${r.trucker}||${r.plateNo}||${r.manifestNo}`
         if (!truckerMap.has(key)) {
-          truckerMap.set(key, { trucker: r.trucker, plateNo: r.plateNo, truckType: r.truckType, rows: [], totalQty: 0, totalVol: 0 })
+          truckerMap.set(key, {
+            trucker:    r.trucker,
+            plateNo:    r.plateNo,
+            truckType:  r.truckType,
+            manifestNo: r.manifestNo,
+            rows:       [],
+            totalQty:   0,
+            totalVol:   0,
+          })
         }
         const g = truckerMap.get(key)!
         g.rows.push(r)
@@ -396,21 +411,31 @@ function exportByTrucker(dayGroups: DayGroup[], monthLabel: string) {
     for (const isoDate of sortedDates) {
       const rows = dateMap.get(isoDate)!
 
-      // Build a synthetic DayGroup for just this trucker's rows on this date
-      const truckerSubGroup: TruckerGroup = {
-        trucker:   rows[0]?.trucker   ?? '',
-        plateNo:   rows[0]?.plateNo   ?? '',
-        truckType: rows[0]?.truckType ?? '',
-        rows,
-        totalQty:  rows.reduce((s, r) => s + r.qty, 0),
-        totalVol:  rows.reduce((s, r) => s + r.totalVolume, 0),
+      // Group this trucker's rows on this date back into per-manifest
+      // subgroups so same-day/same-plate/different-manifest trips still
+      // export as separate subtotal blocks instead of merging.
+      const manifestMap = new Map<string, AccrualRow[]>()
+      for (const r of rows) {
+        const key = r.manifestNo || '—'
+        if (!manifestMap.has(key)) manifestMap.set(key, [])
+        manifestMap.get(key)!.push(r)
       }
+
+      const truckerSubGroups: TruckerGroup[] = Array.from(manifestMap.entries()).map(([manifestNo, mRows]) => ({
+        trucker:    mRows[0]?.trucker   ?? '',
+        plateNo:    mRows[0]?.plateNo   ?? '',
+        truckType:  mRows[0]?.truckType ?? '',
+        manifestNo,
+        rows:       mRows,
+        totalQty:   mRows.reduce((s, r) => s + r.qty, 0),
+        totalVol:   mRows.reduce((s, r) => s + r.totalVolume, 0),
+      }))
 
       const syntheticDay: DayGroup = {
         label:     formatDayLabel(isoDate),
         date:      isoDate,
         rows,
-        subGroups: [truckerSubGroup],
+        subGroups: truckerSubGroups,
       }
 
       const ws = buildWorksheetForDay(syntheticDay)
@@ -832,9 +857,10 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                             <span className="text-[12px] font-bold block" style={{ color: C.textPrimary }}>
                               {sub.trucker || 'Unknown Trucker'}
                             </span>
-                            {sub.plateNo && (
+                            {(sub.plateNo || sub.manifestNo) && (
                               <span className="text-[11px] font-mono" style={{ color: C.textSub }}>
                                 {sub.plateNo} {sub.truckType && `· ${sub.truckType}`}
+                                {sub.manifestNo && ` · MF# ${sub.manifestNo}`}
                               </span>
                             )}
                           </div>

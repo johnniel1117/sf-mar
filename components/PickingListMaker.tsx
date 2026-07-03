@@ -677,27 +677,40 @@ export function PickingListMaker() {
   }
 
   const handleMatch = () => {
-    if (!dnInfoMap) return
-    const requested = parseDNList(dnInput)
-    if (!requested.length) { showToast('Enter at least one DN number', 'error'); return }
+  if (!dnInfoMap) return
+  const rawList = parseDNList(dnInput)
+  if (!rawList.length) { showToast('Enter at least one DN number', 'error'); return }
 
-    const matched:   DNRefEntry[] = []
-    const unmatched: string[]     = []
-
-    for (const dn of requested) {
-      const entry = dnInfoMap[dn]
-        ?? dnInfoMap[dn.replace(/^0+/, '')]
-        ?? Object.values(dnInfoMap).find(e => e.rawDN.replace(/^0+/, '') === dn.replace(/^0+/, ''))
-      if (entry) matched.push(entry)
-      else unmatched.push(dn)
-    }
-
-    setMatchedDNs(matched)
-    setUnmatchedDNs(unmatched)
-    setSelected(new Set(matched.map(e => e.rawDN)))
-    setProcessed(true)
-    showToast(`${matched.length} DN${matched.length !== 1 ? 's' : ''} matched · ${unmatched.length} not found`, matched.length ? 'success' : 'error')
+  // Dedupe while preserving first-seen order
+  const seen = new Set<string>()
+  const requested: string[] = []
+  let duplicateCount = 0
+  for (const dn of rawList) {
+    const key = dn.replace(/^0+/, '')
+    if (seen.has(key)) { duplicateCount++; continue }
+    seen.add(key)
+    requested.push(dn)
   }
+
+  const matched:   DNRefEntry[] = []
+  const unmatched: string[]     = []
+
+  for (const dn of requested) {
+    const entry = dnInfoMap[dn]
+      ?? dnInfoMap[dn.replace(/^0+/, '')]
+      ?? Object.values(dnInfoMap).find(e => e.rawDN.replace(/^0+/, '') === dn.replace(/^0+/, ''))
+    if (entry) matched.push(entry)
+    else unmatched.push(dn)
+  }
+
+  setMatchedDNs(matched)
+  setUnmatchedDNs(unmatched)
+  setSelected(new Set(matched.map(e => e.rawDN)))
+  setProcessed(true)
+
+  const dupSuffix = duplicateCount > 0 ? ` · ${duplicateCount} duplicate${duplicateCount !== 1 ? 's' : ''} removed` : ''
+  showToast(`${matched.length} DN${matched.length !== 1 ? 's' : ''} matched · ${unmatched.length} not found${dupSuffix}`, matched.length ? 'success' : 'error')
+}
 
   const toggleSelect = (rawDN: string) => {
     setSelected(prev => {
@@ -929,7 +942,12 @@ export function PickingListMaker() {
                   <div className="flex items-center gap-2 px-3 py-2" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
                     <Hash className="w-3.5 h-3.5" style={{ color: C.textGhost }} />
                     <span className="text-[11px]" style={{ color: C.textSub }}>
-                      <span style={{ color: C.textPrimary }}>{parseDNList(dnInput).length}</span> DN numbers entered
+                      <span style={{ color: C.textPrimary }}>
+                        {new Set(parseDNList(dnInput).map(dn => dn.replace(/^0+/, ''))).size}
+                      </span> unique DN numbers entered
+                      {parseDNList(dnInput).length !== new Set(parseDNList(dnInput).map(dn => dn.replace(/^0+/, ''))).size && (
+                        <span style={{ color: C.amber }}> ({parseDNList(dnInput).length - new Set(parseDNList(dnInput).map(dn => dn.replace(/^0+/, ''))).size} dup)</span>
+                      )}
                     </span>
                   </div>
                 )}
