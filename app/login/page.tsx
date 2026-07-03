@@ -33,12 +33,20 @@ const C = {
   inputFocus:   '#1F6FEB',
 }
 
+// How long the welcome transition plays before we actually navigate.
+const TRANSITION_MS = 1400
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+
+  // Welcome-transition state
+  const [showWelcome, setShowWelcome] = useState(false)
+  const [welcomeName, setWelcomeName] = useState<string>('')
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -61,15 +69,17 @@ export default function LoginPage() {
       .eq('id', data.user.id)
       .single()
 
-    const role = profile?.role
+    // Prefetch so the dashboard route is warm by the time the animation ends
+    router.prefetch('/')
 
-    if (role === 'viewer') {
-      router.push('/')
-    } else {
-      router.push('/')
-    }
+    setWelcomeName(email.split('@')[0])
+    setLoading(false)
+    setShowWelcome(true)
 
-    router.refresh()
+    window.setTimeout(() => {
+      router.push('/')
+      router.refresh()
+    }, TRANSITION_MS)
   }
 
   return (
@@ -89,7 +99,15 @@ export default function LoginPage() {
       </div>
 
       {/* ── Centered form ── */}
-      <div className="relative z-10 w-full max-w-[480px] px-6">
+      <div
+        className="relative z-10 w-full max-w-[480px] px-6 transition-all duration-300"
+        style={{
+          opacity: showWelcome ? 0 : 1,
+          filter: showWelcome ? 'blur(6px)' : 'blur(0px)',
+          transform: showWelcome ? 'scale(0.98)' : 'scale(1)',
+          pointerEvents: showWelcome ? 'none' : 'auto',
+        }}
+      >
 
         {/* Heading */}
         <div className="mb-10">
@@ -197,7 +215,7 @@ export default function LoginPage() {
           <div className="pt-2">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || showWelcome}
               className="w-full relative flex items-center justify-center gap-2.5 py-3.5 rounded-lg font-[#0D1117] text-[12px] uppercase tracking-[0.2em] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden group text-white"
               style={{
                 background: loading
@@ -226,6 +244,101 @@ export default function LoginPage() {
         </div>
 
       </div>
+
+      {/* ── Welcome transition overlay ── */}
+      {showWelcome && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden" style={{background: C.bg}}>
+
+          {/* Expanding glow disc that zooms to fill the screen */}
+          <div
+            className="absolute rounded-full welcome-zoom-disc"
+            style={{
+              width: 40,
+              height: 40,
+              background: `radial-gradient(circle, ${C.accent} 0%, ${C.accentHover} 55%, transparent 75%)`,
+            }}
+          />
+
+          {/* Subtle radial glow behind text, fades in fast */}
+          <div
+            className="absolute inset-0 welcome-glow-fade pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at 50% 50%, ${C.accentGlow} 0%, transparent 60%)`,
+            }}
+          />
+
+          {/* Content: logo mark + welcome copy, scales/fades in */}
+          <div className="relative z-10 flex flex-col items-center gap-5 welcome-content">
+            <img src="/sf-light.png" alt="SF Express" className="h-7 w-auto welcome-logo" />
+            <div className="flex flex-col items-center gap-2 text-center px-6">
+              <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{color: C.textSub}}>
+                Access granted
+              </p>
+              <h2
+                className="text-[2rem] sm:text-[2.4rem] leading-[1.05] tracking-tight capitalize"
+                style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}
+              >
+                Welcome back, {welcomeName}
+              </h2>
+              <p className="text-[12px] mt-1" style={{color: C.textMuted}}>
+                Taking you to your dashboard…
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        @keyframes welcomeZoomDisc {
+          0% {
+            transform: scale(1);
+            opacity: 0.9;
+          }
+          60% {
+            opacity: 0.5;
+          }
+          100% {
+            transform: scale(60);
+            opacity: 0;
+          }
+        }
+        .welcome-zoom-disc {
+          animation: welcomeZoomDisc ${TRANSITION_MS}ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes welcomeGlowFade {
+          0% { opacity: 0; }
+          40% { opacity: 1; }
+          100% { opacity: 1; }
+        }
+        .welcome-glow-fade {
+          opacity: 0;
+          animation: welcomeGlowFade 500ms ease-out 100ms forwards;
+        }
+
+        @keyframes welcomeContentIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.85) translateY(6px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        .welcome-content {
+          opacity: 0;
+          animation: welcomeContentIn 550ms cubic-bezier(0.16, 1, 0.3, 1) 250ms forwards;
+        }
+
+        @keyframes welcomeLogoPulse {
+          0%, 100% { opacity: 0.9; }
+          50% { opacity: 1; }
+        }
+        .welcome-logo {
+          animation: welcomeLogoPulse 1.2s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   )
 }
