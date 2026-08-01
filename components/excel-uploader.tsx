@@ -81,7 +81,7 @@ function normalizeDN(val: unknown): string {
 
 function parseDNList(raw: string): string[] {
   return raw
-    .split(/[\n,;]+/)
+    .split(/[\n,;\s]+/)
     .map(s => s.trim().replace(/\s+/g, ''))
     .filter(Boolean)
 }
@@ -726,7 +726,7 @@ export function SerialListPrinter() {
                       value={retrieveInput}
                       onChange={e => setRetrieveInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter' && canRetrieve) handleRetrieveSaved() }}
-                      placeholder="One DN, or multiple separated by comma / newline / semicolon"
+                      placeholder="One DN, or multiple separated by space, comma, newline, or semicolon"
                       className="w-full h-10 pl-10 pr-8 text-[13px] outline-none transition-all font-mono"
                       style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}
                       onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
@@ -746,10 +746,16 @@ export function SerialListPrinter() {
                     disabled={!canRetrieve}
                     className="inline-flex items-center justify-center gap-2 px-5 h-10 font-bold text-xs uppercase tracking-widest transition-all duration-150 flex-shrink-0"
                     style={{
-                      background: canRetrieve ? C.accent : C.textGhost,
+                      background: canRetrieve ? '#22c55e' : C.textGhost,
                       color: '#fff',
                       cursor: canRetrieve ? 'pointer' : 'not-allowed',
                       opacity: canRetrieve ? 1 : 0.5,
+                    }}
+                    onMouseEnter={e => {
+                      if (canRetrieve) (e.currentTarget as HTMLButtonElement).style.background = '#16a34a'
+                    }}
+                    onMouseLeave={e => {
+                      if (canRetrieve) (e.currentTarget as HTMLButtonElement).style.background = '#22c55e'
                     }}
                   >
                     {isRetrieving
