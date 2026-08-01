@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { error } from 'console'
 import { NextRequest, NextResponse } from 'next/server'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -128,7 +127,7 @@ export async function POST(request: NextRequest) {
         .select()
 
       if (updateError) {
-        console.error("Supabase update error:", error)
+        console.error("Supabase update error:", updateError)
         return NextResponse.json(
           { error: updateError.message },
           { status: 400 }
@@ -171,6 +170,70 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("API error:", error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
+  }
+}
+
+// ── GET: retrieve previously saved record(s) by DN / TRA number ──────────────
+//
+// Single lookup:  GET /api/save-excel-upload?dnNo=0004500001
+//                 -> returns the single matching row as a JSON object
+//
+// Bulk lookup:    GET /api/save-excel-upload?dnNos=0004500001,0004500002
+//                 -> returns an array of matching rows (only the ones found)
+//
+// Response row shape (raw Supabase row from `excel_uploads`):
+//   {
+//     id, file_name, document_number, ship_to_name,
+//     total_quantity, total_cbm, material_data, serial_data,
+//     shape_names, created_at, updated_at
+//   }
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const singleParam = searchParams.get('dnNo') || searchParams.get('documentNumber')
+    const bulkParam = searchParams.get('dnNos') || searchParams.get('documentNumbers')
+
+    const documentNumbers = bulkParam
+      ? bulkParam.split(',').map(s => s.trim()).filter(Boolean)
+      : singleParam
+        ? [singleParam.trim()]
+        : []
+
+    if (documentNumbers.length === 0) {
+      return NextResponse.json(
+        { error: 'Provide a dnNo (single) or dnNos (comma-separated) query parameter' },
+        { status: 400 }
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('excel_uploads')
+      .select('*')
+      .in('document_number', documentNumbers)
+
+    if (error) {
+      console.error('Supabase select error:', error)
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: 'No saved record found for the given DN number(s)' },
+        { status: 404 }
+      )
+    }
+
+    // Single lookup returns a single object; bulk lookup returns an array
+    if (!bulkParam) {
+      return NextResponse.json(data[0])
+    }
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('API error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
