@@ -342,6 +342,16 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
     </div>
   ` : ''
 
+  // Container Van No. / Seal No. — only rendered when at least one is present
+  const vanSealHtml = (manifest.container_van_no || manifest.seal_no) ? `
+    <div class="info-row">
+      <div class="info-label">Container Van No.</div>
+      <div class="info-value">${manifest.container_van_no || '—'}</div>
+      <div class="info-label">Seal No.</div>
+      <div class="info-value">${manifest.seal_no || '—'}</div>
+    </div>
+  ` : ''
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -393,6 +403,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
       <div class="info-label">Truck Type</div>
       <div class="info-value">${manifest.truck_type || 'N/A'}</div>
     </div>
+    ${vanSealHtml}
     <div class="info-row">
       <div class="info-label">Time Start</div>
       <div class="info-value">${formatTime12hr(manifest.time_start)}</div>
@@ -522,6 +533,14 @@ export class TripManifestPDFGenerator {
       </div>
     ` : ''
 
+    // Container Van No. / Seal No. — only rendered when at least one is present
+    const vanSealHtml = (manifestData.container_van_no || manifestData.seal_no) ? `
+      <div class="info-row">
+        <div class="info-label">Container Van No.</div><div class="info-value">${manifestData.container_van_no || '—'}</div>
+        <div class="info-label">Seal No.</div><div class="info-value">${manifestData.seal_no || '—'}</div>
+      </div>
+    ` : ''
+
     const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
@@ -592,6 +611,7 @@ export class TripManifestPDFGenerator {
         <div class="info-label">Plate No.</div><div class="info-value">${manifestData.plate_no || '—'}</div>
         <div class="info-label">Truck Type</div><div class="info-value">${manifestData.truck_type || 'N/A'}</div>
       </div>
+      ${vanSealHtml}
       <div class="info-row">
         <div class="info-label">Time Start</div><div class="info-value">${formatTime12hrLocal(manifestData.time_start)}</div>
         <div class="info-label">Time End</div><div class="info-value">${formatTime12hrLocal(manifestData.time_end)}</div>

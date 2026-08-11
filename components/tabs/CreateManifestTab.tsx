@@ -7,6 +7,8 @@ import {
 import type { TripManifest, ManifestItem } from '@/lib/services/tripManifestService'
 import { useEffect, useState, useRef } from 'react'
 import React from 'react'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import forkliftAnimation from './forklift-animation-smooth.json'
 
 // ── Design tokens (matching SavedManifestsTab exactly) ────────────────────────
 const C = {
@@ -150,6 +152,50 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
             Save & Add
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Adding-documents loading overlay (Lottie + blurred backdrop) ──────────────
+
+function AddingDocumentsOverlay({ label }: { label: string }) {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      style={{
+        background: 'rgba(13,17,23,0.55)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.35s ease-out',
+      }}
+    >
+      <div
+        className="flex flex-col items-center gap-4"
+        style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'scale(1)' : 'scale(0.92)',
+          transition: 'opacity 0.4s ease-out, transform 0.4s ease-out',
+        }}
+      >
+        <div style={{ width: 320, height: 320 }}>
+          <DotLottieReact
+            data={forkliftAnimation}
+            loop
+            autoplay
+          />
+        </div>
+        <p className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textPrimary }}>
+          {label}
+        </p>
       </div>
     </div>
   )
@@ -488,6 +534,8 @@ export function CreateManifestTab({
 
   return (
     <div>
+      {isProcessingMass && <AddingDocumentsOverlay label="Adding documents…" />}
+
       <ManualEntryModal
         isOpen={showManualEntryModal}
         onClose={() => { setShowManualEntryModal(false); setPendingDocument(null) }}
@@ -782,6 +830,34 @@ export function CreateManifestTab({
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Container Van No. */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                    Container Van No. <span style={{ color: C.textSub }}>(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={manifest.container_van_no || ''}
+                    onChange={(e) => setManifest({ ...manifest, container_van_no: e.target.value.toUpperCase() })}
+                    placeholder="e.g., CVAN-1234"
+                    {...inputProps('container_van_no')}
+                  />
+                </div>
+
+                {/* Seal No. */}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                    Seal No. <span style={{ color: C.textSub }}>(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={manifest.seal_no || ''}
+                    onChange={(e) => setManifest({ ...manifest, seal_no: e.target.value.toUpperCase() })}
+                    placeholder="e.g., SL-98765"
+                    {...inputProps('seal_no')}
+                  />
                 </div>
 
                 {/* Time start */}
@@ -1086,6 +1162,12 @@ export function CreateManifestTab({
                   <Field label="Driver"><FieldValue>{manifest.driver_name || '—'}</FieldValue></Field>
                   <Field label="Plate No."><FieldValue>{manifest.plate_no || '—'}</FieldValue></Field>
                   <Field label="Truck Type"><FieldValue>{manifest.truck_type || '—'}</FieldValue></Field>
+                  {manifest.container_van_no && (
+                    <Field label="Container Van No."><FieldValue>{manifest.container_van_no}</FieldValue></Field>
+                  )}
+                  {manifest.seal_no && (
+                    <Field label="Seal No."><FieldValue>{manifest.seal_no}</FieldValue></Field>
+                  )}
                   <Field label="Time Start"><FieldValue>{formatTime12hr(manifest.time_start)}</FieldValue></Field>
                   <Field label="Time End"><FieldValue>{formatTime12hr(manifest.time_end)}</FieldValue></Field>
                   {manifest.time_start && manifest.time_end && (

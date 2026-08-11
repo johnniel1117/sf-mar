@@ -5,7 +5,7 @@ export interface ManifestItem {
   document_number: string
   ship_to_name: string
   total_quantity: number
-  total_cbm: number  // Added this field
+  total_cbm: number 
 }
 
 export interface TripManifest {
@@ -16,9 +16,11 @@ export interface TripManifest {
   plate_no: string
   trucker?: string
   truck_type?: string
-  time_start?: string       // HH:mm format
-  time_end?: string         // HH:mm format
-  remarks?: string          // ← ADD THIS LINE
+  time_start?: string
+  time_end?: string
+  remarks?: string
+  container_van_no?: string   
+  seal_no?: string            
   status: 'draft' | 'completed'
   items: ManifestItem[]
   created_at?: string
@@ -29,7 +31,7 @@ export interface DocumentLookupResult {
   document_number: string
   ship_to_name: string
   total_quantity: number
-  total_cbm: number  // Added this field
+  total_cbm: number  
 }
 
 export async function updateTripManifest(id: string, data: Partial<TripManifest>) {
