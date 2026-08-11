@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import {
   Home, CheckCircle2, Search, Printer, AlertCircle,
   X, ChevronRight, FileSpreadsheet, Download, Layers,
-  Hash, Package,
+  Hash, Package, Database, Loader2,
 } from 'lucide-react'
 import Link from 'next/link'
 import JsBarcode from 'jsbarcode'
@@ -94,7 +94,7 @@ function normalizeDN(val: unknown): string {
 
 function parseDNList(raw: string): string[] {
   return raw
-    .split(/[\n,;]+/)
+    .split(/[\n,;\s]+/)
     .map(s => s.trim().replace(/\s+/g, ''))
     .filter(Boolean)
 }
@@ -192,7 +192,95 @@ function groupByDN(rows: SerialRow[]): Record<string, DNGroup> {
   return map
 }
 
+// ── Saved-record retrieval ─────────────────────────────────────────────────────
+//
+// Backed by GET /api/save-excel-upload (see route.ts):
+//   ?dnNo=XXX               -> single row object
+//   ?dnNos=XXX,YYY,ZZZ      -> array of matching rows (unmatched ones are just absent)
+//
+// Raw Supabase row shape (table `excel_uploads`):
+//   { id, file_name, document_number, ship_to_name, total_quantity,
+//     total_cbm, material_data, serial_data, shape_names, created_at, updated_at }
 
+const RETRIEVE_ENDPOINT = '/api/save-excel-upload'
+
+function apiRowToDNGroup(row: any): DNGroup {
+  // Parse serial_data if it's a JSON string
+  let serialData = row?.serial_data
+  if (typeof serialData === 'string') {
+    try {
+      serialData = JSON.parse(serialData)
+    } catch {
+      serialData = []
+    }
+  }
+  
+  const rows: SerialRow[] = Array.isArray(serialData) ? serialData : []
+  const first = rows[0]
+  
+  console.log('apiRowToDNGroup:', { 
+    dnNo: row?.document_number,
+    rows_found: rows.length,
+    shipToName: row?.ship_to_name || first?.shipToName
+  })
+  
+  return {
+    dnNo:          row?.document_number || first?.dnNo || '',
+    shipToName:    row?.ship_to_name    || first?.shipToName    || '',
+    shipToAddress: first?.shipToAddress || '',
+    rows,
+  }
+}
+
+async function fetchSavedDNs(dnNumbers: string[]): Promise<{ matched: DNGroup[]; unmatched: string[] }> {
+  // Single DN: use ?dnNo= (returns one object, 404 if not found)
+  if (dnNumbers.length === 1) {
+    const dn = dnNumbers[0]
+    try {
+      const res = await fetch(`${RETRIEVE_ENDPOINT}?dnNo=${encodeURIComponent(dn)}`)
+      if (res.status === 404) {
+        console.warn(`DN not found: ${dn}`)
+        return { matched: [], unmatched: [dn] }
+      }
+      if (!res.ok) {
+        const errText = await res.text()
+        console.error(`Fetch error for DN ${dn}: ${res.status} - ${errText}`)
+        return { matched: [], unmatched: [dn] }
+      }
+      const row = await res.json()
+      console.log(`Retrieved data for DN ${dn}:`, { document_number: row?.document_number, serialDataLen: row?.serial_data?.length })
+      const group = apiRowToDNGroup(row)
+      return group.rows.length > 0 ? { matched: [group], unmatched: [] } : { matched: [], unmatched: [dn] }
+    } catch (err) {
+      console.error(`Error fetching DN ${dn}:`, err)
+      return { matched: [], unmatched: [dn] }
+    }
+  }
+
+  // Multiple DNs: use ?dnNos= (single request, returns array of found rows)
+  try {
+    const res = await fetch(`${RETRIEVE_ENDPOINT}?dnNos=${encodeURIComponent(dnNumbers.join(','))}`)
+    if (res.status === 404) {
+      console.warn(`No DNs found for: ${dnNumbers.join(', ')}`)
+      return { matched: [], unmatched: dnNumbers }
+    }
+    if (!res.ok) {
+      const errText = await res.text()
+      console.error(`Fetch error: ${res.status} - ${errText}`)
+      return { matched: [], unmatched: dnNumbers }
+    }
+    const data = await res.json()
+    console.log(`Retrieved data for ${dnNumbers.length} DNs:`, Array.isArray(data) ? `${data.length} records` : '1 record')
+    const rowsArr: any[] = Array.isArray(data) ? data : [data]
+    const groups = rowsArr.map(apiRowToDNGroup).filter(g => g.rows.length > 0)
+    const foundDNs = new Set(groups.map(g => g.dnNo))
+    const unmatched = dnNumbers.filter(dn => !foundDNs.has(dn))
+    return { matched: groups, unmatched }
+  } catch (err) {
+    console.error(`Error fetching multiple DNs:`, err)
+    return { matched: [], unmatched: dnNumbers }
+  }
+}
 
 // ── PDF — exact same format as handleDownloadIndividualDNPDF ─────────────────
 
@@ -385,6 +473,10 @@ export function SerialListPrinter() {
   const [expandedDN,   setExpandedDN]   = useState<string | null>(null)
   const [search,       setSearch]       = useState('')
 
+  // Retrieve-from-saved-records state
+  const [retrieveInput,  setRetrieveInput]  = useState('')
+  const [isRetrieving,   setIsRetrieving]   = useState(false)
+
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error'; show: boolean }>({
     message: '', type: 'success', show: false,
   })
@@ -505,9 +597,27 @@ export function SerialListPrinter() {
     if (matched.length > 0) saveToSupabase(matched)
   }
 
+  // Retrieve previously saved DN(s) straight from the backend — no Excel upload needed.
+  const handleRetrieveSaved = async () => {
+    const requested = parseDNList(retrieveInput)
+    if (!requested.length) { showToast('Enter at least one DN number to retrieve', 'error'); return }
 
+    setIsRetrieving(true)
+    try {
+      const { matched, unmatched } = await fetchSavedDNs(requested)
+      setMatchedDNs(matched)
+      setUnmatchedDNs(unmatched)
+      setProcessed(true)
+      showToast(`${matched.length} retrieved · ${unmatched.length} not found`, matched.length ? 'success' : 'error')
+    } catch {
+      showToast('Error retrieving saved records', 'error')
+    } finally {
+      setIsRetrieving(false)
+    }
+  }
 
   const canMatch = !!fileName && !!dnInput.trim()
+  const canRetrieve = !!retrieveInput.trim() && !isRetrieving
 
   const filtered = matchedDNs.filter(g =>
     !search ||
@@ -766,6 +876,70 @@ export function SerialListPrinter() {
             {/* Body */}
             <div className="p-5 sm:p-8 space-y-6">
 
+              {/* Retrieve Saved Records */}
+              <div className="p-4 sm:p-5" style={{ background: 'rgba(157,123,248,0.04)', border: `1px solid ${C.accent}30` }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Database className="w-4 h-4" style={{ color: C.accent }} />
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: C.accent }}>
+                    Retrieve Saved Records
+                  </p>
+                </div>
+                <p className="text-[11px] mb-3" style={{ color: C.textMuted }}>
+                  Already processed this DN before? Search it here to pull the saved data — no need to re-upload the Excel file.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: C.textGhost }} />
+                    <input
+                      value={retrieveInput}
+                      onChange={e => setRetrieveInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && canRetrieve) handleRetrieveSaved() }}
+                      placeholder="One DN, or multiple separated by space, comma, newline, or semicolon"
+                      className="w-full h-10 pl-10 pr-8 text-[13px] outline-none transition-all font-mono"
+                      style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}
+                      onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
+                      onBlur={e  => (e.currentTarget.style.borderColor = C.border)}
+                    />
+                    {retrieveInput && (
+                      <button onClick={() => setRetrieveInput('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors" style={{ color: C.textGhost }}
+                        onMouseEnter={e => (e.currentTarget.style.color = C.textPrimary)}
+                        onMouseLeave={e => (e.currentTarget.style.color = C.textGhost)}>
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleRetrieveSaved}
+                    disabled={!canRetrieve}
+                    className="inline-flex items-center justify-center gap-2 px-5 h-10 font-bold text-xs uppercase tracking-widest transition-all duration-150 flex-shrink-0"
+                    style={{
+                      background: canRetrieve ? '#22c55e' : C.textGhost,
+                      color: '#fff',
+                      cursor: canRetrieve ? 'pointer' : 'not-allowed',
+                      opacity: canRetrieve ? 1 : 0.5,
+                    }}
+                    onMouseEnter={e => {
+                      if (canRetrieve) (e.currentTarget as HTMLButtonElement).style.background = '#16a34a'
+                    }}
+                    onMouseLeave={e => {
+                      if (canRetrieve) (e.currentTarget as HTMLButtonElement).style.background = '#22c55e'
+                    }}
+                  >
+                    {isRetrieving
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Search className="w-3.5 h-3.5" />}
+                    {isRetrieving ? 'Searching…' : 'Retrieve'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px" style={{ background: C.divider }} />
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textGhost }}>Or upload a new file</span>
+                <div className="flex-1 h-px" style={{ background: C.divider }} />
+              </div>
+
               {/* Step 1: Upload */}
               <div className="space-y-3">
                 <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textMuted }}>Step 1 — Upload File</p>
@@ -994,7 +1168,7 @@ export function SerialListPrinter() {
                       <div className="flex items-center gap-2 mb-3">
                         <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: C.amber }} />
                         <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: C.amber }}>
-                          Not Found in Excel ({unmatchedDNs.length})
+                          Not Found ({unmatchedDNs.length})
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
