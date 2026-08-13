@@ -377,7 +377,9 @@ export function SavedManifestsTab({
     })
     row += 2
 
-    ;['MANIFEST NO.','DISPATCH DATE','TRUCKER','DRIVER','PLATE NO.','TRUCK TYPE','TIME START','TIME END','DN / TRA NO.','SHIP TO NAME','QTY'].forEach((h, c) =>
+    // Column order: Container Van No. / Seal No. sit right after Truck Type,
+    // before Time Start / Time End — matches the form, PDF, and Excel export order.
+    ;['MANIFEST NO.','DISPATCH DATE','TRUCKER','DRIVER','PLATE NO.','TRUCK TYPE','CONTAINER VAN NO.','SEAL NO.','TIME START','TIME END','DN / TRA NO.','SHIP TO NAME','QTY'].forEach((h, c) =>
       setCell(row, c, h, {
         font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},
         fill:{fgColor:{rgb:'1E3A5F'}},
@@ -406,11 +408,13 @@ export function SavedManifestsTab({
         setCell(row, 3, manifest.driver_name || '—', base())
         setCell(row, 4, manifest.plate_no || '—', center())
         setCell(row, 5, manifest.truck_type || '—', base())
-        setCell(row, 6, manifest.time_start || '—', center())
-        setCell(row, 7, manifest.time_end || '—', center())
-        setCell(row, 8, '—', center())
-        setCell(row, 9, 'No documents', base())
-        setCell(row, 10, 0, center(), 'n')
+        setCell(row, 6, manifest.container_van_no || '—', center())
+        setCell(row, 7, manifest.seal_no || '—', center())
+        setCell(row, 8, manifest.time_start || '—', center())
+        setCell(row, 9, manifest.time_end || '—', center())
+        setCell(row, 10, '—', center())
+        setCell(row, 11, 'No documents', base())
+        setCell(row, 12, 0, center(), 'n')
         row++
       } else {
         items.forEach((item) => {
@@ -421,11 +425,13 @@ export function SavedManifestsTab({
           setCell(row, 3, manifest.driver_name || '—', base())
           setCell(row, 4, manifest.plate_no || '—', center())
           setCell(row, 5, manifest.truck_type || '—', base())
-          setCell(row, 6, manifest.time_start || '—', center())
-          setCell(row, 7, manifest.time_end || '—', center())
-          setCell(row, 8, dnVal, bold({ alignment:{horizontal:'center',vertical:'center'} }), typeof dnVal === 'number' ? 'n' : 's')
-          setCell(row, 9, item.ship_to_name || '—', base())
-          setCell(row, 10, item.total_quantity || 0, center(), 'n')
+          setCell(row, 6, manifest.container_van_no || '—', center())
+          setCell(row, 7, manifest.seal_no || '—', center())
+          setCell(row, 8, manifest.time_start || '—', center())
+          setCell(row, 9, manifest.time_end || '—', center())
+          setCell(row, 10, dnVal, bold({ alignment:{horizontal:'center',vertical:'center'} }), typeof dnVal === 'number' ? 'n' : 's')
+          setCell(row, 11, item.ship_to_name || '—', base())
+          setCell(row, 12, item.total_quantity || 0, center(), 'n')
           grandQty += item.total_quantity || 0
           grandDocs++
           row++
@@ -442,11 +448,11 @@ export function SavedManifestsTab({
       border:bMedium,
     }
     setCell(row, 0, `GRAND TOTAL — ${filteredManifests.length} manifests | ${grandDocs} documents`, totalStyle)
-    for (let c = 1; c <= 9; c++) setCell(row, c, '', totalStyle)
-    setCell(row, 10, grandQty, totalStyle, 'n')
+    for (let c = 1; c <= 11; c++) setCell(row, c, '', totalStyle)
+    setCell(row, 12, grandQty, totalStyle, 'n')
 
-    ws['!ref'] = `A1:K${row + 5}`
-    ws['!cols'] = [{wch:18},{wch:14},{wch:22},{wch:22},{wch:14},{wch:16},{wch:12},{wch:12},{wch:18},{wch:40},{wch:10}]
+    ws['!ref'] = `A1:M${row + 5}`
+    ws['!cols'] = [{wch:18},{wch:14},{wch:22},{wch:22},{wch:14},{wch:16},{wch:16},{wch:14},{wch:12},{wch:12},{wch:18},{wch:40},{wch:10}]
     XLSX.utils.book_append_sheet(wb, ws, 'Monitoring')
     XLSX.writeFile(wb, `Manifest-Monitoring-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
@@ -473,10 +479,13 @@ export function SavedManifestsTab({
       setCell(row,0,'TRIP MANIFEST',{font:{bold:true,sz:20},alignment:{horizontal:'center',vertical:'center'}})
       ws['!merges'].push({s:{r:row,c:0},e:{r:row,c:4}})
       row += 3
+      // Container Van No. / Seal No. sit before Time Start / Time End,
+      // matching the order used on the form, PDF, and single-manifest export.
       ;[
         ['Client','HAIER PHILIPPINES INC.','Dispatch Date',d],
         ['Trucker',manifest.trucker||'N/A','Driver',manifest.driver_name||'—'],
         ['Plate No.',manifest.plate_no||'—','Truck Type',manifest.truck_type||'N/A'],
+        ['Container Van No.',manifest.container_van_no||'—','Seal No.',manifest.seal_no||'—'],
         ['Time Start',manifest.time_start||'—','Time End',manifest.time_end||'—'],
       ].forEach(([l1,v1,l2,v2]) => {
         setCell(row,0,l1,{font:{bold:true}});setCell(row,1,v1);setCell(row,2,l2,{font:{bold:true}});setCell(row,3,v2);row++
