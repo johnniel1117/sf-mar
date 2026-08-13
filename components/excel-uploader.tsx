@@ -691,7 +691,7 @@ export function SerialListPrinter() {
         <div className="p-5 sm:p-8 lg:p-10">
 
           {/* ── Trace Previously Uploaded Serial ── */}
-          <div className="overflow-hidden rounded-2xl mb-6" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
+          {/* <div className="overflow-hidden rounded-2xl mb-6" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
             <div className="px-5 sm:px-8 py-6">
               <div className="flex items-center gap-2 mb-1">
                 <Search className="w-4 h-4" style={{ color: C.accent }} />
@@ -803,7 +803,7 @@ export function SerialListPrinter() {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
 
           <div className="overflow-hidden rounded-2xl" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
 

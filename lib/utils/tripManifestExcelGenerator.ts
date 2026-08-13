@@ -64,10 +64,13 @@ export class TripManifestExcelGenerator {
     row += 3;
 
     // ─── Trip Information ─────────────────────────────────────
+    // Container Van No. / Seal No. sit before Time Start / Time End,
+    // matching the same order used on the form and PDF exports.
     const infoData = [
       ['Client', 'HAIER PHILIPPINES INC.', 'Dispatch Date', formatDateShort(manifestData.manifest_date)],
       ['Trucker', manifestData.trucker || 'N/A', 'Driver', manifestData.driver_name || '—'],
       ['Plate No.', manifestData.plate_no || '—', 'Truck Type', manifestData.truck_type || 'N/A'],
+      ['Container Van No.', manifestData.container_van_no || '—', 'Seal No.', manifestData.seal_no || '—'],
       ['Time Start', manifestData.time_start || '—', 'Time End', manifestData.time_end || '—'],
     ];
 
