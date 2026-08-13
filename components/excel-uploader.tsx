@@ -17,7 +17,7 @@ const getCBMFromMatcode = (code: string): number | null => {
   return MATCODE_CBM_MAP[code] ?? MATCODE_CBM_MAP[code.toUpperCase()] ?? null
 }
 
-// ── Design tokens — identical to existing pages ───────────────────────────────
+// ── Design tokens ──────────────────────────────────────────────────────────
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
@@ -25,19 +25,24 @@ const C = {
   border:       '#30363D',
   borderHover:  '#8B949E',
   divider:      '#21262D',
+
   accent:       '#9d7bf8',
-  accentHover:  '#b59dff',
-  accentGlow:   'rgba(157, 123, 248, 0.25)',
+  accentHover:  '#b39eff',
+  accentGlow:   'rgba(157,123,248,0.25)',
+
   amber:        '#C1F85C',
+
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
   textSub:      '#8B949E',
   textMuted:    '#6E7681',
   textGhost:    '#484F58',
+
   inputBg:      '#0D1117',
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
-  inputFocus:   '#C9D1D9',
+  inputFocus:   '#1F6FEB',
+
   stripeEven:   '#161B22',
   stripeOdd:    '#0D1117',
 }
@@ -422,8 +427,8 @@ function DropZone({ onFile, loaded, fileName }: DropZoneProps) {
       onClick={() => inputRef.current?.click()}
       className="relative cursor-pointer transition-all duration-200"
       style={{
-        border:     `1px solid ${loaded ? 'rgba(34,197,94,0.4)' : dragging ? C.inputFocus : C.border}`,
-        background: loaded ? 'rgba(34,197,94,0.04)' : dragging ? `${C.inputFocus}10` : C.surface,
+        border:     `1px solid ${loaded ? 'rgba(34,197,94,0.4)' : dragging ? C.accent : C.border}`,
+        background: loaded ? 'rgba(34,197,94,0.04)' : dragging ? `${C.accent}10` : C.surface,
         padding: '20px 18px',
       }}
     >
@@ -432,7 +437,7 @@ function DropZone({ onFile, loaded, fileName }: DropZoneProps) {
 
       <div className="flex items-center gap-2 mb-3">
         <span className="w-5 h-5 flex items-center justify-center text-[10px] font-bold"
-          style={{ background: loaded ? 'rgba(0, 100, 37, 0.1)' : 'rgba(25, 232, 60, 0.1)', border: `1px solid ${loaded ? 'rgba(34,197,94,0.3)' : 'rgba(25, 232, 60, 0.2)'}`, color: loaded ? '#22c55e' : C.accent }}>
+          style={{ background: loaded ? 'rgba(0, 100, 37, 0.1)' : 'rgba(157,123,248,0.1)', border: `1px solid ${loaded ? 'rgba(34,197,94,0.3)' : 'rgba(157,123,248,0.2)'}`, color: loaded ? '#22c55e' : C.accent }}>
           {loaded ? '✓' : '1'}
         </span>
         <span className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textMuted }}>
@@ -690,121 +695,6 @@ export function SerialListPrinter() {
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="p-5 sm:p-8 lg:p-10">
 
-          {/* ── Trace Previously Uploaded Serial ── */}
-          {/* <div className="overflow-hidden rounded-2xl mb-6" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
-            <div className="px-5 sm:px-8 py-6">
-              <div className="flex items-center gap-2 mb-1">
-                <Search className="w-4 h-4" style={{ color: C.accent }} />
-                <p className="text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textMuted }}>
-                  Trace Uploaded Serial
-                </p>
-              </div>
-              <p className="text-[12px] mb-4" style={{ color: C.textGhost }}>
-                Look up a DN that was already saved — no need to re-upload the Excel file.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1">
-                  <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: C.textGhost }} />
-                  <input
-                    value={traceDn}
-                    onChange={e => setTraceDn(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleTrace() }}
-                    placeholder="Enter a DN number, e.g. 0004500001"
-                    className="w-full h-11 pl-10 pr-4 text-[13px] outline-none transition-all font-mono"
-                    style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}
-                    onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
-                    onBlur={e  => (e.currentTarget.style.borderColor = C.border)}
-                  />
-                </div>
-                <button
-                  onClick={handleTrace}
-                  disabled={!traceDn.trim() || traceLoading}
-                  className="inline-flex items-center justify-center gap-2 px-6 h-11 font-bold text-xs uppercase tracking-widest transition-all duration-150 flex-shrink-0"
-                  style={{
-                    background: traceDn.trim() ? C.accent : C.textGhost,
-                    color: '#fff',
-                    cursor: traceDn.trim() ? 'pointer' : 'not-allowed',
-                    opacity: traceDn.trim() ? 1 : 0.5,
-                  }}
-                >
-                  <Search className="w-3.5 h-3.5" />
-                  {traceLoading ? 'Searching…' : 'Trace'}
-                </button>
-              </div>
-
-              {traceError && (
-                <div className="flex items-center gap-2 mt-4 px-3 py-2" style={{ background: 'rgba(245,166,35,0.05)', border: `1px solid rgba(245,166,35,0.2)` }}>
-                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: C.amber }} />
-                  <span className="text-[12px]" style={{ color: C.textSub }}>{traceError}</span>
-                </div>
-              )}
-
-              {traceResult && (
-                <div className="mt-5" style={{ borderTop: `1px solid ${C.divider}`, paddingTop: '18px' }}>
-                  <div className="flex flex-wrap items-center gap-6 mb-4">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textMuted }}>DN No.</p>
-                      <p className="text-[15px] font-bold font-mono" style={{ color: C.textPrimary }}>
-                        {traceResult.dnNo || traceResult.traNo || traceResult.fileName || '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textMuted }}>Total Qty</p>
-                      <p className="text-[15px] font-bold tabular-nums" style={{ color: C.amber }}>{traceResult.totalQuantity ?? '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textMuted }}>Total CBM</p>
-                      <p className="text-[15px] font-bold tabular-nums" style={{ color: C.textPrimary }}>{traceResult.totalCbm ?? '—'}</p>
-                    </div>
-                    {traceResult.createdAt && (
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textMuted }}>Uploaded</p>
-                        <p className="text-[13px]" style={{ color: C.textSub }}>{new Date(traceResult.createdAt).toLocaleString()}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {Array.isArray(traceResult.serialData) && traceResult.serialData.length > 0 && (
-                    <div className="overflow-hidden mb-4" style={{ border: `1px solid ${C.divider}` }}>
-                      <div className="grid px-3 py-3" style={{ gridTemplateColumns: '40px 1fr 1fr 140px 80px', background: '#1C2128', borderBottom: `1px solid ${C.divider}` }}>
-                        {['#', 'Material Code', 'Description', 'Barcode / Serial', 'Location'].map(h => (
-                          <span key={h} className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textSilver }}>{h}</span>
-                        ))}
-                      </div>
-                      {traceResult.serialData.map((r, i) => (
-                        <div key={i} className="grid px-3 py-3" style={{ gridTemplateColumns: '40px 1fr 1fr 140px 80px', background: i % 2 === 0 ? C.stripeEven : C.stripeOdd, borderBottom: i < (traceResult.serialData?.length ?? 0) - 1 ? `1px solid ${C.divider}` : 'none' }}>
-                          <span className="text-[11px]" style={{ color: C.textGhost }}>{i + 1}</span>
-                          <span className="text-[11px] font-mono" style={{ color: C.textMuted }}>{r.materialCode}</span>
-                          <span className="text-[13px] truncate" style={{ color: C.textPrimary }}>{r.materialDesc || '—'}</span>
-                          <span className="text-[11px] font-mono font-bold" style={{ color: C.accent }}>{r.barcode || '—'}</span>
-                          <span className="text-[11px]" style={{ color: C.textSub }}>{r.location || r.binCode || '—'}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => printSerialLists([traceRecordToGroup(traceResult)])}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 border text-[11px] font-bold uppercase tracking-widest transition-all"
-                      style={{ border: `1px solid ${C.amber}40`, color: C.amber }}
-                      onMouseEnter={e => { e.currentTarget.style.background = `${C.amber}05`; e.currentTarget.style.borderColor = C.amber }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = `${C.amber}40` }}>
-                      <Printer className="w-3.5 h-3.5" /> Print This DN
-                    </button>
-                    <button onClick={() => exportExcel([traceRecordToGroup(traceResult)])}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-[11px] font-bold uppercase tracking-widest transition-all"
-                      style={{ border: `1px solid ${C.border}`, color: C.textSub }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}>
-                      <Download className="w-3.5 h-3.5" /> Export Excel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div> */}
-
           <div className="overflow-hidden rounded-2xl" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
 
             {/* Header */}
@@ -877,10 +767,10 @@ export function SerialListPrinter() {
             <div className="p-5 sm:p-8 space-y-6">
 
               {/* Retrieve Saved Records */}
-              <div className="p-4 sm:p-5" style={{ background: 'rgba(157,123,248,0.04)', border: `1px solid ${C.accent}30` }}>
+              <div className="p-4 sm:p-5" >
                 <div className="flex items-center gap-2 mb-1">
                   <Database className="w-4 h-4" style={{ color: C.accent }} />
-                  <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: C.accent }}>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: C.textPrimary }}>
                     Retrieve Saved Records
                   </p>
                 </div>
@@ -897,7 +787,7 @@ export function SerialListPrinter() {
                       placeholder="One DN, or multiple separated by space, comma, newline, or semicolon"
                       className="w-full h-10 pl-10 pr-8 text-[13px] outline-none transition-all font-mono"
                       style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}
-                      onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
+                      onFocus={e => (e.currentTarget.style.borderColor = C.inputFocus)}
                       onBlur={e  => (e.currentTarget.style.borderColor = C.border)}
                     />
                     {retrieveInput && (
@@ -981,7 +871,7 @@ export function SerialListPrinter() {
                       color:        C.textPrimary,
                       lineHeight:   '1.7',
                     }}
-                    onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
+                    onFocus={e => (e.currentTarget.style.borderColor = C.inputFocus)}
                     onBlur={e  => (e.currentTarget.style.borderColor = C.border)}
                   />
                   {dnInput && (
@@ -1030,7 +920,7 @@ export function SerialListPrinter() {
                         placeholder="Search DN, Ship To…"
                         className="w-full h-9 pl-9 pr-8 bg-transparent text-[13px] focus:outline-none transition-colors"
                         style={{ border: `1px solid ${C.border}`, color: C.inputText }}
-                        onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
+                        onFocus={e => (e.currentTarget.style.borderColor = C.inputFocus)}
                         onBlur={e  => (e.currentTarget.style.borderColor = C.border)} />
                       {search && (
                         <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors" style={{ color: C.textSilver }}>
