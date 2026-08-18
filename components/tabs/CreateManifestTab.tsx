@@ -264,11 +264,11 @@ export function CreateManifestTab({
 
   const TRUCKER_OPTIONS = ['SF EXPRESS', 'ACCLI', 'AFFI', 'INTELUCK', 'SUYLI']
   const TRUCK_TYPE_OPTIONS = ['10W', '6WF', '6W', '4W']
-  
+
   const filteredTruckers = TRUCKER_OPTIONS.filter(option =>
     option.includes((truckerSearchInput || (manifest.trucker || '')).toUpperCase())
   )
-  
+
   const filteredTruckTypes = TRUCK_TYPE_OPTIONS.filter(option =>
     option.includes((truckTypeSearchInput || (manifest.truck_type || '')).toUpperCase())
   )
@@ -374,10 +374,10 @@ export function CreateManifestTab({
     }
     const normalizedShipTo = (doc.shipToName || '').trim().toLowerCase()
     if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
-      setPendingDocument({ 
-        documentNumber: doc.documentNumber, 
+      setPendingDocument({
+        documentNumber: doc.documentNumber,
         quantity: doc.quantity,
-        cbm: doc.cbm 
+        cbm: doc.cbm
       })
       setShowManualEntryModal(true)
       setSearchResults(null); setBarcodeInput('')
@@ -422,13 +422,13 @@ export function CreateManifestTab({
   const handleProcessMassInput = async () => {
     if (!massInput.trim() || isProcessingMass) return
     setIsProcessingMass(true)
-    
+
     // Parse input - split by comma or newline and trim
     const documentNumbers = massInput
       .split(/[,\n]/)
       .map((num) => num.trim().toUpperCase())
       .filter((num) => num.length > 0)
-    
+
     if (documentNumbers.length === 0) {
       setIsProcessingMass(false)
       if (showToast) showToast('No valid document numbers found', 'error')
@@ -454,7 +454,7 @@ export function CreateManifestTab({
           if (results && results.length > 0) {
             const doc = results[0]
             const normalizedShipTo = (doc.shipToName || '').trim().toLowerCase()
-            
+
             // If ship-to is N/A, we can't add it automatically (would need manual entry)
             if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
               failedDocuments.push(docNumber)
@@ -489,12 +489,12 @@ export function CreateManifestTab({
     } finally {
       setIsProcessingMass(false)
       setMassInput('')
-      
+
       // Show summary toast
       let message = `Added ${successCount} document${successCount !== 1 ? 's' : ''}`
       if (skipCount > 0) message += `, ${skipCount} already in list`
       if (failedDocuments.length > 0) message += `, ${failedDocuments.length} not found`
-      
+
       if (showToast) {
         showToast(message, successCount > 0 ? 'success' : 'error')
       }
@@ -533,7 +533,7 @@ export function CreateManifestTab({
   ]
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       {isProcessingMass && <AddingDocumentsOverlay label="Adding documents…" />}
 
       <ManualEntryModal
@@ -545,11 +545,11 @@ export function CreateManifestTab({
         cbm={pendingDocument?.cbm}
       />
 
-      {/* Outer card */}
-      <div className="overflow-hidden rounded-2xl" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
+      {/* Outer card — fills parent height, header/nav pinned, body scrolls */}
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-2xl" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
 
-        {/* ── Header ── */}
-        <div className="px-5 sm:px-8 pt-8 pb-7" style={{ borderBottom: `1px solid ${C.border}` }}>
+        {/* ── Header (fixed) ── */}
+        <div className="flex-shrink-0 px-5 sm:px-8 pt-8 pb-7" style={{ borderBottom: `1px solid ${C.border}` }}>
 
           {/* Title row with CBM pill */}
           <div className="flex items-start justify-between mb-7 sm:mb-8">
@@ -570,7 +570,7 @@ export function CreateManifestTab({
                 SF Express · Cebu Warehouse
               </p>
             </div>
-            
+
             {/* CBM Total Pill - NEW */}
             {grandTotalCBM > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
@@ -621,8 +621,8 @@ export function CreateManifestTab({
           </div>
         </div>
 
-        {/* ── Step content ── */}
-        <div className="p-5 sm:p-8">
+        {/* ── Step content (scrollable) ── */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-8">
 
           {/* STEP 1 */}
           {currentStep === 1 && (
@@ -1047,7 +1047,7 @@ export function CreateManifestTab({
                         onBlur={() => setFocusedInput(null)}
                       />
                     </div>
-                    
+
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={handleProcessMassInput}
@@ -1252,65 +1252,66 @@ export function CreateManifestTab({
             </div>
           )}
 
-          {/* ── Navigation ── */}
-          <div className="flex justify-between gap-3 mt-6 sm:mt-8 pt-5 sm:pt-7" style={{ borderTop: `1px solid ${C.border}` }}>
+        </div>
+
+        {/* ── Navigation (fixed footer) ── */}
+        <div className="flex-shrink-0 flex justify-between gap-3 px-5 sm:px-8 py-5 sm:py-7" style={{ borderTop: `1px solid ${C.border}` }}>
+          <button
+            onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
+            disabled={currentStep === 1}
+            className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 font-bold text-xs uppercase tracking-widest transition-all duration-150"
+            style={{
+              border: `1px solid ${C.border}`,
+              color: currentStep === 1 ? C.textGhost : C.textSub,
+              cursor: currentStep === 1 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span className="hidden xs:inline">Previous</span>
+            <span className="xs:hidden">Back</span>
+          </button>
+
+          {currentStep < 3 ? (
             <button
-              onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
-              disabled={currentStep === 1}
-              className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 font-bold text-xs uppercase tracking-widest transition-all duration-150"
+              onClick={() => {
+                if (currentStep === 1 && !canProceedToStep2()) return
+                if (currentStep === 2 && !canProceedToStep3()) return
+                setCurrentStep((currentStep + 1) as 1 | 2 | 3)
+              }}
+              disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
+              className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-[#0D1117] text-xs uppercase tracking-widest transition-all duration-150"
               style={{
-                border: `1px solid ${C.border}`,
-                color: currentStep === 1 ? C.textGhost : C.textSub,
-                cursor: currentStep === 1 ? 'not-allowed' : 'pointer',
+                background: C.amber,
+                opacity: (currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3()) ? 0.3 : 1,
+                cursor: (currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3()) ? 'not-allowed' : 'pointer',
               }}
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Previous</span>
-              <span className="xs:hidden">Back</span>
+              Next <ChevronRight className="w-3.5 h-3.5" />
             </button>
-
-            {currentStep < 3 ? (
-              <button
-                onClick={() => {
-                  if (currentStep === 1 && !canProceedToStep2()) return
-                  if (currentStep === 2 && !canProceedToStep3()) return
-                  setCurrentStep((currentStep + 1) as 1 | 2 | 3)
-                }}
-                disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
+          ) : (
+            <div className="flex gap-2 sm:gap-3">
+              <button onClick={resetForm}
+                className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 font-bold text-xs uppercase tracking-widest transition-all duration-150"
+                style={{ border: `1px solid ${C.border}`, color: C.textSub }}>
+                <X className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Clear</span>
+              </button>
+              <button onClick={saveManifest} disabled={isLoading}
                 className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-[#0D1117] text-xs uppercase tracking-widest transition-all duration-150"
                 style={{
-                  background: C.amber,
-                  opacity: (currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3()) ? 0.3 : 1,
-                  cursor: (currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3()) ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Next <ChevronRight className="w-3.5 h-3.5" />
+                  background: isEditMode ? '#2563eb' : C.accent,
+                  color: '#fff',
+                  boxShadow: isEditMode ? '0 8px 24px rgba(37,99,235,0.25)' : `0 8px 24px ${C.accentGlow}`,
+                  opacity: isLoading ? 0.3 : 1,
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                }}>
+                <Save className="w-3.5 h-3.5" />
+                {isLoading ? 'Saving…' : isEditMode ? 'Update' : 'Save'}
               </button>
-            ) : (
-              <div className="flex gap-2 sm:gap-3">
-                <button onClick={resetForm}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 font-bold text-xs uppercase tracking-widest transition-all duration-150"
-                  style={{ border: `1px solid ${C.border}`, color: C.textSub }}>
-                  <X className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Clear</span>
-                </button>
-                <button onClick={saveManifest} disabled={isLoading}
-                  className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-[#0D1117] text-xs uppercase tracking-widest transition-all duration-150"
-                  style={{
-                    background: isEditMode ? '#2563eb' : C.accent,
-                    color: '#fff',
-                    boxShadow: isEditMode ? '0 8px 24px rgba(37,99,235,0.25)' : `0 8px 24px ${C.accentGlow}`,
-                    opacity: isLoading ? 0.3 : 1,
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                  }}>
-                  <Save className="w-3.5 h-3.5" />
-                  {isLoading ? 'Saving…' : isEditMode ? 'Update' : 'Save'}
-                </button>
-              </div>
-            )}
-          </div>
-
+            </div>
+          )}
         </div>
+
       </div>
     </div>
   )
