@@ -134,6 +134,7 @@ function ManifestRow({
             {manifestId}
           </p>
           <p className="text-[12px] mt-0.5 truncate transition-colors" style={{color: C.textSilver}}>
+            {manifest.trucker ? `${manifest.trucker} · ` : ''}
             {manifest.driver_name || 'No driver'}
             {manifest.plate_no ? ` · ${manifest.plate_no}` : ''}
           </p>
