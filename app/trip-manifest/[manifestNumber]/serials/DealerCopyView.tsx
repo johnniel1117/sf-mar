@@ -4,7 +4,7 @@ import { getCategoryFromBinCode } from '@/components/CategoryMapping'
 import { MATCODE_CBM_MAP } from '@/lib/category-mapping'
 
 import type { SerialEntry } from '@/lib/utils/tripManifestPdfGenerator'
-import BarcodeSVG from './BarcodeSvg' 
+import BarcodeSVG from './BarcodeSVG' 
 import PrintButton from './PrintButton'
 
 
