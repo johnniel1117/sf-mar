@@ -177,7 +177,7 @@ function buildSerialListUrl(manifest: TripManifest): string {
 
 function buildQrCodeImgUrl(manifest: TripManifest): string {
   const target = buildSerialListUrl(manifest)
-  return `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=${encodeURIComponent(target)}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=${encodeURIComponent(target)}`
 }
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -240,6 +240,11 @@ const DETAILED_STYLES = `
 
   /* ── Info grid ── */
   .info-section { margin-bottom: 12px; }
+  .truck-details-layout { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 12px; }
+  .truck-details-layout .info-section { flex: 1; margin-bottom: 0; }
+  .truck-details-qr { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+  .truck-details-qr img { width: 72px; height: 72px; }
+  .truck-details-qr .qr-caption { font-size: 5.5px; letter-spacing: 0.04em; color: #666; text-transform: uppercase; white-space: nowrap; }
   .info-row {
     display: grid;
     grid-template-columns: 100px 1fr 100px 1fr;
@@ -320,29 +325,29 @@ const DETAILED_STYLES = `
   .signature-name { position: absolute; top: 2px; left: 0; right: 0; font-weight: bold; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; text-align: center; }
   .signature-position { position: absolute; top: 30px; left: 0; right: 0; font-size: 8.5px; text-align: center; }
 
-  /* ── Haier Footer ── */
+  /* ── Footer ── */
   .footer-haier-section {
     margin-top: 50px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
     padding-top: 20px;
   }
-  .haier2 { height: 30px; width: auto; }
-  .footer-text { font-size: 8px; gap: 10px; padding-top: 10px; font-style: italic; color: #666; letter-spacing: 0.08em; }
+  .footer-text {
+    font-size: 8px;
+    font-style: italic;
+    color: #666;
+    letter-spacing: 0.08em;
+    text-align: center;
+  }
 
   /* ── QR code ── */
   .qr-section {
-    margin-top: 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
+    flex-shrink: 0;
   }
-  .qr-section img { width: 64px; height: 64px; }
-  .qr-caption { font-size: 7px; letter-spacing: 0.05em; color: #666; text-transform: uppercase; }
+  .qr-section img { width: 80px; height: 80px; }
+  .qr-caption { font-size: 5.5px; letter-spacing: 0.04em; color: #666; text-transform: uppercase; white-space: nowrap; }
 
   @media print { body { padding: 10; } }
 `
@@ -423,7 +428,8 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
   </div>
 
   <!-- Trip info -->
-  <div class="info-section">
+  <div class="truck-details-layout">
+    <div class="info-section">
     <div class="info-row">
       <div class="info-label">Client</div>
       <div class="info-value">HAIER PHILIPPINES INC.</div>
@@ -448,6 +454,11 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
       <div class="info-value">${formatTime12hr(manifest.time_start)}</div>
       <div class="info-label">Time End</div>
       <div class="info-value">${formatTime12hr(manifest.time_end)}</div>
+    </div>
+    </div>
+    <div class="truck-details-qr">
+      <img src="${qrCodeUrl}" alt="Scan for serial list" />
+      <div class="qr-caption">Scan to view serial list</div>
     </div>
   </div>
 
@@ -513,14 +524,9 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
     </div>
   </div>
 
-  <!-- Footer with Haier logo -->
+  <!-- Footer -->
   <div class="footer-haier-section">
-    <img src="haier3.png" alt="Haier" class="haier2" />
     <div class="footer-text">FOR DOCUMENTATION PURPOSES</div>
-    <div class="qr-section">
-      <img src="${qrCodeUrl}" alt="Scan for serial list" />
-      <div class="qr-caption">Scan to view serial list</div>
-    </div>
   </div>
 
 </div>
@@ -605,6 +611,11 @@ export class TripManifestPDFGenerator {
     .doc-title { font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.3em; }
     .manifest-number { font-size:15px; font-weight:bold; color:#FF0000; border:2px solid #FF0000; padding:6px 14px; display:inline-block; border-radius:3px; min-width:140px; text-align:center; }
     .info-section { margin-bottom:20px; }
+    .truck-details-layout { display:flex; gap:18px; align-items:flex-start; margin-bottom:20px; }
+    .truck-details-layout .info-section { flex:1; margin-bottom:0; }
+    .truck-details-qr { display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; }
+    .truck-details-qr img { width:120px; height:120px; }
+    .truck-details-qr .qr-caption { font-size:8px; letter-spacing:0.05em; color:#666; text-transform:uppercase; white-space:nowrap; }
     .info-row { display:grid; grid-template-columns:110px 1fr 110px 1fr; gap:12px 20px; align-items:start; }
     .info-label { font-weight:bold; font-size:10px; padding-top:2px; }
     .info-value { font-size:10px; padding:3px 6px; min-height:22px; }
@@ -619,11 +630,11 @@ export class TripManifestPDFGenerator {
     .signature-line { border-top:1px solid #000; position:absolute; top:28px; left:0; right:0; }
     .signature-name { position:absolute; top:4px; left:0; right:0; font-weight:bold; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; }
     .signature-position { position:absolute; top:34px; left:0; right:0; font-size:9px; }
-    .footer-haier-section { margin-top:60px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding-top:15px; }
-    .haier2 { height:50px; width:auto; }
-    .footer-text { font-size:8.5px; font-style:italic; color:#666; letter-spacing:0.08em; }
-    .qr-section { margin-top:16px; display:flex; flex-direction:column; align-items:center; gap:4px; }
-    .qr-section img { width:70px; height:70px; }
+    .footer-haier-section { margin-top:60px; padding-top:15px; }
+    .footer-text { font-size:8.5px; font-style:italic; color:#666; letter-spacing:0.08em; text-align:center; margin-bottom:14px; }
+    .qr-row { display:flex; justify-content:flex-end; }
+    .qr-section { display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .qr-section img { width:175px; height:175px; }
     .qr-caption { font-size:8px; letter-spacing:0.05em; color:#666; text-transform:uppercase; }
     @media print { body { padding:0; } .page-container { max-width:100%; } }
   </style>
@@ -645,7 +656,8 @@ export class TripManifestPDFGenerator {
       <div class="doc-title">Trip Manifest</div>
       <div class="doc-title-line"></div>
     </div>
-    <div class="info-section">
+    <div class="truck-details-layout">
+      <div class="info-section">
       <div class="info-row">
         <div class="info-label">Client</div><div class="info-value">HAIER PHILIPPINES INC.</div>
         <div class="info-label">Dispatch Date</div><div class="info-value">${formatDateShortLocal(manifestData.manifest_date)}</div>
@@ -662,6 +674,11 @@ export class TripManifestPDFGenerator {
       <div class="info-row">
         <div class="info-label">Time Start</div><div class="info-value">${formatTime12hrLocal(manifestData.time_start)}</div>
         <div class="info-label">Time End</div><div class="info-value">${formatTime12hrLocal(manifestData.time_end)}</div>
+      </div>
+      </div>
+      <div class="truck-details-qr">
+        <img src="${qrCodeUrl}" alt="Scan for serial list" />
+        <div class="qr-caption">Scan to view serial list</div>
       </div>
     </div>
     ${remarksHtml}
@@ -722,14 +739,9 @@ export class TripManifestPDFGenerator {
       </div>
     </div>
 
-    <!-- Footer with Haier logo -->
+    <!-- Footer -->
     <div class="footer-haier-section">
-      <img src="haier3.png" alt="Haier" class="haier2" />
       <div class="footer-text">FOR DOCUMENT PURPOSES</div>
-      <div class="qr-section">
-        <img src="${qrCodeUrl}" alt="Scan for serial list" />
-        <div class="qr-caption">Scan to view serial list</div>
-      </div>
     </div>
 
   </div>
