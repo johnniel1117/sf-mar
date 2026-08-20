@@ -11,9 +11,15 @@ import DealerCopyView, { type DNGroup } from './DealerCopyView'
 
 interface PageProps {
   params: Promise<{ manifestNumber: string }>
+  searchParams: Promise<{ access?: string }>
 }
 
-export default async function ManifestSerialsPage({ params }: PageProps) {
+export default async function ManifestSerialsPage({ params, searchParams }: PageProps) {
+  const { access } = await searchParams
+  if (access !== 'qr') {
+    notFound()
+  }
+
   const { manifestNumber } = await params
   const decoded = decodeURIComponent(manifestNumber)
 

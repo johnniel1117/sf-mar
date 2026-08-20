@@ -172,7 +172,7 @@ function buildSerialListUrl(manifest: TripManifest): string {
     process.env.NEXT_PUBLIC_APP_URL ||
     (typeof window !== 'undefined' && window.location?.origin) ||
     ''
-  return `${origin}${ROUTE_BASE}/${encodeURIComponent(manifest.manifest_number)}/serials`
+  return `${origin}${ROUTE_BASE}/${encodeURIComponent(manifest.manifest_number)}/serials?access=qr`
 }
 
 function buildQrCodeImgUrl(manifest: TripManifest): string {

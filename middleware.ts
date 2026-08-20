@@ -36,8 +36,9 @@ export async function middleware(request: NextRequest) {
   // Public routes that don't require authentication
   const publicRoutes = ['/login']
   const isSerialListRoute = /^\/trip-manifest\/[^/]+\/serials\/?$/.test(pathname)
+  const hasQrAccess = request.nextUrl.searchParams.get('access') === 'qr'
   const isPublicRoute =
-    isSerialListRoute || publicRoutes.some((route) => pathname.startsWith(route))
+    (isSerialListRoute && hasQrAccess) || publicRoutes.some((route) => pathname.startsWith(route))
 
   // If user is not authenticated and trying to access a protected route, redirect to login
   if (!user && !isPublicRoute) {
