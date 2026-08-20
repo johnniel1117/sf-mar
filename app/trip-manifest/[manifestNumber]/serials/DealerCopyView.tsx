@@ -7,6 +7,7 @@ import type { SerialEntry } from '@/lib/utils/tripManifestPdfGenerator'
 import BarcodeSVG from './BarcodeSvg' 
 import PrintButton from './PrintButton'
 
+
 export interface DNGroup {
   dnNo:          string
   shipToName:    string
