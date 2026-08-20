@@ -9,6 +9,7 @@ interface BarcodeSVGProps {
   width?: number
 }
 
+
 export default function BarcodeSVG({ value, height = 40, width = 1.6 }: BarcodeSVGProps) {
   const svgRef = useRef<SVGSVGElement>(null)
 
