@@ -302,11 +302,19 @@ const COLS = [
   'ORDER NO', 'MAT CODE', 'MAT DESC', 'CATEGORY',
   'SOLD TO NAME', 'SHIP TO NAME', 'SHIP TO ADDRESS',
   'QTY', 'CBM', 'TOTAL CBM', 'DR AMOUNT',
-  'TRUCKER', 'PLATE NO.', 'TRUCK TYPE', 'DATE DISPATCHED',
+  'TRUCKER', 'PLATE NO.', 'TRUCK TYPE', 'DATE DISPATCHED', 'MANIFEST NO',
 ]
-const COL_WIDTHS = [20, 18, 36, 14, 34, 30, 42, 8, 10, 12, 12, 20, 12, 14, 16]
+const COL_WIDTHS = [20, 18, 36, 14, 34, 30, 42, 8, 10, 12, 12, 20, 12, 14, 16, 18]
 
-function buildWorksheetForDay(day: DayGroup): XLSX.WorkSheet {
+/**
+ * Builds a worksheet from an ordered list of truck groups. Each group renders
+ * as a block of item rows followed by a subtotal row. This is the shared
+ * primitive behind all export modes — the only thing that differs between
+ * them is which groups get passed in and how they're ordered (subGroups for
+ * a single day, or truck+date groups spanning an entire month for a sheet
+ * dedicated to one trucker).
+ */
+function buildWorksheetForGroups(groups: TruckerGroup[]): XLSX.WorkSheet {
   const bThin = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }
 
   const headerStyle = {
@@ -333,7 +341,7 @@ function buildWorksheetForDay(day: DayGroup): XLSX.WorkSheet {
   COLS.forEach((h, c) => setCell(row, c, h, headerStyle))
   row++
 
-  for (const sub of day.subGroups) {
+  for (const sub of groups) {
     sub.rows.forEach((r2, idx) => {
       const fill = { fgColor: { rgb: idx % 2 === 0 ? 'F6F8FA' : 'FFFFFF' } }
       const base = { font:{sz:10}, fill, border:bThin, alignment:{horizontal:'center',vertical:'center',wrapText:true} }
@@ -356,6 +364,7 @@ function buildWorksheetForDay(day: DayGroup): XLSX.WorkSheet {
       setCell(row, 12, r2.plateNo,                     base)
       setCell(row, 13, r2.truckType,                   base)
       setCell(row, 14, toExcelSerial(r2.manifestDate), { ...base, numFmt:'MM/DD/YYYY' }, 'n')
+      setCell(row, 15, r2.manifestNo || '—',           base)
       row++
     })
 
@@ -367,11 +376,15 @@ function buildWorksheetForDay(day: DayGroup): XLSX.WorkSheet {
     row++
   }
 
-  ws['!ref']  = `A1:O${row + 1}`
+  ws['!ref']  = `A1:P${row + 1}`
   ws['!cols'] = COL_WIDTHS.map(wch => ({ wch }))
   ws['!rows'] = Array.from({ length: row }, () => ({ hpt: 28 }))
 
   return ws
+}
+
+function buildWorksheetForDay(day: DayGroup): XLSX.WorkSheet {
+  return buildWorksheetForGroups(day.subGroups)
 }
 
 // ── Excel export — full month (all truckers in one file, sheets per day) ──────
@@ -447,6 +460,73 @@ function exportByTrucker(dayGroups: DayGroup[], monthLabel: string) {
     const dateStr = new Date().toISOString().slice(0, 10)
     XLSX.writeFile(wb, `Accrual-${monthLabel.replace(' ', '-')}-${safeFileName}-${dateStr}.xlsx`)
   }
+}
+
+// ── Excel export — one workbook, one sheet per trucker ─────────────────────
+//
+// Every trucker gets exactly one sheet in a single .xlsx file. Within a
+// trucker's sheet, rows are grouped into blocks by (dispatch date, plate,
+// manifest) so each truck run on each day gets its own subtotal — the
+// existing "DATE DISPATCHED" column on every row still shows the date, and
+// blocks are ordered chronologically so the sheet reads top-to-bottom by day.
+
+function exportAccrualByTruckerOneFile(dayGroups: DayGroup[], monthLabel: string) {
+  // trucker → all rows for that trucker across the whole month
+  const truckerRows = new Map<string, AccrualRow[]>()
+  for (const day of dayGroups) {
+    for (const sub of day.subGroups) {
+      const key = sub.trucker || sub.plateNo || 'Unknown'
+      if (!truckerRows.has(key)) truckerRows.set(key, [])
+      truckerRows.get(key)!.push(...sub.rows)
+    }
+  }
+
+  const wb = XLSX.utils.book_new()
+  const usedSheetNames = new Set<string>()
+
+  // Sort truckers alphabetically so the workbook is easy to scan
+  const sortedTruckerNames = Array.from(truckerRows.keys()).sort((a, b) => a.localeCompare(b))
+
+  for (const truckerName of sortedTruckerNames) {
+    const rows = truckerRows.get(truckerName)!
+
+    // Re-group this trucker's rows into (date, manifest) blocks, sorted
+    // chronologically, so each truck run keeps its own subtotal row.
+    const blockMap = new Map<string, AccrualRow[]>()
+    for (const r of rows) {
+      const key = `${getISODate(r.manifestDate)}||${r.manifestNo || '—'}||${r.plateNo}`
+      if (!blockMap.has(key)) blockMap.set(key, [])
+      blockMap.get(key)!.push(r)
+    }
+
+    const groups: TruckerGroup[] = Array.from(blockMap.entries())
+      .sort(([, aRows], [, bRows]) => aRows[0].manifestDate.localeCompare(bRows[0].manifestDate))
+      .map(([, gRows]) => ({
+        trucker:    gRows[0]?.trucker   ?? '',
+        plateNo:    gRows[0]?.plateNo   ?? '',
+        truckType:  gRows[0]?.truckType ?? '',
+        manifestNo: gRows[0]?.manifestNo ?? '',
+        rows:       gRows,
+        totalQty:   gRows.reduce((s, r) => s + r.qty, 0),
+        totalVol:   gRows.reduce((s, r) => s + r.totalVolume, 0),
+      }))
+
+    const ws = buildWorksheetForGroups(groups)
+
+    // Ensure a unique, valid (<=31 char) sheet name per trucker
+    let sheetName = sanitizeSheetName(truckerName)
+    let suffix = 2
+    while (usedSheetNames.has(sheetName)) {
+      const base = sanitizeSheetName(truckerName).slice(0, 28)
+      sheetName = `${base} (${suffix++})`
+    }
+    usedSheetNames.add(sheetName)
+
+    XLSX.utils.book_append_sheet(wb, ws, sheetName)
+  }
+
+  const dateStr = new Date().toISOString().slice(0, 10)
+  XLSX.writeFile(wb, `Accrual-${monthLabel.replace(' ', '-')}-AllTruckers-${dateStr}.xlsx`)
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
@@ -706,6 +786,32 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
           >
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">By Trucker</span>
+          </button>
+
+          {/* Export — one file, one sheet per trucker */}
+          <button
+            onClick={() => exportAccrualByTruckerOneFile(dayGroups, monthLabel)}
+            disabled={!canExport}
+            className="flex items-center gap-2 px-4 h-10 text-[13px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wide"
+            style={{
+              background: 'transparent',
+              color: C.textSilver,
+              border: `1px solid ${C.border}`,
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = C.accent
+              e.currentTarget.style.color = C.accent
+              e.currentTarget.style.boxShadow = `0 0 12px ${C.accentGlow}`
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = C.border
+              e.currentTarget.style.color = C.textSilver
+              e.currentTarget.style.boxShadow = 'none'
+            }}
+            title="One file, one sheet per trucker — rows grouped by truck and date dispatched"
+          >
+            <FileText className="w-4 h-4" />
+            <span className="hidden sm:inline">1 File / Trucker Sheets</span>
           </button>
         </div>
       </div>
