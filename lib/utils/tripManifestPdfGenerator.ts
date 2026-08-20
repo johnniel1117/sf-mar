@@ -153,6 +153,29 @@ function buildDetailedRows(
   return rows
 }
 
+// ── QR code ───────────────────────────────────────────────────────────────────
+//
+// Encodes a link to a page that shows/generates the full serial list for this
+// manifest. ASSUMPTION: that page lives at `/manifests/[manifestNumber]/serials`.
+// Change ROUTE_BASE below (or the whole buildSerialListUrl function) if your
+// app uses a different path — e.g. an API route that streams a CSV/PDF instead
+// of a page. If that route doesn't exist yet, let me know and I can scaffold it.
+
+const ROUTE_BASE = '/manifests'
+
+function buildSerialListUrl(manifest: TripManifest): string {
+  const origin =
+    (typeof window !== 'undefined' && window.location?.origin) ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    ''
+  return `${origin}${ROUTE_BASE}/${encodeURIComponent(manifest.manifest_number)}/serials`
+}
+
+function buildQrCodeImgUrl(manifest: TripManifest): string {
+  const target = buildSerialListUrl(manifest)
+  return `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=${encodeURIComponent(target)}`
+}
+
 // ── Formatters ────────────────────────────────────────────────────────────────
 
 function formatDateShort(dateStr?: string): string {
@@ -306,12 +329,24 @@ const DETAILED_STYLES = `
   .haier2 { height: 30px; width: auto; }
   .footer-text { font-size: 8px; gap: 10px; padding-top: 10px; font-style: italic; color: #666; letter-spacing: 0.08em; }
 
+  /* ── QR code ── */
+  .qr-section {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .qr-section img { width: 64px; height: 64px; }
+  .qr-caption { font-size: 7px; letter-spacing: 0.05em; color: #666; text-transform: uppercase; }
+
   @media print { body { padding: 10; } }
 `
 
 function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): string {
   const grandQty   = rows.reduce((s, r) => s + r.totalQty, 0)
   const totalDocs  = rows.length
+  const qrCodeUrl  = buildQrCodeImgUrl(manifest)
 
   let rowCounter = 0
 
@@ -478,6 +513,10 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
   <div class="footer-haier-section">
     <img src="haier3.png" alt="Haier" class="haier2" />
     <div class="footer-text">FOR DOCUMENTATION PURPOSES</div>
+    <div class="qr-section">
+      <img src="${qrCodeUrl}" alt="Scan for serial list" />
+      <div class="qr-caption">Scan to view serial list</div>
+    </div>
   </div>
 
 </div>
@@ -496,6 +535,7 @@ export class TripManifestPDFGenerator {
     const totalQty = items.reduce((sum, item) => sum + item.total_quantity, 0)
     const totalCbm = items.reduce((sum, item) => sum + (item.total_cbm ?? 0), 0)
     const hasCbm   = items.some(item => item.total_cbm != null && item.total_cbm > 0)
+    const qrCodeUrl = buildQrCodeImgUrl(manifestData)
 
     const formatDateShortLocal = (dateStr?: string) => {
       if (!dateStr) return '—'
@@ -578,6 +618,9 @@ export class TripManifestPDFGenerator {
     .footer-haier-section { margin-top:60px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding-top:15px; }
     .haier2 { height:50px; width:auto; }
     .footer-text { font-size:8.5px; font-style:italic; color:#666; letter-spacing:0.08em; }
+    .qr-section { margin-top:16px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .qr-section img { width:70px; height:70px; }
+    .qr-caption { font-size:8px; letter-spacing:0.05em; color:#666; text-transform:uppercase; }
     @media print { body { padding:0; } .page-container { max-width:100%; } }
   </style>
 </head>
@@ -679,6 +722,10 @@ export class TripManifestPDFGenerator {
     <div class="footer-haier-section">
       <img src="haier3.png" alt="Haier" class="haier2" />
       <div class="footer-text">FOR DOCUMENT PURPOSES</div>
+      <div class="qr-section">
+        <img src="${qrCodeUrl}" alt="Scan for serial list" />
+        <div class="qr-caption">Scan to view serial list</div>
+      </div>
     </div>
 
   </div>
