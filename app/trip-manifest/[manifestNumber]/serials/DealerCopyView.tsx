@@ -1,8 +1,5 @@
 'use client'
 
-// ASSUMPTION: adjust these two imports if your actual CategoryMapping /
-// category-mapping files live somewhere other than the standard
-// components/ and lib/ folders at your project root.
 import { getCategoryFromBinCode } from '@/components/CategoryMapping'
 import { MATCODE_CBM_MAP } from '@/lib/category-mapping'
 
