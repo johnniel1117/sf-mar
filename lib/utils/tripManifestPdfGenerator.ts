@@ -8,7 +8,7 @@ const supabase = createClient(
 
 // ── Serial entry shape (from excel_uploads.serial_data) ───────────────────────
 
-interface SerialEntry {
+export interface SerialEntry {
   dnNo:          string
   orderItem:     string
   factoryCode:   string
@@ -30,14 +30,14 @@ interface SerialEntry {
 
 // ── Grouped material line (one row per matCode per DN) ────────────────────────
 
-interface MaterialLine {
+export interface MaterialLine {
   materialCode: string
   materialDesc: string
   location:     string
   qty:          number
 }
 
-interface DetailedDNRow {
+export interface DetailedDNRow {
   documentNumber: string
   shipToName:     string
   lines:          MaterialLine[]
@@ -50,7 +50,7 @@ function normalizeDN(dn: string): string {
   return dn.replace(/^0+/, '')
 }
 
-async function fetchSerialData(
+export async function fetchSerialData(
   dns: string[]
 ): Promise<Map<string, SerialEntry[]>> {
   const map = new Map<string, SerialEntry[]>()
@@ -96,7 +96,7 @@ async function fetchSerialData(
   return map
 }
 
-function buildDetailedRows(
+export function buildDetailedRows(
   manifest: TripManifest,
   serialsMap: Map<string, SerialEntry[]>
 ): DetailedDNRow[] {
@@ -155,18 +155,22 @@ function buildDetailedRows(
 
 // ── QR code ───────────────────────────────────────────────────────────────────
 //
-// Encodes a link to a page that shows/generates the full serial list for this
-// manifest. ASSUMPTION: that page lives at `/manifests/[manifestNumber]/serials`.
-// Change ROUTE_BASE below (or the whole buildSerialListUrl function) if your
-// app uses a different path — e.g. an API route that streams a CSV/PDF instead
-// of a page. If that route doesn't exist yet, let me know and I can scaffold it.
+// Encodes a link to a page that shows the full serial list for this manifest,
+// served from app/trip-manifest/[manifestNumber]/serials/page.tsx.
+// NOTE: that page reads from `trip_manifests` and `excel_uploads` as the
+// anonymous (unauthenticated) Supabase role, since it's reached by scanning a
+// QR code — make sure RLS SELECT policies allow anon reads on both tables.
 
-const ROUTE_BASE = '/manifests'
+const ROUTE_BASE = '/trip-manifest'
 
 function buildSerialListUrl(manifest: TripManifest): string {
+  // Prefer the explicit env var (your real domain) so QR codes generated
+  // during local dev don't end up pointing at localhost, which a phone
+  // scanning the code can never reach. Only fall back to the browser's
+  // own origin if NEXT_PUBLIC_APP_URL isn't set.
   const origin =
-    (typeof window !== 'undefined' && window.location?.origin) ||
     process.env.NEXT_PUBLIC_APP_URL ||
+    (typeof window !== 'undefined' && window.location?.origin) ||
     ''
   return `${origin}${ROUTE_BASE}/${encodeURIComponent(manifest.manifest_number)}/serials`
 }
