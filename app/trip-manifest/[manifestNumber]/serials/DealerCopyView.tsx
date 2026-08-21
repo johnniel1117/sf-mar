@@ -34,11 +34,23 @@ export default function DealerCopyView({
   return (
     <div style={{ backgroundColor: '#0D1117', minHeight: '100vh' }}>
       <style>{`
+        .serial-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .serial-table { min-width: 700px; }
+        .manifest-detail-value { min-width: 0; overflow-wrap: anywhere; }
         @media print {
           .no-print { display: none !important; }
           .dn-page { page-break-after: always; }
           .dn-page:last-child { page-break-after: auto; }
           body { background: #fff !important; }
+          .serial-table-wrap { overflow: visible; }
+        }
+        @media (max-width: 640px) {
+          .dealer-header { flex-direction: column; gap: 14px; }
+          .dealer-header > :last-child { width: 100%; text-align: left; }
+          .dealer-header > :last-child > .barcode-wrap { justify-content: flex-start; }
+          .order-number { font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
+          .manifest-detail-row { font-size: 9px; }
+          .manifest-detail-label { width: 64px !important; flex-shrink: 0; }
         }
       `}</style>
 
@@ -63,7 +75,7 @@ export default function DealerCopyView({
       )}
 
       {/* Printable Dealer's Copy pages — one per DN */}
-      <div className="max-w-[820px] mx-auto space-y-6 px-4 pb-10">
+      <div className="max-w-[820px] mx-auto space-y-6 px-2 sm:px-4 pb-10">
         {groups.map(group => {
           const rows = group.rows.filter(r => r.materialCode && r.barcode)
           const totalQuantity = rows.length
@@ -75,11 +87,11 @@ export default function DealerCopyView({
           return (
             <div
               key={group.dnNo}
-              className="dn-page bg-white text-black p-6 rounded-sm"
+              className="dn-page bg-white text-black p-3 sm:p-6 rounded-sm"
               style={{ fontFamily: 'Arial, sans-serif', fontSize: 11 }}
             >
               {/* Header */}
-              <div className="flex justify-between items-start pb-2.5 mb-4" style={{ borderBottom: '2px solid #000' }}>
+              <div className="dealer-header flex justify-between items-start pb-2.5 mb-4" style={{ borderBottom: '2px solid #000' }}>
                 <div>
                   <img src="/sf.png" alt="SF Express Logo" style={{ height: 60, width: 'auto' }} />
                   <div className="text-[9px] leading-tight mt-1.5">
@@ -88,22 +100,23 @@ export default function DealerCopyView({
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-bold tracking-wide" style={{ color: '#FF2C2C' }}>DEALER&apos;S COPY</div>
-                  <div className="mt-2 flex justify-end">
+                  <div className="barcode-wrap mt-2 flex justify-end">
                     <BarcodeSVG value={group.dnNo} height={60} width={2} />
                   </div>
                 </div>
               </div>
 
               <div className="text-center my-4">
-                <div className="text-xl font-bold">ORDER NO : {group.dnNo}</div>
+                <div className="order-number text-xl font-bold">ORDER NO : {group.dnNo}</div>
               </div>
 
-              <div className="flex gap-2 mb-1 text-[10px]"><div className="font-bold" style={{ width: 80 }}>Client</div><div>HAIER PHILIPPINES INC.</div></div>
-              <div className="flex gap-2 mb-1 text-[10px]"><div className="font-bold" style={{ width: 80 }}>Date</div><div>{formatDateShort()}</div></div>
-              <div className="flex gap-2 mb-1 text-[10px]"><div className="font-bold" style={{ width: 80 }}>Customer</div><div>{group.shipToName || 'N/A'}</div></div>
-              <div className="flex gap-2 mb-1 text-[10px]"><div className="font-bold" style={{ width: 80 }}>Address</div><div>{group.shipToAddress || ''}</div></div>
+              <div className="manifest-detail-row flex gap-2 mb-1 text-[10px]"><div className="manifest-detail-label font-bold" style={{ width: 80 }}>Client</div><div className="manifest-detail-value">HAIER PHILIPPINES INC.</div></div>
+              <div className="manifest-detail-row flex gap-2 mb-1 text-[10px]"><div className="manifest-detail-label font-bold" style={{ width: 80 }}>Date</div><div className="manifest-detail-value">{formatDateShort()}</div></div>
+              <div className="manifest-detail-row flex gap-2 mb-1 text-[10px]"><div className="manifest-detail-label font-bold" style={{ width: 80 }}>Customer</div><div className="manifest-detail-value">{group.shipToName || 'N/A'}</div></div>
+              <div className="manifest-detail-row flex gap-2 mb-1 text-[10px]"><div className="manifest-detail-label font-bold" style={{ width: 80 }}>Address</div><div className="manifest-detail-value">{group.shipToAddress || ''}</div></div>
 
-              <table className="w-full border-collapse my-4" style={{ fontSize: 10 }}>
+              <div className="serial-table-wrap my-4">
+              <table className="serial-table w-full border-collapse" style={{ fontSize: 10 }}>
                 <thead>
                   <tr>
                     <th className="p-1.5 text-center font-bold" style={{ border: '1px solid #000', width: 35 }}>NO.</th>
@@ -130,6 +143,7 @@ export default function DealerCopyView({
                   })}
                 </tbody>
               </table>
+              </div>
 
               <div className="flex gap-6 mt-2.5 text-[11px]">
                 <div className="font-bold">TOTAL QTY: {totalQuantity}</div>
