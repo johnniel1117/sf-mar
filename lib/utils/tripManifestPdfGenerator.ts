@@ -180,6 +180,32 @@ function buildQrCodeImgUrl(manifest: TripManifest): string {
   return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=${encodeURIComponent(target)}`
 }
 
+function waitForQrCode(printWindow: Window): Promise<void> {
+  const qrImage = printWindow.document.querySelector<HTMLImageElement>(
+    'img[alt="Scan for serial list"]'
+  )
+  if (!qrImage) return Promise.reject(new Error('QR code image was not rendered'))
+  if (qrImage.complete && qrImage.naturalWidth > 0) return Promise.resolve()
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      qrImage.removeEventListener('load', handleLoad)
+      qrImage.removeEventListener('error', handleError)
+    }
+    const handleLoad = () => {
+      cleanup()
+      resolve()
+    }
+    const handleError = () => {
+      cleanup()
+      reject(new Error('QR code image failed to load'))
+    }
+
+    qrImage.addEventListener('load', handleLoad, { once: true })
+    qrImage.addEventListener('error', handleError, { once: true })
+  })
+}
+
 // ── Formatters ────────────────────────────────────────────────────────────────
 
 function formatDateShort(dateStr?: string): string {
@@ -537,7 +563,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
 // ── Original simple PDF (with remarks) ──────────────────────────────────────────
 
 export class TripManifestPDFGenerator {
-  static generatePDF(manifestData: TripManifest): void {
+  static async generatePDF(manifestData: TripManifest): Promise<void> {
     const printWindow = window.open('', '', 'width=1200,height=800')
     if (!printWindow) return
 
@@ -750,7 +776,8 @@ export class TripManifestPDFGenerator {
 
     printWindow.document.write(htmlContent)
     printWindow.document.close()
-    setTimeout(() => printWindow.print(), 400)
+    await waitForQrCode(printWindow)
+    printWindow.print()
   }
 
   // ── Detailed PDF (with material code, desc, location from serial data) ──────
@@ -776,6 +803,7 @@ export class TripManifestPDFGenerator {
     printWindow.document.open()
     printWindow.document.write(buildDetailedHtml(manifestData, rows))
     printWindow.document.close()
-    setTimeout(() => printWindow.print(), 600)
+    await waitForQrCode(printWindow)
+    printWindow.print()
   }
 }

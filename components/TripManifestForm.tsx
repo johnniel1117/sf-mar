@@ -165,7 +165,11 @@ export default function TripManifestForm({ role }: { role?: string }) {
 
     if (selectedDownloadType === 'pdf') {
       TripManifestPDFGenerator.generatePDF(manifest)
-      showToast('Download started!', 'success')
+        .then(() => showToast('Download started!', 'success'))
+        .catch(err => {
+          console.error('PDF error:', err)
+          showToast('Failed to generate PDF', 'error')
+        })
     }
 
     else if (selectedDownloadType === 'pdf-detailed') {
@@ -186,38 +190,31 @@ export default function TripManifestForm({ role }: { role?: string }) {
             justify-content: center;
             height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
-                        url('/jessa.png') center/cover no-repeat;
-            color: #fff;
-            overflow: hidden;
+            background: #fff;
+            color: #222;
           }
           .loading-container {
             text-align: center;
-            backdrop-filter: blur(4px);
-            background: rgba(0, 0, 0, 0.3);
-            padding: 48px;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            padding: 32px;
           }
           .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-top-color: #E8192C;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e5e5e5;
+            border-top-color: #222;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 24px;
+            animation: spin 0.9s linear infinite;
+            margin: 0 auto 16px;
           }
           @keyframes spin { to { transform: rotate(360deg) } }
           .loading-text {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
+            margin-bottom: 8px;
           }
           .loading-subtext {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            color: #666;
           }
         </style></head>
         <body>
@@ -244,9 +241,13 @@ export default function TripManifestForm({ role }: { role?: string }) {
     }
 
     else if (selectedDownloadType === 'both') {
-      TripManifestPDFGenerator.generatePDF(manifest)
       TripManifestExcelGenerator.generateExcel(manifest)
-      showToast('Download started!', 'success')
+      TripManifestPDFGenerator.generatePDF(manifest)
+        .then(() => showToast('Downloads started!', 'success'))
+        .catch(err => {
+          console.error('PDF error:', err)
+          showToast('Excel download started, but PDF generation failed', 'error')
+        })
     }
 
     setPendingManifestForDownload(null)
