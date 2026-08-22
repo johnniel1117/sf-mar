@@ -1155,7 +1155,21 @@ export function SerialListPrinter() {
                   {bracketGroupsPending.map(group => (
                     <div key={group.dnNo} className="flex items-center justify-between px-3 py-2" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
                       <span className="text-xs font-mono" style={{ color: C.textPrimary }}>{group.dnNo}</span>
-                      <span className="text-xs font-bold tabular-nums" style={{ color: C.amber }}>{customQuantities[group.dnNo] ?? group.rows.length} units</span>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          value={customQuantities[group.dnNo] ?? group.savedQuantity ?? group.rows.length}
+                          onChange={e => setCustomQuantities(previous => ({
+                            ...previous,
+                            [group.dnNo]: Math.max(0, Number(e.target.value) || 0),
+                          }))}
+                          className="w-16 px-1.5 py-1 text-xs text-right tabular-nums outline-none"
+                          style={{ background: C.surface, border: `1px solid ${C.amber}`, color: C.amber }}
+                          aria-label={`Total quantity for ${group.dnNo}`}
+                        />
+                        <span className="text-xs font-bold tabular-nums" style={{ color: C.amber }}>units</span>
+                      </label>
                     </div>
                   ))}
                 </div>
