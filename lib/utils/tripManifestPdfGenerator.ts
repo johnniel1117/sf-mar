@@ -35,6 +35,7 @@ export interface MaterialLine {
   materialDesc: string
   location:     string
   qty:          number
+  actualQty:    number
 }
 
 export interface DetailedDNRow {
@@ -42,6 +43,7 @@ export interface DetailedDNRow {
   shipToName:     string
   lines:          MaterialLine[]
   totalQty:       number
+  actualQty:      number
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -121,11 +123,14 @@ export function buildDetailedRows(
         matMap.get(key)!.qty++
       }
 
-      const lines: MaterialLine[] = Array.from(matMap.entries()).map(([code, v]) => ({
+      const lines: MaterialLine[] = Array.from(matMap.entries()).map(([code, v], lineIndex) => ({
         materialCode: code,
         materialDesc: v.desc,
         location:     v.location,
         qty:          v.qty,
+        actualQty:    item.actual_qty_by_material?.[code] ?? (
+          item.actual_qty_by_material ? 0 : lineIndex === 0 ? item.actual_qty_dispatch ?? item.total_quantity ?? 0 : 0
+        ),
       }))
 
       rows.push({
@@ -133,6 +138,7 @@ export function buildDetailedRows(
         shipToName:     serials[0]?.shipToName || item.ship_to_name || '—',
         lines,
         totalQty:       lines.reduce((s, l) => s + l.qty, 0),
+        actualQty:      item.actual_qty_dispatch ?? item.total_quantity ?? 0,
       })
     } else {
       // Fallback: no serial data — show basic row
@@ -144,8 +150,10 @@ export function buildDetailedRows(
           materialDesc: '(No serial data found)',
           location:     '—',
           qty:          item.total_quantity ?? 0,
+          actualQty:    item.actual_qty_dispatch ?? item.total_quantity ?? 0,
         }],
         totalQty: item.total_quantity ?? 0,
+        actualQty: item.actual_qty_dispatch ?? item.total_quantity ?? 0,
       })
     }
   }
@@ -225,7 +233,7 @@ function formatTime12hr(time?: string): string {
 }
 
 // ── HTML builders ─────────────────────────────────────────────────────────────
-
+//
 const DETAILED_STYLES = `
   @page { size: A4 portrait; margin: 10mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -324,6 +332,7 @@ const DETAILED_STYLES = `
   .col-desc { text-align: center; font-size: 9px; width: 100px; }
   .col-loc  { text-align: center; width: 55px; font-family: monospace; font-size: 8.5px; }
   .col-qty  { text-align: center; width: 45px; font-weight: 700; font-size: 10px; }
+  .col-actual { text-align: center; width: 60px; font-weight: 700; font-size: 10px; }
   .col-rem  { text-align: center; width: 150px; }
 
   /* ── Grand total ── */
@@ -380,6 +389,7 @@ const DETAILED_STYLES = `
 
 function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): string {
   const grandQty   = rows.reduce((s, r) => s + r.totalQty, 0)
+  const actualQty  = rows.reduce((s, r) => s + r.actualQty, 0)
   const totalDocs  = rows.length
   const qrCodeUrl  = buildQrCodeImgUrl(manifest)
 
@@ -398,6 +408,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
           <td class="col-desc">${line.materialDesc}</td>
           <td class="col-loc">${line.location}</td>
           <td class="col-qty">${line.qty}</td>
+          <td class="col-actual">${line.actualQty}</td>
           <td class="col-rem"></td>
         </tr>`
     }).join('')
@@ -501,6 +512,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
         <th style="width:100px">Mat Desc</th>
         <th style="width:55px">Location</th>
         <th style="width:45px">Qty</th>
+        <th style="width:60px">Actual Dispatch</th>
         <th style="width:150px">Remarks</th>
       </tr>
     </thead>
@@ -512,7 +524,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
 
   <!-- Summary line -->
   <div class="footer-summary">
-    TOTAL DOCUMENTS: ${totalDocs}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL QUANTITY: ${grandQty}
+    TOTAL DOCUMENTS: ${totalDocs}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL QUANTITY: ${grandQty}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL ACTUAL DISPATCH: ${actualQty}
   </div>
 
   <!-- Signatures -->
@@ -569,6 +581,7 @@ export class TripManifestPDFGenerator {
 
     const items    = manifestData.items || []
     const totalQty = items.reduce((sum, item) => sum + item.total_quantity, 0)
+    const totalDispatchedQty = items.reduce((sum, item) => sum + (item.actual_qty_dispatch ?? item.total_quantity), 0)
     const totalCbm = items.reduce((sum, item) => sum + (item.total_cbm ?? 0), 0)
     const hasCbm   = items.some(item => item.total_cbm != null && item.total_cbm > 0)
     const qrCodeUrl = buildQrCodeImgUrl(manifestData)
@@ -592,15 +605,20 @@ export class TripManifestPDFGenerator {
     const cbmCol = (val?: number | null) =>
       val != null && val > 0 ? val.toFixed(2) : '—'
 
-    const itemsHtml = items.map((item, idx) => `
+    const itemsHtml = items.map((item, idx) => {
+      const dispatchedQty = item.actual_qty_dispatch ?? item.total_quantity
+      const isShort = dispatchedQty < item.total_quantity
+      return `
       <tr>
         <td style="text-align:center;padding:8px;border:1px solid #000;font-size:10px;">${idx + 1}</td>
         <td style="text-align:center;padding:8px;border:1px solid #000;font-size:10px;">${item.ship_to_name}</td>
         <td style="text-align:center;padding:8px;border:1px solid #000;font-size:10px;font-weight:bold;">${item.document_number}</td>
         <td style="text-align:center;padding:8px;border:1px solid #000;font-size:10px;">${item.total_quantity}</td>
+        <td style="text-align:center;padding:8px;border:1px solid #000;font-size:10px;font-weight:bold;${isShort ? 'color:#B45309;' : ''}">${dispatchedQty}</td>
         ${hasCbm ? `<td style="text-align:center;padding:8px;border:1px solid #000;font-size:10px;">${cbmCol(item.total_cbm)}</td>` : ''}
         <td style="text-align:center;padding:8px;border:1px solid #000;font-size:10px;"></td>
-      </tr>`).join('')
+      </tr>`
+    }).join('')
 
     const remarksHtml = manifestData.remarks ? `
       <div style="margin:20px 0;padding:10px;border:1px solid #000;background:#f9f9f9;">
@@ -712,11 +730,12 @@ export class TripManifestPDFGenerator {
       <thead>
         <tr>
           <th style="width:40px">NO.</th>
-          <th style="width:${hasCbm ? '240px' : '280px'}">SHIP TO NAME</th>
-          <th style="width:150px">DN/TRA NO.</th>
-          <th style="width:70px">QTY</th>
+          <th style="width:${hasCbm ? '190px' : '220px'}">SHIP TO NAME</th>
+          <th style="width:130px">DN/TRA NO.</th>
+          <th style="width:55px">ORDERED</th>
+          <th style="width:65px">DISPATCHED</th>
           ${hasCbm ? '<th style="width:80px">CBM</th>' : ''}
-          <th style="width:100px">REMARKS</th>
+          <th style="width:90px">REMARKS</th>
         </tr>
       </thead>
       <tbody>
@@ -724,13 +743,14 @@ export class TripManifestPDFGenerator {
         <tr style="font-weight:bold;">
           <td colspan="3" style="text-align:right;padding:8px;border:1px solid #000;">TOTAL</td>
           <td style="text-align:center;padding:8px;border:1px solid #000;">${totalQty}</td>
+          <td style="text-align:center;padding:8px;border:1px solid #000;">${totalDispatchedQty}</td>
           ${hasCbm ? `<td style="text-align:center;padding:8px;border:1px solid #000;">${totalCbm.toFixed(2)}</td>` : ''}
           <td style="border:1px solid #000;"></td>
         </tr>
       </tbody>
     </table>
     <div class="footer-summary">
-      TOTAL DOCUMENTS: ${items.length}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL QUANTITY: ${totalQty}${hasCbm ? `&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL CBM: ${totalCbm.toFixed(2)}` : ''}
+      TOTAL DOCUMENTS: ${items.length}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL ORDERED: ${totalQty}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL DISPATCHED: ${totalDispatchedQty}${hasCbm ? `&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL CBM: ${totalCbm.toFixed(2)}` : ''}
     </div>
     <div class="signature-section">
       <div class="signature-box">

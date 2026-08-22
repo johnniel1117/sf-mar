@@ -284,6 +284,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
       document_number: pendingDocument.documentNumber,
       ship_to_name: shipToName,
       total_quantity: pendingDocument.quantity,
+      actual_qty_dispatch: pendingDocument.quantity,
       total_cbm: pendingDocument.cbm || 0,
     }
     setManifest({ ...manifest, items: [...manifest.items, newItem] })
@@ -321,6 +322,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
                 document_number: doc.document_number,
                 ship_to_name: doc.ship_to_name || 'N/A',
                 total_quantity: doc.total_quantity || 0,
+                actual_qty_dispatch: doc.total_quantity || 0,
                 total_cbm: doc.total_cbm || 0,
               }],
             })

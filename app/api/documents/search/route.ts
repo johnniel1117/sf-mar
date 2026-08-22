@@ -48,11 +48,25 @@ export async function GET(request: NextRequest) {
         }, 0)
       }
 
+      let materialCounts: Record<string, number> = {}
+      if (doc.serial_data) {
+        try {
+          const serials = typeof doc.serial_data === 'string' ? JSON.parse(doc.serial_data) : doc.serial_data
+          if (Array.isArray(serials)) {
+            for (const serial of serials) {
+              const materialCode = String(serial.materialCode || '').trim()
+              if (materialCode) materialCounts[materialCode] = (materialCounts[materialCode] || 0) + 1
+            }
+          }
+        } catch { /* Keep the document result when serial data is malformed. */ }
+      }
+
       return {
         documentNumber: doc.document_number,
         shipToName: doc.ship_to_name || 'N/A',
         quantity: doc.total_quantity || 0,
-        cbm: totalCbm // Add CBM to the result
+        cbm: totalCbm,
+        materialCounts,
       }
     })
     

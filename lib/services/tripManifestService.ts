@@ -4,8 +4,10 @@ export interface ManifestItem {
   item_number: number
   document_number: string
   ship_to_name: string
-  total_quantity: number
-  total_cbm: number 
+  total_quantity: number       // the true/full order quantity
+  actual_qty_dispatch?: number // what was actually loaded/dispatched (may be less than total_quantity)
+  actual_qty_by_material?: Record<string, number>
+  total_cbm: number
 }
 
 export interface TripManifest {
@@ -19,8 +21,8 @@ export interface TripManifest {
   time_start?: string
   time_end?: string
   remarks?: string
-  container_van_no?: string   
-  seal_no?: string            
+  container_van_no?: string
+  seal_no?: string
   status: 'draft' | 'completed'
   items: ManifestItem[]
   created_at?: string
@@ -31,7 +33,17 @@ export interface DocumentLookupResult {
   document_number: string
   ship_to_name: string
   total_quantity: number
-  total_cbm: number  
+  total_cbm: number
+  material_counts?: Record<string, number>
+}
+
+/**
+ * Returns the quantity that should be treated as "actually dispatched" for
+ * an item — falls back to total_quantity for older items that predate this
+ * field, so short-shipment math never silently breaks on legacy manifests.
+ */
+export function getDispatchedQty(item: ManifestItem): number {
+  return item.actual_qty_dispatch ?? item.total_quantity
 }
 
 export async function updateTripManifest(id: string, data: Partial<TripManifest>) {

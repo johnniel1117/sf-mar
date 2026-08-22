@@ -185,20 +185,23 @@ function ManifestRow({
             <div className="mb-7 sm:mb-8 overflow-hidden" style={{border: `1px solid ${C.divider}`}}>
               {/* Table header */}
               <div
-                className="grid grid-cols-4 py-3 px-3"
+                className="grid grid-cols-5 py-3 px-3"
                 style={{background: '#1C2128', borderBottom: `1px solid ${C.divider}`}}
               >
-                {['#', 'Ship To', 'DN / TRA', 'Qty'].map(h => (
+                {['#', 'Ship To', 'DN / TRA', 'Qty', 'Disp.'].map(h => (
                   <span key={h} className="text-[10px] uppercase tracking-widest font-bold" style={{color: C.textSilver}}>{h}</span>
                 ))}
               </div>
 
               {/* Striped rows */}
               <div>
-                {manifest.items!.map((item, idx) => (
+                {manifest.items!.map((item, idx) => {
+                  const dispatchedQty = item.actual_qty_dispatch ?? item.total_quantity
+                  const isShort = dispatchedQty < (item.total_quantity ?? 0)
+                  return (
                   <div
                     key={idx}
-                    className="grid grid-cols-4 py-3.5 px-3 group/row transition-colors duration-100"
+                    className="grid grid-cols-5 py-3.5 px-3 group/row transition-colors duration-100"
                     style={{
                       background: idx % 2 === 0 ? C.stripeEven : C.stripeOdd,
                       borderBottom: idx < manifest.items!.length - 1 ? `1px solid ${C.divider}` : 'none',
@@ -218,8 +221,12 @@ function ManifestRow({
                     <span className="text-[13px] font-[#0D1117] text-white tabular-nums text-right sm:text-left">
                       {item.total_quantity ?? 0}
                     </span>
+                    <span className="text-[13px] font-[#0D1117] tabular-nums text-right sm:text-left" style={{color: isShort ? C.amber : 'white'}}>
+                      {dispatchedQty}
+                    </span>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
@@ -380,7 +387,9 @@ export function SavedManifestsTab({
 
     // Column order: Container Van No. / Seal No. sit right after Truck Type,
     // before Time Start / Time End — matches the form, PDF, and Excel export order.
-    ;['MANIFEST NO.','DISPATCH DATE','TRUCKER','DRIVER','PLATE NO.','TRUCK TYPE','CONTAINER VAN NO.','SEAL NO.','TIME START','TIME END','DN / TRA NO.','SHIP TO NAME','QTY'].forEach((h, c) =>
+    // ACTUAL QTY DISPATCH sits right after QTY, since it's a per-line-item
+    // measure of what actually left the warehouse for that document.
+    ;['MANIFEST NO.','DISPATCH DATE','TRUCKER','DRIVER','PLATE NO.','TRUCK TYPE','CONTAINER VAN NO.','SEAL NO.','TIME START','TIME END','DN / TRA NO.','SHIP TO NAME','QTY','ACTUAL QTY DISPATCH'].forEach((h, c) =>
       setCell(row, c, h, {
         font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},
         fill:{fgColor:{rgb:'1E3A5F'}},
@@ -390,7 +399,7 @@ export function SavedManifestsTab({
     )
     row++
 
-    let grandQty = 0, grandDocs = 0, globalIdx = 0
+    let grandQty = 0, grandDispatchedQty = 0, grandDocs = 0, globalIdx = 0
 
     filteredManifests.forEach((manifest) => {
       const d = manifest.manifest_date
@@ -416,10 +425,13 @@ export function SavedManifestsTab({
         setCell(row, 10, '—', center())
         setCell(row, 11, 'No documents', base())
         setCell(row, 12, 0, center(), 'n')
+        setCell(row, 13, 0, center(), 'n')
         row++
       } else {
         items.forEach((item) => {
           const dnVal = toDN(item.document_number)
+          const dispatchedQty = item.actual_qty_dispatch ?? item.total_quantity ?? 0
+          const isShort = dispatchedQty < (item.total_quantity || 0)
           setCell(row, 0, manifest.manifest_number || manifest.id || '—', bold({ alignment:{horizontal:'center',vertical:'center'} }))
           setCell(row, 1, d, center())
           setCell(row, 2, manifest.trucker || '—', base())
@@ -433,7 +445,9 @@ export function SavedManifestsTab({
           setCell(row, 10, dnVal, bold({ alignment:{horizontal:'center',vertical:'center'} }), typeof dnVal === 'number' ? 'n' : 's')
           setCell(row, 11, item.ship_to_name || '—', base())
           setCell(row, 12, item.total_quantity || 0, center(), 'n')
+          setCell(row, 13, dispatchedQty, center({ font:{sz:10,bold:true,color:{rgb: isShort ? 'B45309' : '000000'}} }), 'n')
           grandQty += item.total_quantity || 0
+          grandDispatchedQty += dispatchedQty
           grandDocs++
           row++
         })
@@ -451,9 +465,10 @@ export function SavedManifestsTab({
     setCell(row, 0, `GRAND TOTAL — ${filteredManifests.length} manifests | ${grandDocs} documents`, totalStyle)
     for (let c = 1; c <= 11; c++) setCell(row, c, '', totalStyle)
     setCell(row, 12, grandQty, totalStyle, 'n')
+    setCell(row, 13, grandDispatchedQty, totalStyle, 'n')
 
-    ws['!ref'] = `A1:M${row + 5}`
-    ws['!cols'] = [{wch:18},{wch:14},{wch:22},{wch:22},{wch:14},{wch:16},{wch:16},{wch:14},{wch:12},{wch:12},{wch:18},{wch:40},{wch:10}]
+    ws['!ref'] = `A1:N${row + 5}`
+    ws['!cols'] = [{wch:18},{wch:14},{wch:22},{wch:22},{wch:14},{wch:16},{wch:16},{wch:14},{wch:12},{wch:12},{wch:18},{wch:40},{wch:10},{wch:16}]
     XLSX.utils.book_append_sheet(wb, ws, 'Monitoring')
     XLSX.writeFile(wb, `Manifest-Monitoring-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
@@ -478,7 +493,7 @@ export function SavedManifestsTab({
       setCell(row,4,manifest.manifest_number||'—',{font:{bold:true,sz:16},fill:{fgColor:{rgb:'FFFFC400'}},alignment:{horizontal:'center',vertical:'center'},border:{top:{style:'medium'},bottom:{style:'medium'},left:{style:'medium'},right:{style:'medium'}}})
       row += 3
       setCell(row,0,'TRIP MANIFEST',{font:{bold:true,sz:20},alignment:{horizontal:'center',vertical:'center'}})
-      ws['!merges'].push({s:{r:row,c:0},e:{r:row,c:4}})
+      ws['!merges'].push({s:{r:row,c:0},e:{r:row,c:5}})
       row += 3
       // Container Van No. / Seal No. sit before Time Start / Time End,
       // matching the order used on the form, PDF, and single-manifest export.
@@ -494,7 +509,8 @@ export function SavedManifestsTab({
       row++
       const tableStartRow = row
       const hStyle = {font:{bold:true,sz:11},alignment:{horizontal:'center',vertical:'center',wrapText:true},fill:{fgColor:{rgb:'E8E8E8'}},border:bThin}
-      ;['NO.','SHIP TO NAME','DN/TRA NO.','QTY','REMARKS'].forEach((h,c) => setCell(row,c,h,hStyle))
+      // DISPATCHED sits right after QTY (the ordered amount), before REMARKS.
+      ;['NO.','SHIP TO NAME','DN/TRA NO.','QTY','DISPATCHED','REMARKS'].forEach((h,c) => setCell(row,c,h,hStyle))
       row++
       const items = manifest.items || []
       if (items.length === 0) {
@@ -502,35 +518,41 @@ export function SavedManifestsTab({
         setCell(row,1,'No documents added',{border:bThin})
         setCell(row,2,'—',{border:bThin,alignment:{horizontal:'center'}})
         setCell(row,3,0,{border:bThin,alignment:{horizontal:'center'}},'n')
-        setCell(row,4,'—',{border:bThin,alignment:{horizontal:'center'}})
+        setCell(row,4,0,{border:bThin,alignment:{horizontal:'center'}},'n')
+        setCell(row,5,'—',{border:bThin,alignment:{horizontal:'center'}})
         row++
       } else {
         items.forEach((item, idx) => {
           const cs = {border:bThin,alignment:{horizontal:'center',vertical:'center'}}
+          const dispatchedQty = item.actual_qty_dispatch ?? item.total_quantity ?? 0
+          const isShort = dispatchedQty < (item.total_quantity || 0)
           setCell(row,0,idx+1,cs,'n')
           setCell(row,1,item.ship_to_name||'—',{...cs,alignment:{horizontal:'center',vertical:'center',wrapText:true}})
           setCell(row,2,stripLeadingZeros(item.document_number),{...cs,font:{bold:true}})
           setCell(row,3,item.total_quantity||0,cs,'n')
-          setCell(row,4,'',cs)
+          setCell(row,4,dispatchedQty,{...cs,font:{bold:true,color:{rgb: isShort ? 'B45309' : '000000'}}},'n')
+          setCell(row,5,'',cs)
           row++
         })
       }
       const totalQty = items.reduce((s,i) => s + (i.total_quantity||0), 0)
+      const totalDispatchedQty = items.reduce((s,i) => s + (i.actual_qty_dispatch ?? i.total_quantity ?? 0), 0)
       setCell(row,0,'TOTAL',{font:{bold:true},alignment:{horizontal:'right'},border:bThin})
       setCell(row,1,'',{border:bThin})
       setCell(row,2,'',{border:bThin})
       setCell(row,3,totalQty,{font:{bold:true},alignment:{horizontal:'center'},border:bThin},'n')
-      setCell(row,4,'',{border:bThin})
+      setCell(row,4,totalDispatchedQty,{font:{bold:true},alignment:{horizontal:'center'},border:bThin},'n')
+      setCell(row,5,'',{border:bThin})
       for (let r = tableStartRow; r <= row; r++)
-        for (let c = 0; c <= 4; c++) {
+        for (let c = 0; c <= 5; c++) {
           const addr = XLSX.utils.encode_cell({r,c})
           if (ws[addr]) ws[addr].s = {...(ws[addr].s||{}), border:bThin}
         }
       row += 2
-      setCell(row,2,`TOTAL DOCUMENTS: ${items.length}  |  TOTAL QUANTITY: ${totalQty}`,{font:{bold:true},alignment:{horizontal:'right'}})
+      setCell(row,2,`TOTAL DOCUMENTS: ${items.length}  |  TOTAL QUANTITY: ${totalQty}  |  TOTAL DISPATCHED: ${totalDispatchedQty}`,{font:{bold:true},alignment:{horizontal:'right'}})
       row += 3
-      ws['!ref'] = `A1:E${row+10}`
-      ws['!cols'] = [{wch:6},{wch:45},{wch:20},{wch:12},{wch:25}]
+      ws['!ref'] = `A1:F${row+10}`
+      ws['!cols'] = [{wch:6},{wch:45},{wch:20},{wch:12},{wch:14},{wch:25}]
       XLSX.utils.book_append_sheet(wb, ws, (manifest.manifest_number||`Manifest-${manifestIndex+1}`).replace(/[\\/*?[\]:]/g,'-').slice(0,31))
     })
     XLSX.writeFile(wb, `Manifests-Export-${new Date().toISOString().slice(0,10)}.xlsx`)

@@ -59,7 +59,7 @@ interface CreateManifestTabProps {
   pendingDocument: { documentNumber: string; quantity: number; cbm?: number } | null
   setPendingDocument: (doc: { documentNumber: string; quantity: number; cbm?: number } | null) => void
   addDocumentWithManualShipTo: (shipToName: string) => void
-  searchDocument: (documentNumber: string) => Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number }> | null>
+  searchDocument: (documentNumber: string) => Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> }> | null>
   showToast?: (message: string, type: 'success' | 'error' | 'info') => void
   grandTotalCBM?: number // Added this prop
 }
@@ -247,7 +247,7 @@ export function CreateManifestTab({
   setPendingDocument, addDocumentWithManualShipTo, searchDocument, showToast,
   grandTotalCBM = 0, // Default to 0 if not provided
 }: CreateManifestTabProps) {
-  const [searchResults, setSearchResults] = useState<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number }> | null>(null)
+  const [searchResults, setSearchResults] = useState<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> }> | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
@@ -275,6 +275,10 @@ export function CreateManifestTab({
 
   const totalDocuments = manifest.items.length
   const totalQuantity = manifest.items.reduce((sum, item) => sum + item.total_quantity, 0)
+  const getActualCount = (item: ManifestItem) => item.actual_qty_by_material
+    ? Object.values(item.actual_qty_by_material).reduce((sum, count) => sum + count, 0)
+    : (item.actual_qty_dispatch ?? item.total_quantity)
+  const totalDispatchedQuantity = manifest.items.reduce((sum, item) => sum + getActualCount(item), 0)
   const totalCbm = manifest.items.reduce((sum, item) => sum + (item.total_cbm ?? 0), 0)
   const hasCbm = manifest.items.some(item => item.total_cbm != null && item.total_cbm > 0)
 
@@ -366,7 +370,7 @@ export function CreateManifestTab({
   }
 }
 
-  const selectDocument = async (doc: { documentNumber: string; shipToName: string; quantity: number; cbm?: number }) => {
+  const selectDocument = async (doc: { documentNumber: string; shipToName: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> }) => {
     const exists = manifest.items.some(item => item.document_number === doc.documentNumber)
     if (exists) {
       if (showToast) showToast(`Document ${doc.documentNumber} already added`, 'error')
@@ -389,6 +393,8 @@ export function CreateManifestTab({
       document_number: doc.documentNumber,
       ship_to_name: doc.shipToName,
       total_quantity: doc.quantity,
+      actual_qty_dispatch: doc.quantity,
+      actual_qty_by_material: doc.materialCounts,
       total_cbm: doc.cbm ?? 0,
     }
     setManifest({ ...manifest, items: [...manifest.items, newItem] })
@@ -412,12 +418,37 @@ export function CreateManifestTab({
     document_number: pendingDocument.documentNumber,
     ship_to_name: shipToName,
     total_quantity: pendingDocument.quantity,
+    actual_qty_dispatch: pendingDocument.quantity,
     total_cbm: pendingDocument.cbm ?? 0,
   }
   setManifest({ ...manifest, items: [...manifest.items, newItem] })
   if (showToast) showToast(`Document ${pendingDocument.documentNumber} added manually`, 'success')
   setPendingDocument(null)
 }
+
+  // Updates the editable "actual dispatch qty" for a single scanned item.
+  // Clamped to >= 0; typing an empty value is treated as 0 rather than NaN.
+  const updateDispatchQty = (idx: number, value: number) => {
+    const clamped = Number.isFinite(value) ? Math.max(0, value) : 0
+    const updatedItems = manifest.items.map((item, i) =>
+      i === idx ? { ...item, actual_qty_dispatch: clamped } : item
+    )
+    setManifest({ ...manifest, items: updatedItems })
+  }
+
+  const updateMaterialActualCount = (idx: number, materialCode: string, value: number) => {
+    const clamped = Number.isFinite(value) ? Math.max(0, value) : 0
+    const updatedItems = manifest.items.map((item, itemIndex) => {
+      if (itemIndex !== idx || !item.actual_qty_by_material) return item
+      const actualQtyByMaterial = { ...item.actual_qty_by_material, [materialCode]: clamped }
+      return {
+        ...item,
+        actual_qty_by_material: actualQtyByMaterial,
+        actual_qty_dispatch: Object.values(actualQtyByMaterial).reduce((sum, count) => sum + count, 0),
+      }
+    })
+    setManifest({ ...manifest, items: updatedItems })
+  }
 
   const handleProcessMassInput = async () => {
     if (!massInput.trim() || isProcessingMass) return
@@ -467,6 +498,8 @@ export function CreateManifestTab({
               document_number: doc.documentNumber,
               ship_to_name: doc.shipToName,
               total_quantity: doc.quantity,
+              actual_qty_dispatch: doc.quantity,
+              actual_qty_by_material: doc.materialCounts,
               total_cbm: doc.cbm ?? 0,
             }
             newItems.push(newItem)
@@ -1109,6 +1142,11 @@ export function CreateManifestTab({
                         Total: <span className="font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
                       </span>
                     )}
+                    {totalQuantity > 0 && (
+                      <span className="text-[10px]" style={{ color: C.textPrimary }}>
+                        Dispatched: <span className="font-[#0D1117] tabular-nums" style={{ color: totalDispatchedQuantity < totalQuantity ? C.amber : C.textSilver }}>{totalDispatchedQuantity}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -1120,8 +1158,12 @@ export function CreateManifestTab({
                   </div>
                 ) : (
                   <div style={{ borderTop: `1px solid ${C.divider}` }}>
-                    {manifest.items.map((item, idx) => (
-                      <div key={idx} className="group flex items-center gap-3 py-3.5 transition-all duration-150"
+                    {manifest.items.map((item, idx) => {
+                      const dispatchedQty = item.actual_qty_dispatch ?? item.total_quantity
+                      const isShort = dispatchedQty < item.total_quantity
+                      return (
+                      <React.Fragment key={idx}>
+                      <div className="group flex items-center gap-3 py-3.5 transition-all duration-150"
                         style={{ borderBottom: `1px solid ${C.divider}` }}>
                         <span className="text-[11px] font-bold w-5 flex-shrink-0" style={{ color: C.textGhost }}>
                           {String(item.item_number).padStart(2, '0')}
@@ -1130,11 +1172,28 @@ export function CreateManifestTab({
                           <p className="font-[#0D1117] text-sm truncate transition-colors group-hover:text-white" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
                           <p className="text-[11px] mt-0.5 truncate" style={{ color: C.textPrimary }}>{item.document_number}</p>
                         </div>
-                        <div className="flex items-baseline gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           {item.total_cbm != null && item.total_cbm > 0 && (
                             <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{item.total_cbm.toFixed(4)}</span>
                           )}
                           <span className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.accent }}>×{item.total_quantity}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Disp</span>
+                            <input
+                              type="number"
+                              min={0}
+                              value={dispatchedQty}
+                              onChange={(e) => updateDispatchQty(idx, e.target.value === '' ? 0 : Number(e.target.value))}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-14 px-1.5 py-1 text-xs text-right tabular-nums rounded"
+                              style={{
+                                background: C.inputBg,
+                                border: `1px solid ${isShort ? C.amber : C.inputBorder}`,
+                                color: isShort ? C.amber : C.inputText,
+                                outline: 'none',
+                              }}
+                            />
+                          </div>
                         </div>
                         <button onClick={() => removeItem(idx)} className="p-1.5 flex-shrink-0 touch-manipulation transition-colors" style={{ color: C.textGhost }}
                           onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
@@ -1142,7 +1201,29 @@ export function CreateManifestTab({
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                    ))}
+                      {item.actual_qty_by_material && Object.keys(item.actual_qty_by_material).length > 0 && (
+                        <div className="ml-8 py-2 space-y-2" style={{ borderBottom: `1px solid ${C.divider}` }}>
+                          {Object.entries(item.actual_qty_by_material).map(([materialCode, actualCount]) => (
+                            <div key={materialCode} className="flex items-center justify-between gap-3">
+                              <span className="text-[10px] uppercase tracking-widest truncate" style={{ color: C.textPrimary }}>{materialCode}</span>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Actual Count</span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={actualCount}
+                                  onChange={(e) => updateMaterialActualCount(idx, materialCode, e.target.value === '' ? 0 : Number(e.target.value))}
+                                  className="w-14 px-1.5 py-1 text-xs text-right tabular-nums rounded"
+                                  style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.inputText, outline: 'none' }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      </React.Fragment>
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -1203,22 +1284,29 @@ export function CreateManifestTab({
                     <span className="text-[10px]" style={{ color: C.textPrimary }}>
                       Total Qty: <span className="font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
                     </span>
+                    <span className="text-[10px]" style={{ color: C.textPrimary }}>
+                      Dispatched: <span className="font-[#0D1117] tabular-nums" style={{ color: totalDispatchedQuantity < totalQuantity ? C.amber : C.textSilver }}>{totalDispatchedQuantity}</span>
+                    </span>
                   </div>
                 </div>
 
                 {/* Header row */}
-                <div className={`grid gap-x-3 pb-2.5 text-[10px] uppercase tracking-widest font-bold ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto]'}`}
+                <div className={`grid gap-x-3 pb-2.5 text-[10px] uppercase tracking-widest font-bold ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto_auto]'}`}
                   style={{ color: C.textGhost, borderBottom: `1px solid ${C.border}` }}>
                   <span>#</span>
                   <span>Ship To</span>
                   <span className="hidden sm:block">DN / TRA</span>
                   {hasCbm && <span className="text-right" style={{ color: C.amber }}>CBM</span>}
                   <span className="text-right">Qty</span>
+                  <span className="text-right">Disp.</span>
                 </div>
 
-                {manifest.items.map((item) => (
+                {manifest.items.map((item) => {
+                  const dispatchedQty = item.actual_qty_dispatch ?? item.total_quantity
+                  const isShort = dispatchedQty < item.total_quantity
+                  return (
                   <div key={item.item_number}
-                    className={`grid gap-x-3 py-3.5 items-center group/row hover:pl-1 transition-all duration-150 ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto]'}`}
+                    className={`grid gap-x-3 py-3.5 items-center group/row hover:pl-1 transition-all duration-150 ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto_auto]'}`}
                     style={{ borderBottom: `1px solid ${C.divider}` }}>
                     <span className="text-[11px] font-bold group-hover/row:text-[#E8192C] transition-colors" style={{ color: C.textGhost }}>
                       {String(item.item_number).padStart(2, '0')}
@@ -1234,18 +1322,23 @@ export function CreateManifestTab({
                       </span>
                     )}
                     <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: C.accent }}>×{item.total_quantity}</span>
+                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: isShort ? C.amber : C.textSilver }}>×{dispatchedQty}</span>
                   </div>
-                ))}
+                  )
+                })}
 
                 {/* Grand total footer */}
-                {hasCbm && manifest.items.length > 0 && (
-                  <div className={`grid gap-x-3 py-3 items-center ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto]'}`}
+                {manifest.items.length > 0 && (
+                  <div className={`grid gap-x-3 py-3 items-center ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto_auto]'}`}
                     style={{ borderTop: `1px solid ${C.border}`, background: '#0a0a0a' }}>
                     <span />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-right col-span-2 hidden sm:block" style={{ color: C.textGhost }}>Grand Total</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest col-span-1 sm:hidden" style={{ color: C.textGhost }}>Total</span>
-                    <span className="text-[12px] font-[#0D1117] tabular-nums text-right" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                    {hasCbm && (
+                      <span className="text-[12px] font-[#0D1117] tabular-nums text-right" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                    )}
                     <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: C.accent }}>×{totalQuantity}</span>
+                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: totalDispatchedQuantity < totalQuantity ? C.amber : C.textSilver }}>×{totalDispatchedQuantity}</span>
                   </div>
                 )}
               </div>

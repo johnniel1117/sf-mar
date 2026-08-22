@@ -114,6 +114,7 @@ export function useTripManifest() {
       ship_to_name: data.ship_to_name || 'N/A',
       total_quantity: data.total_quantity || 1,
       total_cbm: totalCbm,
+      material_counts: getMaterialCounts(data.serial_data),
     }
     
     console.log('Returning lookup result:', result)
@@ -156,6 +157,20 @@ export function useTripManifest() {
       console.error('Error:', error)
     }
   }, [])
+
+function getMaterialCounts(serialData: unknown): Record<string, number> {
+  try {
+    const serials = typeof serialData === 'string' ? JSON.parse(serialData) : serialData
+    if (!Array.isArray(serials)) return {}
+    return serials.reduce((counts: Record<string, number>, serial: { materialCode?: string }) => {
+      const materialCode = String(serial.materialCode || '').trim()
+      if (materialCode) counts[materialCode] = (counts[materialCode] || 0) + 1
+      return counts
+    }, {})
+  } catch {
+    return {}
+  }
+}
 
   return {
     isLoading,
