@@ -51,6 +51,7 @@ export default async function ManifestSerialsPage({ params, searchParams }: Page
       shipToName:    serials[0]?.shipToName    || item.ship_to_name || '',
       shipToAddress: serials[0]?.shipToAddress || '',
       rows:          serials,
+      totalQuantity: item.actual_qty_dispatch ?? item.total_quantity,
     }
   })
 

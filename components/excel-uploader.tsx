@@ -487,6 +487,8 @@ export function SerialListPrinter() {
   const [matchedDNs,   setMatchedDNs]   = useState<DNGroup[]>([])
   const [unmatchedDNs, setUnmatchedDNs] = useState<string[]>([])
   const [customQuantities, setCustomQuantities] = useState<Record<string, number>>({})
+  const [bracketGroupsPending, setBracketGroupsPending] = useState<DNGroup[]>([])
+  const [showBracketConfirmation, setShowBracketConfirmation] = useState(false)
   const [processed,    setProcessed]    = useState(false)
   const [expandedDN,   setExpandedDN]   = useState<string | null>(null)
   const [search,       setSearch]       = useState('')
@@ -622,8 +624,13 @@ export function SerialListPrinter() {
         .filter(group => group.rows.some(isBracketMaterial))
         .map(group => [group.dnNo, group.rows.filter(row => row.barcode || row.materialCode).length])
     ))
+    const bracketGroups = matched.filter(group => group.rows.some(isBracketMaterial))
+    const regularGroups = matched.filter(group => !group.rows.some(isBracketMaterial))
+    setBracketGroupsPending(bracketGroups)
+    setShowBracketConfirmation(bracketGroups.length > 0)
     setProcessed(true)
     showToast(`${matched.length} matched · ${unmatched.length} not found`, matched.length ? 'success' : 'error')
+    if (regularGroups.length > 0) saveToSupabase(regularGroups)
   }
 
   // Retrieve previously saved DN(s) straight from the backend — no Excel upload needed.
@@ -960,15 +967,6 @@ export function SerialListPrinter() {
                         </button>
                       )}
                     </div>
-                    {matchedDNs.length > 0 && (
-                      <button
-                        onClick={() => saveToSupabase(matchedDNs)}
-                        className="inline-flex items-center justify-center gap-2 px-5 h-9 font-bold text-[10px] uppercase tracking-widest transition-all"
-                        style={{ background: '#22c55e', color: '#fff' }}
-                      >
-                        Upload Matched DNs
-                      </button>
-                    )}
                   </div>
 
                   {/* Column headers */}
@@ -1137,6 +1135,51 @@ export function SerialListPrinter() {
           </div>
         </div>
       </div>
+
+      {showBracketConfirmation && bracketGroupsPending.length > 0 && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+          role="dialog" aria-modal="true" aria-labelledby="bracket-confirmation-title">
+          <div className="w-full max-w-md p-6 sm:p-7"
+            style={{ background: C.surface, border: `1px solid ${C.amber}`, boxShadow: '0 24px 70px rgba(0,0,0,0.65)' }}>
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: C.amber }} />
+              <div>
+                <h2 id="bracket-confirmation-title" className="text-sm font-bold uppercase tracking-widest" style={{ color: C.amber }}>
+                  Bracket detected
+                </h2>
+                <p className="text-sm mt-3 leading-relaxed" style={{ color: C.textSilver }}>
+                  {bracketGroupsPending.length} bracket DN{bracketGroupsPending.length !== 1 ? 's' : ''} found. Please confirm the customized quantity before uploading.
+                </p>
+                <div className="mt-4 space-y-2">
+                  {bracketGroupsPending.map(group => (
+                    <div key={group.dnNo} className="flex items-center justify-between px-3 py-2" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
+                      <span className="text-xs font-mono" style={{ color: C.textPrimary }}>{group.dnNo}</span>
+                      <span className="text-xs font-bold tabular-nums" style={{ color: C.amber }}>{customQuantities[group.dnNo] ?? group.rows.length} units</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setShowBracketConfirmation(false)}
+                className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest"
+                style={{ border: `1px solid ${C.border}`, color: C.textSub }}>
+                Cancel
+              </button>
+              <button onClick={() => {
+                saveToSupabase(bracketGroupsPending)
+                setBracketGroupsPending([])
+                setShowBracketConfirmation(false)
+              }}
+                className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest"
+                style={{ background: '#22c55e', color: '#fff' }}>
+                Confirm & Upload
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Toast ── */}
       {toast.show && (

@@ -13,6 +13,7 @@ export interface DNGroup {
   shipToName:    string
   shipToAddress: string
   rows:          SerialEntry[]
+  totalQuantity?: number
 }
 
 const getCBMFromMatcode = (code: string): number | null => {
@@ -22,6 +23,14 @@ const getCBMFromMatcode = (code: string): number | null => {
 
 function formatDateShort(): string {
   return new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+}
+
+function isBracketSerial(serial: SerialEntry): boolean {
+  const values = Object.values(serial).map(value =>
+    String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  )
+  return values.some(value => value.startsWith('TD0042653'))
+    || values.some(value => value.includes('BRACKET') || value.includes('BRKT'))
 }
 
 export default function DealerCopyView({
@@ -78,7 +87,10 @@ export default function DealerCopyView({
       <div className="max-w-[820px] mx-auto space-y-6 px-2 sm:px-4 pb-10">
         {groups.map(group => {
           const rows = group.rows.filter(r => r.materialCode && r.barcode)
-          const totalQuantity = rows.length
+          const hasBracket = rows.some(isBracketSerial)
+          const totalQuantity = hasBracket && group.totalQuantity != null
+            ? group.totalQuantity
+            : rows.length
           const totalCbm = rows.reduce((s, r) => {
             const c = getCBMFromMatcode(r.materialCode)
             return c != null ? s + c : s
