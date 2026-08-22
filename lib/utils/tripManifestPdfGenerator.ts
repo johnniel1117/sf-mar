@@ -523,7 +523,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
         <th style="width:100px">Mat Desc</th>
         <th style="width:55px">Location</th>
         <th style="width:45px">Qty</th>
-        <th style="width:60px">Actual Dispatch</th>
+        <th style="width:60px">Dsptch Qty</th>
         <th style="width:150px">Remarks</th>
       </tr>
     </thead>
@@ -535,7 +535,7 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
 
   <!-- Summary line -->
   <div class="footer-summary">
-    TOTAL DOCUMENTS: ${totalDocs}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL QUANTITY: ${grandQty}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL ACTUAL DISPATCH: ${actualQty}
+    TOTAL DOCUMENTS: ${totalDocs}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL QUANTITY: ${grandQty}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL DISPATCH QUANTITY: ${actualQty}
   </div>
 
   <!-- Signatures -->
