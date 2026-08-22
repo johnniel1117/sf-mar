@@ -427,20 +427,14 @@ export function CreateManifestTab({
   setPendingDocument(null)
 }
 
-  // Updates the editable "actual dispatch qty" for a single scanned item.
-  // Clamped to >= 0; typing an empty value is treated as 0 rather than NaN.
-  const updateDispatchQty = (idx: number, value: number) => {
-    const clamped = Number.isFinite(value) ? Math.max(0, value) : 0
-    const updatedItems = manifest.items.map((item, i) =>
-      i === idx ? { ...item, actual_qty_dispatch: clamped } : item
-    )
-    setManifest({ ...manifest, items: updatedItems })
-  }
-
   const updateMaterialActualCount = (idx: number, materialCode: string, value: number) => {
-    const clamped = Number.isFinite(value) ? Math.max(0, value) : 0
     const updatedItems = manifest.items.map((item, itemIndex) => {
       if (itemIndex !== idx || !item.actual_qty_by_material) return item
+      const otherMaterialCount = Object.entries(item.actual_qty_by_material)
+        .filter(([code]) => code !== materialCode)
+        .reduce((sum, [, count]) => sum + count, 0)
+      const requestedCount = Number.isFinite(value) ? Math.max(0, value) : 0
+      const clamped = Math.min(requestedCount, Math.max(0, item.total_quantity - otherMaterialCount))
       const actualQtyByMaterial = { ...item.actual_qty_by_material, [materialCode]: clamped }
       return {
         ...item,
@@ -1117,7 +1111,7 @@ export function CreateManifestTab({
                     </div>
 
                     {/* Info text */}
-                    <div className="mt-3 p-3 flex items-start gap-2 text-[11px]" style={{ background: 'rgba(245,166,35,0.05)', border: `1px solid rgba(245,166,35,0.2)`, borderRadius: '6px', color: C.textPrimary }}>
+                    <div className="mt-3 p-3 flex items-start gap-2 text-[11px]" style={{ border: `1px solid`, borderRadius: '6px', color: C.textPrimary }}>
                       <span style={{ color: C.amber, fontWeight: 'bold', marginTop: '2px' }}>i</span>
                       <div>
                         <p>Separate document numbers with commas or new lines</p>
@@ -1128,10 +1122,40 @@ export function CreateManifestTab({
                 )}
               </div>
 
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3.5" style={{ background: totalDocuments > 0 ? 'rgba(34,197,94,0.045)' : C.surface, border: `1px solid ${totalDocuments > 0 ? 'rgba(34,197,94,0.2)' : C.border}` }}>
+                <div className="flex items-start gap-2.5">
+                  {totalDocuments > 0
+                    ? <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#22c55e' }} />
+                    : <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: C.textMuted }} />}
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: totalDocuments > 0 ? '#86efac' : C.textSilver }}>
+                      {totalDocuments > 0 ? 'Orders added' : 'Waiting for orders'}
+                    </p>
+                    <p className="text-[11px] mt-1" style={{ color: C.textMuted }}>
+                      {totalDocuments > 0 ? 'The order list below is ready to check before review.' : 'Add a DN or TRA number above to build the order list.'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 pl-6 sm:pl-0">
+                  <div>
+                    <p className="text-[9px] uppercase tracking-widest" style={{ color: C.textMuted }}>Orders</p>
+                    <p className="text-base font-bold tabular-nums" style={{ color: C.textPrimary }}>{totalDocuments}</p>
+                  </div>
+                  <div className="h-7 w-px" style={{ background: C.divider }} />
+                  <div>
+                    <p className="text-[9px] uppercase tracking-widest" style={{ color: C.textMuted }}>Units</p>
+                    <p className="text-base font-bold tabular-nums" style={{ color: '#fff' }}>{totalQuantity}</p>
+                  </div>
+                </div>
+              </div>
+
               {/* Scanned list */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <SectionLabel icon={Package}>Scanned ({totalDocuments})</SectionLabel>
+                  <div>
+                    <SectionLabel icon={Package}>Orders ({totalDocuments})</SectionLabel>
+                    <p className="text-[11px] mt-1" style={{ color: C.textMuted }}>Expected is the order quantity. Dispatched is what will be recorded.</p>
+                  </div>
                   <div className="flex items-center gap-3">
                     {hasCbm && (
                       <span className="text-[10px]" style={{ color: C.textPrimary }}>
@@ -1173,28 +1197,27 @@ export function CreateManifestTab({
                           <p className="font-[#0D1117] text-sm truncate transition-colors group-hover:text-white" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
                           <p className="text-[11px] mt-0.5 truncate" style={{ color: C.textPrimary }}>{item.document_number}</p>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                           {item.total_cbm != null && item.total_cbm > 0 && (
                             <span className="text-[10px] font-bold tabular-nums" style={{ color: C.amber }}>{item.total_cbm.toFixed(4)}</span>
                           )}
-                          <span className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.accent }}>×{item.total_quantity}</span>
                           <div className="flex items-center gap-1">
-                            <span className="text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Disp</span>
-                            <input
-                              type="number"
-                              min={0}
-                              value={dispatchedQty}
-                              onChange={(e) => updateDispatchQty(idx, e.target.value === '' ? 0 : Number(e.target.value))}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-14 px-1.5 py-1 text-xs text-right tabular-nums rounded"
-                              style={{
-                                background: C.inputBg,
-                                border: `1px solid ${isShort ? C.amber : C.inputBorder}`,
-                                color: isShort ? C.amber : C.inputText,
-                                outline: 'none',
-                              }}
-                            />
+                            <span className="hidden sm:inline text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Expected</span>
+                            <span className="sm:hidden text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Ord.</span>
+                            <span className="w-9 sm:w-14 text-right text-sm font-[#0D1117] tabular-nums" style={{ color: '#fff' }}>
+                              {item.total_quantity}
+                            </span>
                           </div>
+                          <div className="flex items-center gap-1">
+                            <span className="hidden sm:inline text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Disp</span>
+                            <span className="sm:hidden text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Disp.</span>
+                            <span className="w-9 sm:w-14 text-right text-sm font-[#0D1117] tabular-nums" style={{ color: '#fff' }}>
+                              {dispatchedQty}
+                            </span>
+                          </div>
+                          <span className="hidden md:inline-flex items-center gap-1 text-[9px] uppercase tracking-widest px-2 py-1" style={{ color: isShort ? C.amber : '#86efac', background: isShort ? 'rgba(193,248,92,0.08)' : 'rgba(34,197,94,0.08)', border: `1px solid ${isShort ? 'rgba(193,248,92,0.18)' : 'rgba(34,197,94,0.18)'}` }}>
+                            {isShort ? 'Check qty' : 'Ready'}
+                          </span>
                         </div>
                         <button onClick={() => removeItem(idx)} className="p-1.5 flex-shrink-0 touch-manipulation transition-colors" style={{ color: C.textGhost }}
                           onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
@@ -1212,7 +1235,10 @@ export function CreateManifestTab({
                                 <input
                                   type="number"
                                   min={0}
-                                  value={actualCount}
+                                  max={Math.max(0, item.total_quantity - Object.entries(item.actual_qty_by_material ?? {})
+                                    .filter(([code]) => code !== materialCode)
+                                    .reduce((sum, [, count]) => sum + count, 0))}
+                                  value={Math.min(actualCount, item.total_quantity)}
                                   onChange={(e) => updateMaterialActualCount(idx, materialCode, e.target.value === '' ? 0 : Number(e.target.value))}
                                   className="w-14 px-1.5 py-1 text-xs text-right tabular-nums rounded"
                                   style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.inputText, outline: 'none' }}
@@ -1322,8 +1348,8 @@ export function CreateManifestTab({
                         {item.total_cbm != null && item.total_cbm > 0 ? item.total_cbm.toFixed(4) : '—'}
                       </span>
                     )}
-                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: C.accent }}>×{item.total_quantity}</span>
-                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: isShort ? C.amber : C.textSilver }}>×{dispatchedQty}</span>
+                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: '#fff' }}>×{item.total_quantity}</span>
+                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: '#fff' }}>×{dispatchedQty}</span>
                   </div>
                   )
                 })}
@@ -1339,7 +1365,7 @@ export function CreateManifestTab({
                       <span className="text-[12px] font-[#0D1117] tabular-nums text-right" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
                     )}
                     <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: C.accent }}>×{totalQuantity}</span>
-                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: totalDispatchedQuantity < totalQuantity ? C.amber : C.textSilver }}>×{totalDispatchedQuantity}</span>
+                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: '#fff' }}>×{totalDispatchedQuantity}</span>
                   </div>
                 )}
               </div>

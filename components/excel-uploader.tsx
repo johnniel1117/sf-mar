@@ -1140,42 +1140,58 @@ export function SerialListPrinter() {
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
           role="dialog" aria-modal="true" aria-labelledby="bracket-confirmation-title">
-          <div className="w-full max-w-md p-6 sm:p-7"
-            style={{ background: C.surface, border: `1px solid ${C.amber}`, boxShadow: '0 24px 70px rgba(0,0,0,0.65)' }}>
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: C.amber }} />
-              <div>
-                <h2 id="bracket-confirmation-title" className="text-sm font-bold uppercase tracking-widest" style={{ color: C.amber }}>
-                  Bracket detected
-                </h2>
-                <p className="text-sm mt-3 leading-relaxed" style={{ color: C.textSilver }}>
-                  {bracketGroupsPending.length} bracket DN{bracketGroupsPending.length !== 1 ? 's' : ''} found. Please confirm the customized quantity before uploading.
-                </p>
-                <div className="mt-4 space-y-2">
-                  {bracketGroupsPending.map(group => (
-                    <div key={group.dnNo} className="flex items-center justify-between px-3 py-2" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
-                      <span className="text-xs font-mono" style={{ color: C.textPrimary }}>{group.dnNo}</span>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          min={0}
-                          value={customQuantities[group.dnNo] ?? group.savedQuantity ?? group.rows.length}
-                          onChange={e => setCustomQuantities(previous => ({
-                            ...previous,
-                            [group.dnNo]: Math.max(0, Number(e.target.value) || 0),
-                          }))}
-                          className="w-16 px-1.5 py-1 text-xs text-right tabular-nums outline-none"
-                          style={{ background: C.surface, border: `1px solid ${C.amber}`, color: C.amber }}
-                          aria-label={`Total quantity for ${group.dnNo}`}
-                        />
-                        <span className="text-xs font-bold tabular-nums" style={{ color: C.amber }}>units</span>
-                      </label>
-                    </div>
-                  ))}
+          <div className="w-full max-w-lg overflow-hidden"
+            style={{ background: C.surface, border: `1px solid ${C.border}`, boxShadow: '0 24px 70px rgba(0,0,0,0.65)' }}>
+            <div className="px-6 py-5 sm:px-7" style={{ borderBottom: `1px solid ${C.divider}` }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center" style={{ background: `${C.amber}14`, border: `1px solid ${C.amber}45` }}>
+                  <AlertCircle className="w-4 h-4" style={{ color: C.amber }} />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.22em] font-bold" style={{ color: C.textMuted }}>Quantity review</p>
+                  <h2 id="bracket-confirmation-title" className="mt-1 text-base font-bold" style={{ color: C.textPrimary }}>
+                    Bracket orders need a final quantity
+                  </h2>
+                  <p className="text-xs mt-2 leading-relaxed" style={{ color: C.textSub }}>
+                    The serial list shows the bracket record, but the quantity below is the actual number of units to upload.
+                  </p>
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
+
+            <div className="px-6 py-5 sm:px-7">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: C.textMuted }}>Orders to upload</span>
+                <span className="text-xs font-bold tabular-nums" style={{ color: C.amber }}>{bracketGroupsPending.length}</span>
+              </div>
+              <div className="space-y-2">
+                {bracketGroupsPending.map(group => (
+                  <div key={group.dnNo} className="flex items-center justify-between gap-4 px-3 py-3" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
+                    <div className="min-w-0">
+                      <p className="text-xs font-mono font-bold truncate" style={{ color: C.textPrimary }}>{group.dnNo}</p>
+                      <p className="text-[10px] mt-1" style={{ color: C.textMuted }}>{group.rows.filter(row => row.barcode || row.materialCode).length} serial rows detected</p>
+                    </div>
+                    <label className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: C.textSub }}>Final qty</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={customQuantities[group.dnNo] ?? group.savedQuantity ?? group.rows.length}
+                        onChange={e => setCustomQuantities(previous => ({
+                          ...previous,
+                          [group.dnNo]: Math.max(0, Number(e.target.value) || 0),
+                        }))}
+                        className="w-20 h-9 px-2 text-sm text-right font-bold tabular-nums outline-none"
+                        style={{ background: C.surface, border: `1px solid ${C.amber}`, color: C.amber }}
+                        aria-label={`Final quantity for ${group.dnNo}`}
+                      />
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 px-6 py-4 sm:px-7" style={{ background: C.bg, borderTop: `1px solid ${C.divider}` }}>
               <button onClick={() => setShowBracketConfirmation(false)}
                 className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest"
                 style={{ border: `1px solid ${C.border}`, color: C.textSub }}>
