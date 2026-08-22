@@ -74,6 +74,7 @@ interface DNGroup {
   shipToName:   string
   shipToAddress:string
   rows:         SerialRow[]
+  savedQuantity?: number
 }
 
 const CUSTOM_QTY_MATERIAL = 'TD0042653'
@@ -244,6 +245,7 @@ function apiRowToDNGroup(row: any): DNGroup {
     shipToName:    row?.ship_to_name    || first?.shipToName    || '',
     shipToAddress: first?.shipToAddress || '',
     rows,
+    savedQuantity: typeof row?.total_quantity === 'number' ? row.total_quantity : undefined,
   }
 }
 
@@ -634,6 +636,14 @@ export function SerialListPrinter() {
       const { matched, unmatched } = await fetchSavedDNs(requested)
       setMatchedDNs(matched)
       setUnmatchedDNs(unmatched)
+      setCustomQuantities(Object.fromEntries(
+        matched
+          .filter(group => group.rows.some(isBracketMaterial))
+          .map(group => [
+            group.dnNo,
+            group.savedQuantity ?? group.rows.filter(row => row.barcode || row.materialCode).length,
+          ])
+      ))
       setProcessed(true)
       showToast(`${matched.length} retrieved · ${unmatched.length} not found`, matched.length ? 'success' : 'error')
     } catch {
@@ -1012,7 +1022,7 @@ export function SerialListPrinter() {
                                 <input
                                   type="number"
                                   min={0}
-                                  value={customQuantities[group.dnNo] ?? rows.length}
+                                  value={customQuantities[group.dnNo] ?? group.savedQuantity ?? rows.length}
                                   onChange={e => setCustomQuantities(previous => ({
                                     ...previous,
                                     [group.dnNo]: Math.max(0, Number(e.target.value) || 0),
