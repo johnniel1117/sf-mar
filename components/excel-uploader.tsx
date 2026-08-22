@@ -76,6 +76,16 @@ interface DNGroup {
   rows:         SerialRow[]
 }
 
+const CUSTOM_QTY_MATERIAL = 'TD0042653'
+
+function isBracketMaterial(row: SerialRow): boolean {
+  const values = Object.values(row).map(value =>
+    String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  )
+  return values.some(value => value.startsWith(CUSTOM_QTY_MATERIAL))
+    || values.some(value => value.includes('BRACKET') || value.includes('BRKT'))
+}
+
 // Shape returned when tracing/looking up a previously saved upload.
 // Adjust the optional fields to match whatever your GET endpoint actually returns.
 interface TraceRecord {
@@ -299,9 +309,9 @@ function formatDateShort(): string {
   return new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
 }
 
-function buildDNPageHtml(group: DNGroup): string {
+function buildDNPageHtml(group: DNGroup, customQuantity?: number): string {
   const rows = group.rows.filter(r => r.materialCode && r.barcode)
-  const totalQuantity = rows.length
+  const totalQuantity = customQuantity ?? rows.length
 
   const rowsHtml = rows.map((r, idx) => `
     <tr>
@@ -368,12 +378,12 @@ const PDF_STYLES = `
   @media print{body{margin:0;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:portrait;margin:10mm}}
 `
 
-function printSerialLists(groups: DNGroup[]): void {
+function printSerialLists(groups: DNGroup[], customQuantities: Record<string, number> = {}): void {
   const win = window.open('', '', 'width=1200,height=800')
   if (!win) return
   const pages = groups.map((g, i) => {
     const isLast = i === groups.length - 1
-    return `<div style="${isLast ? '' : 'page-break-after:always'}">${buildDNPageHtml(g)}</div>`
+    return `<div style="${isLast ? '' : 'page-break-after:always'}">${buildDNPageHtml(g, customQuantities[g.dnNo])}</div>`
   }).join('\n')
   win.document.write(`<!DOCTYPE html><html><head><title>Serial Lists</title><style>${PDF_STYLES}</style></head><body>${pages}</body></html>`)
   win.document.close()
@@ -474,6 +484,7 @@ export function SerialListPrinter() {
   const [dnInput,      setDnInput]      = useState('')
   const [matchedDNs,   setMatchedDNs]   = useState<DNGroup[]>([])
   const [unmatchedDNs, setUnmatchedDNs] = useState<string[]>([])
+  const [customQuantities, setCustomQuantities] = useState<Record<string, number>>({})
   const [processed,    setProcessed]    = useState(false)
   const [expandedDN,   setExpandedDN]   = useState<string | null>(null)
   const [search,       setSearch]       = useState('')
@@ -517,7 +528,8 @@ export function SerialListPrinter() {
     for (const group of groups) {
       try {
         const rows = group.rows.filter(r => r.materialCode && r.barcode)
-        const totalQuantity = rows.length
+        const customQuantity = customQuantities[group.dnNo]
+        const totalQuantity = customQuantity ?? rows.length
 
         // Build materialData summary per DN (grouped by materialCode)
         const matMap = new Map<string, { materialCode: string; materialDescription: string; qty: number; cbm: number | null }>()
@@ -525,6 +537,12 @@ export function SerialListPrinter() {
           const key = r.materialCode
           if (matMap.has(key)) matMap.get(key)!.qty += 1
           else matMap.set(key, { materialCode: r.materialCode, materialDescription: r.materialDesc, qty: 1, cbm: getCBMFromMatcode(r.materialCode) })
+        }
+
+        if (customQuantity != null) {
+          const customMaterialCode = rows.find(isBracketMaterial)?.materialCode
+          const customMaterial = customMaterialCode ? matMap.get(customMaterialCode) : undefined
+          if (customMaterial) customMaterial.qty = customQuantity
         }
 
         const isDN = group.dnNo.startsWith('DN') || group.dnNo.includes('-DN-')
@@ -597,9 +615,13 @@ export function SerialListPrinter() {
 
     setMatchedDNs(matched)
     setUnmatchedDNs(unmatched)
+    setCustomQuantities(Object.fromEntries(
+      matched
+        .filter(group => group.rows.some(isBracketMaterial))
+        .map(group => [group.dnNo, group.rows.filter(row => row.barcode || row.materialCode).length])
+    ))
     setProcessed(true)
     showToast(`${matched.length} matched · ${unmatched.length} not found`, matched.length ? 'success' : 'error')
-    if (matched.length > 0) saveToSupabase(matched)
   }
 
   // Retrieve previously saved DN(s) straight from the backend — no Excel upload needed.
@@ -630,7 +652,7 @@ export function SerialListPrinter() {
     g.shipToName.toLowerCase().includes(search.toLowerCase())
   )
 
-  const totalQty = matchedDNs.reduce((s, g) => s + g.rows.filter(r => r.barcode || r.materialCode).length, 0)
+  const totalQty = matchedDNs.reduce((s, g) => s + (customQuantities[g.dnNo] ?? g.rows.filter(r => r.barcode || r.materialCode).length), 0)
 
   const availableDNs = Object.keys(dnMap)
 
@@ -676,7 +698,7 @@ export function SerialListPrinter() {
                 <span className="hidden sm:inline">Excel</span>
               </button>
               <button
-                onClick={() => printSerialLists(matchedDNs)}
+                onClick={() => printSerialLists(matchedDNs, customQuantities)}
                 className="flex items-center gap-1.5 px-3 py-1.5 border text-[10px] font-bold uppercase tracking-widest transition-all duration-150"
                 style={{ borderColor: C.accent, color: C.accent, background: `${C.accent}08` }}
                 onMouseEnter={e => { e.currentTarget.style.background = `${C.accent}18` }}
@@ -928,6 +950,15 @@ export function SerialListPrinter() {
                         </button>
                       )}
                     </div>
+                    {matchedDNs.length > 0 && (
+                      <button
+                        onClick={() => saveToSupabase(matchedDNs)}
+                        className="inline-flex items-center justify-center gap-2 px-5 h-9 font-bold text-[10px] uppercase tracking-widest transition-all"
+                        style={{ background: '#22c55e', color: '#fff' }}
+                      >
+                        Upload Matched DNs
+                      </button>
+                    )}
                   </div>
 
                   {/* Column headers */}
@@ -974,9 +1005,28 @@ export function SerialListPrinter() {
                             </div>
                             <span className="hidden sm:block text-[11px] font-bold tabular-nums w-36 flex-shrink-0 font-mono" style={{ color: C.textSilver }}>{group.dnNo}</span>
                             <span className="w-12 text-center text-2xl font-bold group-hover:text-white transition-colors tabular-nums flex-shrink-0" style={{ color: C.textPrimary }}>{rows.length}</span>
+                            {rows.some(isBracketMaterial) && (
+                              <label className="flex items-center gap-2 flex-shrink-0" title="Bracket detected: enter the actual quantity represented by the serial number">
+                                <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: C.amber }}>Bracket detected</span>
+                                <span className="text-[9px] uppercase tracking-widest" style={{ color: C.textMuted }}>Qty</span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={customQuantities[group.dnNo] ?? rows.length}
+                                  onChange={e => setCustomQuantities(previous => ({
+                                    ...previous,
+                                    [group.dnNo]: Math.max(0, Number(e.target.value) || 0),
+                                  }))}
+                                  onClick={e => e.stopPropagation()}
+                                  className="w-16 px-1.5 py-1 text-xs text-right tabular-nums outline-none"
+                                  style={{ background: C.bg, border: `1px solid ${C.amber}`, color: C.amber }}
+                                  aria-label={`Total quantity for ${group.dnNo}`}
+                                />
+                              </label>
+                            )}
                             <div className="flex items-center gap-2 w-16 flex-shrink-0 justify-end">
                               <button
-                                onClick={e => { e.stopPropagation(); printSerialLists([group]) }}
+                                onClick={e => { e.stopPropagation(); printSerialLists([group], customQuantities) }}
                                 className="p-1.5 transition-colors"
                                 style={{ color: C.textGhost, border: `1px solid ${C.border}` }}
                                 onMouseEnter={e => { e.currentTarget.style.borderColor = C.amber; e.currentTarget.style.color = C.amber }}
@@ -1015,7 +1065,7 @@ export function SerialListPrinter() {
                                 ))}
                               </div>
                               <div className="flex items-center gap-3 pt-2">
-                                <button onClick={() => printSerialLists([group])}
+                                <button onClick={() => printSerialLists([group], customQuantities)}
                                   className="inline-flex items-center gap-1.5 px-4 py-2 border text-[11px] font-bold uppercase tracking-widest transition-all"
                                   style={{ border: `1px solid ${C.amber}40`, color: C.amber }}
                                   onMouseEnter={e => { e.currentTarget.style.background = `${C.amber}05`; e.currentTarget.style.borderColor = C.amber }}

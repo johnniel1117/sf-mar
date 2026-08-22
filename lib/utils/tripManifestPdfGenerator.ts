@@ -52,6 +52,14 @@ function normalizeDN(dn: string): string {
   return dn.replace(/^0+/, '')
 }
 
+function isBracketSerial(serial: SerialEntry): boolean {
+  const values = Object.values(serial).map(value =>
+    String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  )
+  return values.some(value => value.startsWith('TD0042653'))
+    || values.some(value => value.includes('BRACKET') || value.includes('BRKT'))
+}
+
 export async function fetchSerialData(
   dns: string[]
 ): Promise<Map<string, SerialEntry[]>> {
@@ -110,7 +118,7 @@ export function buildDetailedRows(
 
     if (serials && serials.length > 0) {
       // Group serials by materialCode — count barcodes per group
-      const matMap = new Map<string, { desc: string; location: string; qty: number }>()
+      const matMap = new Map<string, { desc: string; location: string; qty: number; isBracket: boolean }>()
       for (const s of serials) {
         const key = s.materialCode
         if (!matMap.has(key)) {
@@ -118,17 +126,20 @@ export function buildDetailedRows(
             desc:     s.materialDesc || '—',
             location: s.location     || '—',
             qty:      0,
+            isBracket: false,
           })
         }
-        matMap.get(key)!.qty++
+        const material = matMap.get(key)!
+        material.qty++
+        material.isBracket ||= isBracketSerial(s)
       }
 
       const lines: MaterialLine[] = Array.from(matMap.entries()).map(([code, v], lineIndex) => ({
         materialCode: code,
         materialDesc: v.desc,
         location:     v.location,
-        qty:          v.qty,
-        actualQty:    item.actual_qty_by_material?.[code] ?? (
+        qty:          v.isBracket ? item.total_quantity ?? v.qty : v.qty,
+        actualQty:    v.isBracket ? item.actual_qty_dispatch ?? item.total_quantity ?? v.qty : item.actual_qty_by_material?.[code] ?? (
           item.actual_qty_by_material ? 0 : lineIndex === 0 ? item.actual_qty_dispatch ?? item.total_quantity ?? 0 : 0
         ),
       }))

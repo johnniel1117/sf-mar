@@ -62,8 +62,15 @@ export async function POST(request: NextRequest) {
       serialDataCount: payload.serialData?.length,
     })
 
-    // Calculate total quantity from material data
-    const totalQty = payload.data.reduce((sum, item) => sum + (item.qty || 0), 0)
+    // Bracket serials can represent multiple units with one barcode, so use
+    // the editable quantity sent by the uploader for those records.
+    const calculatedTotalQty = payload.data.reduce((sum, item) => sum + (item.qty || 0), 0)
+    const hasBracketSerial = payload.serialData.some(serial =>
+      Object.values(serial).some(value =>
+        String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').startsWith('TD0042653')
+      )
+    )
+    const totalQty = hasBracketSerial ? payload.totalQuantity : calculatedTotalQty
 
     // Calculate total CBM from material data
     const totalCbm = payload.data.reduce((sum, item) => {

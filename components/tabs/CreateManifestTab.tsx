@@ -56,8 +56,8 @@ interface CreateManifestTabProps {
   saveManifest: () => void
   showManualEntryModal: boolean
   setShowManualEntryModal: (show: boolean) => void
-  pendingDocument: { documentNumber: string; quantity: number; cbm?: number } | null
-  setPendingDocument: (doc: { documentNumber: string; quantity: number; cbm?: number } | null) => void
+  pendingDocument: { documentNumber: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> } | null
+  setPendingDocument: (doc: { documentNumber: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> } | null) => void
   addDocumentWithManualShipTo: (shipToName: string) => void
   searchDocument: (documentNumber: string) => Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> }> | null>
   showToast?: (message: string, type: 'success' | 'error' | 'info') => void
@@ -419,6 +419,7 @@ export function CreateManifestTab({
     ship_to_name: shipToName,
     total_quantity: pendingDocument.quantity,
     actual_qty_dispatch: pendingDocument.quantity,
+    actual_qty_by_material: pendingDocument.materialCounts,
     total_cbm: pendingDocument.cbm ?? 0,
   }
   setManifest({ ...manifest, items: [...manifest.items, newItem] })

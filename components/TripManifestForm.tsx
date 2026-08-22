@@ -111,7 +111,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
   const [editingManifestId, setEditingManifestId] = useState<string | null>(null)
   const [isEditMode, setIsEditMode]               = useState(false)
   const [showManualEntryModal, setShowManualEntryModal] = useState(false)
-  const [pendingDocument, setPendingDocument]     = useState<{ documentNumber: string; quantity: number; cbm?: number } | null>(null)
+  const [pendingDocument, setPendingDocument]     = useState<{ documentNumber: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> } | null>(null)
   const [sidebarOpen, setSidebarOpen]             = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed]   = useState(true)
 
@@ -265,7 +265,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
     if (currentStep === 2 && barcodeInputRef.current) barcodeInputRef.current.focus()
   }, [currentStep])
 
-  const searchDocument = async (documentNumber: string): Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number }> | null> => {
+  const searchDocument = async (documentNumber: string): Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> }> | null> => {
     if (!documentNumber || documentNumber.length < 1) return null
     try {
       const response = await fetch(`/api/documents/search?query=${encodeURIComponent(documentNumber)}`)
@@ -285,6 +285,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
       ship_to_name: shipToName,
       total_quantity: pendingDocument.quantity,
       actual_qty_dispatch: pendingDocument.quantity,
+      actual_qty_by_material: pendingDocument.materialCounts,
       total_cbm: pendingDocument.cbm || 0,
     }
     setManifest({ ...manifest, items: [...manifest.items, newItem] })
@@ -311,6 +312,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
               documentNumber: doc.document_number,
               quantity: doc.total_quantity || 0,
               cbm: doc.total_cbm || 0,
+              materialCounts: doc.material_counts,
             })
             setShowManualEntryModal(true)
             setBarcodeInput('')
@@ -323,6 +325,7 @@ export default function TripManifestForm({ role }: { role?: string }) {
                 ship_to_name: doc.ship_to_name || 'N/A',
                 total_quantity: doc.total_quantity || 0,
                 actual_qty_dispatch: doc.total_quantity || 0,
+                actual_qty_by_material: doc.material_counts,
                 total_cbm: doc.total_cbm || 0,
               }],
             })
