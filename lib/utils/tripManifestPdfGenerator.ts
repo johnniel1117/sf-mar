@@ -522,8 +522,8 @@ function buildDetailedHtml(manifest: TripManifest, rows: DetailedDNRow[]): strin
         <th style="width:90px">Mat Code</th>
         <th style="width:100px">Mat Desc</th>
         <th style="width:55px">Location</th>
-        <th style="width:45px">Qty</th>
-        <th style="width:60px">Dsptch Qty</th>
+        <th style="width:45px">Order Qty</th>
+        <th style="width:60px">Dispatch Qty</th>
         <th style="width:150px">Remarks</th>
       </tr>
     </thead>
