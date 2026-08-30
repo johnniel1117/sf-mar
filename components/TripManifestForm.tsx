@@ -42,7 +42,7 @@ const C = {
   accentGlow:   'rgba(157,123,248,0.16)',
 
   lime:         '#C1F85C',
-  limeGlow:     'rgba(193,248,92,0.14)',
+  limeGlow:     'rgba(133, 240, 123, 0.04)',
 
   warning:      '#F5A623',
   warningGlow:  'rgba(245,166,35,0.14)',
