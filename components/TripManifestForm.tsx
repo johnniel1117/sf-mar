@@ -26,7 +26,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// Design tokens
+// Design tokens — unified with SavedManifestsTab's palette (purple accent /
+// lime highlight) so the app reads as one system instead of two. "Editing"
+// gets its own warm warning color since it's a status, not a brand action.
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
@@ -34,18 +36,29 @@ const C = {
   border:       '#30363D',
   borderHover:  '#8B949E',
   divider:      '#21262D',
-  accent:       '#E8192C',
-  accentHover:  '#FF1F30',
-  amber:        '#F5A623',
+
+  accent:       '#9d7bf8',
+  accentHover:  '#b39eff',
+  accentGlow:   'rgba(157,123,248,0.16)',
+
+  lime:         '#C1F85C',
+  limeGlow:     'rgba(193,248,92,0.14)',
+
+  warning:      '#F5A623',
+  warningGlow:  'rgba(245,166,35,0.14)',
+
+  danger:       '#E8192C',
+
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
   textSub:      '#8B949E',
   textMuted:    '#6E7681',
   textGhost:    '#484F58',
+
   inputBg:      '#0D1117',
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
-  inputFocus:   '#F5A623',
+  inputFocus:   '#9d7bf8',
 }
 
 type Step = 1 | 2 | 3
@@ -96,6 +109,58 @@ const EMPTY_MANIFEST = (): TripManifest => ({
   status: 'draft',
   items: [],
 })
+
+// ── Small shared nav pieces ─────────────────────────────────────────────────
+
+function NavIconButton({
+  onClick, title, href, children,
+}: { onClick?: () => void; title?: string; href?: string; children: React.ReactNode }) {
+  const className =
+    "p-2 rounded-full transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#9d7bf8]"
+  const handlers = {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+      e.currentTarget.style.backgroundColor = C.surfaceHover
+      const svg = e.currentTarget.querySelector('svg') as SVGElement | null
+      if (svg) svg.style.color = 'white'
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+      e.currentTarget.style.backgroundColor = 'transparent'
+      const svg = e.currentTarget.querySelector('svg') as SVGElement | null
+      if (svg) svg.style.color = C.textSub
+    },
+  }
+  if (href) {
+    return (
+      <Link href={href} className={className} style={{ color: C.textSub }} title={title} {...handlers}>
+        {children}
+      </Link>
+    )
+  }
+  return (
+    <button onClick={onClick} className={className} style={{ color: C.textSub }} title={title} {...handlers}>
+      {children}
+    </button>
+  )
+}
+
+function NavChip({
+  icon, label, value, tone = 'default',
+}: { icon: React.ReactNode; label: string; value: string; tone?: 'default' | 'accent' }) {
+  const tint = tone === 'accent' ? C.accent : C.textSub
+  return (
+    <div
+      className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
+      style={{
+        border: `1px solid ${tone === 'accent' ? `${tint}40` : C.border}`,
+        background: tone === 'accent' ? C.accentGlow : 'transparent',
+      }}
+    >
+      <span style={{ color: tint }}>{icon}</span>
+      <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: tint }}>{label}</span>
+      <span className="text-[11px] tabular-nums font-semibold" style={{ color: C.textPrimary }}>{value}</span>
+    </div>
+  )
+}
 
 export default function TripManifestForm({ role }: { role?: string }) {
   const isViewer = role?.toLowerCase() === 'viewer'
@@ -428,31 +493,34 @@ export default function TripManifestForm({ role }: { role?: string }) {
 
   const grandTotalCBM = manifest.items.reduce((sum, item) => sum + (item.total_cbm || 0), 0)
 
+  const toastIcon = toast.type === 'success' ? <CheckCircle2 className="w-4 h-4" />
+    : toast.type === 'error' ? <AlertCircle className="w-4 h-4" />
+    : <Info className="w-4 h-4" />
+  const toastColor = toast.type === 'success' ? C.lime : toast.type === 'error' ? C.danger : C.accent
+
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ backgroundColor: C.bg }}>
 
+      {/* Local keyframes for the toast's entrance — no animation lib needed */}
+      <style>{`
+        @keyframes tmToastIn {
+          from { opacity: 0; transform: translateY(10px) scale(0.98); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
+
       {/* ── Nav ── */}
-      <nav className="relative flex-shrink-0 h-[73px] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4"
-        style={{ background: C.bg, borderBottom: `1px solid ${C.divider}` }}>
+      <nav
+        className="relative flex-shrink-0 h-[73px] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4"
+        style={{ background: C.bg, borderBottom: `1px solid ${C.divider}`, boxShadow: '0 1px 0 rgba(0,0,0,0.35)' }}
+      >
+        <NavIconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <span className="lg:hidden inline-flex"><Menu className="w-4 h-4 transition-colors" /></span>
+        </NavIconButton>
 
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden p-2 rounded-full transition-colors flex-shrink-0"
-          style={{ color: C.textSub }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHover }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
-        >
-          <Menu className="w-4 h-4" />
-        </button>
-
-        <Link href="/"
-          className="p-2 rounded-full transition-colors flex-shrink-0"
-          style={{ color: C.textSub }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHover; (e.currentTarget.querySelector('svg') as SVGElement).style.color = 'white' }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; (e.currentTarget.querySelector('svg') as SVGElement).style.color = C.textSub }}
-          title="Home">
+        <NavIconButton href="/" title="Home">
           <Home className="w-4 h-4 transition-colors" />
-        </Link>
+        </NavIconButton>
 
         <div className="w-px h-4 flex-shrink-0 hidden sm:block" style={{ backgroundColor: C.divider }} />
 
@@ -469,36 +537,40 @@ export default function TripManifestForm({ role }: { role?: string }) {
 
         <div className="flex items-center gap-2 sm:gap-3">
           {activeTab === 'create' && manifest.items.length > 0 && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
-              style={{ border: `1px solid ${C.inputFocus}40`, background: `${C.inputFocus}05` }}>
-              <Package className="w-3.5 h-3.5" style={{ color: C.inputFocus }} />
-              <span className="text-[10px] uppercase tracking-[0.15em] font-bold" style={{ color: C.inputFocus }}>Total CBM</span>
-              <span className="text-[11px] tabular-nums" style={{ color: C.textPrimary }}>{grandTotalCBM.toFixed(4)}</span>
-            </div>
+            <NavChip
+              icon={<Package className="w-3.5 h-3.5" />}
+              label="Total CBM"
+              value={grandTotalCBM.toFixed(4)}
+              tone="accent"
+            />
           )}
 
           {activeTab === 'create' && manifest.manifest_number && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
-              style={{ border: `1px solid ${C.border}` }}>
-              <span className="text-[10px] uppercase tracking-[0.15em]" style={{ color: C.textSub }}>No.</span>
-              <span className="text-[11px] tabular-nums" style={{ color: C.textPrimary }}>{manifest.manifest_number}</span>
-            </div>
+            <NavChip
+              icon={<FileText className="w-3.5 h-3.5" />}
+              label="No."
+              value={manifest.manifest_number}
+            />
           )}
 
           {isEditMode && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: C.accent }} />
-              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.accent }}>Editing</span>
+            <div
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0"
+              style={{ border: `1px solid ${C.warning}40`, background: C.warningGlow }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: C.warning }} />
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.warning }}>Editing</span>
             </div>
           )}
 
           <button
             onClick={() => setActiveTab('analytics')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#9d7bf8]"
             style={{
-              borderColor: activeTab === 'analytics' ? C.inputFocus : C.border,
-              color: activeTab === 'analytics' ? C.inputFocus : C.textSub,
-              backgroundColor: activeTab === 'analytics' ? `${C.inputFocus}05` : 'transparent',
+              borderColor: activeTab === 'analytics' ? C.accent : C.border,
+              color: activeTab === 'analytics' ? C.accent : C.textSub,
+              backgroundColor: activeTab === 'analytics' ? C.accentGlow : 'transparent',
+              boxShadow: activeTab === 'analytics' ? `0 0 0 1px ${C.accent}20` : 'none',
             }}
             onMouseEnter={e => { if (activeTab !== 'analytics') { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary } }}
             onMouseLeave={e => { if (activeTab !== 'analytics') { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub } }}
@@ -524,8 +596,16 @@ export default function TripManifestForm({ role }: { role?: string }) {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        <main className="flex-1 overflow-y-auto min-h-0 min-w-0" style={{ backgroundColor: C.bg }}>
-          <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] rounded-full blur-[120px] z-0" />
+        <main className="flex-1 overflow-y-auto min-h-0 min-w-0 relative" style={{ backgroundColor: C.bg }}>
+          {/* Ambient depth — two soft glows instead of the old colorless blur */}
+          <div
+            className="pointer-events-none fixed top-0 right-0 w-[560px] h-[560px] rounded-full blur-[190px] z-0"
+            style={{ background: C.limeGlow  }}
+          />
+          <div
+            className="pointer-events-none fixed bottom-0 left-0 w-[220px] h-[220px] rounded-full blur-[110px] z-0"
+            style={{ background: C.limeGlow }}
+          />
 
           <div className="relative z-10 p-5 sm:p-8 lg:p-10 h-full">
 
@@ -576,19 +656,24 @@ export default function TripManifestForm({ role }: { role?: string }) {
                 <div className="h-full w-full overflow-y-auto">
                   {savedManifests.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center px-4 py-16">
-                      <TrendingUp className="w-10 h-10 mx-auto mb-5" style={{ color: C.textMuted }} />
-                      <p className="text-[10px] uppercase tracking-[0.25em] mb-3" style={{ color: C.inputFocus }}>No data yet</p>
-                      <h4 className="text-2xl sm:text-3xl mb-3 tracking-tight" style={{ color: C.textPrimary }}>Nothing to analyze</h4>
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
+                        style={{ background: C.accentGlow, border: `1px solid ${C.accent}30` }}
+                      >
+                        <TrendingUp className="w-7 h-7" style={{ color: C.accent }} />
+                      </div>
+                      <p className="text-[10px] uppercase tracking-[0.25em] mb-3 font-bold" style={{ color: C.accent }}>No data yet</p>
+                      <h4 className="text-2xl sm:text-3xl mb-3 tracking-tight font-semibold" style={{ color: C.textPrimary }}>Nothing to analyze</h4>
                       <p className="text-sm max-w-sm mb-8 leading-relaxed" style={{ color: C.textSub }}>
                         Save trip manifests to see trends, top destinations, trucker performance, and more.
                       </p>
                       {!isViewer && (
                         <button
                           onClick={() => setActiveTab('create')}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#9d7bf8]"
                           style={{ borderColor: C.border, color: C.textSub }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHover; e.currentTarget.style.color = C.textPrimary }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.textPrimary; e.currentTarget.style.background = C.accentGlow }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textSub; e.currentTarget.style.background = 'transparent' }}
                         >
                           Create First Manifest
                           <ArrowUpRight className="w-3.5 h-3.5" />
@@ -636,19 +721,28 @@ export default function TripManifestForm({ role }: { role?: string }) {
 
       {/* ── Toast ── */}
       {toast.show && (
-        <div className="fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] border"
+        <div
+          className="fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] border"
           style={{
-            backgroundColor: C.bg,
-            borderColor: toast.type === 'success' ? '#22C55E' : toast.type === 'error' ? C.accent : C.inputFocus,
-          }}>
-          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: toast.type === 'success' ? '#22C55E' : toast.type === 'error' ? C.accent : C.inputFocus }} />
+            backgroundColor: C.surface,
+            borderColor: `${toastColor}40`,
+            animation: 'tmToastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+        >
+          <span
+            className="flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0"
+            style={{ color: toastColor, background: `${toastColor}1A` }}
+          >
+            {toastIcon}
+          </span>
           <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: C.textPrimary }}>{toast.message}</span>
-          <button onClick={() => setToast(prev => ({ ...prev, show: false }))}
+          <button
+            onClick={() => setToast(prev => ({ ...prev, show: false }))}
             className="ml-1 p-0.5 rounded-full transition-colors"
             style={{ color: C.textSub }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHover }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}>
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+          >
             <X className="w-3 h-3" />
           </button>
         </div>

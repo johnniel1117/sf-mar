@@ -4,9 +4,10 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   Eye, Download, Edit, Trash2, Calendar, FileText,
   ChevronDown, Search, X, BarChart2, ChevronRight,
-  Truck, User, Hash, Clock, Package, ArrowUpRight,
+  Truck, User, Hash, Clock, Package, ArrowUpRight, Boxes,
 } from 'lucide-react'
-import type { TripManifest } from '@/lib/services/tripManifestService'
+import type { TripManifest, ManifestItem } from '@/lib/services/tripManifestService'
+import { fetchSerialData, type SerialEntry } from '@/lib/utils/tripManifestPdfGenerator'
 import * as XLSX from 'xlsx-js-style'
 
 // design tokens (match CreateManifestTab)
@@ -47,6 +48,43 @@ const MONTHS = [
 
 const stripLeadingZeros = (val: string | undefined) =>
   val ? val.replace(/^0+/, '') : '—'
+
+// Material descriptions aren't stored on the saved manifest — they live in
+// excel_uploads.serial_data (SerialEntry.materialDesc), the same source the
+// detailed PDF pulls from via fetchSerialData(). So descriptions are fetched
+// live per manifest (see the effect in ManifestRow below) and cached here as
+// documentNumber -> materialCode -> description.
+type MaterialDescCache = Record<string, Record<string, string>>
+
+function normalizeDN(dn: string): string {
+  return dn.replace(/^0+/, '')
+}
+
+function buildCodeDescMap(serials: SerialEntry[]): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const s of serials) {
+    if (s.materialCode && !map[s.materialCode] && s.materialDesc) {
+      map[s.materialCode] = s.materialDesc
+    }
+  }
+  return map
+}
+
+function getMaterialDescription(cache: MaterialDescCache, documentNumber: string | undefined, code: string): string {
+  if (!documentNumber) return '—'
+  const forDoc = cache[documentNumber] ?? cache[normalizeDN(documentNumber)]
+  return forDoc?.[code]?.trim() || '—'
+}
+
+function itemMatchesQuery(item: ManifestItem, q: string, cache: MaterialDescCache): boolean {
+  if ((item.document_number || '').toLowerCase().includes(q)) return true
+  if ((item.ship_to_name || '').toLowerCase().includes(q)) return true
+  const materials = item.actual_qty_by_material ? Object.keys(item.actual_qty_by_material) : []
+  return materials.some(code =>
+    code.toLowerCase().includes(q) ||
+    getMaterialDescription(cache, item.document_number, code).toLowerCase().includes(q)
+  )
+}
 
 // ── Filter Dropdown ───────────────────────────────────────────────────────────
 
@@ -99,11 +137,11 @@ function FilterDropdown({ selectedMonth, onMonthChange, months }: {
 // ── Manifest Row ──────────────────────────────────────────────────────────────
 
 function ManifestRow({
-  manifest, index, expanded, onToggle, onView, onEdit, onDownload, onDelete, isViewer,
+  manifest, index, expanded, onToggle, onView, onEdit, onDownload, onDelete, isViewer, searchQuery,
 }: {
   manifest: TripManifest; index: number; expanded: boolean
   onToggle: () => void; onView: () => void; onEdit: () => void
-  onDownload: () => void; onDelete: () => void; isViewer?: boolean
+  onDownload: () => void; onDelete: () => void; isViewer?: boolean; searchQuery: string
 }) {
   const totalQty  = manifest.items?.reduce((s, i) => s + (i.total_quantity || 0), 0) ?? 0
   const totalDocs = manifest.items?.length ?? 0
@@ -111,6 +149,48 @@ function ManifestRow({
   const manifestDate = manifest.manifest_date
     ? new Date(manifest.manifest_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : '—'
+
+  // Which order/item row has its material breakdown open (index within manifest.items).
+  const [expandedItem, setExpandedItem] = useState<number | null>(null)
+
+  // documentNumber -> materialCode -> description, fetched live from
+  // excel_uploads.serial_data the first time this manifest is opened.
+  const [descCache, setDescCache] = useState<MaterialDescCache>({})
+  const [loadingDescs, setLoadingDescs] = useState(false)
+
+  useEffect(() => {
+    if (!expanded) return
+    const dns = (manifest.items || []).map(i => i.document_number).filter(Boolean) as string[]
+    const missing = dns.filter(dn => !(dn in descCache))
+    if (missing.length === 0) return
+
+    let cancelled = false
+    setLoadingDescs(true)
+    fetchSerialData(missing)
+      .then(serialsMap => {
+        if (cancelled) return
+        setDescCache(prev => {
+          const next = { ...prev }
+          missing.forEach(dn => {
+            const serials = serialsMap.get(dn) ?? serialsMap.get(normalizeDN(dn)) ?? []
+            next[dn] = buildCodeDescMap(serials)
+          })
+          return next
+        })
+      })
+      .catch(() => { /* leave as "—" on failure */ })
+      .finally(() => { if (!cancelled) setLoadingDescs(false) })
+
+    return () => { cancelled = true }
+  }, [expanded, manifest.items, descCache])
+
+  // Auto-open the order that matches an active search (e.g. a material code hit).
+  useEffect(() => {
+    if (!searchQuery) { setExpandedItem(null); return }
+    const q = searchQuery.toLowerCase()
+    const idx = (manifest.items || []).findIndex(item => itemMatchesQuery(item, q, descCache))
+    setExpandedItem(idx >= 0 ? idx : null)
+  }, [searchQuery, manifest.items, descCache])
 
   return (
     <div
@@ -198,32 +278,84 @@ function ManifestRow({
                 {manifest.items!.map((item, idx) => {
                   const dispatchedQty = item.actual_qty_dispatch ?? item.total_quantity
                   const isShort = dispatchedQty < (item.total_quantity ?? 0)
+                  const materials = item.actual_qty_by_material ? Object.entries(item.actual_qty_by_material) : []
+                  const hasMaterials = materials.length > 0
+                  const isItemExpanded = expandedItem === idx
+                  const rowBg = idx % 2 === 0 ? C.stripeEven : C.stripeOdd
+
                   return (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-5 py-3.5 px-3 group/row transition-colors duration-100"
-                    style={{
-                      background: idx % 2 === 0 ? C.stripeEven : C.stripeOdd,
-                      borderBottom: idx < manifest.items!.length - 1 ? `1px solid ${C.divider}` : 'none',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = C.surfaceHover }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? C.stripeEven : C.stripeOdd }}
-                  >
-                    <span className="text-[11px] font-bold group-hover/row:text-[#C1F85C] transition-colors" style={{color: C.textMuted}}>
-                      {String(idx + 1).padStart(2, '0')}
-                    </span>
-                    <span className="text-[13px] font-semibold truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1" style={{color: C.textPrimary}}>
-                      {item.ship_to_name || '—'}
-                    </span>
-                    <span className="text-[13px] truncate hidden sm:block" style={{color: C.textSilver}}>
-                      {stripLeadingZeros(item.document_number)}
-                    </span>
-                    <span className="text-[13px] font-[#0D1117] text-white tabular-nums text-right sm:text-left">
-                      {item.total_quantity ?? 0}
-                    </span>
-                    <span className="text-[13px] font-[#0D1117] tabular-nums text-right sm:text-left" style={{color: isShort ? C.amber : 'white'}}>
-                      {dispatchedQty}
-                    </span>
+                  <div key={idx}>
+                    <div
+                      className={`grid grid-cols-5 py-3.5 px-3 group/row transition-colors duration-100 ${hasMaterials ? 'cursor-pointer' : ''}`}
+                      style={{
+                        background: rowBg,
+                        borderBottom: (idx < manifest.items!.length - 1 && !isItemExpanded) ? `1px solid ${C.divider}` : 'none',
+                      }}
+                      onClick={() => hasMaterials && setExpandedItem(isItemExpanded ? null : idx)}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = C.surfaceHover }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = rowBg }}
+                    >
+                      <span className="flex items-center gap-1 text-[11px] font-bold group-hover/row:text-[#C1F85C] transition-colors" style={{color: C.textMuted}}>
+                        {hasMaterials && (
+                          <ChevronDown
+                            className={`w-3 h-3 flex-shrink-0 transition-transform duration-200 ${isItemExpanded ? 'rotate-180' : ''}`}
+                            style={{color: isItemExpanded ? C.accent : C.textMuted}}
+                          />
+                        )}
+                        {String(idx + 1).padStart(2, '0')}
+                      </span>
+                      <span className="text-[13px] font-semibold truncate group-hover/row:text-white transition-colors col-span-1 sm:col-span-1" style={{color: C.textPrimary}}>
+                        {item.ship_to_name || '—'}
+                      </span>
+                      <span className="text-[13px] truncate hidden sm:block" style={{color: C.textSilver}}>
+                        {stripLeadingZeros(item.document_number)}
+                      </span>
+                      <span className="text-[13px] font-[#0D1117] text-white tabular-nums text-right sm:text-left">
+                        {item.total_quantity ?? 0}
+                      </span>
+                      <span className="text-[13px] font-[#0D1117] tabular-nums text-right sm:text-left" style={{color: isShort ? C.amber : 'white'}}>
+                        {dispatchedQty}
+                      </span>
+                    </div>
+
+                    {/* Material code / description dropdown for this order */}
+                    {isItemExpanded && hasMaterials && (
+                      <div
+                        className="px-3 pt-1 pb-3"
+                        style={{
+                          background: rowBg,
+                          borderBottom: idx < manifest.items!.length - 1 ? `1px solid ${C.divider}` : 'none',
+                        }}
+                      >
+                        <div className="overflow-hidden" style={{border: `1px solid ${C.divider}`, background: C.bg}}>
+                          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_70px] py-2 px-3" style={{background: '#1C2128'}}>
+                            <span className="text-[9px] uppercase tracking-widest font-bold flex items-center gap-1.5" style={{color: C.textSilver}}>
+                              
+                              Material Code
+                            </span>
+                            <span className="text-[9px] uppercase tracking-widest font-bold" style={{color: C.textSilver}}>Material Description</span>
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-right" style={{color: C.textSilver}}>Qty</span>
+                          </div>
+                          {materials.map(([code, qty], mIdx) => {
+                            const hasDoc = !!item.document_number && (item.document_number in descCache || normalizeDN(item.document_number) in descCache)
+                            const description = hasDoc
+                              ? getMaterialDescription(descCache, item.document_number, code)
+                              : (loadingDescs ? 'Loading…' : '—')
+                            return (
+                              <div
+                                key={mIdx}
+                                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_70px] py-2 px-3"
+                                style={{ borderTop: `1px solid ${C.divider}` }}
+                              >
+                                <span className="text-[12px] font-semibold truncate" style={{color: C.textPrimary}}>{code}</span>
+                                <span className="text-[12px] truncate" style={{color: C.textSilver}}>{description}</span>
+                                <span className="text-[12px] tabular-nums text-right" style={{color: 'white'}}>{qty}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   )
                 })}
@@ -303,7 +435,25 @@ export function SavedManifestsTab({
   const [currentPage,   setCurrentPage]   = useState(1)
   const [expandedId,    setExpandedId]    = useState<string | null>(null)
   const [sortDir,       setSortDir]       = useState<'desc' | 'asc'>('desc')
+  const [searchFocused, setSearchFocused] = useState(false)
   const itemsPerPage = 10
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // "/" focuses search, Escape clears it — standard list-view shortcuts.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement !== searchInputRef.current) {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+      if (e.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        setSearchQuery('')
+        searchInputRef.current?.blur()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const sortedManifests = useMemo(() => {
     const parseDate = (val: string | undefined | null): number => {
@@ -328,16 +478,16 @@ export function SavedManifestsTab({
 
   const filteredManifests = useMemo(() =>
     sortedManifests.filter((manifest) => {
-      const q = searchQuery.toLowerCase()
-      const matchesSearch =
+      const q = searchQuery.toLowerCase().trim()
+      const matchesSearch = !q ||
         (manifest.manifest_number || '').toLowerCase().includes(q) ||
         (manifest.driver_name || '').toLowerCase().includes(q) ||
         (manifest.plate_no || '').toLowerCase().includes(q) ||
         (manifest.trucker || '').toLowerCase().includes(q) ||
-        (manifest.items || []).some(item =>
-          (item.document_number || '').toLowerCase().includes(q) ||
-          (item.ship_to_name || '').toLowerCase().includes(q)
-        )
+        (manifest.truck_type || '').toLowerCase().includes(q) ||
+        (manifest.container_van_no || '').toLowerCase().includes(q) ||
+        (manifest.seal_no || '').toLowerCase().includes(q) ||
+        (manifest.items || []).some(item => itemMatchesQuery(item, q, {}))
       if (!matchesSearch) return false
       if (selectedMonth === 'All Months') return true
       const date = new Date(manifest.manifest_date || manifest.created_at || '')
@@ -347,12 +497,11 @@ export function SavedManifestsTab({
   const totalPages         = Math.ceil(filteredManifests.length / itemsPerPage)
   const paginatedManifests = filteredManifests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-  // Auto-expand on search hit
+  // Auto-expand on search hit (document number, ship-to, or material code/description)
   useEffect(() => {
     if (!searchQuery) return
-    const hit = filteredManifests.find(m =>
-      (m.items || []).some(i => (i.document_number || '').toLowerCase().includes(searchQuery.toLowerCase()))
-    )
+    const q = searchQuery.toLowerCase()
+    const hit = filteredManifests.find(m => (m.items || []).some(i => itemMatchesQuery(i, q, {})))
     if (hit?.id) setExpandedId(hit.id)
   }, [searchQuery, filteredManifests])
 
@@ -606,23 +755,31 @@ export function SavedManifestsTab({
         {/* Search + Filter */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{color: C.textSilver}} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 transition-colors" style={{color: searchFocused ? C.accent : C.textSilver}} />
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Search manifests…"
+              placeholder="Search manifests, drivers, plates, DN/TRA, material codes…"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-              className="w-full h-9 pl-9 pr-8 bg-transparent text-[13px] text-white focus:outline-none transition-colors" style={{border: `1px solid ${C.border}`, color: C.inputText}}
-              onFocus={e => e.currentTarget.style.borderColor = C.inputFocus}
-              onBlur={e => e.currentTarget.style.borderColor = C.border}
+              onFocus={e => { setSearchFocused(true); e.currentTarget.style.borderColor = C.inputFocus }}
+              onBlur={e => { setSearchFocused(false); e.currentTarget.style.borderColor = C.border }}
+              className="w-full h-9 pl-9 pr-9 bg-transparent text-[13px] text-white focus:outline-none transition-colors" style={{border: `1px solid ${C.border}`, color: C.inputText}}
             />
-            {searchQuery && (
+            {searchQuery ? (
               <button
-                onClick={() => { setSearchQuery(''); setCurrentPage(1) }}
+                onClick={() => { setSearchQuery(''); setCurrentPage(1); searchInputRef.current?.focus() }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-white transition-colors" style={{color: C.textSilver}}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
+            ) : !searchFocused && (
+              <kbd
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold px-1.5 py-0.5 leading-none"
+                style={{color: C.textMuted, border: `1px solid ${C.border}`}}
+              >
+                /
+              </kbd>
             )}
           </div>
           <FilterDropdown
@@ -690,6 +847,7 @@ export function SavedManifestsTab({
               onDownload={() => handleDownloadManifest(manifest)}
               onDelete={() => manifest.id && handleDeleteManifest(manifest.id)}
               isViewer={isViewer}
+              searchQuery={searchQuery}
             />
           ))
         )}
