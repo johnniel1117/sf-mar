@@ -511,16 +511,24 @@ export default function TripManifestForm({ role }: { role?: string }) {
 
       {/* ── Nav ── */}
       <nav
-        className="relative flex-shrink-0 h-[73px] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4"
-        style={{ background: C.bg, borderBottom: `1px solid ${C.divider}`, boxShadow: '0 1px 0 rgba(0,0,0,0.35)' }}
-      >
-        {/* <NavIconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
-          <span className="lg:hidden inline-flex"><Menu className="w-4 h-4 transition-colors" /></span>
-        </NavIconButton> */}
+  className="relative flex-shrink-0 h-[73px] z-[60] flex items-center px-5 sm:px-4 gap-2 sm:gap-4"
+  style={{
+    background: C.bg,
+    borderBottom: `1px solid ${C.divider}`,
+    boxShadow: '0 1px 0 rgba(0,0,0,0.35)'
+  }}
+>
+  {/* Mobile menu button */}
+  <div className="lg:hidden">
+    <NavIconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
+      <Menu className="w-4 h-4 transition-colors" />
+    </NavIconButton>
+  </div>
 
-        <NavIconButton href="/" title="Home">
-          <Home className="w-4 h-4 transition-colors" />
-        </NavIconButton>
+  {/* Home */}
+  <NavIconButton href="/" title="Home">
+    <Home className="w-4 h-4 transition-colors" />
+  </NavIconButton>
 
         <div className="w-px h-4 flex-shrink-0 hidden sm:block" style={{ backgroundColor: C.divider }} />
 
