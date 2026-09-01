@@ -514,9 +514,9 @@ export default function TripManifestForm({ role }: { role?: string }) {
         className="relative flex-shrink-0 h-[73px] z-[60] flex items-center px-5 sm:px-8 gap-3 sm:gap-4"
         style={{ background: C.bg, borderBottom: `1px solid ${C.divider}`, boxShadow: '0 1px 0 rgba(0,0,0,0.35)' }}
       >
-        <NavIconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
+        {/* <NavIconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
           <span className="lg:hidden inline-flex"><Menu className="w-4 h-4 transition-colors" /></span>
-        </NavIconButton>
+        </NavIconButton> */}
 
         <NavIconButton href="/" title="Home">
           <Home className="w-4 h-4 transition-colors" />
