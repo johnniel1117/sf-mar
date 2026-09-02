@@ -10,7 +10,10 @@ import React from 'react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import forkliftAnimation from './forklift-animation-smooth.json'
 
-// ── Design tokens (matching SavedManifestsTab exactly) ────────────────────────
+// ── Design tokens ──────────────────────────────────────────────────────────
+// Single source of truth for color, radius, and motion so nothing drifts
+// between sections. Every hardcoded color/animation value below traces back
+// to one of these.
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
@@ -20,10 +23,22 @@ const C = {
   divider:      '#21262D',
 
   accent:       '#9d7bf8',
-  accentHover:  '#5e2ee4f5',
-  accentGlow:   'rgba(104, 25, 232, 0.25)',
+  accentHover:  '#8862F0',
+  accentBg:     'rgba(157,123,248,0.08)',
+  accentBorder: 'rgba(157,123,248,0.20)',
+  accentGlow:   'rgba(157,123,248,0.25)',
 
   amber:        '#C1F85C',
+  amberBg:      'rgba(193,248,92,0.08)',
+  amberBorder:  'rgba(193,248,92,0.20)',
+
+  success:      '#3FB950',
+  successText:  '#7EE787',
+  successBg:    'rgba(63,185,80,0.06)',
+  successBorder:'rgba(63,185,80,0.20)',
+
+  edit:         '#58A6FF',
+  editGlow:     'rgba(88,166,255,0.25)',
 
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
@@ -34,7 +49,23 @@ const C = {
   inputBg:      '#0D1117',
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
-  inputFocus:   '#C9D1D9',
+  inputFocus:   '#9d7bf8',
+} as const
+
+// Shared scale so every panel/button/input/pill uses the same corner radius,
+// and every transition uses the same duration + easing.
+const RADIUS = { panel: '10px', control: '8px', pill: '999px' } as const
+const EASE = 'cubic-bezier(0.4, 0, 0.2, 1)'
+const TRANSITION_FAST = `all 180ms ${EASE}`
+const TRANSITION_MED = `all 260ms ${EASE}`
+
+// Reusable class strings so spacing/typography stays identical everywhere
+// the same kind of element appears.
+const CX = {
+  panel: 'p-5 sm:p-6 rounded-[10px]',
+  microLabel: 'text-[10px] uppercase tracking-[0.2em] font-semibold',
+  smallLabel: 'text-[11px] font-semibold',
+  transition: 'transition-all duration-[180ms] ease-out',
 }
 
 interface CreateManifestTabProps {
@@ -61,7 +92,7 @@ interface CreateManifestTabProps {
   addDocumentWithManualShipTo: (shipToName: string) => void
   searchDocument: (documentNumber: string) => Promise<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> }> | null>
   showToast?: (message: string, type: 'success' | 'error' | 'info') => void
-  grandTotalCBM?: number // Added this prop
+  grandTotalCBM?: number
 }
 
 // ── Manual entry modal ────────────────────────────────────────────────────────
@@ -73,7 +104,16 @@ interface ManualEntryModalProps {
 
 function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, cbm }: ManualEntryModalProps) {
   const [shipToName, setShipToName] = useState('')
-  useEffect(() => { if (isOpen) setShipToName('') }, [isOpen])
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      setShipToName('')
+      const raf = requestAnimationFrame(() => setVisible(true))
+      return () => cancelAnimationFrame(raf)
+    }
+    setVisible(false)
+  }, [isOpen])
 
   const handleSave = () => { if (shipToName.trim()) { onSave(shipToName.trim()); onClose() } }
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -84,48 +124,73 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}>
-      <div className="w-full max-w-md p-6 sm:p-7" style={{ background: C.surface, border: `1px solid ${C.border}`, boxShadow: '0 40px 80px rgba(0,0,0,0.8)' }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        background: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(10px)',
+        opacity: visible ? 1 : 0,
+        transition: TRANSITION_MED,
+      }}
+    >
+      <div
+        className="w-full max-w-md p-6"
+        style={{
+          background: C.surface,
+          border: `1px solid ${C.border}`,
+          borderRadius: RADIUS.panel,
+          boxShadow: '0 32px 64px rgba(0,0,0,0.5)',
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.98)',
+          transition: TRANSITION_MED,
+        }}
+      >
 
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(232,25,44,0.1)', border: '1px solid rgba(232,25,44,0.2)' }}>
+            <div className="w-9 h-9 flex items-center justify-center flex-shrink-0 rounded-[8px]" style={{ background: C.accentBg, border: `1px solid ${C.accentBorder}` }}>
               <AlertCircle className="w-4 h-4" style={{ color: C.accent }} />
             </div>
             <div>
-              <h3 className="text-sm font-[#0D1117] tracking-tight" style={{ color: C.textPrimary }}>Ship-To Name Required</h3>
-              <p className="text-[11px] uppercase tracking-widest mt-0.5" style={{ color: C.textPrimary }}>Document not found in system</p>
+              <h3 className="text-sm font-bold tracking-tight" style={{ color: C.textPrimary }}>Ship-To Name Required</h3>
+              <p className={`${CX.microLabel} mt-0.5`} style={{ color: C.textSub }}>Document not found in system</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 transition-colors" style={{ color: C.textPrimary }}>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-[6px]"
+            style={{ color: C.textSub, transition: TRANSITION_FAST }}
+            onMouseEnter={e => { e.currentTarget.style.color = C.textPrimary; e.currentTarget.style.background = C.surfaceHover }}
+            onMouseLeave={e => { e.currentTarget.style.color = C.textSub; e.currentTarget.style.background = 'transparent' }}
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Doc info */}
-        <div className="p-4 mb-5" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
+        <div className="p-4 mb-5 rounded-[8px]" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textPrimary }}>Document No.</p>
-              <p className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{documentNumber}</p>
+              <p className={`${CX.microLabel} mb-1`} style={{ color: C.textSub }}>Document No.</p>
+              <p className="text-sm font-semibold tabular-nums" style={{ color: C.textSilver }}>{documentNumber}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textPrimary }}>Quantity</p>
-              <p className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.accent }}>{quantity}</p>
+              <p className={`${CX.microLabel} mb-1`} style={{ color: C.textSub }}>Quantity</p>
+              <p className="text-sm font-semibold tabular-nums" style={{ color: C.accent }}>{quantity}</p>
             </div>
           </div>
           {cbm != null && cbm > 0 && (
-            <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
-              <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: C.textPrimary }}>CBM</p>
-              <p className="text-sm font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{cbm.toFixed(4)}</p>
+            <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+              <p className={`${CX.microLabel} mb-1`} style={{ color: C.textSub }}>CBM</p>
+              <p className="text-sm font-semibold tabular-nums" style={{ color: C.amber }}>{cbm.toFixed(4)}</p>
             </div>
           )}
         </div>
 
         {/* Input */}
         <div className="mb-5">
-          <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textSub }}>
+          <label className={`block ${CX.microLabel} mb-2`} style={{ color: C.textSub }}>
             Ship-To Name <span style={{ color: C.accent }}>*</span>
           </label>
           <input
@@ -134,8 +199,8 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
             onKeyDown={handleKeyDown}
             placeholder="Enter customer or delivery location..."
             autoFocus
-            className="w-full px-4 py-3 text-sm outline-none transition-all"
-            style={{ background: C.bg, border: `1px solid ${C.inputBorder}`, color: C.inputText }}
+            className="w-full px-4 py-3 text-sm outline-none rounded-[8px]"
+            style={{ background: C.bg, border: `1px solid ${C.inputBorder}`, color: C.inputText, transition: TRANSITION_FAST }}
             onFocus={e => e.currentTarget.style.borderColor = C.inputFocus}
             onBlur={e => e.currentTarget.style.borderColor = C.inputBorder}
           />
@@ -143,12 +208,26 @@ function ManualEntryModal({ isOpen, onClose, onSave, documentNumber, quantity, c
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all" style={{ border: `1px solid ${C.border}`, color: C.textPrimary }}>
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 font-bold text-xs uppercase tracking-widest rounded-[8px]"
+            style={{ border: `1px solid ${C.border}`, color: C.textSub, transition: TRANSITION_FAST }}
+            onMouseEnter={e => { e.currentTarget.style.color = C.textPrimary; e.currentTarget.style.borderColor = C.borderHover }}
+            onMouseLeave={e => { e.currentTarget.style.color = C.textSub; e.currentTarget.style.borderColor = C.border }}
+          >
             Cancel
           </button>
-          <button onClick={handleSave} disabled={!shipToName.trim()}
-            className="flex-1 px-4 py-3 font-[#0D1117] text-xs uppercase tracking-widest transition-all"
-            style={{ background: shipToName.trim() ? C.accent : C.textGhost, color: '#fff', cursor: shipToName.trim() ? 'pointer' : 'not-allowed' }}>
+          <button
+            onClick={handleSave}
+            disabled={!shipToName.trim()}
+            className="flex-1 px-4 py-3 font-bold text-xs uppercase tracking-widest rounded-[8px]"
+            style={{
+              background: shipToName.trim() ? C.accent : C.textGhost,
+              color: '#fff',
+              cursor: shipToName.trim() ? 'pointer' : 'not-allowed',
+              transition: TRANSITION_FAST,
+            }}
+          >
             Save & Add
           </button>
         </div>
@@ -175,15 +254,15 @@ function AddingDocumentsOverlay({ label }: { label: string }) {
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
         opacity: visible ? 1 : 0,
-        transition: 'opacity 0.35s ease-out',
+        transition: TRANSITION_MED,
       }}
     >
       <div
         className="flex flex-col items-center gap-4"
         style={{
           opacity: visible ? 1 : 0,
-          transform: visible ? 'scale(1)' : 'scale(0.92)',
-          transition: 'opacity 0.4s ease-out, transform 0.4s ease-out',
+          transform: visible ? 'scale(1)' : 'scale(0.94)',
+          transition: TRANSITION_MED,
         }}
       >
         <div style={{ width: 320, height: 320 }}>
@@ -193,7 +272,7 @@ function AddingDocumentsOverlay({ label }: { label: string }) {
             autoplay
           />
         </div>
-        <p className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textPrimary }}>
+        <p className={CX.microLabel} style={{ color: C.textPrimary, letterSpacing: '0.25em' }}>
           {label}
         </p>
       </div>
@@ -216,7 +295,7 @@ const formatTime12hr = (time: string | undefined): string => {
 
 function SectionLabel({ icon: Icon, children }: { icon?: React.ComponentType<{ className?: string; color?: string }>; children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold" style={{ color: C.textPrimary }}>
+    <p className={`flex items-center gap-2 ${CX.microLabel}`} style={{ color: C.textSub }}>
       {Icon && <Icon className="w-3.5 h-3.5" color={C.accent} />}
       {children}
     </p>
@@ -226,14 +305,14 @@ function SectionLabel({ icon: Icon, children }: { icon?: React.ComponentType<{ c
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.2em] mb-0.5" style={{ color: C.textPrimary }}>{label}</p>
+      <p className={`${CX.microLabel} mb-1`} style={{ color: C.textSub }}>{label}</p>
       {children}
     </div>
   )
 }
 
 function FieldValue({ children }: { children: React.ReactNode }) {
-  return <p className="font-[#0D1117] text-sm truncate" style={{ color: C.textSilver }}>{children}</p>
+  return <p className="font-semibold text-sm truncate" style={{ color: C.textSilver }}>{children}</p>
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -245,15 +324,15 @@ export function CreateManifestTab({
   canProceedToStep2, canProceedToStep3, resetForm, saveManifest,
   showManualEntryModal, setShowManualEntryModal, pendingDocument,
   setPendingDocument, addDocumentWithManualShipTo, searchDocument, showToast,
-  grandTotalCBM = 0, // Default to 0 if not provided
+  grandTotalCBM = 0,
 }: CreateManifestTabProps) {
   const [searchResults, setSearchResults] = useState<Array<{ documentNumber: string; shipToName: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> }> | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
-  const [inputMode, setInputMode] = useState<'single' | 'mass'>('single') // Toggle between single and mass input
-  const [massInput, setMassInput] = useState<string>('') // Mass input textarea value
-  const [isProcessingMass, setIsProcessingMass] = useState(false) // Processing state for mass input
+  const [inputMode, setInputMode] = useState<'single' | 'mass'>('single')
+  const [massInput, setMassInput] = useState<string>('')
+  const [isProcessingMass, setIsProcessingMass] = useState(false)
   const [truckerDropdownOpen, setTruckerDropdownOpen] = useState(false)
   const [truckerSearchInput, setTruckerSearchInput] = useState('')
   const truckerDropdownRef = useRef<HTMLDivElement>(null)
@@ -287,7 +366,6 @@ export function CreateManifestTab({
     return () => { isMountedRef.current = false }
   }, [])
 
-  // Close trucker dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (truckerDropdownRef.current && !truckerDropdownRef.current.contains(e.target as Node)) {
@@ -300,7 +378,6 @@ export function CreateManifestTab({
     }
   }, [truckerDropdownOpen])
 
-  // Close truck type dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (truckTypeDropdownRef.current && !truckTypeDropdownRef.current.contains(e.target as Node)) {
@@ -349,26 +426,26 @@ export function CreateManifestTab({
   }, [currentStep, searchResults, isSearching])
 
   const handleSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === 'Enter') {
-    e.preventDefault()
-    if (searchResults && searchResults.length === 1) { selectDocument(searchResults[0]); return }
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (searchResults && searchResults.length === 1) { selectDocument(searchResults[0]); return }
 
-    const trimmed = barcodeInput.trim()
-    if (trimmed && manifest.items.some(item => item.document_number === trimmed)) {
-      if (showToast) showToast(`Document ${trimmed} already added`, 'error')
+      const trimmed = barcodeInput.trim()
+      if (trimmed && manifest.items.some(item => item.document_number === trimmed)) {
+        if (showToast) showToast(`Document ${trimmed} already added`, 'error')
+        setSearchResults(null); setBarcodeInput('')
+        requestAnimationFrame(() => { if (barcodeInputRef.current) barcodeInputRef.current.focus() })
+        return
+      }
+
+      handleBarcodeInput(e)
       setSearchResults(null); setBarcodeInput('')
       requestAnimationFrame(() => { if (barcodeInputRef.current) barcodeInputRef.current.focus() })
-      return
+    } else if (e.key === 'Escape') {
+      setSearchResults(null); setBarcodeInput('')
+      if (barcodeInputRef.current) barcodeInputRef.current.focus()
     }
-
-    handleBarcodeInput(e)
-    setSearchResults(null); setBarcodeInput('')
-    requestAnimationFrame(() => { if (barcodeInputRef.current) barcodeInputRef.current.focus() })
-  } else if (e.key === 'Escape') {
-    setSearchResults(null); setBarcodeInput('')
-    if (barcodeInputRef.current) barcodeInputRef.current.focus()
   }
-}
 
   const selectDocument = async (doc: { documentNumber: string; shipToName: string; quantity: number; cbm?: number; materialCounts?: Record<string, number> }) => {
     const exists = manifest.items.some(item => item.document_number === doc.documentNumber)
@@ -404,28 +481,28 @@ export function CreateManifestTab({
   }
 
   const handleAddDocumentWithManualShipTo = (shipToName: string) => {
-  if (!pendingDocument) return
+    if (!pendingDocument) return
 
-  const exists = manifest.items.some(item => item.document_number === pendingDocument.documentNumber)
-  if (exists) {
-    if (showToast) showToast(`Document ${pendingDocument.documentNumber} already added`, 'error')
+    const exists = manifest.items.some(item => item.document_number === pendingDocument.documentNumber)
+    if (exists) {
+      if (showToast) showToast(`Document ${pendingDocument.documentNumber} already added`, 'error')
+      setPendingDocument(null)
+      return
+    }
+
+    const newItem: ManifestItem = {
+      item_number: manifest.items.length + 1,
+      document_number: pendingDocument.documentNumber,
+      ship_to_name: shipToName,
+      total_quantity: pendingDocument.quantity,
+      actual_qty_dispatch: pendingDocument.quantity,
+      actual_qty_by_material: pendingDocument.materialCounts,
+      total_cbm: pendingDocument.cbm ?? 0,
+    }
+    setManifest({ ...manifest, items: [...manifest.items, newItem] })
+    if (showToast) showToast(`Document ${pendingDocument.documentNumber} added manually`, 'success')
     setPendingDocument(null)
-    return
   }
-
-  const newItem: ManifestItem = {
-    item_number: manifest.items.length + 1,
-    document_number: pendingDocument.documentNumber,
-    ship_to_name: shipToName,
-    total_quantity: pendingDocument.quantity,
-    actual_qty_dispatch: pendingDocument.quantity,
-    actual_qty_by_material: pendingDocument.materialCounts,
-    total_cbm: pendingDocument.cbm ?? 0,
-  }
-  setManifest({ ...manifest, items: [...manifest.items, newItem] })
-  if (showToast) showToast(`Document ${pendingDocument.documentNumber} added manually`, 'success')
-  setPendingDocument(null)
-}
 
   const updateMaterialActualCount = (idx: number, materialCode: string, value: number) => {
     const updatedItems = manifest.items.map((item, itemIndex) => {
@@ -449,7 +526,6 @@ export function CreateManifestTab({
     if (!massInput.trim() || isProcessingMass) return
     setIsProcessingMass(true)
 
-    // Parse input - split by comma or newline and trim
     const documentNumbers = massInput
       .split(/[,\n]/)
       .map((num) => num.trim().toUpperCase())
@@ -468,26 +544,22 @@ export function CreateManifestTab({
 
     try {
       for (const docNumber of documentNumbers) {
-        // Check if document already exists
         if (newItems.some((item) => item.document_number === docNumber)) {
           skipCount++
           continue
         }
 
-        // Search for document
         try {
           const results = await searchDocument(docNumber)
           if (results && results.length > 0) {
             const doc = results[0]
             const normalizedShipTo = (doc.shipToName || '').trim().toLowerCase()
 
-            // If ship-to is N/A, we can't add it automatically (would need manual entry)
             if (normalizedShipTo === 'n/a' || normalizedShipTo === 'na' || normalizedShipTo === '') {
               failedDocuments.push(docNumber)
               continue
             }
 
-            // Add to manifest
             const newItem: ManifestItem = {
               item_number: newItems.length + 1,
               document_number: doc.documentNumber,
@@ -506,11 +578,9 @@ export function CreateManifestTab({
           failedDocuments.push(docNumber)
         }
 
-        // Small delay between requests to avoid overwhelming the API
         await new Promise((resolve) => setTimeout(resolve, 100))
       }
 
-      // Update manifest with all new items at once
       if (successCount > 0) {
         setManifest({ ...manifest, items: newItems })
       }
@@ -518,7 +588,6 @@ export function CreateManifestTab({
       setIsProcessingMass(false)
       setMassInput('')
 
-      // Show summary toast
       let message = `Added ${successCount} document${successCount !== 1 ? 's' : ''}`
       if (skipCount > 0) message += `, ${skipCount} already in list`
       if (failedDocuments.length > 0) message += `, ${failedDocuments.length} not found`
@@ -544,14 +613,15 @@ export function CreateManifestTab({
     border: `1px solid ${focusedInput === id ? C.inputFocus : C.inputBorder}`,
     color: C.inputText,
     outline: 'none',
-    transition: 'border-color 0.15s',
+    borderRadius: RADIUS.control,
+    transition: TRANSITION_FAST,
   })
 
   const inputProps = (id: string) => ({
     onFocus: () => setFocusedInput(id),
     onBlur: () => setFocusedInput(null),
     style: inputStyle(id),
-    className: 'w-full px-4 py-3 text-sm',
+    className: 'w-full px-4 py-2.5 text-sm',
   })
 
   const steps = [
@@ -577,21 +647,21 @@ export function CreateManifestTab({
       <div className="flex flex-col flex-1 min-h-0 overflow-hidden rounded-2xl" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
 
         {/* ── Header (fixed) ── */}
-        <div className="flex-shrink-0 px-5 sm:px-8 pt-8 pb-7" style={{ borderBottom: `1px solid ${C.border}` }}>
+        <div className="flex-shrink-0 px-5 sm:px-6 pt-5 pb-4" style={{ borderBottom: `1px solid ${C.border}` }}>
 
           {/* Title row with CBM pill */}
-          <div className="flex items-start justify-between mb-7 sm:mb-8">
+          <div className="flex items-start justify-between gap-4 mb-5">
             <div>
               <div className="flex items-center gap-2.5 mb-3">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-50" style={{ background: C.accent }} />
                   <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: C.accent }} />
                 </span>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-white font-bold" >
+                <p className={CX.microLabel} style={{ color: C.textSub }}>
                   {isEditMode ? 'Editing manifest' : 'New manifest'}
                 </p>
               </div>
-              <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-[#0D1117] leading-[0.93] tracking-tight" style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
+              <h2 className="text-[clamp(1.6rem,4vw,2.6rem)] font-bold leading-[0.93] tracking-tight" style={{ color: C.amber, fontFamily: 'var(--font-bricolage)' }}>
                 {isEditMode ? 'Edit Manifest' : 'Create Manifest'}
               </h2>
               <p className="text-[12px] mt-2" style={{ color: C.textSub }}>
@@ -599,13 +669,15 @@ export function CreateManifestTab({
               </p>
             </div>
 
-            {/* CBM Total Pill - NEW */}
+            {/* CBM Total Pill */}
             {grandTotalCBM > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full flex-shrink-0"
-                   style={{ border: '1px solid rgba(245,166,35,0.2)', background: 'rgba(245,166,35,0.05)' }}>
-                <Package className="w-3.5 h-3.5 text-[#F5A623]" />
-                <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-[#F5A623]">Total CBM</span>
-                <span className="text-[12px] font-[#0D1117] text-white tabular-nums">{grandTotalCBM.toFixed(4)}</span>
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 flex-shrink-0"
+                style={{ borderRadius: RADIUS.pill, border: `1px solid ${C.amberBorder}`, background: C.amberBg }}
+              >
+                <Package className="w-3.5 h-3.5" style={{ color: C.amber }} />
+                <span className={CX.microLabel} style={{ color: C.amber, letterSpacing: '0.15em' }}>Total CBM</span>
+                <span className="text-[12px] font-bold tabular-nums" style={{ color: C.textPrimary }}>{grandTotalCBM.toFixed(4)}</span>
               </div>
             )}
           </div>
@@ -618,12 +690,14 @@ export function CreateManifestTab({
               const Icon        = step.icon
               return (
                 <React.Fragment key={step.number}>
-                  <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0 min-w-0">
-                    <div className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                  <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 min-w-0">
+                    <div
+                      className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0 rounded-m"
                       style={{
                         background:  isActive ? C.accent : isCompleted ? C.amber : 'transparent',
                         border:      isActive ? 'none' : isCompleted ? `1px solid ${C.amber}` : `1px solid ${C.border}`,
                         color:       isActive ? '#fff' : isCompleted ? C.bg : C.textGhost,
+                        transition: TRANSITION_MED,
                       }}
                     >
                       {isCompleted
@@ -631,16 +705,17 @@ export function CreateManifestTab({
                         : <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
                       }
                     </div>
-                    <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-bold transition-colors"
-                      style={{ color: isActive ? C.textPrimary : isCompleted ? C.accent : C.textPrimary }}>
+                    <p
+                      className={`${CX.microLabel} tracking-[0.15em]`}
+                      style={{ color: isActive ? C.textPrimary : isCompleted ? C.accent : C.textMuted, transition: TRANSITION_MED }}
+                    >
                       <span className="sm:hidden">{step.shortTitle}</span>
                       <span className="hidden sm:inline">{step.title}</span>
                     </p>
                   </div>
                   {index < 2 && (
-                    <div className="flex-1 mx-2 sm:mx-4">
-                      <div className="h-px transition-all duration-500"
-                        style={{ background: isCompleted ? 'rgba(232,25,44,0.35)' : C.divider }} />
+                    <div className="flex-1 mx-3 sm:mx-4">
+                      <div className="h-px" style={{ background: isCompleted ? C.accentBorder : C.divider, transition: TRANSITION_MED }} />
                     </div>
                   )}
                 </React.Fragment>
@@ -650,33 +725,33 @@ export function CreateManifestTab({
         </div>
 
         {/* ── Step content (scrollable) ── */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-8">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6">
 
           {/* STEP 1 */}
           {currentStep === 1 && (
-            <div className="space-y-4 sm:space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
 
                 {/* Manifest number — read-only display */}
-                <div className="sm:col-span-2">
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>Manifest Number</label>
-                  <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-                    <div className="w-0.5 h-9 flex-shrink-0" style={{ background: 'rgba(232,25,44,0.6)' }} />
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>Manifest Number</label>
+                  <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-2.5" style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: RADIUS.control }}>
+                    <div className="w-0.5 h-7 flex-shrink-0 rounded-full" style={{ background: C.accentBorder }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] uppercase tracking-[0.2em] mb-0.5" style={{ color: C.textPrimary }}>Auto-generated</p>
-                      <p className="text-lg sm:text-2xl font-[#0D1117] tracking-wider tabular-nums truncate leading-none" style={{ color: C.textPrimary }}>
+                      <p className={`${CX.microLabel} mb-0.5`} style={{ color: C.textMuted }}>Auto-generated</p>
+                      <p className="text-base sm:text-lg font-bold tracking-wider tabular-nums truncate leading-none" style={{ color: C.textPrimary }}>
                         {manifest.manifest_number || '—'}
                       </p>
                     </div>
-                    <div className="flex-shrink-0 px-2 py-1" style={{ background: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.2)' }}>
-                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.amber }}>System</span>
+                    <div className="flex-shrink-0 px-4 py-3 rounded-[4px]" style={{ background: C.amberBg, border: `1px solid ${C.amberBorder}` }}>
+                      <span className="text-[12px] font-bold uppercase tracking-widest" style={{ color: C.amber }}>System</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Manifest Date */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>
                     Manifest Date <span style={{ color: C.accent }}>*</span>
                   </label>
                   <input
@@ -690,7 +765,7 @@ export function CreateManifestTab({
 
                 {/* Trucker Dropdown with Manual Input */}
                 <div ref={truckerDropdownRef}>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>
                     Trucker <span style={{ color: C.accent }}>*</span>
                   </label>
                   <div className="relative">
@@ -706,18 +781,19 @@ export function CreateManifestTab({
                       onFocus={() => setTruckerDropdownOpen(true)}
                       placeholder="Type or select trucker..."
                       required
-                      className="w-full px-4 py-3 text-sm"
+                      className="w-full px-4 py-2.5 text-sm"
                       style={{
                         background: C.inputBg,
                         border: `1px solid ${truckerDropdownOpen ? C.inputFocus : C.inputBorder}`,
                         color: C.inputText,
                         outline: 'none',
-                        transition: 'border-color 0.15s',
+                        borderRadius: RADIUS.control,
+                        transition: TRANSITION_FAST,
                       }}
                     />
                     {truckerDropdownOpen && (
                       <div
-                        className="absolute top-full left-0 right-0 mt-1 overflow-hidden rounded shadow-lg z-10"
+                        className="absolute top-full left-0 right-0 mt-1.5 overflow-hidden shadow-lg z-10 rounded-[8px]"
                         style={{ background: C.surface, border: `1px solid ${C.border}` }}
                       >
                         {filteredTruckers.length > 0 ? (
@@ -730,27 +806,24 @@ export function CreateManifestTab({
                                 setTruckerSearchInput('')
                                 setTruckerDropdownOpen(false)
                               }}
-                              className="w-full text-left px-4 py-3 transition-colors text-sm"
+                              className="w-full text-left px-4 py-2.5 text-sm"
                               style={{
                                 background: manifest.trucker === option ? C.accent : 'transparent',
                                 color: manifest.trucker === option ? '#fff' : C.textSilver,
+                                transition: TRANSITION_FAST,
                               }}
                               onMouseEnter={(e) => {
-                                if (manifest.trucker !== option) {
-                                  e.currentTarget.style.background = C.surfaceHover
-                                }
+                                if (manifest.trucker !== option) e.currentTarget.style.background = C.surfaceHover
                               }}
                               onMouseLeave={(e) => {
-                                if (manifest.trucker !== option) {
-                                  e.currentTarget.style.background = 'transparent'
-                                }
+                                if (manifest.trucker !== option) e.currentTarget.style.background = 'transparent'
                               }}
                             >
                               {option}
                             </button>
                           ))
                         ) : (
-                          <div className="px-4 py-3 text-[12px]" style={{ color: C.textPrimary }}>
+                          <div className="px-4 py-3 text-[12px]" style={{ color: C.textMuted }}>
                             No matches found
                           </div>
                         )}
@@ -761,7 +834,7 @@ export function CreateManifestTab({
 
                 {/* Driver Name */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>
                     Driver Name <span style={{ color: C.accent }}>*</span>
                   </label>
                   <input
@@ -776,7 +849,7 @@ export function CreateManifestTab({
 
                 {/* Plate No */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>
                     Plate No. <span style={{ color: C.accent }}>*</span>
                   </label>
                   <input
@@ -790,8 +863,8 @@ export function CreateManifestTab({
                 </div>
 
                 {/* Truck Type Dropdown with Manual Input */}
-                <div className="sm:col-span-2" ref={truckTypeDropdownRef}>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                <div ref={truckTypeDropdownRef}>
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>
                     Truck Type <span style={{ color: C.accent }}>*</span>
                   </label>
                   <div className="relative">
@@ -807,18 +880,19 @@ export function CreateManifestTab({
                       onFocus={() => setTruckTypeDropdownOpen(true)}
                       placeholder="Type or select truck type..."
                       required
-                      className="w-full px-4 py-3 text-sm"
+                      className="w-full px-4 py-2.5 text-sm"
                       style={{
                         background: C.inputBg,
                         border: `1px solid ${truckTypeDropdownOpen ? C.inputFocus : C.inputBorder}`,
                         color: C.inputText,
                         outline: 'none',
-                        transition: 'border-color 0.15s',
+                        borderRadius: RADIUS.control,
+                        transition: TRANSITION_FAST,
                       }}
                     />
                     {truckTypeDropdownOpen && (
                       <div
-                        className="absolute top-full left-0 right-0 mt-1 overflow-hidden rounded shadow-lg z-10"
+                        className="absolute top-full left-0 right-0 mt-1.5 overflow-hidden shadow-lg z-10 rounded-[8px]"
                         style={{ background: C.surface, border: `1px solid ${C.border}` }}
                       >
                         {filteredTruckTypes.length > 0 ? (
@@ -831,27 +905,24 @@ export function CreateManifestTab({
                                 setTruckTypeSearchInput('')
                                 setTruckTypeDropdownOpen(false)
                               }}
-                              className="w-full text-left px-4 py-3 transition-colors text-sm"
+                              className="w-full text-left px-4 py-2.5 text-sm"
                               style={{
                                 background: manifest.truck_type === option ? C.accent : 'transparent',
                                 color: manifest.truck_type === option ? '#fff' : C.textSilver,
+                                transition: TRANSITION_FAST,
                               }}
                               onMouseEnter={(e) => {
-                                if (manifest.truck_type !== option) {
-                                  e.currentTarget.style.background = C.surfaceHover
-                                }
+                                if (manifest.truck_type !== option) e.currentTarget.style.background = C.surfaceHover
                               }}
                               onMouseLeave={(e) => {
-                                if (manifest.truck_type !== option) {
-                                  e.currentTarget.style.background = 'transparent'
-                                }
+                                if (manifest.truck_type !== option) e.currentTarget.style.background = 'transparent'
                               }}
                             >
                               {option}
                             </button>
                           ))
                         ) : (
-                          <div className="px-4 py-3 text-[12px]" style={{ color: C.textPrimary }}>
+                          <div className="px-4 py-3 text-[12px]" style={{ color: C.textMuted }}>
                             No matches found
                           </div>
                         )}
@@ -862,8 +933,8 @@ export function CreateManifestTab({
 
                 {/* Container Van No. */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
-                    Container Van No. <span style={{ color: C.textSub }}>(Optional)</span>
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>
+                    Container Van No. <span style={{ color: C.textMuted }}>(Optional)</span>
                   </label>
                   <input
                     type="text"
@@ -876,8 +947,8 @@ export function CreateManifestTab({
 
                 {/* Seal No. */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
-                    Seal No. <span style={{ color: C.textSub }}>(Optional)</span>
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>
+                    Seal No. <span style={{ color: C.textMuted }}>(Optional)</span>
                   </label>
                   <input
                     type="text"
@@ -890,14 +961,14 @@ export function CreateManifestTab({
 
                 {/* Time start */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>
                     Time Start <span style={{ color: C.accent }}>*</span>
                   </label>
                   <div className="relative">
                     <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: C.textGhost }} />
                     <input type="time" value={manifest.time_start || ''}
                       onChange={(e) => setManifest({ ...manifest, time_start: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 text-sm"
+                      className="w-full pl-10 pr-4 py-2.5 text-sm"
                       style={inputStyle('time_start')}
                       onFocus={() => setFocusedInput('time_start')} onBlur={() => setFocusedInput(null)}
                       required
@@ -907,12 +978,12 @@ export function CreateManifestTab({
 
                 {/* Time end */}
                 <div>
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>Time End</label>
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>Time End</label>
                   <div className="relative">
                     <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: C.textGhost }} />
                     <input type="time" value={manifest.time_end || ''}
                       onChange={(e) => setManifest({ ...manifest, time_end: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 text-sm"
+                      className="w-full pl-10 pr-4 py-2.5 text-sm"
                       style={inputStyle('time_end')}
                       onFocus={() => setFocusedInput('time_end')} onBlur={() => setFocusedInput(null)}
                     />
@@ -920,30 +991,28 @@ export function CreateManifestTab({
                 </div>
 
                 {/* Remarks */}
-                <div className="sm:col-span-2">
-                  <label className="block text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: C.textPrimary }}>
-                    Note <span style={{ color: C.textSub }}>(Optional)</span>
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <label className={`block ${CX.microLabel} mb-1`} style={{ color: C.textSub }}>
+                    Note <span style={{ color: C.textMuted }}>(Optional)</span>
                   </label>
                   <textarea
                     value={manifest.remarks || ''}
                     onChange={(e) => setManifest({ ...manifest, remarks: e.target.value })}
                     placeholder="Add any notes about this trip..."
-                    className="w-full px-4 py-3 text-sm font-sans resize-none rounded"
+                    className="w-full px-4 py-4.5 text-sm font-sans resize-none"
                     style={{
                       background: C.inputBg,
                       border: `1px solid ${focusedInput === 'remarks' ? C.inputFocus : C.inputBorder}`,
                       color: C.inputText,
                       outline: 'none',
-                      transition: 'border-color 0.15s',
-                      minHeight: '100px',
-                      maxHeight: '150px',
+                      borderRadius: RADIUS.control,
+                      transition: TRANSITION_FAST,
+                      minHeight: '48px',
+                      maxHeight: '80px',
                     }}
                     onFocus={() => setFocusedInput('remarks')}
                     onBlur={() => setFocusedInput(null)}
                   />
-                  <p className="text-[10px] mt-2 max-w-xs" style={{ color: C.textMuted }}>
-                    Add delivery instructions, special handling notes, or any other remarks.
-                  </p>
                 </div>
               </div>
             </div>
@@ -953,27 +1022,29 @@ export function CreateManifestTab({
           {currentStep === 2 && (
             <div className="space-y-5">
               {/* Search box with toggle */}
-              <div className="p-4 sm:p-6" style={{ border: `1px solid ${C.border}` }}>
+              <div className={CX.panel} style={{ border: `1px solid ${C.border}` }}>
                 <div className="flex items-center justify-between mb-4">
                   <SectionLabel icon={Search}>Document Search</SectionLabel>
                   {/* Toggle between single and mass input */}
-                  <div className="flex gap-2 bg-opacity-30 rounded-lg p-1" style={{ background: 'rgba(232,25,44,0.08)' }}>
+                  <div className="flex gap-1 p-1 rounded-[8px]" style={{ background: C.surface }}>
                     <button
                       onClick={() => { setInputMode('single'); setMassInput('') }}
-                      className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-all duration-200 rounded"
+                      className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold rounded-[6px]"
                       style={{
                         background: inputMode === 'single' ? C.accent : 'transparent',
-                        color: inputMode === 'single' ? '#fff' : C.textPrimary,
+                        color: inputMode === 'single' ? '#fff' : C.textSub,
+                        transition: TRANSITION_FAST,
                       }}
                     >
                       Single
                     </button>
                     <button
                       onClick={() => { setInputMode('mass'); setBarcodeInput(''); setSearchResults(null) }}
-                      className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold transition-all duration-200 rounded"
+                      className="px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold rounded-[6px]"
                       style={{
                         background: inputMode === 'mass' ? C.accent : 'transparent',
-                        color: inputMode === 'mass' ? '#fff' : C.textPrimary,
+                        color: inputMode === 'mass' ? '#fff' : C.textSub,
+                        transition: TRANSITION_FAST,
                       }}
                     >
                       Mass Input
@@ -984,7 +1055,7 @@ export function CreateManifestTab({
                 {/* Single input mode */}
                 {inputMode === 'single' && (
                   <>
-                    <div className="relative mt-3 sm:mt-4">
+                    <div className="relative">
                       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: C.textGhost }} />
                       <input
                         ref={barcodeInputRef}
@@ -1003,7 +1074,7 @@ export function CreateManifestTab({
 
                     {/* Searching spinner */}
                     {isSearching && barcodeInput.trim().length >= 1 && (
-                      <div className="mt-3 p-3 flex items-center gap-2 text-[11px]" style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textPrimary }}>
+                      <div className="mt-3 p-3 flex items-center gap-2 text-[11px] rounded-[8px]" style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textSub }}>
                         <div className="animate-spin rounded-full h-3.5 w-3.5 border border-t-transparent" style={{ borderColor: C.accent, borderTopColor: 'transparent' }} />
                         Searching…
                       </div>
@@ -1011,18 +1082,18 @@ export function CreateManifestTab({
 
                     {/* Results */}
                     {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length > 0 && (
-                      <div className="mt-3 overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
+                      <div className="mt-3 overflow-hidden rounded-[8px]" style={{ border: `1px solid ${C.border}` }}>
                         {searchResults.map((result, idx) => (
                           <button key={idx} onClick={() => selectDocument(result)} type="button"
-                            className="w-full text-left px-3 py-3 transition-colors group"
-                            style={{ borderTop: idx > 0 ? `1px solid ${C.divider}` : 'none', background: 'transparent' }}
+                            className="w-full text-left px-3 py-3"
+                            style={{ borderTop: idx > 0 ? `1px solid ${C.divider}` : 'none', background: 'transparent', transition: TRANSITION_FAST }}
                             onMouseEnter={e => (e.currentTarget.style.background = C.surfaceHover)}
                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                           >
                             <div className="flex items-baseline justify-between gap-2">
                               <div className="flex items-baseline gap-2 min-w-0">
-                                <span className="text-[10px]" style={{ color: C.textPrimary }}>{String(idx + 1).padStart(2, '0')}</span>
-                                <span className="font-[#0D1117] text-sm truncate transition-colors" style={{ color: C.textSilver }}>{result.documentNumber}</span>
+                                <span className="text-[10px]" style={{ color: C.textGhost }}>{String(idx + 1).padStart(2, '0')}</span>
+                                <span className="font-semibold text-sm truncate" style={{ color: C.textSilver }}>{result.documentNumber}</span>
                               </div>
                               <div className="flex items-baseline gap-3 flex-shrink-0">
                                 {result.cbm != null && result.cbm > 0 && (
@@ -1031,7 +1102,7 @@ export function CreateManifestTab({
                                 <span className="text-[10px] font-bold" style={{ color: C.accent }}>×{result.quantity}</span>
                               </div>
                             </div>
-                            <p className="text-[11px] mt-0.5 pl-6 truncate" style={{ color: C.textPrimary }}>{result.shipToName}</p>
+                            <p className="text-[11px] mt-0.5 pl-6 truncate" style={{ color: C.textMuted }}>{result.shipToName}</p>
                           </button>
                         ))}
                       </div>
@@ -1039,11 +1110,11 @@ export function CreateManifestTab({
 
                     {/* Not found */}
                     {!isSearching && barcodeInput.trim().length >= 1 && searchResults && searchResults.length === 0 && (
-                      <div className="mt-3 p-4 flex items-start gap-3" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+                      <div className="mt-3 p-4 flex items-start gap-3 rounded-[8px]" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
                         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: C.accent }} />
                         <div>
-                          <p className="font-[#0D1117] text-xs uppercase tracking-widest" style={{ color: C.textSilver }}>Not Found</p>
-                          <p className="text-[11px] mt-1" style={{ color: C.textPrimary }}>
+                          <p className="font-semibold text-xs uppercase tracking-widest" style={{ color: C.textSilver }}>Not Found</p>
+                          <p className="text-[11px] mt-1" style={{ color: C.textSub }}>
                             Press Enter to add <span className="font-bold" style={{ color: C.textSilver }}>"{barcodeInput}"</span> manually
                           </p>
                         </div>
@@ -1055,36 +1126,36 @@ export function CreateManifestTab({
                 {/* Mass input mode */}
                 {inputMode === 'mass' && (
                   <>
-                    <div className="mt-3 sm:mt-4">
-                      <textarea
-                        value={massInput}
-                        onChange={(e) => setMassInput(e.target.value.toUpperCase())}
-                        placeholder="Enter DN/TRA numbers - one per line or comma-separated"
-                        disabled={isProcessingMass}
-                        className="w-full px-4 py-3 text-sm font-mono resize-none"
-                        style={{
-                          background: C.inputBg,
-                          border: `1px solid ${focusedInput === 'mass' ? C.inputFocus : C.inputBorder}`,
-                          color: C.inputText,
-                          outline: 'none',
-                          transition: 'border-color 0.15s',
-                          minHeight: '120px',
-                          maxHeight: '200px',
-                        }}
-                        onFocus={() => setFocusedInput('mass')}
-                        onBlur={() => setFocusedInput(null)}
-                      />
-                    </div>
+                    <textarea
+                      value={massInput}
+                      onChange={(e) => setMassInput(e.target.value.toUpperCase())}
+                      placeholder="Enter DN/TRA numbers - one per line or comma-separated"
+                      disabled={isProcessingMass}
+                      className="w-full px-4 py-3 text-sm font-mono resize-none"
+                      style={{
+                        background: C.inputBg,
+                        border: `1px solid ${focusedInput === 'mass' ? C.inputFocus : C.inputBorder}`,
+                        color: C.inputText,
+                        outline: 'none',
+                        borderRadius: RADIUS.control,
+                        transition: TRANSITION_FAST,
+                        minHeight: '120px',
+                        maxHeight: '200px',
+                      }}
+                      onFocus={() => setFocusedInput('mass')}
+                      onBlur={() => setFocusedInput(null)}
+                    />
 
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={handleProcessMassInput}
                         disabled={!massInput.trim() || isProcessingMass}
-                        className="flex-1 px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all"
+                        className="flex-1 px-4 py-3 font-bold text-xs uppercase tracking-widest rounded-[8px]"
                         style={{
                           background: !massInput.trim() || isProcessingMass ? C.textGhost : C.accent,
                           color: '#fff',
                           cursor: !massInput.trim() || isProcessingMass ? 'not-allowed' : 'pointer',
+                          transition: TRANSITION_FAST,
                         }}
                       >
                         {isProcessingMass ? (
@@ -1099,11 +1170,12 @@ export function CreateManifestTab({
                       <button
                         onClick={() => setMassInput('')}
                         disabled={isProcessingMass}
-                        className="px-4 py-3 font-bold text-xs uppercase tracking-widest transition-all"
+                        className="px-4 py-3 font-bold text-xs uppercase tracking-widest rounded-[8px]"
                         style={{
                           border: `1px solid ${C.border}`,
-                          color: isProcessingMass ? C.textGhost : C.textPrimary,
+                          color: isProcessingMass ? C.textGhost : C.textSub,
                           cursor: isProcessingMass ? 'not-allowed' : 'pointer',
+                          transition: TRANSITION_FAST,
                         }}
                       >
                         Clear
@@ -1111,7 +1183,7 @@ export function CreateManifestTab({
                     </div>
 
                     {/* Info text */}
-                    <div className="mt-3 p-3 flex items-start gap-2 text-[11px]" style={{ border: `1px solid`, borderRadius: '6px', color: C.textPrimary }}>
+                    <div className="mt-3 p-3 flex items-start gap-2 text-[11px] rounded-[8px]" style={{ border: `1px solid ${C.border}`, color: C.textSub }}>
                       <span style={{ color: C.amber, fontWeight: 'bold', marginTop: '2px' }}>i</span>
                       <div>
                         <p>Separate document numbers with commas or new lines</p>
@@ -1122,13 +1194,20 @@ export function CreateManifestTab({
                 )}
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3.5" style={{ background: totalDocuments > 0 ? 'rgba(34,197,94,0.045)' : C.surface, border: `1px solid ${totalDocuments > 0 ? 'rgba(34,197,94,0.2)' : C.border}` }}>
+              <div
+                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 rounded-[10px]"
+                style={{
+                  background: totalDocuments > 0 ? C.successBg : C.surface,
+                  border: `1px solid ${totalDocuments > 0 ? C.successBorder : C.border}`,
+                  transition: TRANSITION_MED,
+                }}
+              >
                 <div className="flex items-start gap-2.5">
                   {totalDocuments > 0
-                    ? <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#22c55e' }} />
+                    ? <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: C.success }} />
                     : <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: C.textMuted }} />}
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: totalDocuments > 0 ? '#86efac' : C.textSilver }}>
+                    <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: totalDocuments > 0 ? C.successText : C.textSilver }}>
                       {totalDocuments > 0 ? 'Orders added' : 'Waiting for orders'}
                     </p>
                     <p className="text-[11px] mt-1" style={{ color: C.textMuted }}>
@@ -1144,7 +1223,7 @@ export function CreateManifestTab({
                   <div className="h-7 w-px" style={{ background: C.divider }} />
                   <div>
                     <p className="text-[9px] uppercase tracking-widest" style={{ color: C.textMuted }}>Units</p>
-                    <p className="text-base font-bold tabular-nums" style={{ color: '#fff' }}>{totalQuantity}</p>
+                    <p className="text-base font-bold tabular-nums" style={{ color: C.textPrimary }}>{totalQuantity}</p>
                   </div>
                 </div>
               </div>
@@ -1158,27 +1237,27 @@ export function CreateManifestTab({
                   </div>
                   <div className="flex items-center gap-3">
                     {hasCbm && (
-                      <span className="text-[10px]" style={{ color: C.textPrimary }}>
-                        CBM: <span className="font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                        CBM: <span className="font-semibold tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
                       </span>
                     )}
                     {totalQuantity > 0 && (
-                      <span className="text-[10px]" style={{ color: C.textPrimary }}>
-                        Total: <span className="font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
+                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                        Total: <span className="font-semibold tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
                       </span>
                     )}
                     {totalQuantity > 0 && (
-                      <span className="text-[10px]" style={{ color: C.textPrimary }}>
-                        Dispatched: <span className="font-[#0D1117] tabular-nums" style={{ color: totalDispatchedQuantity < totalQuantity ? C.amber : C.textSilver }}>{totalDispatchedQuantity}</span>
+                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                        Dispatched: <span className="font-semibold tabular-nums" style={{ color: totalDispatchedQuantity < totalQuantity ? C.amber : C.textSilver }}>{totalDispatchedQuantity}</span>
                       </span>
                     )}
                   </div>
                 </div>
 
                 {manifest.items.length === 0 ? (
-                  <div className="py-12 text-center" style={{ border: `1px dashed ${C.border}` }}>
+                  <div className="py-12 text-center rounded-[10px]" style={{ border: `1px dashed ${C.border}` }}>
                     <Package className="w-7 h-7 mx-auto mb-2.5" style={{ color: C.textGhost }} />
-                    <p className="font-[#0D1117] text-xs uppercase tracking-widest" style={{ color: C.textPrimary }}>No documents yet</p>
+                    <p className="font-semibold text-xs uppercase tracking-widest" style={{ color: C.textSub }}>No documents yet</p>
                     <p className="text-[11px] mt-1" style={{ color: C.textGhost }}>Scan or type a DN/TRA above</p>
                   </div>
                 ) : (
@@ -1188,14 +1267,13 @@ export function CreateManifestTab({
                       const isShort = dispatchedQty < item.total_quantity
                       return (
                       <React.Fragment key={idx}>
-                      <div className="group flex items-center gap-3 py-3.5 transition-all duration-150"
-                        style={{ borderBottom: `1px solid ${C.divider}` }}>
+                      <div className="group flex items-center gap-3 py-3.5" style={{ borderBottom: `1px solid ${C.divider}`, transition: TRANSITION_FAST }}>
                         <span className="text-[11px] font-bold w-5 flex-shrink-0" style={{ color: C.textGhost }}>
                           {String(item.item_number).padStart(2, '0')}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className="font-[#0D1117] text-sm truncate transition-colors group-hover:text-white" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
-                          <p className="text-[11px] mt-0.5 truncate" style={{ color: C.textPrimary }}>{item.document_number}</p>
+                          <p className="font-semibold text-sm truncate" style={{ color: C.textSilver, transition: TRANSITION_FAST }}>{item.ship_to_name}</p>
+                          <p className="text-[11px] mt-0.5 truncate" style={{ color: C.textMuted }}>{item.document_number}</p>
                         </div>
                         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                           {item.total_cbm != null && item.total_cbm > 0 && (
@@ -1204,24 +1282,35 @@ export function CreateManifestTab({
                           <div className="flex items-center gap-1">
                             <span className="hidden sm:inline text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Expected</span>
                             <span className="sm:hidden text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Ord.</span>
-                            <span className="w-9 sm:w-14 text-right text-sm font-[#0D1117] tabular-nums" style={{ color: '#fff' }}>
+                            <span className="w-9 sm:w-14 text-right text-sm font-semibold tabular-nums" style={{ color: C.textPrimary }}>
                               {item.total_quantity}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="hidden sm:inline text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Disp</span>
                             <span className="sm:hidden text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Disp.</span>
-                            <span className="w-9 sm:w-14 text-right text-sm font-[#0D1117] tabular-nums" style={{ color: '#fff' }}>
+                            <span className="w-9 sm:w-14 text-right text-sm font-semibold tabular-nums" style={{ color: C.textPrimary }}>
                               {dispatchedQty}
                             </span>
                           </div>
-                          <span className="hidden md:inline-flex items-center gap-1 text-[9px] uppercase tracking-widest px-2 py-1" style={{ color: isShort ? C.amber : '#86efac', background: isShort ? 'rgba(193,248,92,0.08)' : 'rgba(34,197,94,0.08)', border: `1px solid ${isShort ? 'rgba(193,248,92,0.18)' : 'rgba(34,197,94,0.18)'}` }}>
+                          <span
+                            className="hidden md:inline-flex items-center gap-1 text-[9px] uppercase tracking-widest px-2 py-1 rounded-full"
+                            style={{
+                              color: isShort ? C.amber : C.successText,
+                              background: isShort ? C.amberBg : C.successBg,
+                              border: `1px solid ${isShort ? C.amberBorder : C.successBorder}`,
+                            }}
+                          >
                             {isShort ? 'Check qty' : 'Ready'}
                           </span>
                         </div>
-                        <button onClick={() => removeItem(idx)} className="p-1.5 flex-shrink-0 touch-manipulation transition-colors" style={{ color: C.textGhost }}
-                          onMouseEnter={e => (e.currentTarget.style.color = C.accent)}
-                          onMouseLeave={e => (e.currentTarget.style.color = C.textGhost)}>
+                        <button
+                          onClick={() => removeItem(idx)}
+                          className="p-1.5 flex-shrink-0 touch-manipulation rounded-[6px]"
+                          style={{ color: C.textGhost, transition: TRANSITION_FAST }}
+                          onMouseEnter={e => { e.currentTarget.style.color = C.accent; e.currentTarget.style.background = C.accentBg }}
+                          onMouseLeave={e => { e.currentTarget.style.color = C.textGhost; e.currentTarget.style.background = 'transparent' }}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -1229,7 +1318,7 @@ export function CreateManifestTab({
                         <div className="ml-8 py-2 space-y-2" style={{ borderBottom: `1px solid ${C.divider}` }}>
                           {Object.entries(item.actual_qty_by_material).map(([materialCode, actualCount]) => (
                             <div key={materialCode} className="flex items-center justify-between gap-3">
-                              <span className="text-[10px] uppercase tracking-widest truncate" style={{ color: C.textPrimary }}>{materialCode}</span>
+                              <span className="text-[10px] uppercase tracking-widest truncate" style={{ color: C.textSub }}>{materialCode}</span>
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 <span className="text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Actual Count</span>
                                 <input
@@ -1240,8 +1329,8 @@ export function CreateManifestTab({
                                     .reduce((sum, [, count]) => sum + count, 0))}
                                   value={Math.min(actualCount, item.total_quantity)}
                                   onChange={(e) => updateMaterialActualCount(idx, materialCode, e.target.value === '' ? 0 : Number(e.target.value))}
-                                  className="w-14 px-1.5 py-1 text-xs text-right tabular-nums rounded"
-                                  style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.inputText, outline: 'none' }}
+                                  className="w-14 px-1.5 py-1 text-xs text-right tabular-nums rounded-[6px]"
+                                  style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.inputText, outline: 'none', transition: TRANSITION_FAST }}
                                 />
                               </div>
                             </div>
@@ -1261,7 +1350,7 @@ export function CreateManifestTab({
           {currentStep === 3 && (
             <div className="space-y-5">
               {/* Trip info */}
-              <div className="p-4 sm:p-6" style={{ border: `1px solid ${C.border}` }}>
+              <div className={CX.panel} style={{ border: `1px solid ${C.border}` }}>
                 <SectionLabel icon={Truck}>Trip Information</SectionLabel>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-y-5 mt-4">
                   <Field label="Manifest No."><FieldValue>{manifest.manifest_number}</FieldValue></Field>
@@ -1280,7 +1369,7 @@ export function CreateManifestTab({
                   <Field label="Time End"><FieldValue>{formatTime12hr(manifest.time_end)}</FieldValue></Field>
                   {manifest.time_start && manifest.time_end && (
                     <Field label="Duration">
-                      <p className="font-[#0D1117] text-sm tabular-nums" style={{ color: C.amber }}>{getDuration()}</p>
+                      <p className="font-semibold text-sm tabular-nums" style={{ color: C.amber }}>{getDuration()}</p>
                     </Field>
                   )}
                 </div>
@@ -1288,9 +1377,9 @@ export function CreateManifestTab({
 
               {/* Remarks Section */}
               {manifest.remarks && (
-                <div className="p-4 sm:p-6" style={{ border: `1px solid ${C.border}` }}>
+                <div className={CX.panel} style={{ border: `1px solid ${C.border}` }}>
                   <SectionLabel icon={MessageSquare}>Note</SectionLabel>
-                  <div className="mt-4 p-4 rounded" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+                  <div className="mt-4 p-4 rounded-[8px]" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: C.textSilver }}>
                       {manifest.remarks}
                     </p>
@@ -1299,20 +1388,20 @@ export function CreateManifestTab({
               )}
 
               {/* Documents */}
-              <div className="p-4 sm:p-6" style={{ border: `1px solid ${C.border}` }}>
+              <div className={CX.panel} style={{ border: `1px solid ${C.border}` }}>
                 <div className="flex items-center justify-between mb-4">
                   <SectionLabel icon={Package}>Documents ({totalDocuments})</SectionLabel>
                   <div className="flex items-center gap-4">
                     {hasCbm && (
-                      <span className="text-[10px]" style={{ color: C.textPrimary }}>
-                        Total CBM: <span className="font-[#0D1117] tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                      <span className="text-[10px]" style={{ color: C.textMuted }}>
+                        Total CBM: <span className="font-semibold tabular-nums" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
                       </span>
                     )}
-                    <span className="text-[10px]" style={{ color: C.textPrimary }}>
-                      Total Qty: <span className="font-[#0D1117] tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
+                    <span className="text-[10px]" style={{ color: C.textMuted }}>
+                      Total Qty: <span className="font-semibold tabular-nums" style={{ color: C.textSilver }}>{totalQuantity}</span>
                     </span>
-                    <span className="text-[10px]" style={{ color: C.textPrimary }}>
-                      Dispatched: <span className="font-[#0D1117] tabular-nums" style={{ color: totalDispatchedQuantity < totalQuantity ? C.amber : C.textSilver }}>{totalDispatchedQuantity}</span>
+                    <span className="text-[10px]" style={{ color: C.textMuted }}>
+                      Dispatched: <span className="font-semibold tabular-nums" style={{ color: totalDispatchedQuantity < totalQuantity ? C.amber : C.textSilver }}>{totalDispatchedQuantity}</span>
                     </span>
                   </div>
                 </div>
@@ -1333,39 +1422,39 @@ export function CreateManifestTab({
                   const isShort = dispatchedQty < item.total_quantity
                   return (
                   <div key={item.item_number}
-                    className={`grid gap-x-3 py-3.5 items-center group/row hover:pl-1 transition-all duration-150 ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto_auto]'}`}
-                    style={{ borderBottom: `1px solid ${C.divider}` }}>
-                    <span className="text-[11px] font-bold group-hover/row:text-[#E8192C] transition-colors" style={{ color: C.textGhost }}>
+                    className={`grid gap-x-3 py-3.5 items-center group/row hover:pl-1 ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto_auto]'}`}
+                    style={{ borderBottom: `1px solid ${C.divider}`, transition: TRANSITION_FAST }}>
+                    <span className="text-[11px] font-bold group-hover/row:text-[var(--accent)] transition-colors" style={{ color: C.textGhost, ['--accent' as string]: C.accent }}>
                       {String(item.item_number).padStart(2, '0')}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-[#0D1117] text-sm truncate group-hover/row:text-white transition-colors" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
-                      <p className="sm:hidden text-[11px] mt-0.5 truncate" style={{ color: C.textPrimary }}>{item.document_number}</p>
+                      <p className="font-semibold text-sm truncate" style={{ color: C.textSilver }}>{item.ship_to_name}</p>
+                      <p className="sm:hidden text-[11px] mt-0.5 truncate" style={{ color: C.textMuted }}>{item.document_number}</p>
                     </div>
-                    <span className="text-[11px] hidden sm:block" style={{ color: C.textPrimary }}>{item.document_number}</span>
+                    <span className="text-[11px] hidden sm:block" style={{ color: C.textMuted }}>{item.document_number}</span>
                     {hasCbm && (
                       <span className="text-[11px] font-bold tabular-nums text-right" style={{ color: item.total_cbm != null && item.total_cbm > 0 ? C.amber : C.textGhost }}>
                         {item.total_cbm != null && item.total_cbm > 0 ? item.total_cbm.toFixed(4) : '—'}
                       </span>
                     )}
-                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: '#fff' }}>×{item.total_quantity}</span>
-                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: '#fff' }}>×{dispatchedQty}</span>
+                    <span className="text-sm font-semibold tabular-nums text-right" style={{ color: C.textPrimary }}>×{item.total_quantity}</span>
+                    <span className="text-sm font-semibold tabular-nums text-right" style={{ color: C.textPrimary }}>×{dispatchedQty}</span>
                   </div>
                   )
                 })}
 
                 {/* Grand total footer */}
                 {manifest.items.length > 0 && (
-                  <div className={`grid gap-x-3 py-3 items-center ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto_auto]'}`}
-                    style={{ borderTop: `1px solid ${C.border}`, background: '#0a0a0a' }}>
+                  <div className={`grid gap-x-3 py-3 items-center rounded-b-[8px] ${hasCbm ? 'grid-cols-[1.5rem_1fr_auto_auto_auto_auto]' : 'grid-cols-[1.5rem_1fr_auto_auto_auto]'}`}
+                    style={{ borderTop: `1px solid ${C.border}`, background: C.surface }}>
                     <span />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-right col-span-2 hidden sm:block" style={{ color: C.textGhost }}>Grand Total</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest col-span-1 sm:hidden" style={{ color: C.textGhost }}>Total</span>
                     {hasCbm && (
-                      <span className="text-[12px] font-[#0D1117] tabular-nums text-right" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
+                      <span className="text-[12px] font-semibold tabular-nums text-right" style={{ color: C.amber }}>{totalCbm.toFixed(4)}</span>
                     )}
-                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: C.accent }}>×{totalQuantity}</span>
-                    <span className="text-sm font-[#0D1117] tabular-nums text-right" style={{ color: '#fff' }}>×{totalDispatchedQuantity}</span>
+                    <span className="text-sm font-bold tabular-nums text-right" style={{ color: C.accent }}>×{totalQuantity}</span>
+                    <span className="text-sm font-bold tabular-nums text-right" style={{ color: C.textPrimary }}>×{totalDispatchedQuantity}</span>
                   </div>
                 )}
               </div>
@@ -1375,15 +1464,16 @@ export function CreateManifestTab({
         </div>
 
         {/* ── Navigation (fixed footer) ── */}
-        <div className="flex-shrink-0 flex justify-between gap-3 px-5 sm:px-8 py-5 sm:py-7" style={{ borderTop: `1px solid ${C.border}` }}>
+        <div className="flex-shrink-0 flex justify-between gap-3 px-5 sm:px-6 py-4" style={{ borderTop: `1px solid ${C.border}` }}>
           <button
             onClick={() => currentStep > 1 && setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
             disabled={currentStep === 1}
-            className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 font-bold text-xs uppercase tracking-widest transition-all duration-150"
+            className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 font-bold text-xs uppercase tracking-widest rounded-[8px]"
             style={{
               border: `1px solid ${C.border}`,
               color: currentStep === 1 ? C.textGhost : C.textSub,
               cursor: currentStep === 1 ? 'not-allowed' : 'pointer',
+              transition: TRANSITION_FAST,
             }}
           >
             <ChevronLeft className="w-3.5 h-3.5" />
@@ -1399,11 +1489,13 @@ export function CreateManifestTab({
                 setCurrentStep((currentStep + 1) as 1 | 2 | 3)
               }}
               disabled={(currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3())}
-              className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-[#0D1117] text-xs uppercase tracking-widest transition-all duration-150"
+              className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2.5 font-bold text-xs uppercase tracking-widest rounded-[8px]"
               style={{
                 background: C.amber,
+                color: C.bg,
                 opacity: (currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3()) ? 0.3 : 1,
                 cursor: (currentStep === 1 && !canProceedToStep2()) || (currentStep === 2 && !canProceedToStep3()) ? 'not-allowed' : 'pointer',
+                transition: TRANSITION_FAST,
               }}
             >
               Next <ChevronRight className="w-3.5 h-3.5" />
@@ -1411,19 +1503,20 @@ export function CreateManifestTab({
           ) : (
             <div className="flex gap-2 sm:gap-3">
               <button onClick={resetForm}
-                className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 font-bold text-xs uppercase tracking-widest transition-all duration-150"
-                style={{ border: `1px solid ${C.border}`, color: C.textSub }}>
+                className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 font-bold text-xs uppercase tracking-widest rounded-[8px]"
+                style={{ border: `1px solid ${C.border}`, color: C.textSub, transition: TRANSITION_FAST }}>
                 <X className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Clear</span>
               </button>
               <button onClick={saveManifest} disabled={isLoading}
-                className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2 font-[#0D1117] text-xs uppercase tracking-widest transition-all duration-150"
+                className="inline-flex items-center justify-center gap-1.5 px-5 sm:px-6 py-2.5 font-bold text-xs uppercase tracking-widest rounded-[8px]"
                 style={{
-                  background: isEditMode ? '#2563eb' : C.accent,
+                  background: isEditMode ? C.edit : C.accent,
                   color: '#fff',
-                  boxShadow: isEditMode ? '0 8px 24px rgba(37,99,235,0.25)' : `0 8px 24px ${C.accentGlow}`,
+                  boxShadow: isEditMode ? `0 8px 24px ${C.editGlow}` : `0 8px 24px ${C.accentGlow}`,
                   opacity: isLoading ? 0.3 : 1,
                   cursor: isLoading ? 'not-allowed' : 'pointer',
+                  transition: TRANSITION_FAST,
                 }}>
                 <Save className="w-3.5 h-3.5" />
                 {isLoading ? 'Saving…' : isEditMode ? 'Update' : 'Save'}
