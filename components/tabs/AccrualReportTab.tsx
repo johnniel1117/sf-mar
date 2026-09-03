@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import {
   Download, Calendar, Search, X, ChevronRight,
   TrendingUp, Package, Loader2, Truck, FileText,
@@ -16,6 +16,10 @@ const supabase = createClient(
 )
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
+// Matched to SavedManifestsTab / TripManifestForm: purple accent, lime highlight
+// for CBM, amber/warning for shortfalls. inputFocus now uses the shared accent
+// instead of the stray blue this file had before, so focus rings read the same
+// across every tab.
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
@@ -27,6 +31,7 @@ const C = {
   accentHover:  '#b39eff',
   accentGlow:   'rgba(157,123,248,0.25)',
   amber:        '#C1F85C',
+  warning:      '#F5A623',
   textPrimary:  '#C9D1D9',
   textSilver:   '#B1BAC4',
   textSub:      '#8B949E',
@@ -35,7 +40,7 @@ const C = {
   inputBg:      '#0D1117',
   inputBorder:  '#30363D',
   inputText:    '#C9D1D9',
-  inputFocus:   '#1F6FEB',
+  inputFocus:   '#9d7bf8',
   stripeEven:   '#161B22',
   stripeOdd:    '#0D1117',
 }
@@ -71,6 +76,7 @@ interface AccrualRow {
   shipToAddress: string
   soldToName:    string
   qty:           number
+  dispatchQty:   number
   totalVolume:   number
   drAmount:      number
   trucker:       string
@@ -81,13 +87,14 @@ interface AccrualRow {
 }
 
 interface TruckerGroup {
-  trucker:    string
-  plateNo:    string
-  truckType:  string
-  manifestNo: string
-  rows:       AccrualRow[]
-  totalQty:   number
-  totalVol:   number
+  trucker:       string
+  plateNo:       string
+  truckType:     string
+  manifestNo:    string
+  rows:          AccrualRow[]
+  totalQty:      number
+  totalDispatch: number
+  totalVol:      number
 }
 
 interface DayGroup {
@@ -185,6 +192,14 @@ async function fetchSerialsForDNs(dns: string[]): Promise<Map<string, SerialEntr
 }
 
 // ── Row builder ───────────────────────────────────────────────────────────────
+//
+// `qty` is the ordered quantity for a material line (count of scanned serials,
+// or the document's total_quantity when no serial data exists). `dispatchQty`
+// is what actually went out — pulled from the manifest item's per-material
+// actual_qty_by_material map when available, falling back to the item-level
+// actual_qty_dispatch, and finally to qty itself (i.e. "assume fully
+// dispatched" when nothing more granular was recorded) — the same convention
+// used everywhere else in the app.
 
 function buildAccrualRows(
   manifests: TripManifest[],
@@ -210,6 +225,8 @@ function buildAccrualRows(
 
         for (const group of groupMap.values()) {
           const first = group[0]
+          const orderedQty   = group.length
+          const dispatchQty  = item.actual_qty_by_material?.[first.materialCode] ?? orderedQty
           rows.push({
             orderNo:       dn,
             matCode:       first.materialCode  ?? '',
@@ -218,7 +235,8 @@ function buildAccrualRows(
             shipToName:    first.shipToName    ?? '—',
             shipToAddress: first.shipToAddress ?? '—',
             soldToName:    first.soldToName    ?? '—',
-            qty:           group.length,
+            qty:           orderedQty,
+            dispatchQty,
             totalVolume:   item.total_cbm      ?? 0,
             drAmount:      0,
             trucker:       m.trucker           ?? '',
@@ -238,6 +256,7 @@ function buildAccrualRows(
           shipToAddress: '—',
           soldToName:    '—',
           qty:           item.total_quantity ?? 0,
+          dispatchQty:   item.actual_qty_dispatch ?? item.total_quantity ?? 0,
           totalVolume:   item.total_cbm      ?? 0,
           drAmount:      0,
           trucker:       m.trucker           ?? '',
@@ -272,19 +291,21 @@ function groupByDay(rows: AccrualRow[]): DayGroup[] {
         const key = `${r.trucker}||${r.plateNo}||${r.manifestNo}`
         if (!truckerMap.has(key)) {
           truckerMap.set(key, {
-            trucker:    r.trucker,
-            plateNo:    r.plateNo,
-            truckType:  r.truckType,
-            manifestNo: r.manifestNo,
-            rows:       [],
-            totalQty:   0,
-            totalVol:   0,
+            trucker:       r.trucker,
+            plateNo:       r.plateNo,
+            truckType:     r.truckType,
+            manifestNo:    r.manifestNo,
+            rows:          [],
+            totalQty:      0,
+            totalDispatch: 0,
+            totalVol:      0,
           })
         }
         const g = truckerMap.get(key)!
         g.rows.push(r)
-        g.totalQty += r.qty
-        g.totalVol += r.totalVolume
+        g.totalQty      += r.qty
+        g.totalDispatch += r.dispatchQty
+        g.totalVol      += r.totalVolume
       }
       return { label: formatDayLabel(date), date, rows: dayRows, subGroups: Array.from(truckerMap.values()) }
     })
@@ -293,18 +314,23 @@ function groupByDay(rows: AccrualRow[]): DayGroup[] {
 // ── Excel sheet builder (shared between both export functions) ────────────────
 
 /**
- * Columns (15 total):
+ * Columns (17 total):
  * ORDER NO | MAT CODE | MAT DESC | CATEGORY (blank) | SOLD TO NAME |
- * SHIP TO NAME | SHIP TO ADDRESS | QTY | CBM (blank) | TOTAL CBM |
- * DR AMOUNT | TRUCKER | PLATE NO. | TRUCK TYPE | DATE DISPATCHED
+ * SHIP TO NAME | SHIP TO ADDRESS | QTY | DISPATCH QTY | CBM (blank) |
+ * TOTAL CBM | DR AMOUNT | TRUCKER | PLATE NO. | TRUCK TYPE |
+ * DATE DISPATCHED | MANIFEST NO
+ *
+ * DISPATCH QTY sits right after QTY — the ordered amount — since it's the
+ * per-line-item measure of what actually left the warehouse, same placement
+ * convention used in the trip manifest exports.
  */
 const COLS = [
   'ORDER NO', 'MAT CODE', 'MAT DESC', 'CATEGORY',
   'SOLD TO NAME', 'SHIP TO NAME', 'SHIP TO ADDRESS',
-  'QTY', 'CBM', 'TOTAL CBM', 'DR AMOUNT',
+  'QTY', 'DISPATCH QTY', 'CBM', 'TOTAL CBM', 'DR AMOUNT',
   'TRUCKER', 'PLATE NO.', 'TRUCK TYPE', 'DATE DISPATCHED', 'MANIFEST NO',
 ]
-const COL_WIDTHS = [20, 18, 36, 14, 34, 30, 42, 8, 10, 12, 12, 20, 12, 14, 16, 18]
+const COL_WIDTHS = [20, 18, 36, 14, 34, 30, 42, 8, 12, 10, 12, 12, 20, 12, 14, 16, 18]
 
 /**
  * Builds a worksheet from an ordered list of truck groups. Each group renders
@@ -346,6 +372,8 @@ function buildWorksheetForGroups(groups: TruckerGroup[]): XLSX.WorkSheet {
       const fill = { fgColor: { rgb: idx % 2 === 0 ? 'F6F8FA' : 'FFFFFF' } }
       const base = { font:{sz:10}, fill, border:bThin, alignment:{horizontal:'center',vertical:'center',wrapText:true} }
       const bold = { ...base, font:{sz:10,bold:true} }
+      const isShort = r2.dispatchQty < r2.qty
+      const dispatchStyle = { ...base, font:{ sz:10, bold:true, color:{ rgb: isShort ? 'B45309' : '000000' } } }
 
       const orderNoVal = r2.orderNo.replace(/^0+/, '')
 
@@ -357,26 +385,27 @@ function buildWorksheetForGroups(groups: TruckerGroup[]): XLSX.WorkSheet {
       setCell(row,  5, r2.shipToName    || '—',        base)
       setCell(row,  6, r2.shipToAddress || '—',        base)
       setCell(row,  7, r2.qty,                         base, 'n')
-      setCell(row,  8, '',                              base)        // CBM — blank
-      setCell(row,  9, r2.totalVolume,                 base, 'n')
-      setCell(row, 10, r2.drAmount,                    base, 'n')
-      setCell(row, 11, r2.trucker,                     base)
-      setCell(row, 12, r2.plateNo,                     base)
-      setCell(row, 13, r2.truckType,                   base)
-      setCell(row, 14, toExcelSerial(r2.manifestDate), { ...base, numFmt:'MM/DD/YYYY' }, 'n')
-      setCell(row, 15, r2.manifestNo || '—',           base)
+      setCell(row,  8, r2.dispatchQty,                 dispatchStyle, 'n')
+      setCell(row,  9, '',                              base)        // CBM — blank
+      setCell(row, 10, r2.totalVolume,                 base, 'n')
+      setCell(row, 11, r2.drAmount,                    base, 'n')
+      setCell(row, 12, r2.trucker,                     base)
+      setCell(row, 13, r2.plateNo,                     base)
+      setCell(row, 14, r2.truckType,                   base)
+      setCell(row, 15, toExcelSerial(r2.manifestDate), { ...base, numFmt:'MM/DD/YYYY' }, 'n')
+      setCell(row, 16, r2.manifestNo || '—',           base)
       row++
     })
 
     // Subtotal row
     COLS.forEach((_, c) => {
-      const v = c === 7 ? sub.totalQty : c === 9 ? sub.totalVol : ''
-      setCell(row, c, v, subtotalStyle, (c === 7 || c === 9) ? 'n' : 's')
+      const v = c === 7 ? sub.totalQty : c === 8 ? sub.totalDispatch : c === 10 ? sub.totalVol : ''
+      setCell(row, c, v, subtotalStyle, (c === 7 || c === 8 || c === 10) ? 'n' : 's')
     })
     row++
   }
 
-  ws['!ref']  = `A1:P${row + 1}`
+  ws['!ref']  = `A1:Q${row + 1}`
   ws['!cols'] = COL_WIDTHS.map(wch => ({ wch }))
   ws['!rows'] = Array.from({ length: row }, () => ({ hpt: 28 }))
 
@@ -435,13 +464,14 @@ function exportByTrucker(dayGroups: DayGroup[], monthLabel: string) {
       }
 
       const truckerSubGroups: TruckerGroup[] = Array.from(manifestMap.entries()).map(([manifestNo, mRows]) => ({
-        trucker:    mRows[0]?.trucker   ?? '',
-        plateNo:    mRows[0]?.plateNo   ?? '',
-        truckType:  mRows[0]?.truckType ?? '',
+        trucker:       mRows[0]?.trucker   ?? '',
+        plateNo:       mRows[0]?.plateNo   ?? '',
+        truckType:     mRows[0]?.truckType ?? '',
         manifestNo,
-        rows:       mRows,
-        totalQty:   mRows.reduce((s, r) => s + r.qty, 0),
-        totalVol:   mRows.reduce((s, r) => s + r.totalVolume, 0),
+        rows:          mRows,
+        totalQty:      mRows.reduce((s, r) => s + r.qty, 0),
+        totalDispatch: mRows.reduce((s, r) => s + r.dispatchQty, 0),
+        totalVol:      mRows.reduce((s, r) => s + r.totalVolume, 0),
       }))
 
       const syntheticDay: DayGroup = {
@@ -502,13 +532,14 @@ function exportAccrualByTruckerOneFile(dayGroups: DayGroup[], monthLabel: string
     const groups: TruckerGroup[] = Array.from(blockMap.entries())
       .sort(([, aRows], [, bRows]) => aRows[0].manifestDate.localeCompare(bRows[0].manifestDate))
       .map(([, gRows]) => ({
-        trucker:    gRows[0]?.trucker   ?? '',
-        plateNo:    gRows[0]?.plateNo   ?? '',
-        truckType:  gRows[0]?.truckType ?? '',
-        manifestNo: gRows[0]?.manifestNo ?? '',
-        rows:       gRows,
-        totalQty:   gRows.reduce((s, r) => s + r.qty, 0),
-        totalVol:   gRows.reduce((s, r) => s + r.totalVolume, 0),
+        trucker:       gRows[0]?.trucker    ?? '',
+        plateNo:       gRows[0]?.plateNo    ?? '',
+        truckType:     gRows[0]?.truckType  ?? '',
+        manifestNo:    gRows[0]?.manifestNo ?? '',
+        rows:          gRows,
+        totalQty:      gRows.reduce((s, r) => s + r.qty, 0),
+        totalDispatch: gRows.reduce((s, r) => s + r.dispatchQty, 0),
+        totalVol:      gRows.reduce((s, r) => s + r.totalVolume, 0),
       }))
 
     const ws = buildWorksheetForGroups(groups)
@@ -542,7 +573,7 @@ function StatCard({ label, value, color, icon: Icon }: { label: string; value: s
       <div className="flex items-start gap-3">
         {Icon && (
           <div className="flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center"
-            style={{ background: color === C.amber ? 'rgba(193,248,92,0.1)' : 'rgba(157,123,248,0.1)', border: `1px solid ${C.border}` }}>
+            style={{ background: color === C.amber ? 'rgba(193,248,92,0.1)' : color === C.warning ? 'rgba(245,166,35,0.1)' : 'rgba(157,123,248,0.1)', border: `1px solid ${C.border}` }}>
             <Icon className="w-4 h-4" style={{ color }} />
           </div>
         )}
@@ -584,10 +615,28 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
     const n = new Date()
     return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`
   })
-  const [search,      setSearch]      = useState('')
-  const [expandedDay, setExpandedDay] = useState<string | null>(null)
-  const [serialsMap,  setSerialsMap]  = useState<Map<string, SerialEntry[]>>(new Map())
-  const [loading,     setLoading]     = useState(false)
+  const [search,       setSearch]       = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [expandedDay,  setExpandedDay]  = useState<string | null>(null)
+  const [serialsMap,   setSerialsMap]   = useState<Map<string, SerialEntry[]>>(new Map())
+  const [loading,      setLoading]      = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // "/" focuses search, matching the shortcut used in Saved Manifests.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement !== searchInputRef.current) {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+      if (e.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        setSearch('')
+        searchInputRef.current?.blur()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const [selYear, selMonth] = selectedMonth.split('-').map(Number)
   const monthLabel = `${MONTH_NAMES[selMonth - 1]} ${selYear}`
@@ -651,27 +700,29 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
     return groups
   }, [allRows, search])
 
-  const totalQty   = allRows.reduce((s, r) => s + r.qty, 0)
-  const totalVol   = allRows.reduce((s, r) => s + r.totalVolume, 0)
-  const totalDays  = dayGroups.length
-  const hasSerials = allRows.some(r => r.matCode)
+  const totalQty      = allRows.reduce((s, r) => s + r.qty, 0)
+  const totalDispatch = allRows.reduce((s, r) => s + r.dispatchQty, 0)
+  const totalVol       = allRows.reduce((s, r) => s + r.totalVolume, 0)
+  const totalDays      = dayGroups.length
+  const hasSerials      = allRows.some(r => r.matCode)
+  const hasShortfall    = totalDispatch < totalQty
 
   const gridCols   = hasSerials
-    ? '220px 200px 1fr 100px 300px 340px 70px 90px'
-    : '220px 1fr 300px 70px 90px'
-  const minWidth   = hasSerials ? '1200px' : '700px'
+    ? '220px 200px 1fr 100px 300px 340px 70px 80px 90px'
+    : '220px 1fr 300px 70px 80px 90px'
+  const minWidth   = hasSerials ? '1280px' : '760px'
   const colHeaders = hasSerials
-    ? ['Order No.', 'Mat Code', 'Description', 'Type', 'Sold To', 'Ship To / Address', 'Qty', 'CBM']
-    : ['Order No.', 'Ship To', 'Address', 'Qty', 'CBM']
+    ? ['Order No.', 'Mat Code', 'Description', 'Type', 'Sold To', 'Ship To / Address', 'Qty', 'Dispatch', 'CBM']
+    : ['Order No.', 'Ship To', 'Address', 'Qty', 'Dispatch', 'CBM']
 
   const canExport = dayGroups.length > 0 && !loading
 
   return (
-    <div className="rounded-xl overflow-hidden flex flex-col"
+    <div className="rounded-2xl overflow-hidden flex flex-col"
       style={{ background: C.bg, border: `1px solid ${C.border}` }}>
 
       {/* ══ HEADER ══════════════════════════════════════════════════════════════ */}
-      <div className="px-6 sm:px-8 pt-8 pb-8 flex-shrink-0"
+      <div className="px-5 sm:px-8 pt-8 pb-7 flex-shrink-0"
         style={{ borderBottom: `1px solid ${C.border}` }}>
 
         <div className="mb-6">
@@ -693,17 +744,18 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
         {/* Stats */}
         {monthManifests.length > 0 && !loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-            <StatCard label="Active Days"  value={String(totalDays)}           color={C.accent}       icon={CalendarIcon} />
-            <StatCard label="Total Qty"    value={totalQty.toLocaleString()}    color={C.textPrimary}  icon={Package} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <StatCard label="Active Days"     value={String(totalDays)}            color={C.accent}               icon={CalendarIcon} />
+            <StatCard label="Total Qty"       value={totalQty.toLocaleString()}     color={C.textPrimary}          icon={Package} />
+            <StatCard label="Total Dispatch"  value={totalDispatch.toLocaleString()} color={hasShortfall ? C.warning : C.textPrimary} icon={Truck} />
             {totalVol > 0 && (
-              <StatCard label="Total CBM"  value={totalVol.toFixed(2)}          color={C.amber}        icon={TrendingUp} />
+              <StatCard label="Total CBM"     value={totalVol.toFixed(2)}           color={C.amber}                icon={TrendingUp} />
             )}
           </div>
         )}
 
         {/* Controls */}
-        <div className="flex gap-3 flex-wrap items-center"
+        <div className="flex gap-2 flex-wrap items-center"
           style={{ background: 'rgba(255,255,255,0.02)', padding: '12px 16px', borderRadius: '8px', border: `1px solid ${C.border}` }}>
 
           {/* Month selector */}
@@ -713,7 +765,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
             <select
               value={selectedMonth}
               onChange={e => { setSelectedMonth(e.target.value); setExpandedDay(null) }}
-              className="h-10 pl-10 pr-4 text-[13px] font-medium appearance-none cursor-pointer outline-none rounded-md transition-colors"
+              className="h-9 pl-10 pr-4 text-[13px] font-medium appearance-none cursor-pointer outline-none rounded-md transition-colors"
               style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textSilver }}
               onFocus={e => (e.currentTarget.style.borderColor = C.inputFocus)}
               onBlur={e  => (e.currentTarget.style.borderColor = C.border)}
@@ -728,23 +780,31 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
           {/* Search */}
           <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-              style={{ color: C.textMuted }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none transition-colors"
+              style={{ color: searchFocused ? C.accent : C.textMuted }} />
             <input
+              ref={searchInputRef}
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search DN, material, sold to, trucker…"
-              className="w-full h-10 pl-10 pr-4 bg-transparent text-[13px] rounded-md focus:outline-none transition-all"
+              className="w-full h-9 pl-10 pr-9 bg-transparent text-[13px] rounded-md focus:outline-none transition-all"
               style={{ border: `1px solid ${C.border}`, color: C.textSilver }}
-              onFocus={e => { e.currentTarget.style.borderColor = C.inputFocus; e.currentTarget.style.background = C.surface }}
-              onBlur={e  => { e.currentTarget.style.borderColor = C.border;     e.currentTarget.style.background = 'transparent' }}
+              onFocus={e => { setSearchFocused(true); e.currentTarget.style.borderColor = C.inputFocus; e.currentTarget.style.background = C.surface }}
+              onBlur={e  => { setSearchFocused(false); e.currentTarget.style.borderColor = C.border;     e.currentTarget.style.background = 'transparent' }}
             />
-            {search && (
-              <button onClick={() => setSearch('')}
+            {search ? (
+              <button onClick={() => { setSearch(''); searchInputRef.current?.focus() }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-100 opacity-60 p-1"
                 style={{ color: C.textSub }}>
                 <X className="w-4 h-4" />
               </button>
+            ) : !searchFocused && (
+              <kbd
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold px-1.5 py-0.5 leading-none rounded-sm"
+                style={{ color: C.textMuted, border: `1px solid ${C.border}` }}
+              >
+                /
+              </kbd>
             )}
           </div>
 
@@ -752,13 +812,13 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
           <button
             onClick={() => exportAccrualExcel(dayGroups, monthLabel)}
             disabled={!canExport}
-            className="flex items-center gap-2 px-4 h-10 text-[13px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wide"
+            className="flex items-center gap-2 px-4 h-9 text-[11px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-widest"
             style={{ background: C.accent, color: 'white', border: 'none' }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.accentHover; e.currentTarget.style.boxShadow = `0 0 12px ${C.accentGlow}` }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = C.accent;      e.currentTarget.style.boxShadow = 'none' }}
             title="Export all truckers — one file, sheets per day"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Export</span>
           </button>
 
@@ -766,7 +826,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
           <button
             onClick={() => exportByTrucker(dayGroups, monthLabel)}
             disabled={!canExport}
-            className="flex items-center gap-2 px-4 h-10 text-[13px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wide"
+            className="flex items-center gap-2 px-4 h-9 text-[11px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-widest"
             style={{
               background: 'transparent',
               color: C.textSilver,
@@ -784,7 +844,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
             }}
             title="Export per trucker — one file per trucker, sheets per day"
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">By Trucker</span>
           </button>
 
@@ -792,7 +852,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
           <button
             onClick={() => exportAccrualByTruckerOneFile(dayGroups, monthLabel)}
             disabled={!canExport}
-            className="flex items-center gap-2 px-4 h-10 text-[13px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wide"
+            className="flex items-center gap-2 px-4 h-9 text-[11px] font-bold rounded-md transition-all flex-shrink-0 disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-widest"
             style={{
               background: 'transparent',
               color: C.textSilver,
@@ -810,7 +870,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
             }}
             title="One file, one sheet per trucker — rows grouped by truck and date dispatched"
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">1 File / Trucker Sheets</span>
           </button>
         </div>
@@ -818,9 +878,9 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
       {/* ══ LIST HEADER ═════════════════════════════════════════════════════════ */}
       {dayGroups.length > 0 && !loading && (
-        <div className="grid px-6 sm:px-8 py-3.5 text-[11px] font-bold uppercase tracking-wider flex-shrink-0"
+        <div className="grid px-5 sm:px-8 py-3.5 text-[11px] font-bold uppercase tracking-wider flex-shrink-0"
           style={{
-            gridTemplateColumns: '1fr 80px 64px 72px 20px',
+            gridTemplateColumns: '1fr 80px 64px 64px 72px 20px',
             borderBottom: `1px solid ${C.border}`,
             background: `${C.surface}80`,
             color: C.textMuted,
@@ -828,6 +888,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
           <span>Dispatch Date</span>
           <span className="hidden sm:block text-center">DNs</span>
           <span className="text-right">Qty</span>
+          <span className="text-right">Dispatch</span>
           <span className="text-right" style={{ color: C.amber }}>CBM</span>
           <span />
         </div>
@@ -888,10 +949,11 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
         {/* Day rows */}
         {!loading && dayGroups.map(day => {
-          const isOpen    = expandedDay === day.date
-          const dayQty    = day.rows.reduce((s, r) => s + r.qty, 0)
-          const dayVol    = day.rows.reduce((s, r) => s + r.totalVolume, 0)
-          const uniqueDNs = [...new Set(day.rows.map(r => r.orderNo))].length
+          const isOpen      = expandedDay === day.date
+          const dayQty      = day.rows.reduce((s, r) => s + r.qty, 0)
+          const dayDispatch = day.rows.reduce((s, r) => s + r.dispatchQty, 0)
+          const dayVol      = day.rows.reduce((s, r) => s + r.totalVolume, 0)
+          const uniqueDNs   = [...new Set(day.rows.map(r => r.orderNo))].length
 
           return (
             <div key={day.date}
@@ -909,8 +971,8 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                 onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background = 'transparent' }}
                 onClick={() => setExpandedDay(isOpen ? null : day.date)}
               >
-                <div className="grid px-6 py-4 items-center"
-                  style={{ gridTemplateColumns: '1fr 80px 64px 72px 20px' }}>
+                <div className="grid px-5 sm:px-6 py-4 items-center"
+                  style={{ gridTemplateColumns: '1fr 80px 64px 64px 72px 20px' }}>
 
                   <div className="min-w-0">
                     <p className="text-[15px] font-bold" style={{ color: C.textPrimary }}>{day.label}</p>
@@ -937,6 +999,11 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                   </p>
 
                   <p className="text-right text-[14px] font-bold tabular-nums"
+                    style={{ color: dayDispatch < dayQty ? C.warning : C.textSilver }}>
+                    {dayDispatch.toLocaleString()}
+                  </p>
+
+                  <p className="text-right text-[14px] font-bold tabular-nums"
                     style={{ color: dayVol > 0 ? C.amber : C.textGhost }}>
                     {dayVol > 0 ? dayVol.toFixed(2) : '—'}
                   </p>
@@ -948,7 +1015,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
               {/* Expanded detail */}
               {isOpen && (
-                <div className="px-6 pb-6" style={{ borderTop: `1px solid ${C.border}` }}>
+                <div className="px-5 sm:px-6 pb-6" style={{ borderTop: `1px solid ${C.border}` }}>
 
                   {day.subGroups.map((sub, si) => (
                     <div key={si} className={si > 0 ? 'mt-6 pt-6 border-t' : 'mt-4'}
@@ -1044,6 +1111,10 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
                             <span className="text-[13px] font-bold tabular-nums"
                               style={{ color: C.textPrimary }}>{r.qty}</span>
+                            <span className="text-[12px] font-bold tabular-nums"
+                              style={{ color: r.dispatchQty < r.qty ? C.warning : C.textSilver }}>
+                              {r.dispatchQty}
+                            </span>
                             <span className="text-[12px] tabular-nums font-medium"
                               style={{ color: r.totalVolume > 0 ? C.amber : C.textGhost }}>
                               {r.totalVolume > 0 ? r.totalVolume.toFixed(3) : '—'}
@@ -1071,6 +1142,10 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                           <span className="text-[13px] font-bold tabular-nums"
                             style={{ color: C.textPrimary }}>{sub.totalQty.toLocaleString()}</span>
                           <span className="text-[12px] font-bold tabular-nums"
+                            style={{ color: sub.totalDispatch < sub.totalQty ? C.warning : C.textSilver }}>
+                            {sub.totalDispatch.toLocaleString()}
+                          </span>
+                          <span className="text-[12px] font-bold tabular-nums"
                             style={{ color: sub.totalVol > 0 ? C.amber : C.textGhost }}>
                             {sub.totalVol > 0 ? sub.totalVol.toFixed(3) : '—'}
                           </span>
@@ -1091,6 +1166,11 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
                         <span className="text-[16px] font-bold tabular-nums"
                           style={{ color: C.textPrimary }}>{dayQty.toLocaleString()}</span>
                       </div>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span className="text-[11px] uppercase tracking-wider font-bold" style={{ color: dayDispatch < dayQty ? C.warning : C.textMuted }}>Day Dispatch</span>
+                        <span className="text-[16px] font-bold tabular-nums"
+                          style={{ color: dayDispatch < dayQty ? C.warning : C.textPrimary }}>{dayDispatch.toLocaleString()}</span>
+                      </div>
                       {dayVol > 0 && (
                         <div className="flex flex-col items-end gap-0.5">
                           <span className="text-[11px] uppercase tracking-wider font-bold" style={{ color: C.amber }}>Day CBM</span>
@@ -1109,7 +1189,7 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
 
       {/* ══ FOOTER ══════════════════════════════════════════════════════════════ */}
       {dayGroups.length > 0 && !loading && (
-        <div className="flex-shrink-0 px-6 sm:px-8 py-3.5 flex items-center justify-between gap-3 flex-wrap"
+        <div className="flex-shrink-0 px-5 sm:px-8 py-3.5 flex items-center justify-between gap-3 flex-wrap"
           style={{ borderTop: `1px solid ${C.border}`, background: C.surface }}>
 
           <p className="text-[11px] font-medium" style={{ color: C.textMuted }}>
@@ -1122,6 +1202,13 @@ export function AccrualReportTab({ manifests }: { manifests: TripManifest[] }) {
               <span className="text-[12px] font-semibold tabular-nums" style={{ color: C.textPrimary }}>
                 {totalQty.toLocaleString()}
                 <span className="text-[10px] font-normal ml-1" style={{ color: C.textMuted }}>pcs</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Truck className="w-3.5 h-3.5" style={{ color: hasShortfall ? C.warning : C.textMuted }} />
+              <span className="text-[12px] font-semibold tabular-nums" style={{ color: hasShortfall ? C.warning : C.textPrimary }}>
+                {totalDispatch.toLocaleString()}
+                <span className="text-[10px] font-normal ml-1" style={{ color: C.textMuted }}>dispatched</span>
               </span>
             </div>
             {totalVol > 0 && (
