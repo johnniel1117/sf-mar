@@ -134,15 +134,43 @@ export function buildDetailedRows(
         material.isBracket ||= isBracketSerial(s)
       }
 
-      const lines: MaterialLine[] = Array.from(matMap.entries()).map(([code, v], lineIndex) => ({
-        materialCode: code,
-        materialDesc: v.desc,
-        location:     v.location,
-        qty:          v.isBracket ? item.total_quantity ?? v.qty : v.qty,
-        actualQty:    v.isBracket ? item.actual_qty_dispatch ?? item.total_quantity ?? v.qty : item.actual_qty_by_material?.[code] ?? (
-          item.actual_qty_by_material ? 0 : lineIndex === 0 ? item.actual_qty_dispatch ?? item.total_quantity ?? 0 : 0
-        ),
-      }))
+      const dispatchQtyForItem = item.actual_qty_dispatch ?? item.total_quantity ?? 0
+      const totalScannedQty = Array.from(matMap.values()).reduce((s, v) => s + v.qty, 0)
+      const entries = Array.from(matMap.entries())
+
+      let allocated = 0
+      const lines: MaterialLine[] = entries.map(([code, v], idx) => {
+        const qty = v.isBracket ? item.total_quantity ?? v.qty : v.qty
+
+        let actualQty: number
+        if (v.isBracket) {
+          actualQty = item.actual_qty_dispatch ?? item.total_quantity ?? v.qty
+        } else if (item.actual_qty_by_material?.[code] != null) {
+          // Explicit per-material breakdown, when available, wins
+          actualQty = item.actual_qty_by_material[code]
+        } else if (totalScannedQty > 0) {
+          // No explicit breakdown — split the item's dispatched qty across
+          // material lines proportionally to what was actually scanned,
+          // instead of assigning it all to the first line and zeroing the rest.
+          const isLast = idx === entries.length - 1
+          if (isLast) {
+            actualQty = dispatchQtyForItem - allocated
+          } else {
+            actualQty = Math.round((v.qty / totalScannedQty) * dispatchQtyForItem)
+            allocated += actualQty
+          }
+        } else {
+          actualQty = 0
+        }
+
+        return {
+          materialCode: code,
+          materialDesc: v.desc,
+          location:     v.location,
+          qty,
+          actualQty,
+        }
+      })
 
       rows.push({
         documentNumber: dn,
