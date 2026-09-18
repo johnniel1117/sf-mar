@@ -1210,7 +1210,7 @@ export function SavedManifestsTab({
     })
     row += 2
 
-    ;['MANIFEST NO.','DISPATCH DATE','TRUCKER','DRIVER','PLATE NO.','TRUCK TYPE','CONTAINER VAN NO.','SEAL NO.','TIME START','TIME END','DN / TRA NO.','SHIP TO NAME','QTY','ACTUAL QTY DISPATCH'].forEach((h, c) =>
+    ;['MANIFEST NO.','DISPATCH DATE','TRUCKER','DRIVER','PLATE NO.','TRUCK TYPE','CONTAINER VAN NO.','SEAL NO.','TIME START','TIME END','DN / TRA NO.','SHIP TO NAME','QTY','ACTUAL QTY DISPATCH','REMARKS'].forEach((h, c) =>
       setCell(row, c, h, {
         font:{bold:true,sz:11,color:{rgb:'FFFFFF'}},
         fill:{fgColor:{rgb:'1E3A5F'}},
@@ -1247,6 +1247,7 @@ export function SavedManifestsTab({
         setCell(row, 11, 'No documents', base())
         setCell(row, 12, 0, center(), 'n')
         setCell(row, 13, 0, center(), 'n')
+        setCell(row, 14, manifest.remarks || '—', base({ alignment:{horizontal:'left',vertical:'top',wrapText:true} }))
         row++
       } else {
         items.forEach((item) => {
@@ -1267,6 +1268,7 @@ export function SavedManifestsTab({
           setCell(row, 11, item.ship_to_name || '—', base())
           setCell(row, 12, item.total_quantity || 0, center(), 'n')
           setCell(row, 13, dispatchedQty, center({ font:{sz:10,bold:true,color:{rgb: isShort ? 'B45309' : '000000'}} }), 'n')
+          setCell(row, 14, manifest.remarks || '—', base({ alignment:{horizontal:'left',vertical:'top',wrapText:true} }))
           grandQty += item.total_quantity || 0
           grandDispatchedQty += dispatchedQty
           grandDocs++
@@ -1287,9 +1289,10 @@ export function SavedManifestsTab({
     for (let c = 1; c <= 11; c++) setCell(row, c, '', totalStyle)
     setCell(row, 12, grandQty, totalStyle, 'n')
     setCell(row, 13, grandDispatchedQty, totalStyle, 'n')
+    setCell(row, 14, '', totalStyle)
 
-    ws['!ref'] = `A1:N${row + 5}`
-    ws['!cols'] = [{wch:18},{wch:14},{wch:22},{wch:22},{wch:14},{wch:16},{wch:16},{wch:14},{wch:12},{wch:12},{wch:18},{wch:40},{wch:10},{wch:16}]
+    ws['!ref'] = `A1:O${row + 5}`
+    ws['!cols'] = [{wch:18},{wch:14},{wch:22},{wch:22},{wch:14},{wch:16},{wch:16},{wch:14},{wch:12},{wch:12},{wch:18},{wch:40},{wch:10},{wch:16},{wch:28}]
     XLSX.utils.book_append_sheet(wb, ws, 'Monitoring')
     XLSX.writeFile(wb, `Manifest-Monitoring-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
@@ -1337,7 +1340,7 @@ export function SavedManifestsTab({
         setCell(row,2,'—',{border:bThin,alignment:{horizontal:'center'}})
         setCell(row,3,0,{border:bThin,alignment:{horizontal:'center'}},'n')
         setCell(row,4,0,{border:bThin,alignment:{horizontal:'center'}},'n')
-        setCell(row,5,'—',{border:bThin,alignment:{horizontal:'center'}})
+        setCell(row,5,manifest.remarks || '—',{border:bThin,alignment:{horizontal:'left',vertical:'top',wrapText:true}})
         row++
       } else {
         items.forEach((item, idx) => {
@@ -1349,7 +1352,7 @@ export function SavedManifestsTab({
           setCell(row,2,stripLeadingZeros(item.document_number),{...cs,font:{bold:true}})
           setCell(row,3,item.total_quantity||0,cs,'n')
           setCell(row,4,dispatchedQty,{...cs,font:{bold:true,color:{rgb: isShort ? 'B45309' : '000000'}}},'n')
-          setCell(row,5,'',cs)
+          setCell(row,5,manifest.remarks || '',{...cs,alignment:{horizontal:'left',vertical:'top',wrapText:true}})
           row++
         })
       }
