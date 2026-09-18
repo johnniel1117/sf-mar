@@ -632,7 +632,7 @@ export function CreateManifestTab({
 
   return (
     <div className="h-full flex flex-col">
-      {isProcessingMass && <AddingDocumentsOverlay label="Adding documents…" />}
+      {isProcessingMass && <AddingDocumentsOverlay label={''}  />}
 
       <ManualEntryModal
         isOpen={showManualEntryModal}
