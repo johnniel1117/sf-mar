@@ -251,20 +251,18 @@ function buildAccrualRows(
           const bracketMaterialTotal = getBracketMaterialTotal(item)
           const recordedQty = item.actual_qty_by_material?.[first.materialCode]
           const effectiveDispatchQty = getDispatchedQty(item)
-          const fallbackQty = isBracketGroup
-            ? (item.total_quantity ?? group.length)
-            : group.length
+          const hasRecordedQty = recordedQty != null && Number.isFinite(recordedQty) && recordedQty > 0
+          const isSingleBarcodeBracket = isBracketGroup && group.length === 1
+          const materialQty = hasRecordedQty ? recordedQty : group.length
 
-          // For bracket accessories, one scanned barcode can represent multiple
-          // units. Prefer the actual dispatched total or the saved per-material
-          // bracket total before falling back to the raw scan count. This keeps
-          // historical records from incorrectly collapsing to 1.
-          const dispatchQty = effectiveDispatchQty || fallbackQty || 0
-          const orderedQty = isBracketGroup
-            ? dispatchQty
-            : (recordedQty != null && Number.isFinite(recordedQty) && recordedQty > 0)
-              ? recordedQty
-              : (bracketMaterialTotal > 0 ? bracketMaterialTotal : dispatchQty)
+          // A bracket's one barcode can represent the whole order. Every
+          // other material must keep its own scanned/recorded quantity.
+          const orderedQty = isSingleBarcodeBracket
+            ? (item.total_quantity ?? effectiveDispatchQty ?? bracketMaterialTotal ?? materialQty)
+            : materialQty
+          const dispatchQty = isSingleBarcodeBracket
+            ? (item.actual_qty_dispatch ?? item.total_quantity ?? orderedQty)
+            : materialQty
 
           rows.push({
             orderNo:       dn,
