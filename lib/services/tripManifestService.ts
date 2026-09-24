@@ -37,13 +37,33 @@ export interface DocumentLookupResult {
   material_counts?: Record<string, number>
 }
 
+function isBracketMaterialCode(code: string): boolean {
+  const compact = String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  return compact.startsWith('TD0042653') || compact.includes('BRACKET') || compact.includes('BRKT')
+}
+
 /**
  * Returns the quantity that should be treated as "actually dispatched" for
  * an item — falls back to total_quantity for older items that predate this
  * field, so short-shipment math never silently breaks on legacy manifests.
+ *
+ * For bracket items, a single scanned barcode can represent multiple units, so
+ * the saved material breakdown is authoritative and should override stale raw
+ * row counts like 1.
  */
 export function getDispatchedQty(item: ManifestItem): number {
-  return item.actual_qty_dispatch ?? item.total_quantity
+  if (item.actual_qty_dispatch != null && Number.isFinite(item.actual_qty_dispatch)) {
+    return item.actual_qty_dispatch
+  }
+
+  const bracketMaterialTotal = item.actual_qty_by_material
+    ? Object.entries(item.actual_qty_by_material).reduce((sum, [code, qty]) => {
+        return isBracketMaterialCode(code) ? sum + (Number(qty) || 0) : sum
+      }, 0)
+    : 0
+
+  if (bracketMaterialTotal > 0) return bracketMaterialTotal
+  return item.total_quantity
 }
 
 export async function updateTripManifest(id: string, data: Partial<TripManifest>) {

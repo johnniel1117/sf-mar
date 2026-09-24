@@ -114,7 +114,7 @@ export function useTripManifest() {
       ship_to_name: data.ship_to_name || 'N/A',
       total_quantity: data.total_quantity || 1,
       total_cbm: totalCbm,
-      material_counts: getMaterialCounts(data.serial_data),
+      material_counts: getMaterialCounts(data.serial_data, data.total_quantity || 0),
     }
     
     console.log('Returning lookup result:', result)
@@ -158,13 +158,21 @@ export function useTripManifest() {
     }
   }, [])
 
-function getMaterialCounts(serialData: unknown): Record<string, number> {
+function getMaterialCounts(serialData: unknown, totalQuantity = 0): Record<string, number> {
   try {
     const serials = typeof serialData === 'string' ? JSON.parse(serialData) : serialData
     if (!Array.isArray(serials)) return {}
     return serials.reduce((counts: Record<string, number>, serial: { materialCode?: string }) => {
       const materialCode = String(serial.materialCode || '').trim()
-      if (materialCode) counts[materialCode] = (counts[materialCode] || 0) + 1
+      if (!materialCode) return counts
+
+      const isBracket = /^(TD0042653)|BRACKET|BRKT/i.test(String(Object.values(serial).join(' ')))
+      if (isBracket && totalQuantity > 0) {
+        counts[materialCode] = totalQuantity
+        return counts
+      }
+
+      counts[materialCode] = (counts[materialCode] || 0) + 1
       return counts
     }, {})
   } catch {

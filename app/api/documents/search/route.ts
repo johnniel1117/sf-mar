@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     // Include total_cbm in the select query
     const { data, error } = await supabase
       .from('excel_uploads')
-      .select('document_number, ship_to_name, total_quantity, total_cbm, serial_data')
+      .select('document_number, ship_to_name, total_quantity, total_cbm, material_data, serial_data')
       .ilike('document_number', `%${searchText}%`)
       .limit(20)
     
@@ -32,6 +32,13 @@ export async function GET(request: NextRequest) {
     
     if (!data || data.length === 0) {
       return NextResponse.json({ results: [] })
+    }
+
+    function isBracketSerial(serial: Record<string, unknown>): boolean {
+      return Object.values(serial).some(value => {
+        const compact = String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+        return compact.startsWith('TD0042653') || compact.includes('BRACKET') || compact.includes('BRKT')
+      })
     }
 
     // Map to expected format with CBM calculation
@@ -49,13 +56,29 @@ export async function GET(request: NextRequest) {
       }
 
       let materialCounts: Record<string, number> = {}
-      if (doc.serial_data) {
+
+      if (Array.isArray(doc.material_data)) {
+        for (const item of doc.material_data) {
+          const materialCode = String(item?.materialCode || item?.material_code || '').trim()
+          const qty = Number(item?.qty ?? item?.quantity ?? 0)
+          if (materialCode && qty > 0) materialCounts[materialCode] = qty
+        }
+      }
+
+      if (Object.keys(materialCounts).length === 0 && doc.serial_data) {
         try {
           const serials = typeof doc.serial_data === 'string' ? JSON.parse(doc.serial_data) : doc.serial_data
           if (Array.isArray(serials)) {
+            const bracketQty = Number(doc.total_quantity || 0)
             for (const serial of serials) {
               const materialCode = String(serial.materialCode || '').trim()
-              if (materialCode) materialCounts[materialCode] = (materialCounts[materialCode] || 0) + 1
+              if (!materialCode) continue
+
+              if (isBracketSerial(serial as Record<string, unknown>)) {
+                materialCounts[materialCode] = bracketQty > 0 ? bracketQty : (materialCounts[materialCode] || 0) + 1
+              } else {
+                materialCounts[materialCode] = (materialCounts[materialCode] || 0) + 1
+              }
             }
           }
         } catch { /* Keep the document result when serial data is malformed. */ }

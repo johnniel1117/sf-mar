@@ -6,7 +6,7 @@ import {
   TrendingUp, Package, Loader2, Truck, FileText,
   Calendar as CalendarIcon, BarChart3, Users,
 } from 'lucide-react'
-import type { TripManifest } from '@/lib/services/tripManifestService'
+import { getDispatchedQty, type TripManifest } from '@/lib/services/tripManifestService'
 import { createClient } from '@supabase/supabase-js'
 import * as XLSX from 'xlsx-js-style'
 
@@ -16,10 +16,6 @@ const supabase = createClient(
 )
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
-// Matched to SavedManifestsTab / TripManifestForm: purple accent, lime highlight
-// for CBM, amber/warning for shortfalls. inputFocus now uses the shared accent
-// instead of the stray blue this file had before, so focus rings read the same
-// across every tab.
 const C = {
   bg:           '#0D1117',
   surface:      '#161B22',
@@ -141,6 +137,30 @@ function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9\-_. ]/g, '').trim() || 'Trucker'
 }
 
+function isBracketMaterialCode(code: string): boolean {
+  const compact = String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  return compact.startsWith('TD0042653') || compact.includes('BRACKET') || compact.includes('BRKT')
+}
+
+function isBracketSerial(serial: SerialEntry): boolean {
+  const values = Object.values(serial).map(value =>
+    String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  )
+  return values.some(value => value.startsWith('TD0042653'))
+    || values.some(value => value.includes('BRACKET') || value.includes('BRKT'))
+}
+
+function getBracketMaterialTotal(item: { actual_qty_by_material?: Record<string, number> | null }) {
+  if (!item.actual_qty_by_material) return 0
+
+  return Object.entries(item.actual_qty_by_material).reduce((sum, [code, qty]) => {
+    if (isBracketMaterialCode(code)) {
+      return sum + (Number(qty) || 0)
+    }
+    return sum
+  }, 0)
+}
+
 // ── Supabase fetch ────────────────────────────────────────────────────────────
 
 const FETCH_BATCH_SIZE = 20
@@ -193,13 +213,14 @@ async function fetchSerialsForDNs(dns: string[]): Promise<Map<string, SerialEntr
 
 // ── Row builder ───────────────────────────────────────────────────────────────
 //
-// `qty` is the ordered quantity for a material line (count of scanned serials,
-// or the document's total_quantity when no serial data exists). `dispatchQty`
-// is what actually went out — pulled from the manifest item's per-material
-// actual_qty_by_material map when available, falling back to the item-level
-// actual_qty_dispatch, and finally to qty itself (i.e. "assume fully
-// dispatched" when nothing more granular was recorded) — the same convention
-// used everywhere else in the app.
+// `qty` is the accrual quantity for a material line. When the manifest item
+// has a recorded actual_qty_by_material entry for this material code, that
+// figure is authoritative and is used for BOTH qty and dispatchQty — it's a
+// manually recorded actual quantity, not something derived from scan counts,
+// so it correctly reflects cases like brackets/accessories where multiple
+// units ship under a single scanned barcode (group.length would otherwise
+// undercount them as 1). Only when there's no recorded actual quantity do we
+// fall back to the barcode/serial scan count as the best available estimate.
 
 function buildAccrualRows(
   manifests: TripManifest[],
@@ -225,8 +246,26 @@ function buildAccrualRows(
 
         for (const group of groupMap.values()) {
           const first = group[0]
-          const orderedQty   = group.length
-          const dispatchQty  = item.actual_qty_by_material?.[first.materialCode] ?? orderedQty
+          const isBracketGroup = group.some(isBracketSerial) || isBracketMaterialCode(first.materialCode)
+
+          const bracketMaterialTotal = getBracketMaterialTotal(item)
+          const recordedQty = item.actual_qty_by_material?.[first.materialCode]
+          const effectiveDispatchQty = getDispatchedQty(item)
+          const fallbackQty = isBracketGroup
+            ? (item.total_quantity ?? group.length)
+            : group.length
+
+          // For bracket accessories, one scanned barcode can represent multiple
+          // units. Prefer the actual dispatched total or the saved per-material
+          // bracket total before falling back to the raw scan count. This keeps
+          // historical records from incorrectly collapsing to 1.
+          const dispatchQty = effectiveDispatchQty || fallbackQty || 0
+          const orderedQty = isBracketGroup
+            ? dispatchQty
+            : (recordedQty != null && Number.isFinite(recordedQty) && recordedQty > 0)
+              ? recordedQty
+              : (bracketMaterialTotal > 0 ? bracketMaterialTotal : dispatchQty)
+
           rows.push({
             orderNo:       dn,
             matCode:       first.materialCode  ?? '',
@@ -256,7 +295,7 @@ function buildAccrualRows(
           shipToAddress: '—',
           soldToName:    '—',
           qty:           item.total_quantity ?? 0,
-          dispatchQty:   item.actual_qty_dispatch ?? item.total_quantity ?? 0,
+          dispatchQty:   getDispatchedQty(item),
           totalVolume:   item.total_cbm      ?? 0,
           drAmount:      0,
           trucker:       m.trucker           ?? '',
@@ -313,17 +352,6 @@ function groupByDay(rows: AccrualRow[]): DayGroup[] {
 
 // ── Excel sheet builder (shared between both export functions) ────────────────
 
-/**
- * Columns (17 total):
- * ORDER NO | MAT CODE | MAT DESC | CATEGORY (blank) | SOLD TO NAME |
- * SHIP TO NAME | SHIP TO ADDRESS | QTY | DISPATCH QTY | CBM (blank) |
- * TOTAL CBM | DR AMOUNT | TRUCKER | PLATE NO. | TRUCK TYPE |
- * DATE DISPATCHED | MANIFEST NO
- *
- * DISPATCH QTY sits right after QTY — the ordered amount — since it's the
- * per-line-item measure of what actually left the warehouse, same placement
- * convention used in the trip manifest exports.
- */
 const COLS = [
   'ORDER NO', 'MAT CODE', 'MAT DESC', 'CATEGORY',
   'SOLD TO NAME', 'SHIP TO NAME', 'SHIP TO ADDRESS',
@@ -332,14 +360,6 @@ const COLS = [
 ]
 const COL_WIDTHS = [20, 18, 36, 14, 34, 30, 42, 8, 12, 10, 12, 12, 20, 12, 14, 16, 18]
 
-/**
- * Builds a worksheet from an ordered list of truck groups. Each group renders
- * as a block of item rows followed by a subtotal row. This is the shared
- * primitive behind all export modes — the only thing that differs between
- * them is which groups get passed in and how they're ordered (subGroups for
- * a single day, or truck+date groups spanning an entire month for a sheet
- * dedicated to one trucker).
- */
 function buildWorksheetForGroups(groups: TruckerGroup[]): XLSX.WorkSheet {
   const bThin = { top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }
 
@@ -430,9 +450,7 @@ function exportAccrualExcel(dayGroups: DayGroup[], monthLabel: string) {
 // ── Excel export — per trucker (one file per trucker, sheets per day) ─────────
 
 function exportByTrucker(dayGroups: DayGroup[], monthLabel: string) {
-  // Collect all unique truckers across all days
   const truckerRowMap = new Map<string, Map<string, AccrualRow[]>>()
-  // truckerRowMap: trucker → (isoDate → rows[])
 
   for (const day of dayGroups) {
     for (const sub of day.subGroups) {
@@ -447,15 +465,11 @@ function exportByTrucker(dayGroups: DayGroup[], monthLabel: string) {
   for (const [truckerName, dateMap] of truckerRowMap.entries()) {
     const wb = XLSX.utils.book_new()
 
-    // Sort dates ascending
     const sortedDates = Array.from(dateMap.keys()).sort()
 
     for (const isoDate of sortedDates) {
       const rows = dateMap.get(isoDate)!
 
-      // Group this trucker's rows on this date back into per-manifest
-      // subgroups so same-day/same-plate/different-manifest trips still
-      // export as separate subtotal blocks instead of merging.
       const manifestMap = new Map<string, AccrualRow[]>()
       for (const r of rows) {
         const key = r.manifestNo || '—'
@@ -493,15 +507,8 @@ function exportByTrucker(dayGroups: DayGroup[], monthLabel: string) {
 }
 
 // ── Excel export — one workbook, one sheet per trucker ─────────────────────
-//
-// Every trucker gets exactly one sheet in a single .xlsx file. Within a
-// trucker's sheet, rows are grouped into blocks by (dispatch date, plate,
-// manifest) so each truck run on each day gets its own subtotal — the
-// existing "DATE DISPATCHED" column on every row still shows the date, and
-// blocks are ordered chronologically so the sheet reads top-to-bottom by day.
 
 function exportAccrualByTruckerOneFile(dayGroups: DayGroup[], monthLabel: string) {
-  // trucker → all rows for that trucker across the whole month
   const truckerRows = new Map<string, AccrualRow[]>()
   for (const day of dayGroups) {
     for (const sub of day.subGroups) {
@@ -514,14 +521,11 @@ function exportAccrualByTruckerOneFile(dayGroups: DayGroup[], monthLabel: string
   const wb = XLSX.utils.book_new()
   const usedSheetNames = new Set<string>()
 
-  // Sort truckers alphabetically so the workbook is easy to scan
   const sortedTruckerNames = Array.from(truckerRows.keys()).sort((a, b) => a.localeCompare(b))
 
   for (const truckerName of sortedTruckerNames) {
     const rows = truckerRows.get(truckerName)!
 
-    // Re-group this trucker's rows into (date, manifest) blocks, sorted
-    // chronologically, so each truck run keeps its own subtotal row.
     const blockMap = new Map<string, AccrualRow[]>()
     for (const r of rows) {
       const key = `${getISODate(r.manifestDate)}||${r.manifestNo || '—'}||${r.plateNo}`
@@ -544,7 +548,6 @@ function exportAccrualByTruckerOneFile(dayGroups: DayGroup[], monthLabel: string
 
     const ws = buildWorksheetForGroups(groups)
 
-    // Ensure a unique, valid (<=31 char) sheet name per trucker
     let sheetName = sanitizeSheetName(truckerName)
     let suffix = 2
     while (usedSheetNames.has(sheetName)) {

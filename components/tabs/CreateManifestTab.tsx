@@ -354,9 +354,25 @@ export function CreateManifestTab({
 
   const totalDocuments = manifest.items.length
   const totalQuantity = manifest.items.reduce((sum, item) => sum + item.total_quantity, 0)
-  const getActualCount = (item: ManifestItem) => item.actual_qty_by_material
-    ? Object.values(item.actual_qty_by_material).reduce((sum, count) => sum + count, 0)
-    : (item.actual_qty_dispatch ?? item.total_quantity)
+  const isBracketMaterialCode = (code: string) => {
+    const compact = String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+    return compact.startsWith('TD0042653') || compact.includes('BRACKET') || compact.includes('BRKT')
+  }
+  const getMaterialDisplayQty = (item: ManifestItem, materialCode: string, materialQty: number) => {
+    if (isBracketMaterialCode(materialCode) && Number.isFinite(item.actual_qty_dispatch) && (item.actual_qty_dispatch ?? 0) > 0) {
+      return item.actual_qty_dispatch ?? materialQty
+    }
+    return materialQty
+  }
+  const getActualCount = (item: ManifestItem) => {
+    if (item.actual_qty_dispatch != null && Number.isFinite(item.actual_qty_dispatch)) {
+      return item.actual_qty_dispatch
+    }
+    if (item.actual_qty_by_material) {
+      return Object.values(item.actual_qty_by_material).reduce((sum, count) => sum + count, 0)
+    }
+    return item.total_quantity
+  }
   const totalDispatchedQuantity = manifest.items.reduce((sum, item) => sum + getActualCount(item), 0)
   const totalCbm = manifest.items.reduce((sum, item) => sum + (item.total_cbm ?? 0), 0)
   const hasCbm = manifest.items.some(item => item.total_cbm != null && item.total_cbm > 0)
@@ -1316,25 +1332,28 @@ export function CreateManifestTab({
                       </div>
                       {item.actual_qty_by_material && Object.keys(item.actual_qty_by_material).length > 0 && (
                         <div className="ml-8 py-2 space-y-2" style={{ borderBottom: `1px solid ${C.divider}` }}>
-                          {Object.entries(item.actual_qty_by_material).map(([materialCode, actualCount]) => (
-                            <div key={materialCode} className="flex items-center justify-between gap-3">
-                              <span className="text-[10px] uppercase tracking-widest truncate" style={{ color: C.textSub }}>{materialCode}</span>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className="text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Actual Count</span>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={Math.max(0, item.total_quantity - Object.entries(item.actual_qty_by_material ?? {})
-                                    .filter(([code]) => code !== materialCode)
-                                    .reduce((sum, [, count]) => sum + count, 0))}
-                                  value={Math.min(actualCount, item.total_quantity)}
-                                  onChange={(e) => updateMaterialActualCount(idx, materialCode, e.target.value === '' ? 0 : Number(e.target.value))}
-                                  className="w-14 px-1.5 py-1 text-xs text-right tabular-nums rounded-[6px]"
-                                  style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.inputText, outline: 'none', transition: TRANSITION_FAST }}
-                                />
+                          {Object.entries(item.actual_qty_by_material).map(([materialCode, actualCount]) => {
+                            const displayedCount = getMaterialDisplayQty(item, materialCode, actualCount)
+                            return (
+                              <div key={materialCode} className="flex items-center justify-between gap-3">
+                                <span className="text-[10px] uppercase tracking-widest truncate" style={{ color: C.textSub }}>{materialCode}</span>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  <span className="text-[9px] uppercase tracking-widest" style={{ color: C.textGhost }}>Actual Count</span>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={Math.max(0, item.total_quantity - Object.entries(item.actual_qty_by_material ?? {})
+                                      .filter(([code]) => code !== materialCode)
+                                      .reduce((sum, [, count]) => sum + count, 0))}
+                                    value={Math.min(displayedCount, item.total_quantity)}
+                                    onChange={(e) => updateMaterialActualCount(idx, materialCode, e.target.value === '' ? 0 : Number(e.target.value))}
+                                    className="w-14 px-1.5 py-1 text-xs text-right tabular-nums rounded-[6px]"
+                                    style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.inputText, outline: 'none', transition: TRANSITION_FAST }}
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       )}
                       </React.Fragment>

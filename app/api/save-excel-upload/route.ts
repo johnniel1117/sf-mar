@@ -49,6 +49,13 @@ interface UploadPayload {
   serialData: SerialData[]
 }
 
+function isBracketSerial(serial: SerialData): boolean {
+  return Object.values(serial).some(value => {
+    const compact = String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+    return compact.startsWith('TD0042653') || compact.includes('BRACKET') || compact.includes('BRKT')
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const payload: UploadPayload = await request.json()
@@ -65,11 +72,7 @@ export async function POST(request: NextRequest) {
     // Bracket serials can represent multiple units with one barcode, so use
     // the editable quantity sent by the uploader for those records.
     const calculatedTotalQty = payload.data.reduce((sum, item) => sum + (item.qty || 0), 0)
-    const hasBracketSerial = payload.serialData.some(serial =>
-      Object.values(serial).some(value =>
-        String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').startsWith('TD0042653')
-      )
-    )
+    const hasBracketSerial = payload.serialData.some(isBracketSerial)
     const totalQty = hasBracketSerial ? payload.totalQuantity : calculatedTotalQty
 
     // Calculate total CBM from material data

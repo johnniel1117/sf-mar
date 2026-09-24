@@ -212,6 +212,18 @@ function getMaterialDescription(cache: MaterialDescCache, documentNumber: string
   return forDoc?.[code]?.trim() || '—'
 }
 
+function isBracketMaterialCode(code: string): boolean {
+  const compact = String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  return compact.startsWith('TD0042653') || compact.includes('BRACKET') || compact.includes('BRKT')
+}
+
+function getDisplayMaterialQty(item: ManifestItem, materialCode: string, materialQty: number): number {
+  if (isBracketMaterialCode(materialCode) && Number.isFinite(item.actual_qty_dispatch) && (item.actual_qty_dispatch ?? 0) > 0) {
+    return item.actual_qty_dispatch ?? materialQty
+  }
+  return materialQty
+}
+
 function itemMatchesQuery(item: ManifestItem, q: string, cache: MaterialDescCache): boolean {
   if ((item.document_number || '').toLowerCase().includes(q)) return true
   if ((item.ship_to_name || '').toLowerCase().includes(q)) return true
@@ -863,7 +875,9 @@ function ManifestRow({
                 {manifest.items!.map((item, idx) => {
                   const dispatchedQty = item.actual_qty_dispatch ?? item.total_quantity
                   const isShort = dispatchedQty < (item.total_quantity ?? 0)
-                  const materials = item.actual_qty_by_material ? Object.entries(item.actual_qty_by_material) : []
+                  const materials = item.actual_qty_by_material
+                    ? Object.entries(item.actual_qty_by_material).map(([code, qty]) => [code, getDisplayMaterialQty(item, code, qty)] as [string, number])
+                    : []
                   const hasMaterials = materials.length > 0
                   const isItemExpanded = expandedItem === idx
                   const rowBg = idx % 2 === 0 ? C.stripeEven : C.stripeOdd
